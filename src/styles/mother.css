@@ -1,0 +1,437 @@
+/* ============================================================
+   Mother Dashboard — Soft & Maternal Theme
+   ============================================================ */
+
+/* Background overlay */
+.mother-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background: 
+        linear-gradient(135deg, 
+            rgba(255, 241, 242, 0.95) 0%, 
+            rgba(255, 255, 255, 0.97) 50%, 
+            rgba(255, 241, 242, 0.95) 100%
+        ),
+        url('../images/mother_bg.jpg') center/cover no-repeat;
+}
+
+/* Override colors for maternal theme */
+.mother-theme {
+    --accent-primary: #f472b6;
+    --accent-secondary: #c084fc;
+    --accent-gradient: linear-gradient(135deg, #f472b6, #c084fc);
+}
+
+/* Emergency Trigger Button */
+.emergency-trigger-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl) 0;
+}
+
+.emergency-btn {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 
+        0 0 0 0 rgba(239, 68, 68, 0.4),
+        0 10px 40px rgba(239, 68, 68, 0.3);
+    transition: all var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 1;
+}
+
+.emergency-btn .btn-emoji {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.emergency-btn::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 3px solid rgba(239, 68, 68, 0.3);
+    animation: ripple 2s ease-in-out infinite;
+}
+
+.emergency-btn::after {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 2px solid rgba(239, 68, 68, 0.15);
+    animation: ripple 2s ease-in-out infinite 0.5s;
+}
+
+@keyframes ripple {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+
+.emergency-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 
+        0 0 60px rgba(239, 68, 68, 0.5),
+        0 20px 60px rgba(239, 68, 68, 0.3);
+}
+
+.emergency-btn:active {
+    transform: scale(0.95);
+}
+
+.emergency-btn.triggered {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    animation: none;
+}
+
+.emergency-btn.triggered::before,
+.emergency-btn.triggered::after {
+    animation: none;
+    border-color: rgba(249, 115, 22, 0.3);
+}
+
+.emergency-subtitle {
+    margin-top: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Cancel Alert */
+.cancel-alert-btn {
+    margin-top: var(--space-lg);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger-400);
+    padding: 0.75rem 2rem;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+}
+
+.cancel-alert-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Emergency Status Tracker */
+.status-tracker {
+    padding: var(--space-xl);
+}
+
+.status-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: var(--space-xl);
+}
+
+.status-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    background: var(--border-color);
+}
+
+.status-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+    flex: 1;
+}
+
+.status-step .step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: var(--space-sm);
+    transition: all var(--transition-base);
+}
+
+.status-step.completed .step-circle {
+    background: var(--success-600);
+    border-color: var(--success-500);
+}
+
+.status-step.active .step-circle {
+    background: var(--warning-500);
+    border-color: var(--warning-400);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    animation: pulse-step 2s ease infinite;
+}
+
+@keyframes pulse-step {
+    0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+    50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.6); }
+}
+
+.status-step .step-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 80px;
+}
+
+.status-step.completed .step-label,
+.status-step.active .step-label {
+    color: var(--text-primary);
+}
+
+/* Pregnancy Tracker Card */
+.pregnancy-tracker {
+    position: relative;
+    overflow: hidden;
+}
+
+.pregnancy-tracker::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(192, 132, 252, 0.1));
+}
+
+.pregnancy-weeks {
+    font-family: var(--font-heading);
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f472b6, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.pregnancy-trimester {
+    font-size: 0.9rem;
+    color: var(--purple-300);
+    font-weight: 600;
+    margin-top: var(--space-xs);
+}
+
+.due-date-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Checkup Card */
+.checkup-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-glass);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-sm);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.checkup-item:hover {
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.checkup-date {
+    text-align: center;
+    min-width: 50px;
+}
+
+.checkup-date .day {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--rose-400);
+    line-height: 1;
+}
+
+.checkup-date .month {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.checkup-info {
+    flex: 1;
+}
+
+.checkup-type {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.checkup-hospital {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.checkup-time {
+    font-size: 0.75rem;
+    color: var(--purple-300);
+    font-weight: 500;
+}
+
+/* Profile Section */
+.profile-card {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f472b6, #c084fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    margin: 0 auto var(--space-lg);
+    box-shadow: 0 0 30px rgba(244, 114, 182, 0.3);
+}
+
+.profile-name {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: var(--space-xs);
+}
+
+.profile-id {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Mother mobile-first overrides */
+@media (max-width: 768px) {
+    .mother-dashboard .sidebar {
+        display: none;
+    }
+    
+    .mother-dashboard .main-content {
+        margin-left: 0;
+        padding: var(--space-md);
+    }
+
+    .emergency-btn {
+        width: 180px;
+        height: 180px;
+        font-size: 1rem;
+    }
+
+    .status-steps {
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .status-steps::before {
+        top: 20px;
+        bottom: 20px;
+        left: 20px;
+        right: auto;
+        width: 3px;
+        height: auto;
+    }
+
+    .status-step {
+        flex-direction: row;
+        gap: var(--space-md);
+    }
+
+    .status-step .step-label {
+        text-align: left;
+        max-width: none;
+    }
+}
+
+/* Bottom navigation for mobile mothers */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-sm) 0;
+    z-index: 100;
+}
+
+.mobile-bottom-nav .nav-items {
+    display: flex;
+    justify-content: space-around;
+}
+
+.mobile-bottom-nav .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mobile-bottom-nav .nav-item .nav-icon {
+    font-size: 1.2rem;
+}
+
+.mobile-bottom-nav .nav-item.active {
+    color: var(--rose-400);
+}
+
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: block;
+    }
+    .mother-dashboard .main-content {
+        padding-bottom: 80px;
+    }
+}

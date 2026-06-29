@@ -1,0 +1,22 @@
+{
+  "name": "MamaTrack GPS Maternal Emergency response",
+  "short_name": "MamaTrack",
+  "description": "GPS-based maternal emergency response and tracking system for Mukono District",
+  "start_url": "index.php",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "../assets/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "../assets/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

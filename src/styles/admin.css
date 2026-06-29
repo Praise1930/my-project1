@@ -1,0 +1,344 @@
+/* ============================================================
+   Admin Dashboard — Professional Command Center Theme
+   ============================================================ */
+
+.admin-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    background: 
+        linear-gradient(135deg, 
+            rgba(240, 244, 248, 0.95) 0%, 
+            rgba(255, 255, 255, 0.97) 50%, 
+            rgba(240, 244, 248, 0.95) 100%
+        ),
+        url('../images/admin_bg.jpg') center/cover no-repeat;
+}
+
+/* Emergency Alert Panel */
+.emergency-panel {
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.05);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: var(--space-lg);
+    animation: emergency-glow 3s ease-in-out infinite;
+}
+
+@keyframes emergency-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.1); }
+    50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.2); }
+}
+
+.emergency-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(239, 68, 68, 0.1);
+    border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.emergency-panel-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--danger-400);
+    font-size: 0.95rem;
+}
+
+.emergency-panel-header .count {
+    background: var(--danger-600);
+    color: white;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 700;
+    animation: pulse-badge 2s ease infinite;
+}
+
+.emergency-panel-body {
+    padding: var(--space-lg);
+}
+
+/* Emergency Card */
+.emergency-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-md);
+    transition: all var(--transition-fast);
+}
+
+.emergency-card:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.emergency-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+}
+
+.emergency-card .emergency-code {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--danger-400);
+    font-size: 0.95rem;
+}
+
+.emergency-card .emergency-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.emergency-card .emergency-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.emergency-detail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.8rem;
+}
+
+.emergency-detail-item .detail-label {
+    color: var(--text-muted);
+    min-width: 70px;
+}
+
+.emergency-card .emergency-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Dispatch Confirmation */
+.dispatch-form {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.dispatch-suggestion {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(34, 197, 94, 0.05);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.dispatch-suggestion .suggestion-icon {
+    font-size: 1.5rem;
+}
+
+.dispatch-suggestion .suggestion-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.dispatch-suggestion .suggestion-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--success-300);
+}
+
+/* Resource Management Cards */
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-lg);
+}
+
+.resource-card {
+    padding: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.resource-card .resource-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+}
+
+.resource-card .resource-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.resource-card .resource-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.resource-card .resource-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Quick actions panel */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--border-light);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+}
+
+.quick-action-btn .action-icon {
+    font-size: 1.5rem;
+}
+
+/* Hospital Capacity Bars */
+.capacity-bar {
+    height: 8px;
+    background: var(--bg-glass);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: var(--space-sm);
+}
+
+.capacity-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width var(--transition-slow);
+}
+
+.capacity-fill.low { background: var(--success-500); }
+.capacity-fill.medium { background: var(--warning-500); }
+.capacity-fill.high { background: var(--danger-500); }
+
+/* Report Charts Area */
+.chart-container {
+    width: 100%;
+    height: 300px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+}
+
+/* Data list */
+.data-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.data-list-item:last-child {
+    border-bottom: none;
+}
+
+.data-list-item:hover {
+    background: var(--bg-glass);
+}
+
+/* ============================================================
+   Manage Assets — Table Action Buttons
+   ============================================================ */
+.action-btns-cell {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.action-btns-cell .btn-ghost {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.action-btns-cell .btn-ghost:hover {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    color: #0369a1;
+}
+
+.action-btns-cell .btn-danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    box-shadow: none;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.action-btns-cell .btn-danger:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    color: #b91c1c;
+}
+
+/* Manage Assets tab content header strip */
+.manage-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.875rem;
+    border-bottom: 2px solid #e8edf3;
+}
+
+.manage-section-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Improve font semibold utility */
+.font-semibold { font-weight: 600; }

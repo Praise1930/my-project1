@@ -1,0 +1,307 @@
+/* ============================================================
+   Driver Dashboard — Navigation & Field Operations Theme
+   ============================================================ */
+
+/* Background overlay */
+.driver-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    background: 
+        linear-gradient(135deg, 
+            rgba(240, 255, 248, 0.95) 0%, 
+            rgba(255, 255, 255, 0.97) 50%, 
+            rgba(235, 255, 245, 0.95) 100%
+        ),
+        url('../images/admin_bg.jpg') center/cover no-repeat;
+}
+
+/* Map-centric layout for driver */
+.driver-map-layout {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.driver-map-layout .map-panel {
+    flex: 1;
+    min-height: 300px;
+}
+
+/* Assignment Card */
+.assignment-card {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(234, 88, 12, 0.06));
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.assignment-card .assignment-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.assignment-card .assignment-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-lg);
+    background: rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--warning-400);
+}
+
+.assignment-card .assignment-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--warning-300);
+}
+
+.assignment-card .assignment-code {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Navigation Info */
+.nav-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.nav-info-item {
+    text-align: center;
+    padding: var(--space-md);
+    background: var(--bg-glass);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.nav-info-item .nav-value {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--warning-400);
+    line-height: 1;
+}
+
+.nav-info-item .nav-unit {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Trip Waypoints */
+.waypoint-list {
+    padding: var(--space-md) 0;
+}
+
+.waypoint-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+    position: relative;
+}
+
+.waypoint-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 30px;
+    bottom: -8px;
+    width: 2px;
+    border-left: 2px dashed var(--border-color);
+}
+
+.waypoint-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 2px solid;
+    margin-top: 2px;
+}
+
+.waypoint-dot.pickup {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: var(--success-500);
+    color: var(--success-400);
+}
+
+.waypoint-dot.dropoff {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--danger-500);
+    color: var(--danger-400);
+}
+
+.waypoint-info {
+    flex: 1;
+}
+
+.waypoint-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.waypoint-address {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.waypoint-distance {
+    font-size: 0.75rem;
+    color: var(--warning-400);
+}
+
+/* Action buttons - Driver */
+.driver-action-row {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.arrived-btn {
+    flex: 1;
+    background: linear-gradient(135deg, var(--success-600), var(--success-500));
+    color: white;
+    border: none;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.arrived-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow-green);
+}
+
+/* Vehicle Status Card */
+.vehicle-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--space-lg);
+}
+
+.vehicle-icon-large {
+    font-size: 2.5rem;
+}
+
+.vehicle-detail .vehicle-plate {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.vehicle-detail .vehicle-type {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.vehicle-metrics {
+    display: flex;
+    gap: var(--space-lg);
+    margin-top: var(--space-sm);
+}
+
+.vehicle-metric {
+    text-align: center;
+}
+
+.vehicle-metric .metric-value {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.vehicle-metric .metric-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+/* Trip History */
+.trip-history-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem;
+}
+
+.trip-history-item:last-child {
+    border-bottom: none;
+}
+
+.trip-history-item .trip-date {
+    width: 80px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.trip-history-item .trip-route {
+    flex: 1;
+}
+
+.trip-history-item .trip-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Fullscreen map mode for driver on mobile */
+@media (max-width: 768px) {
+    .driver-dashboard .sidebar {
+        display: none;
+    }
+    
+    .driver-map-layout {
+        height: 100vh;
+        grid-template-rows: 1fr auto;
+    }
+
+    .driver-bottom-sheet {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+        padding: var(--space-lg);
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .nav-info-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
