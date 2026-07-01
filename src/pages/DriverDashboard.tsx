@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DriverService, EmergencyService, SimulationEngine, User, Driver, Emergency, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { CheckSquare, PlusSquare, CheckCircle } from 'lucide-react';
+import '../styles/driver/theme.css';
 
 export const DriverDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -33,20 +34,11 @@ export const DriverDashboard: React.FC = () => {
 
   const [hasInspectedToday, setHasInspectedToday] = useState(false);
 
-  // Dynamic Stylesheet Loading for isolating theme CSS
+  // Toggle body class when driver theme is active
   useEffect(() => {
     document.body.classList.add('driver-theme-active');
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = '/src/styles/driver/theme.css';
-    link.id = 'driver-theme-css';
-    document.head.appendChild(link);
-
     return () => {
       document.body.classList.remove('driver-theme-active');
-      const linkEl = document.getElementById('driver-theme-css');
-      if (linkEl) linkEl.remove();
     };
   }, []);
 
