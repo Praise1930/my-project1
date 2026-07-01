@@ -41,6 +41,38 @@ export const MotherDashboard: React.FC = () => {
   const [chatLogs, setChatLogs] = useState<Record<number, { sender: 'patient' | 'doctor'; text: string; time: string }[]>>({});
   const [isTyping, setIsTyping] = useState(false);
 
+  // Onboarding Guide states
+  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [guideStep, setGuideStep] = useState(0);
+
+  const guideSteps = [
+    {
+      title: "Welcome to Momentra",
+      icon: "🤱",
+      desc: "Your comprehensive maternal health console. Let's walk you through the key features designed to ensure you and your baby remain safe.",
+    },
+    {
+      title: "🚨 Real-Time Rescue Beacon",
+      icon: "🆘",
+      desc: "Tap the glowing red SOS button during any pregnancy distress. This instantly logs your GPS coordinates, dispatches the nearest ambulance, and alerts Obstetricians at Mukono General Hospital.",
+    },
+    {
+      title: "👶 Antenatal Milestones Checklist",
+      icon: "📈",
+      desc: "Track World Health Organization (WHO) pregnancy milestones from weeks 8 to 40. Stay informed about key visits, ultrasound schedules, and critical checks for your delivery care.",
+    },
+    {
+      title: "🩺 Expert Doctor Consultations",
+      icon: "💬",
+      desc: "Inquire about symptoms in real-time. Chat with on-duty obstetricians and midwives, upload symptom notes (cramping, feet swelling), and receive clinical replies.",
+    },
+    {
+      title: "📋 Smart Appointment Schedules",
+      icon: "📅",
+      desc: "Review scheduled antenatal visits, log personal medical history (allergies, blood group), and set next-of-kin emergency contact profiles for automated alerts.",
+    }
+  ];
+
   // Toggle background body class for whole dashboard image transparency
   useEffect(() => {
     document.body.classList.add('mother-theme-active');
@@ -404,7 +436,7 @@ export const MotherDashboard: React.FC = () => {
 
                   {/* Distinct hero actions: Get Started points to schedules, SOS triggers emergency */}
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
-                    <button className="btn-momentra-primary" onClick={() => navigate('/mother-console')}>
+                    <button className="btn-momentra-primary" onClick={() => { setShowGuideModal(true); setGuideStep(0); }}>
                       Get Started
                     </button>
                     
@@ -997,6 +1029,64 @@ export const MotherDashboard: React.FC = () => {
             <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px', marginTop: '14px' }}>
               <button className="btn-momentra-outline" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={() => setShowConfirmModal(false)}>Cancel</button>
               <button className="btn-momentra-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={handleConfirmSOS}>Trigger Dispatch SOS</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOMENTRA INTERACTIVE ONBOARDING GUIDE MODAL */}
+      {showGuideModal && (
+        <div className="modal-overlay active">
+          <div className="modal card-glass" style={{ width: '100%', maxWidth: '500px', padding: '2rem', border: '1px solid rgba(244,63,94,0.2)' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '10px', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🤱</span> Momentra System Guide
+              </h3>
+              <button onClick={() => setShowGuideModal(false)} style={{ background: 'none', border: 'none', color: '#4b5563', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1.25rem', minHeight: '180px' }}>
+              <div style={{ fontSize: '3rem', width: '80px', height: '80px', background: 'rgba(244, 63, 94, 0.05)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(244,63,94,0.08)' }}>
+                {guideSteps[guideStep].icon}
+              </div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1f2937' }}>
+                {guideSteps[guideStep].title}
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#4b5563', lineHeight: 1.6, maxWidth: '400px' }}>
+                {guideSteps[guideStep].desc}
+              </p>
+              
+              {/* Progress dots */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                {guideSteps.map((_, idx) => (
+                  <span key={idx} style={{ width: guideStep === idx ? '24px' : '8px', height: '8px', borderRadius: '4px', background: guideStep === idx ? '#f43f5e' : 'rgba(0,0,0,0.1)', transition: 'all 0.3s' }} />
+                ))}
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '14px', marginTop: '20px' }}>
+              <button 
+                className="btn-momentra-outline" 
+                style={{ padding: '0.45rem 1.2rem', fontSize: '0.8rem', visibility: guideStep === 0 ? 'hidden' : 'visible' }}
+                onClick={() => setGuideStep(guideStep - 1)}
+              >
+                Back
+              </button>
+              
+              <button 
+                className="btn-momentra-primary" 
+                style={{ padding: '0.45rem 1.5rem', fontSize: '0.8rem' }}
+                onClick={() => {
+                  if (guideStep < guideSteps.length - 1) {
+                    setGuideStep(guideStep + 1);
+                  } else {
+                    setShowGuideModal(false);
+                    navigate('/mother-console');
+                  }
+                }}
+              >
+                {guideStep === guideSteps.length - 1 ? "Enter Console" : "Next Step"}
+              </button>
             </div>
           </div>
         </div>
