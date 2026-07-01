@@ -381,6 +381,11 @@ export const MotherDashboard: React.FC = () => {
                 
                 {/* Left column hero texts & details */}
                 <div className="momentra-left-col">
+                  {/* Eyebrow maternal health slogan */}
+                  <div style={{ fontSize: '0.75rem', color: '#f43f5e', fontWeight: 800, letterSpacing: '0.08em', marginBottom: '2px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ animation: 'active-emergency-pulse 1s infinite alternate' }}>✨</span> "Bringing a life should not end another"
+                  </div>
+
                   <h1 className="momentra-title">
                     Empowering Every<br />
                     Mother With <span className="momentra-script">Smarter<br />Pregnancy Care</span>
@@ -389,9 +394,9 @@ export const MotherDashboard: React.FC = () => {
                     Track your pregnancy journey with AI-powered health monitoring, expert guidance, personalized insights, and real-time support all in one seamless experience.
                   </p>
 
-                  {/* Actions row: contains Get Started and Direct SOS Trigger Button on Home */}
+                  {/* Distinct hero actions: Get Started points to schedules, SOS triggers emergency */}
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
-                    <button className="btn-momentra-primary" onClick={() => setActiveTab('emergency')}>
+                    <button className="btn-momentra-primary" onClick={() => setActiveTab('checkups')}>
                       Get Started
                     </button>
                     
@@ -422,7 +427,7 @@ export const MotherDashboard: React.FC = () => {
                   <div className="momentra-mother-frame">
                     <img className="momentra-mother-img" src="/mother.jpeg" alt="Expectant Mother" />
 
-                    {/* Relocated Health Score Card inside parent photo frame to prevent text overlaps */}
+                    {/* Relocated Health Score Card inside parent photo frame */}
                     <div className="floating-widget widget-health">
                       <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your Health Score</span>
                       
@@ -510,8 +515,8 @@ export const MotherDashboard: React.FC = () => {
                 <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
               </button>
 
-              <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem' }}>
-                {/* Left controls */}
+              <div className="grid-2" style={{ gridTemplateColumns: '1.05fr 1.15fr', gap: '1.5rem' }}>
+                {/* Left controls column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div className="card-glass text-center" style={{ padding: '2rem' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1f2937' }}>Need Urgent Medical Rescue?</h2>
@@ -545,8 +550,8 @@ export const MotherDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Active rescue metadata */}
-                  {activeEmergency && (
+                  {/* Active rescue details or danger signs / clinic contacts to fill empty space */}
+                  {activeEmergency ? (
                     <div className="card-glass" style={{ padding: '1.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
                         <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>🚨 Rescue Status</h3>
@@ -599,6 +604,48 @@ export const MotherDashboard: React.FC = () => {
                         <button className="cancel-alert-btn" onClick={handleCancelSOS}>
                           Cancel Rescue Beacon
                         </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Show Danger signs & Clinic support contacts to fill blank space
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* Danger signs list */}
+                      <div className="card-glass" style={{ padding: '1.25rem' }}>
+                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                          ⚠️ Critical Maternal Danger Signs
+                        </h4>
+                        <p style={{ fontSize: '0.72rem', color: '#6b7280', marginBottom: '10px', lineHeight: 1.45 }}>
+                          If you experience any of these signs, please press the **Trigger Emergency SOS** button immediately to dispatch clinical help:
+                        </p>
+                        <ul style={{ fontSize: '0.72rem', color: '#4b5563', paddingLeft: '16px', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <li>Severe, persistent headache or blurred vision</li>
+                          <li>Sudden swelling of the face, hands, or ankles</li>
+                          <li>Vaginal bleeding or sudden warm fluid leakage</li>
+                          <li>Severe, constant abdominal pain or cramping</li>
+                          <li>High fever, severe chills, or fits/convulsions</li>
+                          <li>Reduced or absent baby movements (kicks)</li>
+                        </ul>
+                      </div>
+
+                      {/* Clinic and VHT support numbers */}
+                      <div className="card-glass" style={{ padding: '1.25rem' }}>
+                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                          📞 Mukono Support Contacts
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)', paddingBottom: '4px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4b5563' }}>Emergency Dispatcher</span>
+                            <a href="tel:+256742100001" style={{ fontSize: '0.72rem', color: '#f43f5e', fontWeight: 700, textDecoration: 'none' }}>+256-742-100-001</a>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)', paddingBottom: '4px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4b5563' }}>Betty Namusoke (VHT)</span>
+                            <a href="tel:+256772600001" style={{ fontSize: '0.72rem', color: '#f43f5e', fontWeight: 700, textDecoration: 'none' }}>+256-772-600-001</a>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4b5563' }}>Mukono General Hospital</span>
+                            <a href="tel:+256414290001" style={{ fontSize: '0.72rem', color: '#f43f5e', fontWeight: 700, textDecoration: 'none' }}>+256-414-290-001</a>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

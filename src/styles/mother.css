@@ -3,17 +3,26 @@
    Premium Soft Pastel Rose, Peach, and Calming Glassmorphism
    ============================================================ */
 
-/* Soft Calming Ambient Background with Blurred Picture */
+/* Fullscreen Background visibility overrides */
+body:has(.mother-theme) {
+    background: transparent !important;
+}
+
+.mother-theme {
+    background: transparent !important;
+}
+
+/* Soft Calming Ambient Background with Full Page Blurred Picture */
 .mother-bg {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: -2;
-    background: url('/mother.jpeg') center/cover no-repeat;
-    filter: blur(16px) brightness(0.94);
-    transform: scale(1.06); /* Avoid white edges */
+    z-index: -10;
+    background: url('/mother.jpeg') center/cover no-repeat !important;
+    filter: blur(18px) brightness(0.94);
+    transform: scale(1.08); /* Avoid white edges */
     background-size: cover;
 }
 
@@ -23,8 +32,8 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: -1;
-    background: linear-gradient(135deg, rgba(254, 250, 250, 0.88) 0%, rgba(246, 239, 246, 0.93) 100%);
+    z-index: -9;
+    background: linear-gradient(135deg, rgba(254, 250, 250, 0.88) 0%, rgba(246, 239, 246, 0.93) 100%) !important;
 }
 
 /* Base Light Theme Tokens */

@@ -191,5 +191,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [emergencyCircle]);
 
+  // 6. Invalidate map size on window/render updates to prevent rendering glitches
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize();
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [markers, routePoints]);
+
   return <div ref={mapContainerRef} className="map-container" style={{ width: '100%', height: '100%', minHeight: '350px' }} />;
 };
