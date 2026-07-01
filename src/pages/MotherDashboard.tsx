@@ -1,16 +1,16 @@
-// MamaTrack GPS — Expectant Mother Dashboard
+// MamaTrack GPS — Expectant Mother Dashboard (Momentra Redesign)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
-import { Bell, Calendar, LogOut } from 'lucide-react';
+import { Bell, Calendar, LogOut, ArrowLeft, Play } from 'lucide-react';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Mother | null>(null);
-  const [activeTab, setActiveTab] = useState<'emergency' | 'checkups' | 'anc-timeline' | 'profile'>('emergency');
+  const [activeTab, setActiveTab] = useState<'home' | 'emergency' | 'checkups' | 'anc-timeline' | 'profile'>('home');
   
   // States for active emergency
   const [activeEmergency, setActiveEmergency] = useState<Emergency | null>(null);
@@ -100,7 +100,7 @@ export const MotherDashboard: React.FC = () => {
     };
   }, [activeEmergency?.id, activeEmergency?.status, user]);
 
-  if (!user || !profile) return <div style={{ padding: '2rem', textAlign: 'center', color: '#fff' }}>Loading Mother Profile...</div>;
+  if (!user || !profile) return <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading Mother Profile...</div>;
 
   // Calculate Pregnancy Progress
   const calculateWeeks = () => {
@@ -185,6 +185,7 @@ export const MotherDashboard: React.FC = () => {
     setActiveEmergency(newEmg);
     setEmergencyNotes('');
     setRequireCemonc(false);
+    setActiveTab('emergency'); // Auto switch to track
   };
 
   const handleCancelSOS = () => {
@@ -192,9 +193,7 @@ export const MotherDashboard: React.FC = () => {
     if (window.confirm('Are you sure you want to cancel your emergency dispatch request?')) {
       const updated = EmergencyService.cancelEmergency(activeEmergency.id, 'Cancelled by patient', user.id);
       setActiveEmergency(null);
-      // Stop simulation
       SimulationEngine.stopSimulation(updated.id);
-      // Reload page list
       setNotifications(NotificationService.getNotificationsForUser(user.id));
     }
   };
@@ -205,6 +204,26 @@ export const MotherDashboard: React.FC = () => {
     UserService.updateMotherProfile(user.id, profileForm);
     alert('Profile information updated successfully!');
   };
+
+  // Dynamic next appointment calculation
+  const getNextAppointmentInfo = () => {
+    const upcoming = checkups.filter(c => c.status === 'upcoming');
+    if (upcoming.length > 0) {
+      const next = upcoming[0];
+      const dt = new Date(next.scheduled_date);
+      return {
+        date: dt.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }),
+        time: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: next.checkup_type
+      };
+    }
+    return {
+      date: '24 May, 2026',
+      time: '10:30 AM',
+      type: 'ANC Checkup'
+    };
+  };
+  const nextAppt = getNextAppointmentInfo();
 
   // WHO Milestones
   const whoMilestones = [
@@ -222,418 +241,523 @@ export const MotherDashboard: React.FC = () => {
     <div className="mother-theme" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="mother-bg" />
 
-      <div className="dashboard-layout">
-        {/* Sidebar Nav */}
-        <aside className="sidebar">
-          <div className="sidebar-logo">
-            <div className="logo-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>🤰</div>
-            <div>
-              <h2 style={{ fontSize: '1rem', fontWeight: 800 }}>MamaTrack</h2>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Maternal Dispatch Portal</p>
-            </div>
+      <div className="dashboard-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Top Navbar */}
+        <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.03)', zIndex: 100 }}>
+          <div className="logo" onClick={() => setActiveTab('home')} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.35rem', cursor: 'pointer', fontWeight: 800 }}>
+            <span style={{ fontSize: '1.8rem', background: 'rgba(244,63,94,0.1)', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤱</span>
+            <span className="logo-text" style={{ color: '#1f2937' }}>Momentra</span>
           </div>
 
-          <nav className="sidebar-nav">
-            <div className="nav-section">
-              <div className={`nav-item ${activeTab === 'emergency' ? 'active' : ''}`} onClick={() => setActiveTab('emergency')}>
-                <span className="nav-icon">🚨</span>
-                <span>Emergency Hub</span>
-              </div>
-              <div className={`nav-item ${activeTab === 'checkups' ? 'active' : ''}`} onClick={() => setActiveTab('checkups')}>
-                <span className="nav-icon">📅</span>
-                <span>ANC Schedules</span>
-              </div>
-              <div className={`nav-item ${activeTab === 'anc-timeline' ? 'active' : ''}`} onClick={() => setActiveTab('anc-timeline')}>
-                <span className="nav-icon">🗓️</span>
-                <span>ANC Timeline</span>
-              </div>
-              <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-                <span className="nav-icon">👤</span>
-                <span>My Profile</span>
-              </div>
-            </div>
+          <nav className="header-nav" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+            <span onClick={() => setActiveTab('home')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'home' ? 700 : 500, color: activeTab === 'home' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Home</span>
+            <span onClick={() => setActiveTab('emergency')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'emergency' ? 700 : 500, color: activeTab === 'emergency' ? '#f43f5e' : '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              Rescue {activeEmergency && <span className="pulse-dot" style={{ width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%' }} />}
+            </span>
+            <span onClick={() => setActiveTab('checkups')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'checkups' ? 700 : 500, color: activeTab === 'checkups' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Schedules</span>
+            <span onClick={() => setActiveTab('anc-timeline')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'anc-timeline' ? 700 : 500, color: activeTab === 'anc-timeline' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Timeline</span>
+            <span onClick={() => setActiveTab('profile')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'profile' ? 700 : 500, color: activeTab === 'profile' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Profile</span>
           </nav>
 
-          <div className="sidebar-user">
-            <div className="user-avatar" style={{ background: 'linear-gradient(135deg, #ef4444, #a855f7)' }}>🤰</div>
-            <div className="user-info">
-              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{user.full_name}</div>
-              <div className="user-role" style={{ fontSize: '0.7rem', color: '#ff8080' }}>{trimester} ({weeks}w)</div>
-            </div>
-            <button className="btn-logout" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '4px' }}>
-              <LogOut size={16} />
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Content Workspace */}
-        <main className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>
-          <header className="top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Maternal Emergency Response</h1>
-              <p className="header-greeting" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Welcome, {user.full_name}</p>
-            </div>
-
-            {/* Notifications Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* Notifications */}
             <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', position: 'relative' }}>
+              <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
                 <Bell size={18} />
                 {notifications.some(n => !n.is_read) && (
-                  <span style={{ position: 'absolute', top: '2px', right: '2px', background: 'var(--rose-500)', width: '10px', height: '10px', borderRadius: '50%' }} />
+                  <span style={{ position: 'absolute', top: '1px', right: '1px', background: '#f43f5e', width: '8px', height: '8px', borderRadius: '50%' }} />
                 )}
               </button>
 
               {showNotifications && (
-                <div className="card-glass" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', maxHeight: '400px', overflowY: 'auto', zIndex: 999, border: '1px solid var(--border)', borderRadius: '12px', padding: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '8px' }}>
+                <div className="card-glass notifications-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', maxHeight: '400px', overflowY: 'auto', zIndex: 999, padding: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '8px' }}>
                     <strong style={{ fontSize: '0.85rem' }}>Alert Notifications</strong>
-                    <button onClick={() => { NotificationService.markAllAsRead(user.id); setNotifications(NotificationService.getNotificationsForUser(user.id)); }} style={{ background: 'none', border: 'none', color: 'var(--rose-400)', fontSize: '0.7rem', cursor: 'pointer' }}>Mark all read</button>
+                    <button onClick={() => { NotificationService.markAllAsRead(user.id); setNotifications(NotificationService.getNotificationsForUser(user.id)); }} style={{ background: 'none', border: 'none', color: '#f43f5e', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
                   </div>
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '20px 0', textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)' }}>No messages</div>
+                    <div style={{ padding: '20px 0', textAlign: 'center', fontSize: '0.78rem', color: '#8b96a5' }}>No messages</div>
                   ) : (
                     notifications.map(n => (
-                      <div key={n.id} style={{ padding: '8px', borderRadius: '6px', background: n.is_read ? 'transparent' : 'rgba(244,63,94,0.06)', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '2px', opacity: n.is_read ? 0.7 : 1 }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: n.is_read ? 600 : 700, color: n.type === 'emergency' ? 'var(--rose-400)' : '#fff' }}>{n.title}</span>
-                        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>{n.message}</p>
-                        <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textAlign: 'right' }}>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <div key={n.id} style={{ padding: '8px', borderRadius: '6px', background: n.is_read ? 'transparent' : 'rgba(244,63,94,0.03)', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '2px', opacity: n.is_read ? 0.7 : 1 }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: n.is_read ? 600 : 700, color: n.type === 'emergency' ? '#f43f5e' : '#1f2937' }}>{n.title}</span>
+                        <p style={{ fontSize: '0.72rem', color: '#4b5563', lineHeight: 1.3 }}>{n.message}</p>
+                        <span style={{ fontSize: '0.65rem', color: '#9ca3af', textAlign: 'right' }}>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     ))
                   )}
                 </div>
               )}
             </div>
-          </header>
 
-          {/* TAB 1: EMERGENCY CENTER */}
-          {activeTab === 'emergency' && (
-            <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem', flex: 1 }}>
-              {/* Left trigger panel */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div className="card card-glass text-center" style={{ padding: '2rem' }}>
-                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Need Urgent Medical Rescue?</h2>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '10px 0 20px', lineHeight: 1.5 }}>
-                    Press the button below. The system will auto-dispatch the nearest available ambulance, map your coordinates, and alert an Obstetrician at the hospital.
+            {/* Logout button */}
+            <button className="btn-momentra-outline" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }}>
+              <LogOut size={14} style={{ marginRight: '4px' }} />
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="main-content" style={{ flex: 1, padding: '2rem var(--space-xl)', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* TAB 0: MOMENTRA HOME DASHBOARD */}
+          {activeTab === 'home' && (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+              <div className="momentra-hero-grid">
+                
+                {/* Left column hero texts & details */}
+                <div className="momentra-left-col">
+                  <h1 className="momentra-title">
+                    Empowering Every<br />
+                    Mother With <span className="momentra-script">Smarter<br />Pregnancy Care</span>
+                  </h1>
+                  <p className="momentra-subtitle">
+                    Track your pregnancy journey with AI-powered health monitoring, expert guidance, personalized insights, and real-time support all in one seamless experience.
                   </p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    {!activeEmergency ? (
-                      <button className="emergency-btn" onClick={handleTriggerSOS}>
-                        <span className="btn-emoji">🆘</span>
-                        <span style={{ fontWeight: 800 }}>Trigger SOS</span>
-                      </button>
-                    ) : (
-                      <div className="emergency-btn triggered">
-                        <span className="btn-emoji">🚨</span>
-                        <span>SOS Active</span>
-                      </div>
-                    )}
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {!activeEmergency ? (
-                        <span>Tap to dispatch ambulance</span>
-                      ) : (
-                        <>
-                          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#f97316', boxShadow: '0 0 10px #f97316', animation: 'active-emergency-pulse 1s infinite alternate' }} />
-                          <span style={{ color: '#fdba74', fontWeight: 700 }}>GPS Beacon Actively Broadcasting Location</span>
-                        </>
-                      )}
-                    </span>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '10px' }}>
+                    <button className="btn-momentra-primary" onClick={() => setActiveTab('emergency')}>
+                      Get Started
+                    </button>
+                    <button className="btn-momentra-outline" onClick={handleTriggerSOS}>
+                      <span className="btn-play-circle"><Play size={10} fill="#f43f5e" /></span>
+                      Trigger Emergency SOS
+                    </button>
+                  </div>
+
+                  {/* Social Proof */}
+                  <div className="social-proof">
+                    <div className="avatar-stack">
+                      <div className="avatar-placeholder" style={{ background: '#fecdd3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>👩</div>
+                      <div className="avatar-placeholder" style={{ background: '#ddd6fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>👩‍⚕️</div>
+                      <div className="avatar-placeholder" style={{ background: '#bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>🤰</div>
+                    </div>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#4b5563' }}>50k+ <span style={{ color: '#8b96a5', fontWeight: 400 }}>Satisfied Mothers</span></span>
+                  </div>
+
+                  {/* Floating Health Score Card */}
+                  <div className="floating-widget widget-health">
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your Health Score</span>
+                    
+                    <div className="health-circle-wrap">
+                      <svg className="health-circle-svg" width="72" height="72">
+                        <circle cx="36" cy="36" r="30" stroke="rgba(244,63,94,0.06)" strokeWidth="6" fill="transparent" />
+                        <circle cx="36" cy="36" r="30" stroke="url(#rose-grad)" strokeWidth="6" fill="transparent"
+                                strokeDasharray={2 * Math.PI * 30}
+                                strokeDashoffset={2 * Math.PI * 30 * (1 - 0.92)} />
+                        <defs>
+                          <linearGradient id="rose-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#fb7185" />
+                            <stop offset="100%" stopColor="#f43f5e" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <div className="health-score-val">92</div>
+                    </div>
+
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#a855f7', background: 'rgba(168,85,247,0.08)', padding: '2px 8px', borderRadius: '12px' }}>● Excellent</span>
                   </div>
                 </div>
 
-                {/* Tracking Progress */}
-                {activeEmergency && (
-                  <div className="card card-glass" style={{ padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '12px' }}>
-                      <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>🚨 Rescue Status</h3>
-                      <span className="badge badge-amber" style={{ background: activeEmergency.status === 'arrived' ? 'var(--success-700)' : 'var(--warning-600)' }}>
-                        {activeEmergency.status.toUpperCase()}
+                {/* Right column Mother Image & layered stats widgets */}
+                <div className="momentra-right-col">
+                  <div className="momentra-mother-frame">
+                    <img className="momentra-mother-img" src="/mother.jpeg" alt="Expectant Mother" />
+
+                    {/* Floating Baby Heart Rate Card */}
+                    <div className="floating-widget widget-heart">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ color: '#ef4444', animation: 'active-emergency-pulse 1s infinite alternate', fontSize: '1.25rem' }}>❤️</span>
+                        <div>
+                          <div style={{ fontSize: '0.62rem', color: '#8b96a5', fontWeight: 700, textTransform: 'uppercase' }}>Baby's Heart Rate</div>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>142 <span style={{ fontSize: '0.65rem', fontWeight: 500, color: '#4b5563' }}>bpm</span></div>
+                        </div>
+                      </div>
+
+                      {/* SVG animated pulse graph */}
+                      <svg width="140" height="35" className="heart-wave-svg" style={{ marginTop: '8px' }}>
+                        <path d="M 0,17 Q 12,17 17,17 T 23,5 T 28,30 T 32,17 Q 48,17 53,17 T 59,5 T 64,30 T 68,17 Q 84,17 89,17 T 95,5 T 100,30 T 104,17 H 140"
+                              fill="transparent" stroke="#f43f5e" strokeWidth="2.5" />
+                      </svg>
+                    </div>
+
+                    {/* Floating Next Appointment Card */}
+                    <div className="floating-widget widget-appointment">
+                      <div className="appointment-icon-wrap">📅</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.62rem', color: '#8b96a5', fontWeight: 700, textTransform: 'uppercase' }}>Next Appointment</div>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1f2937' }}>{nextAppt.date}</div>
+                        <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>{nextAppt.time} • {nextAppt.type}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom clickable cards to display functional tabs */}
+              <div className="momentra-bottom-grid">
+                <div className="momentra-feature-card" onClick={() => setActiveTab('emergency')}>
+                  <div className="feature-icon-wrap">🚨</div>
+                  <div className="feature-title">Real-Time Health Monitoring</div>
+                  <p className="feature-desc">Active GPS tracking coordinates, ambulance routing status maps, and distress triggers.</p>
+                </div>
+
+                <div className="momentra-feature-card" onClick={() => setActiveTab('anc-timeline')}>
+                  <div className="feature-icon-wrap">👶</div>
+                  <div className="feature-title">Personalized Pregnancy Insights</div>
+                  <p className="feature-desc">Interactive WHO milestones checklists covering weeks 8 to 40 for optimal delivery care.</p>
+                </div>
+
+                <div className="momentra-feature-card" onClick={() => setActiveTab('profile')}>
+                  <div className="feature-icon-wrap">🩺</div>
+                  <div className="feature-title">Expert Doctor Consultation</div>
+                  <p className="feature-desc">Log your medical summaries, allergy records, and coordinate with matched clinical response staff.</p>
+                </div>
+
+                <div className="momentra-feature-card" onClick={() => setActiveTab('checkups')}>
+                  <div className="feature-icon-wrap">📋</div>
+                  <div className="feature-title">Smart Reminders & Scheduling</div>
+                  <p className="feature-desc">Never miss clinic visits. View detailed antenatal care appointments, statuses, and history logs.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 1: EMERGENCY RESPONSE / LIVE GPS MAP */}
+          {activeTab === 'emergency' && (
+            <div className="tab-content-container">
+              <button className="btn-momentra-outline" onClick={() => setActiveTab('home')} style={{ marginBottom: '1.25rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
+              </button>
+
+              <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem' }}>
+                {/* Left controls */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div className="card-glass text-center" style={{ padding: '2rem' }}>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1f2937' }}>Need Urgent Medical Rescue?</h2>
+                    <p style={{ fontSize: '0.82rem', color: '#6b7280', margin: '10px 0 20px', lineHeight: 1.5 }}>
+                      Press the button below. The system will auto-dispatch the nearest available ambulance, map your coordinates, and alert an Obstetrician at the hospital.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      {!activeEmergency ? (
+                        <button className="emergency-btn" onClick={handleTriggerSOS}>
+                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}>🆘</span>
+                          <span style={{ fontWeight: 800 }}>Trigger SOS</span>
+                        </button>
+                      ) : (
+                        <div className="emergency-btn triggered" style={{ animation: 'active-emergency-pulse 1s infinite alternate' }}>
+                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}>🚨</span>
+                          <span>SOS Active</span>
+                        </div>
+                      )}
+                      
+                      <span style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {!activeEmergency ? (
+                          <span>Tap to dispatch ambulance</span>
+                        ) : (
+                          <>
+                            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 10px #ef4444', animation: 'active-emergency-pulse 1s infinite alternate' }} />
+                            <span style={{ color: '#ef4444', fontWeight: 700 }}>GPS Beacon Transmitting Live Coordinates</span>
+                          </>
+                        )}
                       </span>
                     </div>
-
-                    <div className="status-tracker">
-                      <div className="status-steps" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
-                        <div className={`status-step ${['pending', 'verified', 'dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
-                          <div className="step-circle">🆘</div>
-                          <div className="step-label" style={{ fontSize: '0.65rem' }}>SOS</div>
-                        </div>
-                        <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'verified' ? 'active' : ''}`}>
-                          <div className="step-circle">📡</div>
-                          <div className="step-label" style={{ fontSize: '0.65rem' }}>Dispatched</div>
-                        </div>
-                        <div className={`status-step ${['arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
-                          <div className="step-circle">🚑</div>
-                          <div className="step-label" style={{ fontSize: '0.65rem' }}>En-Route</div>
-                        </div>
-                        <div className={`status-step ${activeEmergency.status === 'completed' ? 'completed' : activeEmergency.status === 'arrived' ? 'active' : ''}`}>
-                          <div className="step-circle">🏥</div>
-                          <div className="step-label" style={{ fontSize: '0.65rem' }}>Arrived</div>
-                        </div>
-                      </div>
-
-                      <div className="nav-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '1.25rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f97316' }}>
-                            {activeEmergency.eta_minutes !== null ? `${activeEmergency.eta_minutes} Min` : 'Calculating'}
-                          </div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Ambulance ETA</div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc' }}>
-                            {activeEmergency.driver_id ? db.users.find(u => u.id === activeEmergency.driver_id)?.full_name.split(' ')[0] : 'Searching'}
-                          </div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Assigned Driver</div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#cbd5e1' }}>
-                            {activeEmergency.vehicle_id ? db.vehicles.find(v => v.id === activeEmergency.vehicle_id)?.plate_number : '-'}
-                          </div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Plate No</div>
-                        </div>
-                      </div>
-
-                      <button className="cancel-alert-btn" onClick={handleCancelSOS}>
-                        Cancel Rescue Beacon
-                      </button>
-                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* Right: Map view */}
-              <div className="card card-glass" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px 12px', alignItems: 'center' }}>
-                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>📍 Live Tracking Map</h3>
-                  <span style={{ fontSize: '0.72rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)', animation: 'active-emergency-pulse 1.5s infinite alternate' }} />
-                    Live Tracking (±15m)
-                  </span>
+                  {/* Active rescue metadata */}
+                  {activeEmergency && (
+                    <div className="card-glass" style={{ padding: '1.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>🚨 Rescue Status</h3>
+                        <span className="badge" style={{ background: activeEmergency.status === 'arrived' ? '#16a34a' : '#ea580c', color: 'white', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                          {activeEmergency.status.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="status-tracker">
+                        <div className="status-steps">
+                          <div className={`status-step ${['pending', 'verified', 'dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
+                            <div className="step-circle">🆘</div>
+                            <div className="step-label">SOS</div>
+                          </div>
+                          <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'verified' ? 'active' : ''}`}>
+                            <div className="step-circle">📡</div>
+                            <div className="step-label">Dispatched</div>
+                          </div>
+                          <div className={`status-step ${['arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
+                            <div className="step-circle">🚑</div>
+                            <div className="step-label">En-Route</div>
+                          </div>
+                          <div className={`status-step ${activeEmergency.status === 'completed' ? 'completed' : activeEmergency.status === 'arrived' ? 'active' : ''}`}>
+                            <div className="step-circle">🏥</div>
+                            <div className="step-label">Arrived</div>
+                          </div>
+                        </div>
+
+                        <div className="nav-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '1.5rem', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.03)', padding: '10px', borderRadius: '8px' }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#f43f5e' }}>
+                              {activeEmergency.eta_minutes !== null ? `${activeEmergency.eta_minutes} Min` : 'Calculating'}
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>Ambulance ETA</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1f2937' }}>
+                              {activeEmergency.driver_id ? db.users.find(u => u.id === activeEmergency.driver_id)?.full_name.split(' ')[0] : 'Searching'}
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>Assigned Driver</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#4b5563' }}>
+                              {activeEmergency.vehicle_id ? db.vehicles.find(v => v.id === activeEmergency.vehicle_id)?.plate_number : '-'}
+                            </div>
+                            <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>Plate No</div>
+                          </div>
+                        </div>
+
+                        <button className="cancel-alert-btn" onClick={handleCancelSOS}>
+                          Cancel Rescue Beacon
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div style={{ flex: 1, minHeight: '350px', position: 'relative' }}>
-                  <MapComponent
-                    center={[motherLat, motherLng]}
-                    zoom={13}
-                    markers={getMapMarkers()}
-                    routePoints={getRoutePoints()}
-                    emergencyCircle={activeEmergency ? { lat: activeEmergency.latitude, lng: activeEmergency.longitude, radius: 400 } : null}
-                  />
+
+                {/* Right column Map Component */}
+                <div className="card-glass" style={{ display: 'flex', flexDirection: 'column', padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px 12px', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>📍 Live Tracking Map</h3>
+                    <span style={{ fontSize: '0.72rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                      <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)', animation: 'active-emergency-pulse 1.2s infinite alternate' }} />
+                      GPS Transmitting (±15m)
+                    </span>
+                  </div>
+                  <div style={{ flex: 1, minHeight: '380px', position: 'relative' }}>
+                    <MapComponent
+                      center={[motherLat, motherLng]}
+                      zoom={13}
+                      markers={getMapMarkers()}
+                      routePoints={getRoutePoints()}
+                      emergencyCircle={activeEmergency ? { lat: activeEmergency.latitude, lng: activeEmergency.longitude, radius: 400 } : null}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 2: ANC CHECKUPS */}
+          {/* TAB 2: SCHEDULED APPOINTMENTS */}
           {activeTab === 'checkups' && (
-            <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem' }}>
-              {/* Pregnancy Stats Card */}
-              <div className="card card-glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Pregnancy Progress</h3>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f43f5e', margin: '15px 0 5px' }}>{weeks} Weeks</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{trimester}</div>
-                </div>
+            <div className="tab-content-container">
+              <button className="btn-momentra-outline" onClick={() => setActiveTab('home')} style={{ marginBottom: '1.25rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
+              </button>
 
-                <div style={{ marginTop: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                    <span>Progress to Delivery</span>
-                    <span>{progressPercent}%</span>
+              <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.2fr', gap: '1.5rem' }}>
+                
+                {/* Pregnancy Progress summary */}
+                <div className="card-glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Pregnancy Progress</h3>
+                    <div style={{ fontSize: '3rem', fontWeight: 900, color: '#f43f5e', margin: '15px 0 5px' }}>{weeks} Weeks</div>
+                    <div style={{ fontSize: '0.85rem', color: '#6b7280', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>{trimester}</div>
                   </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%`, background: 'var(--accent-gradient)' }} />
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', marginTop: '15px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
-                    <span>📅</span> Expected Due Date: <strong style={{ color: '#f43f5e' }}>{new Date(profile.expected_due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
-                  </div>
-                </div>
-              </div>
 
-              {/* ANC visits list */}
-              <div className="card card-glass" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem' }}>Antenatal Care (ANC) Appointments</h3>
-                {checkups.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                    <Calendar size={40} style={{ strokeWidth: 1.5, color: 'var(--text-muted)' }} />
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '8px' }}>No checkup schedules logged. Visit your nearest matched clinic to add records.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {checkups.map(c => {
-                      const dt = new Date(c.scheduled_date);
-                      return (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '10px' }}>
-                          <div style={{ background: c.status === 'completed' ? '#16a34a' : 'rgba(255,255,255,0.06)', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc' }}>{dt.getDate()}</span>
-                            <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{dt.toLocaleString('default', { month: 'short' })}</span>
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{c.checkup_type}</div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{c.notes}</div>
-                          </div>
-                          <span className={`badge ${c.status === 'completed' ? 'badge-green' : c.status === 'upcoming' ? 'badge-amber' : 'badge-red'}`} style={{ fontSize: '0.65rem' }}>
-                            {c.status.toUpperCase()}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: ANC TIMELINE */}
-          {activeTab === 'anc-timeline' && (
-            <div className="card card-glass" style={{ padding: '1.5rem' }}>
-              <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '10px', marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>🗓️ WHO Antenatal Care Progress Timeline</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  The World Health Organization recommends at least 8 ANC contacts. Expand each visit milestone to understand details.
-                </p>
-              </div>
-
-              {/* Visit Tracker details */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {whoMilestones.map((m) => {
-                  const isDone = checkups.some(c => c.status === 'completed' && c.checkup_type.toLowerCase().includes(String(m.visit)));
-                  const isCurrent = weeks >= m.minWeek && !isDone;
-                  
-                  let dotColor = '#334155';
-                  let badgeText = 'Future';
-                  let cardBorder = 'var(--border)';
-
-                  if (isDone) {
-                    dotColor = 'var(--success-500)';
-                    badgeText = 'Completed';
-                    cardBorder = 'rgba(16,185,129,0.3)';
-                  } else if (isCurrent) {
-                    dotColor = 'var(--warning-500)';
-                    badgeText = 'Due Now';
-                    cardBorder = 'rgba(245,158,11,0.4)';
-                  }
-
-                  return (
-                    <div key={m.visit} style={{ display: 'flex', gap: '16px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '28px' }}>
-                        <div style={{ background: dotColor, width: '14px', height: '14px', borderRadius: '50%', border: '2px solid var(--border)', marginTop: '4px', zIndex: 1 }} />
-                        <div style={{ flex: 1, width: '2px', background: 'var(--border)', margin: '4px 0' }} />
-                      </div>
-                      <div className="card-glass" style={{ flex: 1, padding: '10px 14px', border: `1px solid ${cardBorder}`, borderRadius: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Visit {m.visit}: {m.label} (Week {m.weeks})</span>
-                          <span className={`badge ${isDone ? 'badge-green' : isCurrent ? 'badge-amber' : 'badge-gray'}`} style={{ fontSize: '0.65rem' }}>{badgeText}</span>
-                        </div>
-                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4 }}>{m.desc}</p>
-                      </div>
+                  <div style={{ marginTop: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#4b5563', marginBottom: '6px' }}>
+                      <span>Progress to Delivery</span>
+                      <span>{progressPercent}%</span>
                     </div>
-                  );
-                })}
+                    <div className="progress-bar" style={{ height: '8px', background: 'rgba(0,0,0,0.04)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%`, height: '100%', background: 'linear-gradient(135deg, #fb7185, #f43f5e)' }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', marginTop: '20px', background: 'rgba(244,63,94,0.03)', border: '1px solid rgba(244,63,94,0.05)', padding: '12px', borderRadius: '12px' }}>
+                      <span>📅</span> Expected Due Date: <strong style={{ color: '#f43f5e' }}>{new Date(profile.expected_due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calendar listing */}
+                <div className="card-glass" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem' }}>Antenatal Care (ANC) Appointments</h3>
+                  {checkups.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                      <Calendar size={40} style={{ strokeWidth: 1.5, color: '#8b96a5' }} />
+                      <p style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: '8px' }}>No checkup schedules logged. Visit your nearest matched clinic to add records.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {checkups.map(c => {
+                        const dt = new Date(c.scheduled_date);
+                        return (
+                          <div key={c.id} className="checkup-item">
+                            <div className="checkup-date" style={{ background: c.status === 'completed' ? '#16a34a' : 'rgba(244,63,94,0.05)', border: '1px solid rgba(0,0,0,0.03)', borderRadius: '12px', width: '45px', height: '45px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                              <span style={{ fontSize: '1rem', fontWeight: 800, color: c.status === 'completed' ? 'white' : '#f43f5e' }}>{dt.getDate()}</span>
+                              <span style={{ fontSize: '0.58rem', textTransform: 'uppercase', color: c.status === 'completed' ? 'rgba(255,255,255,0.8)' : '#6b7280' }}>{dt.toLocaleString('default', { month: 'short' })}</span>
+                            </div>
+                            <div className="checkup-info">
+                              <div className="checkup-type" style={{ color: '#1f2937', fontWeight: 700 }}>{c.checkup_type}</div>
+                              <div className="checkup-hospital" style={{ color: '#6b7280' }}>{c.notes}</div>
+                            </div>
+                            <span className="badge" style={{ fontSize: '0.65rem', background: c.status === 'completed' ? '#dcfce7' : c.status === 'upcoming' ? '#fef3c7' : '#fee2e2', color: c.status === 'completed' ? '#15803d' : c.status === 'upcoming' ? '#b45309' : '#b91c1c', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                              {c.status.toUpperCase()}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 4: PROFILE */}
-          {activeTab === 'profile' && (
-            <div className="card card-glass" style={{ maxWidth: '550px', margin: '0 auto', width: '100%', padding: '2rem' }}>
-              <div style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-                <div className="profile-avatar-large" style={{ margin: '0 auto 10px', background: 'linear-gradient(135deg, var(--rose-400), var(--purple-400))', fontSize: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%' }}>🤰</div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{user.full_name}</h3>
-                <span style={{ fontSize: '0.72rem', color: 'var(--rose-400)' }}>Maternal ID: MT-{String(profile.id).padStart(5, '0')}</span>
+          {/* TAB 3: ANC WHO TIMELINE */}
+          {activeTab === 'anc-timeline' && (
+            <div className="tab-content-container">
+              <button className="btn-momentra-outline" onClick={() => setActiveTab('home')} style={{ marginBottom: '1.25rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
+              </button>
+
+              <div className="card-glass" style={{ padding: '2rem' }}>
+                <div style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '10px', marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>🗓️ WHO Antenatal Care Progress Timeline</h3>
+                  <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>
+                    The World Health Organization recommends at least 8 ANC contacts. Expand each visit milestone to understand details.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {whoMilestones.map((m) => {
+                    const isDone = checkups.some(c => c.status === 'completed' && c.checkup_type.toLowerCase().includes(String(m.visit)));
+                    const isCurrent = weeks >= m.minWeek && !isDone;
+                    
+                    let dotColor = 'rgba(0,0,0,0.08)';
+                    let badgeText = 'Future';
+                    let cardBorder = 'rgba(0,0,0,0.04)';
+                    let badgeColor = { bg: '#f3f4f6', text: '#6b7280' };
+
+                    if (isDone) {
+                      dotColor = '#16a34a';
+                      badgeText = 'Completed';
+                      cardBorder = 'rgba(34,197,94,0.15)';
+                      badgeColor = { bg: '#dcfce7', text: '#15803d' };
+                    } else if (isCurrent) {
+                      dotColor = '#d97706';
+                      badgeText = 'Due Now';
+                      cardBorder = 'rgba(245,158,11,0.25)';
+                      badgeColor = { bg: '#fef3c7', text: '#b45309' };
+                    }
+
+                    return (
+                      <div key={m.visit} style={{ display: 'flex', gap: '16px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '28px' }}>
+                          <div style={{ background: dotColor, width: '12px', height: '12px', borderRadius: '50%', border: '2px solid white', marginTop: '4px', zIndex: 1, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }} />
+                          <div style={{ flex: 1, width: '2px', background: 'rgba(0,0,0,0.04)', margin: '4px 0' }} />
+                        </div>
+                        <div className="card-glass" style={{ flex: 1, padding: '12px 16px', border: `1px solid ${cardBorder}`, borderRadius: '16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1f2937' }}>Visit {m.visit}: {m.label} (Week {m.weeks})</span>
+                            <span className="badge" style={{ fontSize: '0.65rem', background: badgeColor.bg, color: badgeColor.text, padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>{badgeText}</span>
+                          </div>
+                          <p style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '4px', lineHeight: 1.4 }}>{m.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+            </div>
+          )}
 
-              <form onSubmit={handleUpdateProfile}>
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Sub County</label>
-                    <select className="form-input" value={profileForm.sub_county} onChange={e => setProfileForm({ ...profileForm, sub_county: e.target.value })}>
-                      <option value="Goma">Goma</option>
-                      <option value="Nama">Nama</option>
-                      <option value="Mukono Municipality">Mukono Municipality</option>
-                      <option value="Koome">Koome</option>
-                      <option value="Ntenjeru">Ntenjeru</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Village / Ward</label>
-                    <input type="text" className="form-input" value={profileForm.village} onChange={e => setProfileForm({ ...profileForm, village: e.target.value })} required />
-                  </div>
+          {/* TAB 4: PROFILE SETTINGS */}
+          {activeTab === 'profile' && (
+            <div className="tab-content-container">
+              <button className="btn-momentra-outline" onClick={() => setActiveTab('home')} style={{ marginBottom: '1.25rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
+              </button>
+
+              <div className="card-glass" style={{ maxWidth: '550px', margin: '0 auto', width: '100%', padding: '2rem' }}>
+                <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                  <div className="profile-avatar-large" style={{ margin: '0 auto 10px', background: 'linear-gradient(135deg, #fb7185, #f43f5e)', fontSize: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', boxShadow: '0 8px 25px rgba(244, 63, 94, 0.2)' }}>🤰</div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1f2937' }}>{user.full_name}</h3>
+                  <span style={{ fontSize: '0.72rem', color: '#f43f5e', fontWeight: 600 }}>Maternal ID: MT-{String(profile.id).padStart(5, '0')}</span>
                 </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Kin Contact Name</label>
-                    <input type="text" className="form-input" value={profileForm.next_of_kin_name} onChange={e => setProfileForm({ ...profileForm, next_of_kin_name: e.target.value })} required />
+                <form onSubmit={handleUpdateProfile}>
+                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Sub County</label>
+                      <select className="form-input" value={profileForm.sub_county} onChange={e => setProfileForm({ ...profileForm, sub_county: e.target.value })}>
+                        <option value="Goma">Goma</option>
+                        <option value="Nama">Nama</option>
+                        <option value="Mukono Municipality">Mukono Municipality</option>
+                        <option value="Koome">Koome</option>
+                        <option value="Ntenjeru">Ntenjeru</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Village / Ward</label>
+                      <input type="text" className="form-input" value={profileForm.village} onChange={e => setProfileForm({ ...profileForm, village: e.target.value })} required />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Relationship</label>
-                    <input type="text" className="form-input" value={profileForm.next_of_kin_relationship} onChange={e => setProfileForm({ ...profileForm, next_of_kin_relationship: e.target.value })} required />
+
+                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Kin Contact Name</label>
+                      <input type="text" className="form-input" value={profileForm.next_of_kin_name} onChange={e => setProfileForm({ ...profileForm, next_of_kin_name: e.target.value })} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Relationship</label>
+                      <input type="text" className="form-input" value={profileForm.next_of_kin_relationship} onChange={e => setProfileForm({ ...profileForm, next_of_kin_relationship: e.target.value })} required />
+                    </div>
                   </div>
-                </div>
 
-                <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                  <label className="form-label">Kin Phone Number</label>
-                  <input type="tel" className="form-input" value={profileForm.next_of_kin_phone} onChange={e => setProfileForm({ ...profileForm, next_of_kin_phone: e.target.value })} required />
-                </div>
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                    <label className="form-label">Kin Phone Number</label>
+                    <input type="tel" className="form-input" value={profileForm.next_of_kin_phone} onChange={e => setProfileForm({ ...profileForm, next_of_kin_phone: e.target.value })} required />
+                  </div>
 
-                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <label className="form-label">Medical History / Allergies</label>
-                  <textarea className="form-input" style={{ minHeight: '80px', padding: '8px', resize: 'vertical' }} value={profileForm.medical_history} onChange={e => setProfileForm({ ...profileForm, medical_history: e.target.value })} />
-                </div>
+                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                    <label className="form-label">Medical History / Allergies</label>
+                    <textarea className="form-input" style={{ minHeight: '80px', padding: '8px', resize: 'vertical' }} value={profileForm.medical_history} onChange={e => setProfileForm({ ...profileForm, medical_history: e.target.value })} />
+                  </div>
 
-                <button type="submit" className="btn btn-rose btn-block" style={{ background: 'var(--accent-gradient)', border: 'none', fontWeight: 800 }}>
-                  Update Profile Details
-                </button>
-              </form>
+                  <button type="submit" className="btn-momentra-primary" style={{ width: '100%' }}>
+                    Update Profile Details
+                  </button>
+                </form>
+              </div>
             </div>
           )}
         </main>
-      </div>
-
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="mobile-bottom-nav">
-        <div className="nav-items">
-          <div className={`nav-item ${activeTab === 'emergency' ? 'active' : ''}`} onClick={() => setActiveTab('emergency')}>
-            <span className="nav-icon">🚨</span>
-            <span>Emergency</span>
-          </div>
-          <div className={`nav-item ${activeTab === 'checkups' ? 'active' : ''}`} onClick={() => setActiveTab('checkups')}>
-            <span className="nav-icon">📅</span>
-            <span>Schedules</span>
-          </div>
-          <div className={`nav-item ${activeTab === 'anc-timeline' ? 'active' : ''}`} onClick={() => setActiveTab('anc-timeline')}>
-            <span className="nav-icon">🗓️</span>
-            <span>Timeline</span>
-          </div>
-          <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-            <span className="nav-icon">👤</span>
-            <span>Profile</span>
-          </div>
-        </div>
       </div>
 
       {/* CONFIRM TRIGGER SOS MODAL */}
       {showConfirmModal && (
         <div className="modal-overlay active">
           <div className="modal" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem' }}>
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--rose-400)' }}>Confirm Emergency SOS Trigger</h3>
-              <button onClick={() => setShowConfirmModal(false)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>&times;</button>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e' }}>Confirm Emergency SOS Trigger</h3>
+              <button onClick={() => setShowConfirmModal(false)} style={{ background: 'none', border: 'none', color: '#4b5563', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ fontSize: '0.82rem', lineHeight: 1.4, color: 'var(--text-secondary)' }}>
+              <p style={{ fontSize: '0.82rem', lineHeight: 1.4, color: '#4b5563' }}>
                 Are you sure you want to trigger a maternal rescue alert? This will immediately lock your GPS location coordinates, dispatch nearby ambulances, and notify clinical responders.
               </p>
               <div className="form-group">
-                <label className="form-label" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>Describe your symptoms (e.g. severe contractions, water broke, bleeding)</label>
+                <label className="form-label" style={{ fontSize: '0.78rem', color: '#6b7280', marginBottom: '4px', display: 'block' }}>Describe your symptoms (e.g. severe contractions, water broke, bleeding)</label>
                 <textarea className="form-input" style={{ minHeight: '60px', padding: '8px' }} placeholder="Provide brief notes..." value={emergencyNotes} onChange={e => setEmergencyNotes(e.target.value)} />
               </div>
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input type="checkbox" id="cemonc-chk" checked={requireCemonc} onChange={e => setRequireCemonc(e.target.checked)} style={{ cursor: 'pointer' }} />
-                <label htmlFor="cemonc-chk" style={{ fontSize: '0.78rem', cursor: 'pointer', userSelect: 'none' }}>Require specialized surgical / obstetric theater (CEmONC)</label>
+                <label htmlFor="cemonc-chk" style={{ fontSize: '0.78rem', cursor: 'pointer', userSelect: 'none', color: '#4b5563' }}>Require specialized surgical / obstetric theater (CEmONC)</label>
               </div>
             </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: '14px' }}>
-              <button className="btn btn-ghost" onClick={() => setShowConfirmModal(false)}>Cancel</button>
-              <button className="btn btn-danger" style={{ background: 'var(--rose-500)' }} onClick={handleConfirmSOS}>Trigger Dispatch SOS</button>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px', marginTop: '14px' }}>
+              <button className="btn-momentra-outline" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={() => setShowConfirmModal(false)}>Cancel</button>
+              <button className="btn-momentra-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={handleConfirmSOS}>Trigger Dispatch SOS</button>
             </div>
           </div>
         </div>
