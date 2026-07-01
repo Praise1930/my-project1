@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { AuthService } from '../services/db';
+import { db, AuthService } from '../services/db';
 import { UserCheck } from 'lucide-react';
 
 // Import template stylesheets
@@ -62,6 +62,18 @@ export const Login: React.FC = () => {
     const creds = getDemoCredentials();
     setEmail(creds.email);
     setPassword(creds.password);
+  };
+
+  const handleForgotPassword = () => {
+    const userEmail = window.prompt("Enter your registered email address to recover your password:");
+    if (!userEmail) return;
+
+    const matchedUser = db.users.find(u => u.email.toLowerCase() === userEmail.trim().toLowerCase());
+    if (matchedUser) {
+      alert(`🔐 Account Verified!\n\nFor this simulator, your password is:\n👉 "${matchedUser.password_hash}"\n\nPlease use this credentials to authenticate your portal.`);
+    } else {
+      alert("❌ Registered account not found with this email. Please check your credentials or contact VHT/Admin.");
+    }
   };
 
   const roleLabels = {
@@ -192,9 +204,18 @@ export const Login: React.FC = () => {
               </div>
 
               <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: '#4b5563', marginBottom: '6px' }}>
-                  Account Password
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: '#4b5563', margin: 0 }}>
+                    Account Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '0.82rem', textDecoration: 'underline', cursor: 'pointer', outline: 'none', padding: 0 }}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
                 <input
                   type="password"
                   className="form-input"
