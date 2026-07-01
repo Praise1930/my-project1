@@ -926,6 +926,12 @@ export const DriverService = {
 
     const val = !drv.is_on_duty;
     db.drivers = drivers.map(d => d.user_id === userId ? { ...d, is_on_duty: val, last_duty_toggle: new Date().toISOString() } : d);
+    
+    // Synchronize the vehicle status
+    if (drv.vehicle_id) {
+      db.vehicles = db.vehicles.map(v => v.id === drv.vehicle_id ? { ...v, status: val ? 'available' : 'off_duty' } : v);
+    }
+    
     return val;
   },
 

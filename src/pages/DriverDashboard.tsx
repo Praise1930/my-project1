@@ -152,6 +152,11 @@ export const DriverDashboard: React.FC = () => {
   const handleToggleDuty = () => {
     const newVal = DriverService.toggleDuty(user.id);
     setDriver({ ...driver, is_on_duty: newVal });
+    // Reload vehicle status from local db to keep UI synchronized
+    const freshVehicle = db.vehicles.find(v => v.id === driver.vehicle_id);
+    if (freshVehicle) {
+      setVehicle(freshVehicle);
+    }
   };
 
   // Pre-duty Checklist
@@ -222,12 +227,21 @@ export const DriverDashboard: React.FC = () => {
 
           <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', textAlign: 'center' }}>
             <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '10px' }}>Ambulance: <strong style={{ color: '#f8fafc' }}>{vehicle.plate_number}</strong></div>
-            <button
-              onClick={handleToggleDuty}
-              className={`btn btn-sm btn-block ${driver.is_on_duty ? 'btn-amber' : 'btn-ghost'}`}
+            <div
+              style={{
+                display: 'inline-block',
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                background: driver.is_on_duty ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                color: driver.is_on_duty ? '#fbbf24' : '#94a3b8',
+                border: driver.is_on_duty ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)'
+              }}
             >
-              🚚 {driver.is_on_duty ? 'Duty Status: ACTIVE' : 'Duty Status: STANDBY'}
-            </button>
+              {driver.is_on_duty ? '🟢 ACTIVE ON-DUTY' : '🔴 STANDBY MODE'}
+            </div>
           </div>
 
           <nav className="sidebar-nav" style={{ marginTop: '1rem', flex: 1 }}>
@@ -257,6 +271,16 @@ export const DriverDashboard: React.FC = () => {
             <div>
               <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>Ambulance Navigation Panel</h1>
               <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '4px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                onClick={handleToggleDuty}
+                className={`btn btn-sm ${driver.is_on_duty ? 'btn-amber' : 'btn-ghost'}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.82rem' }}
+              >
+                <span>{driver.is_on_duty ? '🟢 Active On-Duty' : '🔴 Go Standby'}</span>
+              </button>
             </div>
           </header>
 
@@ -341,81 +365,99 @@ export const DriverDashboard: React.FC = () => {
             </div>
           ) : (
             // STANDBY MODE: Checklists and Logs
-            <div className="grid-2" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
-              {/* Pre duty safety checklists */}
-              <div className="card card-glass" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', paddingBottom: '8px' }}>
-                  <CheckSquare size={20} style={{ color: '#fbbf24' }} /> Pre-Duty Vehicle Inspection
-                </h3>
-                
-                {hasInspectedToday ? (
-                  <div className="inspection-success-box" style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🛡️</div>
-                    <strong style={{ fontSize: '1rem', color: '#34d399' }}>Inspection Log Certified</strong>
-                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '6px', marginBottom: 0 }}>
-                      Ambulance <strong>{vehicle.plate_number}</strong> is fully authorized safe and standing by for regional emergency dispatches.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleInspectionSubmit}>
-                    <div className="form-group" style={{ marginBottom: '14px' }}>
-                      <label className="form-label">Inspected Fuel Level</label>
-                      <select className="form-input" style={{ width: '100%' }} value={inspectionForm.fuel_level} onChange={e => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value as any })}>
-                        <option value="full">Full Tank</option>
-                        <option value="half">Half Tank</option>
-                        <option value="low">Low Tank</option>
-                      </select>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div className="grid-2" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+                {/* Pre duty safety checklists */}
+                <div className="card card-glass" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', paddingBottom: '8px' }}>
+                    <CheckSquare size={20} style={{ color: '#fbbf24' }} /> Pre-Duty Vehicle Inspection
+                  </h3>
+                  
+                  {hasInspectedToday ? (
+                    <div className="inspection-success-box" style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🛡️</div>
+                      <strong style={{ fontSize: '1rem', color: '#34d399' }}>Inspection Log Certified</strong>
+                      <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '6px', marginBottom: 0 }}>
+                        Ambulance <strong>{vehicle.plate_number}</strong> is fully authorized safe and standing by for regional emergency dispatches.
+                      </p>
                     </div>
+                  ) : (
+                    <form onSubmit={handleInspectionSubmit}>
+                      <div className="form-group" style={{ marginBottom: '14px' }}>
+                        <label className="form-label">Inspected Fuel Level</label>
+                        <select className="form-input" style={{ width: '100%' }} value={inspectionForm.fuel_level} onChange={e => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value as any })}>
+                          <option value="full">Full Tank</option>
+                          <option value="half">Half Tank</option>
+                          <option value="low">Low Tank</option>
+                        </select>
+                      </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', fontSize: '0.85rem' }}>
-                      <label className="checklist-item">
-                        <input type="checkbox" checked={inspectionForm.siren_ok} onChange={e => setInspectionForm({ ...inspectionForm, siren_ok: e.target.checked })} />
-                        <span>Siren & Emergency Beacon fully functional</span>
-                      </label>
-                      <label className="checklist-item">
-                        <input type="checkbox" checked={inspectionForm.medical_checked} onChange={e => setInspectionForm({ ...inspectionForm, medical_checked: e.target.checked })} />
-                        <span>Obstetric delivery kit & oxygen tanks verified</span>
-                      </label>
-                      <label className="checklist-item">
-                        <input type="checkbox" checked={inspectionForm.tires_ok} onChange={e => setInspectionForm({ ...inspectionForm, tires_ok: e.target.checked })} />
-                        <span>Tire pressure and suspension ok</span>
-                      </label>
-                      <label className="checklist-item">
-                        <input type="checkbox" checked={inspectionForm.engine_ok} onChange={e => setInspectionForm({ ...inspectionForm, engine_ok: e.target.checked })} />
-                        <span>Engine fluid, oil, and coolant levels ok</span>
-                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', fontSize: '0.85rem' }}>
+                        <label className="checklist-item">
+                          <input type="checkbox" checked={inspectionForm.siren_ok} onChange={e => setInspectionForm({ ...inspectionForm, siren_ok: e.target.checked })} />
+                          <span>Siren & Emergency Beacon fully functional</span>
+                        </label>
+                        <label className="checklist-item">
+                          <input type="checkbox" checked={inspectionForm.medical_checked} onChange={e => setInspectionForm({ ...inspectionForm, medical_checked: e.target.checked })} />
+                          <span>Obstetric delivery kit & oxygen tanks verified</span>
+                        </label>
+                        <label className="checklist-item">
+                          <input type="checkbox" checked={inspectionForm.tires_ok} onChange={e => setInspectionForm({ ...inspectionForm, tires_ok: e.target.checked })} />
+                          <span>Tire pressure and suspension ok</span>
+                        </label>
+                        <label className="checklist-item">
+                          <input type="checkbox" checked={inspectionForm.engine_ok} onChange={e => setInspectionForm({ ...inspectionForm, engine_ok: e.target.checked })} />
+                          <span>Engine fluid, oil, and coolant levels ok</span>
+                        </label>
+                      </div>
+
+                      <button type="submit" className="btn btn-amber btn-block" style={{ marginTop: '1.5rem', width: '100%', height: '42px' }}>
+                        Submit Inspection Log
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+                {/* Fuel purchase logs */}
+                <div className="card card-glass" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', paddingBottom: '8px' }}>
+                    <PlusSquare size={20} style={{ color: '#fbbf24' }} /> Fuel Purchase receipts
+                  </h3>
+                  
+                  <form onSubmit={handleFuelSubmit}>
+                    <div className="form-group" style={{ marginBottom: '12px' }}>
+                      <label className="form-label">Fuel Quantity (Liters)</label>
+                      <input type="number" className="form-input" style={{ width: '100%' }} value={fuelForm.liters} onChange={e => setFuelForm({ ...fuelForm, liters: Number(e.target.value) })} required />
                     </div>
-
-                    <button type="submit" className="btn btn-amber btn-block" style={{ marginTop: '1.5rem', width: '100%', height: '42px' }}>
-                      Submit Inspection Log
+                    <div className="form-group" style={{ marginBottom: '12px' }}>
+                      <label className="form-label">Total Cost (UGX)</label>
+                      <input type="number" className="form-input" style={{ width: '100%' }} value={fuelForm.cost} onChange={e => setFuelForm({ ...fuelForm, cost: Number(e.target.value) })} required />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                      <label className="form-label">Filling Station Name</label>
+                      <input type="text" className="form-input" style={{ width: '100%' }} value={fuelForm.station} onChange={e => setFuelForm({ ...fuelForm, station: e.target.value })} required />
+                    </div>
+                    <button type="submit" className="btn btn-amber btn-block" style={{ width: '100%', height: '42px' }}>
+                      Log Fuel Purchase
                     </button>
                   </form>
-                )}
+                </div>
               </div>
 
-              {/* Fuel purchase logs */}
-              <div className="card card-glass" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', paddingBottom: '8px' }}>
-                  <PlusSquare size={20} style={{ color: '#fbbf24' }} /> Fuel Purchase receipts
-                </h3>
-                
-                <form onSubmit={handleFuelSubmit}>
-                  <div className="form-group" style={{ marginBottom: '12px' }}>
-                    <label className="form-label">Fuel Quantity (Liters)</label>
-                    <input type="number" className="form-input" style={{ width: '100%' }} value={fuelForm.liters} onChange={e => setFuelForm({ ...fuelForm, liters: Number(e.target.value) })} required />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: '12px' }}>
-                    <label className="form-label">Total Cost (UGX)</label>
-                    <input type="number" className="form-input" style={{ width: '100%' }} value={fuelForm.cost} onChange={e => setFuelForm({ ...fuelForm, cost: Number(e.target.value) })} required />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="form-label">Filling Station Name</label>
-                    <input type="text" className="form-input" style={{ width: '100%' }} value={fuelForm.station} onChange={e => setFuelForm({ ...fuelForm, station: e.target.value })} required />
-                  </div>
-                  <button type="submit" className="btn btn-amber btn-block" style={{ width: '100%', height: '42px' }}>
-                    Log Fuel Purchase
-                  </button>
-                </form>
+              {/* Standby Map routing view */}
+              <div className="card card-glass map-hud-container" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
+                <div style={{ padding: '6px 10px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.1)' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>🗺️ Region Standby Monitor Map</h3>
+                  <span style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700, letterSpacing: '0.05em' }}>● STANDBY MONITOR</span>
+                </div>
+                <div style={{ flex: 1, minHeight: '380px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
+                  <MapComponent
+                    center={[driver.current_latitude, driver.current_longitude]}
+                    zoom={13}
+                    markers={getMapMarkers()}
+                    routePoints={getRoutePoints()}
+                  />
+                </div>
               </div>
             </div>
           )}
