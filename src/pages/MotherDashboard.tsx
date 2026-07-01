@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
-import { Bell, Calendar, LogOut, ArrowLeft, Play } from 'lucide-react';
+import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -34,6 +34,12 @@ export const MotherDashboard: React.FC = () => {
 
   // Lists
   const [checkups, setCheckups] = useState<CheckupSchedule[]>([]);
+
+  // Doctor Consultation States
+  const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLogs, setChatLogs] = useState<Record<number, { sender: 'patient' | 'doctor'; text: string; time: string }[]>>({});
+  const [isTyping, setIsTyping] = useState(false);
 
   // 1. Authentication check
   useEffect(() => {
@@ -205,6 +211,72 @@ export const MotherDashboard: React.FC = () => {
     alert('Profile information updated successfully!');
   };
 
+  // Get Seeded Doctors list
+  const getDoctorsList = () => {
+    return db.doctors.map(d => {
+      const u = db.users.find(usr => usr.id === d.user_id);
+      const h = db.hospitals.find(hosp => hosp.id === d.hospital_id);
+      return {
+        ...d,
+        name: u?.full_name || 'Dr. Specialist',
+        phone: u?.phone || '+256-700-000-000',
+        hospitalName: h?.name || 'District Facility'
+      };
+    });
+  };
+  const doctors = getDoctorsList();
+
+  // Handle consultation message dispatch
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || !selectedDoctor) return;
+
+    const docId = selectedDoctor.id;
+    const userMsg = chatInput.trim();
+    setChatInput('');
+
+    // Append user message
+    const currentChat = chatLogs[docId] || [];
+    const updatedChat = [
+      ...currentChat,
+      { sender: 'patient' as const, text: userMsg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    ];
+    setChatLogs({
+      ...chatLogs,
+      [docId]: updatedChat
+    });
+
+    // Simulated typing response
+    setIsTyping(true);
+
+    let reply = "Thank you for reaching out. I have received your concern. Based on your profile, please ensure you keep up with your scheduled clinic checkups. If this is an emergency, please use the SOS Trigger on the Home dashboard.";
+    const lower = userMsg.toLowerCase();
+    
+    if (lower.includes('pain') || lower.includes('cramp') || lower.includes('bleeding')) {
+      reply = "Sharp, constant abdominal pain, severe cramps, or any bleeding requires immediate clinical attention. Please rest, elevate your feet, and use the 'Trigger Emergency SOS' button on the Home tab to dispatch an ambulance.";
+    } else if (lower.includes('swell') || lower.includes('feet') || lower.includes('edema')) {
+      reply = "Ankle swelling is common during pregnancy. Rest with your legs elevated above heart level, keep hydrated, and limit salt. If you experience sudden swelling in your face/hands or a severe headache, check your blood pressure immediately.";
+    } else if (lower.includes('move') || lower.includes('kick') || lower.includes('baby')) {
+      reply = "Try to count fetal movements. You should note at least 10 distinct movements within a 2-hour window when the baby is active. If you feel a sudden drop in kick counts, please visit the hospital for a Doppler check.";
+    } else if (lower.includes('fever') || lower.includes('temp') || lower.includes('hot')) {
+      reply = "A fever above 38°C should be examined. Rest, drink plenty of water, and consult in person at Mukono General Hospital if your temperature stays elevated.";
+    }
+
+    setTimeout(() => {
+      setIsTyping(false);
+      setChatLogs(prev => {
+        const chat = prev[docId] || [];
+        return {
+          ...prev,
+          [docId]: [
+            ...chat,
+            { sender: 'doctor' as const, text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+          ]
+        };
+      });
+    }, 2000);
+  };
+
   // Dynamic next appointment calculation
   const getNextAppointmentInfo = () => {
     const upcoming = checkups.filter(c => c.status === 'upcoming');
@@ -239,7 +311,9 @@ export const MotherDashboard: React.FC = () => {
 
   return (
     <div className="mother-theme" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Blurred background image & light tint overlay */}
       <div className="mother-bg" />
+      <div className="mother-bg-overlay" />
 
       <div className="dashboard-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Top Navbar */}
@@ -256,7 +330,7 @@ export const MotherDashboard: React.FC = () => {
             </span>
             <span onClick={() => setActiveTab('checkups')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'checkups' ? 700 : 500, color: activeTab === 'checkups' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Schedules</span>
             <span onClick={() => setActiveTab('anc-timeline')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'anc-timeline' ? 700 : 500, color: activeTab === 'anc-timeline' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Timeline</span>
-            <span onClick={() => setActiveTab('profile')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'profile' ? 700 : 500, color: activeTab === 'profile' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Profile</span>
+            <span onClick={() => setActiveTab('profile')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'profile' ? 700 : 500, color: activeTab === 'profile' ? '#f43f5e' : '#4b5563', cursor: 'pointer' }}>Profile & Doctors</span>
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -315,18 +389,25 @@ export const MotherDashboard: React.FC = () => {
                     Track your pregnancy journey with AI-powered health monitoring, expert guidance, personalized insights, and real-time support all in one seamless experience.
                   </p>
 
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '10px' }}>
+                  {/* Actions row: contains Get Started and Direct SOS Trigger Button on Home */}
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
                     <button className="btn-momentra-primary" onClick={() => setActiveTab('emergency')}>
                       Get Started
                     </button>
-                    <button className="btn-momentra-outline" onClick={handleTriggerSOS}>
-                      <span className="btn-play-circle"><Play size={10} fill="#f43f5e" /></span>
-                      Trigger Emergency SOS
-                    </button>
+                    
+                    {!activeEmergency ? (
+                      <button className="emergency-btn-home" onClick={handleTriggerSOS}>
+                        🚨 Trigger Emergency SOS
+                      </button>
+                    ) : (
+                      <button className="emergency-btn-home triggered" onClick={() => setActiveTab('emergency')}>
+                        🚨 Tracking Active SOS
+                      </button>
+                    )}
                   </div>
 
                   {/* Social Proof */}
-                  <div className="social-proof">
+                  <div className="social-proof" style={{ marginTop: '5px' }}>
                     <div className="avatar-stack">
                       <div className="avatar-placeholder" style={{ background: '#fecdd3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>👩</div>
                       <div className="avatar-placeholder" style={{ background: '#ddd6fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>👩‍⚕️</div>
@@ -334,35 +415,35 @@ export const MotherDashboard: React.FC = () => {
                     </div>
                     <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#4b5563' }}>50k+ <span style={{ color: '#8b96a5', fontWeight: 400 }}>Satisfied Mothers</span></span>
                   </div>
-
-                  {/* Floating Health Score Card */}
-                  <div className="floating-widget widget-health">
-                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your Health Score</span>
-                    
-                    <div className="health-circle-wrap">
-                      <svg className="health-circle-svg" width="72" height="72">
-                        <circle cx="36" cy="36" r="30" stroke="rgba(244,63,94,0.06)" strokeWidth="6" fill="transparent" />
-                        <circle cx="36" cy="36" r="30" stroke="url(#rose-grad)" strokeWidth="6" fill="transparent"
-                                strokeDasharray={2 * Math.PI * 30}
-                                strokeDashoffset={2 * Math.PI * 30 * (1 - 0.92)} />
-                        <defs>
-                          <linearGradient id="rose-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#fb7185" />
-                            <stop offset="100%" stopColor="#f43f5e" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                      <div className="health-score-val">92</div>
-                    </div>
-
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#a855f7', background: 'rgba(168,85,247,0.08)', padding: '2px 8px', borderRadius: '12px' }}>● Excellent</span>
-                  </div>
                 </div>
 
                 {/* Right column Mother Image & layered stats widgets */}
                 <div className="momentra-right-col">
                   <div className="momentra-mother-frame">
                     <img className="momentra-mother-img" src="/mother.jpeg" alt="Expectant Mother" />
+
+                    {/* Relocated Health Score Card inside parent photo frame to prevent text overlaps */}
+                    <div className="floating-widget widget-health">
+                      <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your Health Score</span>
+                      
+                      <div className="health-circle-wrap">
+                        <svg className="health-circle-svg" width="72" height="72">
+                          <circle cx="36" cy="36" r="30" stroke="rgba(244,63,94,0.06)" strokeWidth="6" fill="transparent" />
+                          <circle cx="36" cy="36" r="30" stroke="url(#rose-grad)" strokeWidth="6" fill="transparent"
+                                  strokeDasharray={2 * Math.PI * 30}
+                                  strokeDashoffset={2 * Math.PI * 30 * (1 - 0.92)} />
+                          <defs>
+                            <linearGradient id="rose-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#fb7185" />
+                              <stop offset="100%" stopColor="#f43f5e" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="health-score-val">92</div>
+                      </div>
+
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#a855f7', background: 'rgba(168,85,247,0.08)', padding: '2px 8px', borderRadius: '12px' }}>● Excellent</span>
+                    </div>
 
                     {/* Floating Baby Heart Rate Card */}
                     <div className="floating-widget widget-heart">
@@ -374,7 +455,6 @@ export const MotherDashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* SVG animated pulse graph */}
                       <svg width="140" height="35" className="heart-wave-svg" style={{ marginTop: '8px' }}>
                         <path d="M 0,17 Q 12,17 17,17 T 23,5 T 28,30 T 32,17 Q 48,17 53,17 T 59,5 T 64,30 T 68,17 Q 84,17 89,17 T 95,5 T 100,30 T 104,17 H 140"
                               fill="transparent" stroke="#f43f5e" strokeWidth="2.5" />
@@ -411,7 +491,7 @@ export const MotherDashboard: React.FC = () => {
                 <div className="momentra-feature-card" onClick={() => setActiveTab('profile')}>
                   <div className="feature-icon-wrap">🩺</div>
                   <div className="feature-title">Expert Doctor Consultation</div>
-                  <p className="feature-desc">Log your medical summaries, allergy records, and coordinate with matched clinical response staff.</p>
+                  <p className="feature-desc">Coordinate and chat with on-duty specialists and matched medical responders.</p>
                 </div>
 
                 <div className="momentra-feature-card" onClick={() => setActiveTab('checkups')}>
@@ -671,63 +751,167 @@ export const MotherDashboard: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: PROFILE SETTINGS */}
+          {/* TAB 4: PROFILE SETTINGS & DOCTOR CONSULTATION */}
           {activeTab === 'profile' && (
             <div className="tab-content-container">
               <button className="btn-momentra-outline" onClick={() => setActiveTab('home')} style={{ marginBottom: '1.25rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
                 <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
               </button>
 
-              <div className="card-glass" style={{ maxWidth: '550px', margin: '0 auto', width: '100%', padding: '2rem' }}>
-                <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-                  <div className="profile-avatar-large" style={{ margin: '0 auto 10px', background: 'linear-gradient(135deg, #fb7185, #f43f5e)', fontSize: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', boxShadow: '0 8px 25px rgba(244, 63, 94, 0.2)' }}>🤰</div>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1f2937' }}>{user.full_name}</h3>
-                  <span style={{ fontSize: '0.72rem', color: '#f43f5e', fontWeight: 600 }}>Maternal ID: MT-{String(profile.id).padStart(5, '0')}</span>
+              <div className="consultation-panel">
+                {/* Left panel: Expert doctor consultations */}
+                <div className="card-glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '1rem', color: '#1f2937' }}>
+                    🩺 Consult Clinical Specialists
+                  </h3>
+                  
+                  {!selectedDoctor ? (
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.8rem', color: '#4b5563', marginBottom: '1.25rem', lineHeight: 1.45 }}>
+                        Select an on-duty doctor below to send medical inquiries, discuss symptoms, or review checkup test results in real-time.
+                      </p>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {doctors.map(doc => (
+                          <div key={doc.id} className="doctor-consult-card">
+                            <div>
+                              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1f2937' }}>{doc.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#f43f5e', fontWeight: 600 }}>{doc.specialization}</div>
+                              <div style={{ fontSize: '0.68rem', color: '#8b96a5', marginTop: '2px' }}>{doc.hospitalName} • {doc.years_experience} yrs exp</div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                              <span className="badge" style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: '8px', background: doc.is_on_duty ? '#dcfce7' : '#f3f4f6', color: doc.is_on_duty ? '#15803d' : '#4b5563', fontWeight: 700 }}>
+                                {doc.is_on_duty ? '● ON DUTY' : 'OFF DUTY'}
+                              </span>
+                              
+                              <button 
+                                className="btn-momentra-primary" 
+                                style={{ padding: '0.35rem 0.85rem', fontSize: '0.72rem', borderRadius: '12px' }}
+                                onClick={() => setSelectedDoctor(doc)}
+                              >
+                                Consult
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    // Consultation Active chat interface
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button 
+                            style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+                            onClick={() => setSelectedDoctor(null)}
+                          >
+                            <ArrowLeft size={16} />
+                          </button>
+                          <div>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1f2937' }}>{selectedDoctor.name}</span>
+                            <div style={{ fontSize: '0.68rem', color: '#6b7280' }}>Specialist • {selectedDoctor.hospitalName}</div>
+                          </div>
+                        </div>
+                        
+                        <a href={`tel:${selectedDoctor.phone}`} style={{ textDecoration: 'none' }}>
+                          <button style={{ background: 'rgba(244,63,94,0.08)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f43f5e', cursor: 'pointer' }}>
+                            <PhoneCall size={14} />
+                          </button>
+                        </a>
+                      </div>
+
+                      {/* Chat log window */}
+                      <div className="chat-log">
+                        <div className="chat-bubble doctor">
+                          Hello Nakato Fatima. I am {selectedDoctor.name}, your assigned obstetrician. How can I assist you with your pregnancy care today?
+                        </div>
+                        
+                        {(chatLogs[selectedDoctor.id] || []).map((msg, idx) => (
+                          <div key={idx} className={`chat-bubble ${msg.sender}`}>
+                            {msg.text}
+                            <span style={{ display: 'block', fontSize: '0.6rem', opacity: 0.6, textAlign: 'right', marginTop: '2px' }}>{msg.time}</span>
+                          </div>
+                        ))}
+
+                        {isTyping && (
+                          <div className="typing-indicator">
+                            <span style={{ animation: 'active-emergency-pulse 0.8s infinite alternate' }}>✍️</span> {selectedDoctor.name} is typing...
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Msg input form */}
+                      <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem' }}
+                          placeholder="Type symptoms or medical queries..."
+                          value={chatInput}
+                          onChange={e => setChatInput(e.target.value)}
+                          required
+                        />
+                        <button type="submit" className="btn-momentra-primary" style={{ padding: '8px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Send size={14} />
+                        </button>
+                      </form>
+                    </div>
+                  )}
                 </div>
 
-                <form onSubmit={handleUpdateProfile}>
-                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">Sub County</label>
-                      <select className="form-input" value={profileForm.sub_county} onChange={e => setProfileForm({ ...profileForm, sub_county: e.target.value })}>
-                        <option value="Goma">Goma</option>
-                        <option value="Nama">Nama</option>
-                        <option value="Mukono Municipality">Mukono Municipality</option>
-                        <option value="Koome">Koome</option>
-                        <option value="Ntenjeru">Ntenjeru</option>
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Village / Ward</label>
-                      <input type="text" className="form-input" value={profileForm.village} onChange={e => setProfileForm({ ...profileForm, village: e.target.value })} required />
-                    </div>
+                {/* Right panel: Profile Form */}
+                <div className="card-glass" style={{ padding: '1.5rem' }}>
+                  <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                    <div className="profile-avatar-large" style={{ margin: '0 auto 8px', background: 'linear-gradient(135deg, #fb7185, #f43f5e)', fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: '50%', boxShadow: '0 6px 15px rgba(244, 63, 94, 0.15)' }}>🤰</div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1f2937' }}>{user.full_name}</h3>
+                    <span style={{ fontSize: '0.7rem', color: '#f43f5e', fontWeight: 600 }}>Maternal ID: MT-{String(profile.id).padStart(5, '0')}</span>
                   </div>
 
-                  <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">Kin Contact Name</label>
-                      <input type="text" className="form-input" value={profileForm.next_of_kin_name} onChange={e => setProfileForm({ ...profileForm, next_of_kin_name: e.target.value })} required />
+                  <form onSubmit={handleUpdateProfile}>
+                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">Sub County</label>
+                        <select className="form-input" style={{ fontSize: '0.8rem', padding: '8px' }} value={profileForm.sub_county} onChange={e => setProfileForm({ ...profileForm, sub_county: e.target.value })}>
+                          <option value="Goma">Goma</option>
+                          <option value="Nama">Nama</option>
+                          <option value="Mukono Municipality">Mukono Municipality</option>
+                          <option value="Koome">Koome</option>
+                          <option value="Ntenjeru">Ntenjeru</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Village / Ward</label>
+                        <input type="text" className="form-input" style={{ fontSize: '0.8rem', padding: '8px' }} value={profileForm.village} onChange={e => setProfileForm({ ...profileForm, village: e.target.value })} required />
+                      </div>
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Relationship</label>
-                      <input type="text" className="form-input" value={profileForm.next_of_kin_relationship} onChange={e => setProfileForm({ ...profileForm, next_of_kin_relationship: e.target.value })} required />
+
+                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                      <div className="form-group">
+                        <label className="form-label">Kin Contact Name</label>
+                        <input type="text" className="form-input" style={{ fontSize: '0.8rem', padding: '8px' }} value={profileForm.next_of_kin_name} onChange={e => setProfileForm({ ...profileForm, next_of_kin_name: e.target.value })} required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Relationship</label>
+                        <input type="text" className="form-input" style={{ fontSize: '0.8rem', padding: '8px' }} value={profileForm.next_of_kin_relationship} onChange={e => setProfileForm({ ...profileForm, next_of_kin_relationship: e.target.value })} required />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                    <label className="form-label">Kin Phone Number</label>
-                    <input type="tel" className="form-input" value={profileForm.next_of_kin_phone} onChange={e => setProfileForm({ ...profileForm, next_of_kin_phone: e.target.value })} required />
-                  </div>
+                    <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                      <label className="form-label">Kin Phone Number</label>
+                      <input type="tel" className="form-input" style={{ fontSize: '0.8rem', padding: '8px' }} value={profileForm.next_of_kin_phone} onChange={e => setProfileForm({ ...profileForm, next_of_kin_phone: e.target.value })} required />
+                    </div>
 
-                  <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                    <label className="form-label">Medical History / Allergies</label>
-                    <textarea className="form-input" style={{ minHeight: '80px', padding: '8px', resize: 'vertical' }} value={profileForm.medical_history} onChange={e => setProfileForm({ ...profileForm, medical_history: e.target.value })} />
-                  </div>
+                    <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                      <label className="form-label">Medical History / Allergies</label>
+                      <textarea className="form-input" style={{ minHeight: '60px', padding: '6px', resize: 'vertical', fontSize: '0.8rem' }} value={profileForm.medical_history} onChange={e => setProfileForm({ ...profileForm, medical_history: e.target.value })} />
+                    </div>
 
-                  <button type="submit" className="btn-momentra-primary" style={{ width: '100%' }}>
-                    Update Profile Details
-                  </button>
-                </form>
+                    <button type="submit" className="btn-momentra-primary" style={{ width: '100%', padding: '0.75rem', fontSize: '0.85rem' }}>
+                      Update Profile Details
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           )}
