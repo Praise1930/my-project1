@@ -45,16 +45,57 @@ export const Register: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.5rem' }}>
+      <style>{`
+        .health-register-card {
+          max-width: 780px !important;
+          padding: 4rem 3.5rem !important;
+        }
+        .health-register-card h2 {
+          font-size: 2.2rem !important;
+          font-weight: 800 !important;
+          color: #1f2937 !important;
+        }
+        .health-register-card p.subtitle-desc {
+          font-size: 1.05rem !important;
+        }
+        .health-register-card h3 {
+          font-size: 1.15rem !important;
+          margin-top: 1.5rem !important;
+        }
+        .health-register-card .form-label {
+          font-size: 1.02rem !important;
+          font-weight: 600 !important;
+          color: #374151 !important;
+          margin-bottom: 6px !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+        }
+        .health-register-card .form-input {
+          padding: 12px 18px !important;
+          font-size: 1.08rem !important;
+          border-radius: 10px !important;
+        }
+        .health-register-card .btn-rose {
+          padding: 14px 24px !important;
+          font-size: 1.15rem !important;
+          border-radius: 10px !important;
+        }
+        .health-register-card .footer-link-text {
+          font-size: 0.98rem !important;
+        }
+      `}</style>
+
       <div className="bg-orbs">
         <div className="orb orb-1" />
         <div className="orb orb-3" />
       </div>
 
-      <div className="card card-glass" style={{ width: '100%', maxWidth: '650px', padding: '2.5rem 2rem', position: 'relative', zIndex: 10 }}>
+      <div className="card card-glass health-register-card" style={{ width: '100%', position: 'relative', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🤰</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Expectant Mother Registration</h2>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '0.5rem' }}>🤰</div>
+          <h2>Expectant Mother Registration</h2>
+          <p className="subtitle-desc" style={{ color: 'var(--text-muted)', marginTop: '4px' }}>
             Register your profile to enable GPS emergency rescue response.
           </p>
         </div>
@@ -174,8 +215,8 @@ export const Register: React.FC = () => {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Already have an account? <Link to="/login?role=mother" style={{ color: 'var(--rose-400)', fontWeight: 600 }}>Login here</Link>
+          <p className="footer-link-text" style={{ color: 'var(--text-muted)' }}>
+            Already have an account? <Link to="/login?role=mother" style={{ color: 'var(--rose-400)', fontWeight: 700, textDecoration: 'underline' }}>Login here</Link>
           </p>
         </div>
       </div>

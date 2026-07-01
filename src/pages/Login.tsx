@@ -71,27 +71,28 @@ export const Login: React.FC = () => {
         <div className="orb orb-2" />
       </div>
 
-      <div className="card card-glass" style={{ width: '100%', maxWidth: '450px', padding: '2.5rem 2rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{roleLabels[role].icon}</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{roleLabels[role].title}</h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>MamaTrack GPS — Mukono District</p>
+      <div className="card card-glass" style={{ width: '100%', maxWidth: '540px', padding: '4rem 3.5rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ fontSize: '3.5rem', marginBottom: '0.8rem' }}>{roleLabels[role].icon}</div>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#1f2937' }}>{roleLabels[role].title}</h2>
+          <p style={{ fontSize: '1.05rem', color: 'var(--text-muted)', marginTop: '6px' }}>MamaTrack GPS — Mukono District</p>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--danger-400)', padding: '10px 14px', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--danger-400)', padding: '12px 16px', borderRadius: '8px', fontSize: '0.95rem', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>⚠️</span> {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Mail size={14} style={{ color: 'var(--text-muted)' }} /> Email Address
+          <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+              <Mail size={16} style={{ color: 'var(--text-muted)' }} /> Email Address
             </label>
             <input
               type="email"
               className="form-input"
+              style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px' }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. fatima@gmail.com"
@@ -99,13 +100,14 @@ export const Login: React.FC = () => {
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Key size={14} style={{ color: 'var(--text-muted)' }} /> Account Password
+          <div className="form-group" style={{ marginBottom: '2rem' }}>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+              <Key size={16} style={{ color: 'var(--text-muted)' }} /> Account Password
             </label>
             <input
               type="password"
               className="form-input"
+              style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px' }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -120,28 +122,31 @@ export const Login: React.FC = () => {
               background: roleLabels[role].color,
               color: role === 'driver' ? '#000000' : '#ffffff',
               fontWeight: 700,
-              boxShadow: `0 4px 15px rgba(0,0,0,0.2)`
+              boxShadow: `0 4px 15px rgba(0,0,0,0.2)`,
+              padding: '14px 24px',
+              fontSize: '1.15rem',
+              borderRadius: '10px'
             }}
           >
             Authenticate Portal →
           </button>
         </form>
 
-        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+        <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
           <button
             onClick={handleFillCredentials}
             className="btn btn-sm btn-ghost"
-            style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+            style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px' }}
           >
-            <UserCheck size={12} /> Auto-fill Demo Credentials
+            <UserCheck size={14} /> Auto-fill Demo Credentials
           </button>
 
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', gap: '12px' }}>
-            <Link to="/" style={{ color: 'var(--text-muted)' }}>← Change Role</Link>
+          <div style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', gap: '12px' }}>
+            <Link to="/" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }}>← Change Role</Link>
             {role === 'mother' && (
               <>
                 <span>•</span>
-                <Link to="/register" style={{ color: 'var(--rose-400)', fontWeight: 600 }}>Create Account</Link>
+                <Link to="/register" style={{ color: 'var(--rose-400)', fontWeight: 700, textDecoration: 'underline' }}>Create Account</Link>
               </>
             )}
           </div>
