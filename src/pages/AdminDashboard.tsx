@@ -1,15 +1,15 @@
-// MamaTrack GPS — System Admin Command Center (Dasher Theme Redesign with Admin Actions)
+// MamaTrack GPS — System Admin Command Center (Dasher Theme with Mothers & Undo Capability)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle } from '../services/db';
+import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'reports'>('dispatch');
+  const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'reports'>('dispatch');
 
   // Database states
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
@@ -17,6 +17,7 @@ export const AdminDashboard: React.FC = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [mothers, setMothers] = useState<Mother[]>([]);
 
   // Dispatch control states
   const [selectedEmergency, setSelectedEmergency] = useState<Emergency | null>(null);
@@ -25,8 +26,60 @@ export const AdminDashboard: React.FC = () => {
   const [dispatchHospital, setDispatchHospital] = useState<number>(0);
   const [dispatchEta, setDispatchEta] = useState<number>(20);
 
+  // --- UNDO/BACKUP HISTORY STATE ---
+  const [undoStack, setUndoStack] = useState<string[]>([]);
+
+  const saveBackupState = () => {
+    const snapshot = JSON.stringify({
+      users: db.users,
+      hospitals: db.hospitals,
+      doctors: db.doctors,
+      drivers: db.drivers,
+      mothers: db.mothers
+    });
+    setUndoStack(prev => [...prev, snapshot]);
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+    const nextStack = [...undoStack];
+    const previousStateRaw = nextStack.pop();
+    if (previousStateRaw) {
+      const state = JSON.parse(previousStateRaw);
+      db.users = state.users;
+      db.hospitals = state.hospitals;
+      db.doctors = state.doctors;
+      db.drivers = state.drivers;
+      db.mothers = state.mothers;
+      setUndoStack(nextStack);
+      loadData();
+      alert('↩️ Database restored back to previous backup snapshot.');
+    }
+  };
+
   // --- ADMIN ACTIONS STATE ---
   
+  // Password Reset Modals
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+
+  // Mothers Modals
+  const [showMotherModal, setShowMotherModal] = useState(false);
+  const [editMother, setEditMother] = useState<Mother | null>(null);
+  const [motherForm, setMotherForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    blood_type: 'O+',
+    pregnancy_start_date: '',
+    next_of_kin_name: '',
+    next_of_kin_relationship: 'Husband',
+    next_of_kin_phone: '',
+    village: '',
+    sub_county: 'Goma'
+  });
+
   // Facilities Modals
   const [showFacilityModal, setShowFacilityModal] = useState(false);
   const [editFacility, setEditFacility] = useState<Hospital | null>(null);
@@ -57,10 +110,10 @@ export const AdminDashboard: React.FC = () => {
     full_name: '',
     email: '',
     phone: '',
-    specialization: '', // specialization for doctor, role tag for driver
+    specialization: '', 
     license_number: '',
     hospital_id: 1,
-    vehicle_id: 0, // vehicle_id for driver, if any
+    vehicle_id: 0, 
     years_experience: 3
   });
 
@@ -115,6 +168,7 @@ export const AdminDashboard: React.FC = () => {
     setDrivers(db.drivers);
     setDoctors(db.doctors);
     setVehicles(db.vehicles);
+    setMothers(db.mothers);
   };
 
   // Simple state poller to keep dispatch screen live
@@ -183,6 +237,7 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
+      saveBackupState(); // Save undo state
       EmergencyService.assignDispatch(
         selectedEmergency.id,
         dispatchDriver,
@@ -208,6 +263,91 @@ export const AdminDashboard: React.FC = () => {
       loadData();
       alert('Database restored back to seeds. Please log in again.');
       navigate('/');
+    }
+  };
+
+  // --- PASSWORD RESET ACTION ---
+  const handleOpenPasswordReset = (targetUser: User) => {
+    setPasswordUser(targetUser);
+    setNewPassword('password123'); // seed temporary password
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordResetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordUser) return;
+
+    saveBackupState(); // Save backup for undo
+    db.users = db.users.map(u => u.id === passwordUser.id ? {
+      ...u,
+      password_hash: newPassword
+    } : u);
+
+    setShowPasswordModal(false);
+    setPasswordUser(null);
+    setNewPassword('');
+    alert('User password updated successfully. They can login with the new credential.');
+  };
+
+  // --- EXPECTANT MOTHER ACTIONS ---
+  
+  const handleOpenEditMother = (m: Mother) => {
+    setEditMother(m);
+    const u = db.users.find(usr => usr.id === m.user_id);
+    setMotherForm({
+      full_name: u?.full_name || '',
+      email: u?.email || '',
+      phone: u?.phone || '',
+      blood_type: m.blood_type,
+      pregnancy_start_date: m.pregnancy_start_date,
+      next_of_kin_name: m.next_of_kin_name,
+      next_of_kin_relationship: m.next_of_kin_relationship,
+      next_of_kin_phone: m.next_of_kin_phone,
+      village: m.village,
+      sub_county: m.sub_county
+    });
+    setShowMotherModal(true);
+  };
+
+  const handleMotherSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editMother) return;
+
+    saveBackupState(); // Save undo state
+    
+    // Update user record
+    db.users = db.users.map(u => u.id === editMother.user_id ? {
+      ...u,
+      full_name: motherForm.full_name,
+      email: motherForm.email,
+      phone: motherForm.phone
+    } : u);
+
+    // Update maternal checklist variables
+    db.mothers = db.mothers.map(m => m.id === editMother.id ? {
+      ...m,
+      blood_type: motherForm.blood_type,
+      pregnancy_start_date: motherForm.pregnancy_start_date,
+      next_of_kin_name: motherForm.next_of_kin_name,
+      next_of_kin_relationship: motherForm.next_of_kin_relationship,
+      next_of_kin_phone: motherForm.next_of_kin_phone,
+      village: motherForm.village,
+      sub_county: motherForm.sub_county
+    } : m);
+
+    setShowMotherModal(false);
+    setEditMother(null);
+    loadData();
+    alert('Expectant Mother profile updated.');
+  };
+
+  const handleDeleteMother = (id: number, userId: number) => {
+    if (window.confirm('Are you sure you want to delete this expectant mother?')) {
+      saveBackupState(); // Save undo state
+      db.mothers = db.mothers.filter(m => m.id !== id);
+      db.users = db.users.filter(u => u.id !== userId);
+      loadData();
+      alert('Expectant mother record removed from database.');
     }
   };
 
@@ -261,6 +401,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleDeleteFacility = (id: number) => {
     if (window.confirm('Are you sure you want to delete this health facility?')) {
+      saveBackupState(); // Save undo state
       const updated = db.hospitals.filter(h => h.id !== id);
       db.hospitals = updated;
       loadData();
@@ -270,8 +411,8 @@ export const AdminDashboard: React.FC = () => {
 
   const handleFacilitySubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    saveBackupState(); // Save undo state
     if (editFacility) {
-      // Edit mode
       const updated = db.hospitals.map(h => h.id === editFacility.id ? { 
         ...h, 
         name: facilityForm.name,
@@ -295,7 +436,6 @@ export const AdminDashboard: React.FC = () => {
       db.hospitals = updated;
       alert('Facility details updated successfully.');
     } else {
-      // Add mode
       const nextHospId = Math.max(...db.hospitals.map(h => h.id), 0) + 1;
       const newHospital: Hospital = {
         id: nextHospId,
@@ -362,6 +502,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleDeletePersonnel = (role: 'doctor' | 'driver', id: number, userId: number) => {
     if (window.confirm(`Are you sure you want to delete this ${role}?`)) {
+      saveBackupState(); // Save undo state
       if (role === 'doctor') {
         db.doctors = db.doctors.filter(d => d.id !== id);
       } else {
@@ -375,8 +516,8 @@ export const AdminDashboard: React.FC = () => {
 
   const handlePersonnelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    saveBackupState(); // Save undo state
     if (editPersonnel) {
-      // Edit User
       db.users = db.users.map(u => u.id === editPersonnel.user_id ? {
         ...u,
         full_name: personnelForm.full_name,
@@ -402,14 +543,13 @@ export const AdminDashboard: React.FC = () => {
       }
       alert('Personnel details updated successfully.');
     } else {
-      // Create User
       const nextUserId = Math.max(...db.users.map(u => u.id), 0) + 1;
       const newUser: User = {
         id: nextUserId,
         full_name: personnelForm.full_name,
         email: personnelForm.email,
         phone: personnelForm.phone,
-        password_hash: 'password123', // default demo credential
+        password_hash: 'password123', 
         role: personnelRole,
         avatar: null,
         is_active: true,
@@ -617,6 +757,10 @@ export const AdminDashboard: React.FC = () => {
             <i className="ti ti-users" style={{ fontSize: '18px' }}></i>
             <span>Duty Personnel</span>
           </div>
+          <div className={`sidebar-nav-item ${activeTab === 'mothers' ? 'active' : ''}`} onClick={() => setActiveTab('mothers')}>
+            <i className="ti ti-user-heart" style={{ fontSize: '18px' }}></i>
+            <span>Expectant Mothers</span>
+          </div>
           <div className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
             <i className="ti ti-file-analytics" style={{ fontSize: '18px' }}></i>
             <span>Audit & Fuel Logs</span>
@@ -656,13 +800,25 @@ export const AdminDashboard: React.FC = () => {
             <span style={{ fontSize: '13px', color: '#64748b' }}>Mukono Regional Ambulance Dispatch Fleet Monitor</span>
           </div>
           
-          <button 
-            onClick={handleResetDatabase} 
-            className="btn btn-outline-secondary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155' }}
-          >
-            <RefreshCw size={13} /> Reset Database
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {undoStack.length > 0 && (
+              <button 
+                onClick={handleUndo} 
+                className="btn btn-warning" 
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, padding: '8px 16px', borderRadius: '6px', background: '#f59e0b', color: '#ffffff', border: 'none' }}
+              >
+                ↩️ Undo Last Change ({undoStack.length})
+              </button>
+            )}
+
+            <button 
+              onClick={handleResetDatabase} 
+              className="btn btn-outline-secondary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155' }}
+            >
+              <RefreshCw size={13} /> Reset Database
+            </button>
+          </div>
         </header>
 
         {/* GREETING BANNER WIDGET */}
@@ -930,7 +1086,15 @@ export const AdminDashboard: React.FC = () => {
                       </div>
 
                       {/* Doctor actions row */}
-                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {u && (
+                          <button 
+                            onClick={() => handleOpenPasswordReset(u)}
+                            style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                          >
+                            🔑 Reset Pass
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleOpenEditPersonnel('doctor', d)}
                           style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
@@ -980,7 +1144,15 @@ export const AdminDashboard: React.FC = () => {
                       </div>
 
                       {/* Driver actions row */}
-                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        {u && (
+                          <button 
+                            onClick={() => handleOpenPasswordReset(u)}
+                            style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                          >
+                            🔑 Reset Pass
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleOpenEditPersonnel('driver', d)}
                           style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
@@ -1003,7 +1175,72 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 4: REPORTS & HISTORICAL LOGS */}
+        {/* TAB 4: EXPECTANT MOTHERS */}
+        {activeTab === 'mothers' && (
+          <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
+            <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>Registered Expectant Mothers Profiles</h4>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              {mothers.map(m => {
+                const u = db.users.find(usr => usr.id === m.user_id);
+                return (
+                  <div key={m.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '15px', color: '#0f172a' }}>{u?.full_name}</strong>
+                        <span className="badge-alert-pending" style={{ background: '#fff0f6', color: '#d0145a', borderColor: 'rgba(208,20,90,0.2)' }}>
+                          BLOOD: {m.blood_type}
+                        </span>
+                      </div>
+                      
+                      <div style={{ fontSize: '13px', color: '#334155', marginBottom: '12px' }}>
+                        <div>📧 Email: <strong>{u?.email}</strong></div>
+                        <div>📞 Phone: <strong>{u?.phone}</strong></div>
+                        <div>📍 Location: <strong>{m.village}, {m.sub_county} Sub-county</strong></div>
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', color: '#475569', borderTop: '1px dashed #e2e8f0', paddingTop: '10px', marginBottom: '14px' }}>
+                        <div>Pregnancy Start: <strong>{m.pregnancy_start_date}</strong></div>
+                        <div>Kin: <strong>{m.next_of_kin_name} ({m.next_of_kin_relationship})</strong></div>
+                        <div>Kin Phone: <strong>{m.next_of_kin_phone}</strong></div>
+                        <div>VHT Assigned: <strong>{m.vht_name} ({m.vht_phone})</strong></div>
+                      </div>
+                    </div>
+
+                    {/* Actions row */}
+                    <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      {u && (
+                        <button 
+                          onClick={() => handleOpenPasswordReset(u)}
+                          className="btn btn-sm btn-outline-secondary" 
+                          style={{ fontSize: '12px', padding: '4px 10px', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569' }}
+                        >
+                          🔑 Reset Pass
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => handleOpenEditMother(m)}
+                        className="btn btn-sm btn-outline-secondary" 
+                        style={{ fontSize: '12px', padding: '4px 10px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
+                      >
+                        ✏️ Edit Profile
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteMother(m.id, m.user_id)}
+                        className="btn btn-sm btn-outline-danger" 
+                        style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: REPORTS & HISTORICAL LOGS */}
         {activeTab === 'reports' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
@@ -1110,6 +1347,193 @@ export const AdminDashboard: React.FC = () => {
         )}
 
       </main>
+
+      {/* --- PASSWORD RESET MODAL --- */}
+      {showPasswordModal && passwordUser && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-container" style={{ maxWidth: '400px' }}>
+            <div style={{ background: '#0f172a', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>🔑 Reset User Password</h5>
+              <button onClick={() => { setShowPasswordModal(false); setPasswordUser(null); }} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <form onSubmit={handlePasswordResetSubmit} style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
+                  Resetting credentials for: <strong>{passwordUser.full_name}</strong> ({passwordUser.role})
+                </div>
+                <label className="form-label-admin">New Account Password</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="e.g. password123"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+                <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => { setShowPasswordModal(false); setPasswordUser(null); }}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#3b82f6', border: 'none' }}>Update Password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- EDIT EXPECTANT MOTHER PROFILE MODAL --- */}
+      {showMotherModal && editMother && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-container">
+            <div style={{ background: '#be123c', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>✏️ Edit Expectant Mother Health Profile</h5>
+              <button onClick={() => { setShowMotherModal(false); setEditMother(null); }} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <form onSubmit={handleMotherSubmit} style={{ padding: '20px', maxHeight: '480px', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Mother Full Name</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin" 
+                  value={motherForm.full_name} 
+                  onChange={e => setMotherForm({ ...motherForm, full_name: e.target.value })} 
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Email Address</label>
+                  <input 
+                    type="email" 
+                    className="form-control-admin" 
+                    value={motherForm.email} 
+                    onChange={e => setMotherForm({ ...motherForm, email: e.target.value })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="form-label-admin">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    className="form-control-admin" 
+                    value={motherForm.phone} 
+                    onChange={e => setMotherForm({ ...motherForm, phone: e.target.value })} 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Blood Group</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={motherForm.blood_type} 
+                    onChange={e => setMotherForm({ ...motherForm, blood_type: e.target.value })}
+                  >
+                    <option value="O+">O Positive (O+)</option>
+                    <option value="O-">O Negative (O-)</option>
+                    <option value="A+">A Positive (A+)</option>
+                    <option value="A-">A Negative (A-)</option>
+                    <option value="B+">B Positive (B+)</option>
+                    <option value="B-">B Negative (B-)</option>
+                    <option value="AB+">AB Positive (AB+)</option>
+                    <option value="AB-">AB Negative (AB-)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Pregnancy Confirmation Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control-admin" 
+                    value={motherForm.pregnancy_start_date} 
+                    onChange={e => setMotherForm({ ...motherForm, pregnancy_start_date: e.target.value })} 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <h6 style={{ fontSize: '12px', fontWeight: 700, borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', margin: '14px 0 10px', color: '#be123c' }}>Next of Kin Details</h6>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Kin Full Name</label>
+                  <input 
+                    type="text" 
+                    className="form-control-admin" 
+                    value={motherForm.next_of_kin_name} 
+                    onChange={e => setMotherForm({ ...motherForm, next_of_kin_name: e.target.value })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="form-label-admin">Relationship</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={motherForm.next_of_kin_relationship} 
+                    onChange={e => setMotherForm({ ...motherForm, next_of_kin_relationship: e.target.value })}
+                  >
+                    <option value="Husband">Husband</option>
+                    <option value="Mother">Mother</option>
+                    <option value="Father">Father</option>
+                    <option value="Brother">Brother</option>
+                    <option value="Sister">Sister</option>
+                    <option value="VHT Worker">VHT Worker</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Kin Phone Number</label>
+                <input 
+                  type="tel" 
+                  className="form-control-admin" 
+                  value={motherForm.next_of_kin_phone} 
+                  onChange={e => setMotherForm({ ...motherForm, next_of_kin_phone: e.target.value })} 
+                  required 
+                />
+              </div>
+
+              <h6 style={{ fontSize: '12px', fontWeight: 700, borderBottom: '1px solid #cbd5e1', paddingBottom: '4px', margin: '14px 0 10px', color: '#be123c' }}>Residential Information</h6>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                <div>
+                  <label className="form-label-admin">Sub County</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={motherForm.sub_county} 
+                    onChange={e => setMotherForm({ ...motherForm, sub_county: e.target.value })}
+                  >
+                    <option value="Goma">Goma</option>
+                    <option value="Nama">Nama</option>
+                    <option value="Mukono Municipality">Mukono Municipality</option>
+                    <option value="Koome">Koome</option>
+                    <option value="Ntenjeru">Ntenjeru</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Village / Ward</label>
+                  <input 
+                    type="text" 
+                    className="form-control-admin" 
+                    value={motherForm.village} 
+                    onChange={e => setMotherForm({ ...motherForm, village: e.target.value })} 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+                <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => { setShowMotherModal(false); setEditMother(null); }}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#be123c', border: 'none' }}>Save Profile</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* --- ADD/EDIT HEALTH FACILITY MODAL --- */}
       {showFacilityModal && (
