@@ -33,6 +33,23 @@ export const DriverDashboard: React.FC = () => {
 
   const [hasInspectedToday, setHasInspectedToday] = useState(false);
 
+  // Dynamic Stylesheet Loading for isolating theme CSS
+  useEffect(() => {
+    document.body.classList.add('driver-theme-active');
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/src/styles/driver/theme.css';
+    link.id = 'driver-theme-css';
+    document.head.appendChild(link);
+
+    return () => {
+      document.body.classList.remove('driver-theme-active');
+      const linkEl = document.getElementById('driver-theme-css');
+      if (linkEl) linkEl.remove();
+    };
+  }, []);
+
   // 1. Auth check and initial load
   useEffect(() => {
     const sessionUser = db.getCurrentSessionUser();
@@ -204,25 +221,24 @@ export const DriverDashboard: React.FC = () => {
         {/* Sidebar Nav */}
         <aside className="sidebar">
           <div className="sidebar-logo">
-            <div className="logo-icon" style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--warning-400)' }}>🚑</div>
+            <div className="logo-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', fontSize: '1.5rem', width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🚑</div>
             <div>
-              <h2 style={{ fontSize: '1rem', fontWeight: 800 }}>MamaTrack</h2>
-              <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Ambulance Deck</p>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>MamaTrack</h2>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>Ambulance Deck</p>
             </div>
           </div>
 
-          <div style={{ padding: '0 1rem 1.5rem', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Ambulance: {vehicle.plate_number}</div>
+          <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '10px' }}>Ambulance: <strong style={{ color: '#f8fafc' }}>{vehicle.plate_number}</strong></div>
             <button
               onClick={handleToggleDuty}
-              className={`btn btn-sm ${driver.is_on_duty ? 'btn-amber' : 'btn-ghost'}`}
-              style={{ background: driver.is_on_duty ? 'var(--warning-500)' : 'rgba(255,255,255,0.05)', color: driver.is_on_duty ? '#000000' : '#ffffff', fontSize: '0.78rem', width: '100%', padding: '6px' }}
+              className={`btn btn-sm btn-block ${driver.is_on_duty ? 'btn-amber' : 'btn-ghost'}`}
             >
-              🚚 {driver.is_on_duty ? 'Duty Status: ACTIVE' : 'Duty Status: OFF'}
+              🚚 {driver.is_on_duty ? 'Duty Status: ACTIVE' : 'Duty Status: STANDBY'}
             </button>
           </div>
 
-          <nav className="sidebar-nav" style={{ marginTop: '1rem' }}>
+          <nav className="sidebar-nav" style={{ marginTop: '1rem', flex: 1 }}>
             <div className="nav-section">
               <div className="nav-item active">
                 <span className="nav-icon">🚑</span>
@@ -232,23 +248,23 @@ export const DriverDashboard: React.FC = () => {
           </nav>
 
           <div className="sidebar-user">
-            <div className="user-avatar" style={{ background: 'linear-gradient(135deg, var(--warning-400), var(--amber-700))', color: '#000' }}>🚑</div>
+            <div className="user-avatar" style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)', color: '#060b13', fontWeight: 800, width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>DF</div>
             <div className="user-info">
-              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{user.full_name.split(' ')[0]}</div>
-              <div className="user-role" style={{ fontSize: '0.7rem', color: 'var(--warning-400)' }}>Ambulance Driver</div>
+              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>{user.full_name.split(' ')[0]}</div>
+              <div className="user-role" style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Ambulance Driver</div>
             </div>
-            <button className="btn-logout" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '4px' }}>
+            <button className="btn-logout" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '6px', fontSize: '1.1rem', color: '#ef4444' }}>
               🚪
             </button>
           </div>
         </aside>
 
         {/* Main Panel Workspace */}
-        <main className="main-content">
+        <main className="main-content" style={{ padding: '2rem' }}>
           <header className="top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <h1 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Ambulance Navigation Panel</h1>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Real-time GPS Dispatch Receiver</p>
+              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>Ambulance Navigation Panel</h1>
+              <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '4px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
             </div>
           </header>
 
@@ -257,43 +273,58 @@ export const DriverDashboard: React.FC = () => {
             <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.3fr', gap: '1.5rem' }}>
               {/* Mission Control Card */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div className="card card-glass" style={{ padding: '1.5rem', border: '1px solid rgba(245,158,11,0.3)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '12px' }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--warning-400)' }}>🚨 Active Dispatch Assignment</h3>
+                <div className="card card-glass active-dispatch-glow" style={{ padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(239, 68, 68, 0.25)', paddingBottom: '10px', marginBottom: '14px' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f87171', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🚨 Active Dispatch Assignment
+                    </h3>
                     <span className="badge badge-red">{activeEmergency.code}</span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.82rem' }}>
-                    <div>Patient Name: <strong>{motherUser?.full_name}</strong></div>
-                    <div>Location: <strong>{motherData()?.village}, {motherData()?.sub_county}</strong></div>
-                    <div>Distress details: <strong style={{ color: 'var(--danger-400)' }}>{activeEmergency.notes}</strong></div>
-                    <div>Hospital matched: <strong>{hospitalMatched?.name}</strong></div>
-                    <div style={{ marginTop: '8px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                      Kin Contact: <strong>{motherData()?.next_of_kin_name} ({motherData()?.next_of_kin_phone})</strong>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.875rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '6px' }}>
+                      <span style={{ color: '#94a3b8' }}>Patient Name:</span>
+                      <strong style={{ color: '#f8fafc' }}>{motherUser?.full_name}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '6px' }}>
+                      <span style={{ color: '#94a3b8' }}>Location (GPS Target):</span>
+                      <strong style={{ color: '#f8fafc' }}>{motherData()?.village}, {motherData()?.sub_county}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '6px' }}>
+                      <span style={{ color: '#94a3b8' }}>Distress Symptoms:</span>
+                      <strong style={{ color: '#ef4444' }}>{activeEmergency.notes}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '6px' }}>
+                      <span style={{ color: '#94a3b8' }}>Destination Hospital:</span>
+                      <strong style={{ color: '#fbbf24' }}>{hospitalMatched?.name}</strong>
+                    </div>
+                    <div style={{ marginTop: '6px', background: 'rgba(239, 68, 68, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#f87171', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px' }}>Kin Emergency Contact:</div>
+                      <strong style={{ color: '#f8fafc' }}>{motherData()?.next_of_kin_name} ({motherData()?.next_of_kin_phone})</strong>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '1.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
                     {activeEmergency.status === 'dispatched' && (
-                      <button onClick={handleStartRoute} className="btn btn-amber btn-block" style={{ background: 'var(--warning-500)', color: '#000', fontWeight: 700 }}>
+                      <button onClick={handleStartRoute} className="btn btn-amber btn-block" style={{ height: '48px', fontSize: '0.95rem' }}>
                         🚀 Start Trip & GPS Simulation
                       </button>
                     )}
 
                     {activeEmergency.status === 'en_route' && (
                       <>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--warning-400)', textAlign: 'center', marginBottom: '6px', animation: 'pulse-slow 2s infinite' }}>
+                        <div className="telemetry-pulsing" style={{ fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}>
                           ⚡ GPS simulator driving toward mother...
                         </div>
-                        <button onClick={handleManualArrived} className="btn btn-success btn-block" style={{ background: 'var(--success-500)', color: '#fff', fontWeight: 700 }}>
+                        <button onClick={handleManualArrived} className="btn btn-success btn-block" style={{ height: '48px', fontSize: '0.95rem' }}>
                           Arrived at Patient & Picked Up
                         </button>
                       </>
                     )}
 
                     {activeEmergency.status === 'arrived' && (
-                      <button onClick={handleHandoffComplete} className="btn btn-success btn-block" style={{ background: 'var(--success-500)', color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        <CheckCircle size={16} /> Clinical Handoff Complete
+                      <button onClick={handleHandoffComplete} className="btn btn-success btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <CheckCircle size={18} /> Clinical Handoff Complete
                       </button>
                     )}
                   </div>
@@ -301,11 +332,12 @@ export const DriverDashboard: React.FC = () => {
               </div>
 
               {/* Map routing view */}
-              <div className="card card-glass" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
-                <div style={{ padding: '4px 8px 12px' }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>🗺️ GPS Rescue Routing Navigation</h3>
+              <div className="card card-glass map-hud-container" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
+                <div style={{ padding: '6px 10px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.1)' }}>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>🗺️ GPS Rescue Routing Navigation</h3>
+                  <span style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700, letterSpacing: '0.05em' }}>● HUD ACTIVE</span>
                 </div>
-                <div style={{ flex: 1, minHeight: '380px' }}>
+                <div style={{ flex: 1, minHeight: '380px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
                   <MapComponent
                     center={[driver.current_latitude, driver.current_longitude]}
                     zoom={13}
@@ -320,47 +352,49 @@ export const DriverDashboard: React.FC = () => {
             <div className="grid-2" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
               {/* Pre duty safety checklists */}
               <div className="card card-glass" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <CheckSquare size={18} /> Pre-Duty Vehicle Inspection
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', paddingBottom: '8px' }}>
+                  <CheckSquare size={20} style={{ color: '#fbbf24' }} /> Pre-Duty Vehicle Inspection
                 </h3>
                 
                 {hasInspectedToday ? (
-                  <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', padding: '1.5rem', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✅</div>
-                    <strong style={{ fontSize: '0.9rem' }}>Inspection Log Registered</strong>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>Ambulance {vehicle.plate_number} is certified safe and ready for dispatch.</p>
+                  <div className="inspection-success-box" style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🛡️</div>
+                    <strong style={{ fontSize: '1rem', color: '#34d399' }}>Inspection Log Certified</strong>
+                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '6px', marginBottom: 0 }}>
+                      Ambulance <strong>{vehicle.plate_number}</strong> is fully authorized safe and standing by for regional emergency dispatches.
+                    </p>
                   </div>
                 ) : (
                   <form onSubmit={handleInspectionSubmit}>
-                    <div className="form-group" style={{ marginBottom: '10px' }}>
+                    <div className="form-group" style={{ marginBottom: '14px' }}>
                       <label className="form-label">Inspected Fuel Level</label>
-                      <select className="form-input" value={inspectionForm.fuel_level} onChange={e => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value as any })}>
+                      <select className="form-input" style={{ width: '100%' }} value={inspectionForm.fuel_level} onChange={e => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value as any })}>
                         <option value="full">Full Tank</option>
                         <option value="half">Half Tank</option>
                         <option value="low">Low Tank</option>
                       </select>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', fontSize: '0.82rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', fontSize: '0.85rem' }}>
+                      <label className="checklist-item">
                         <input type="checkbox" checked={inspectionForm.siren_ok} onChange={e => setInspectionForm({ ...inspectionForm, siren_ok: e.target.checked })} />
-                        Siren & Emergency Beacon fully functional
+                        <span>Siren & Emergency Beacon fully functional</span>
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <label className="checklist-item">
                         <input type="checkbox" checked={inspectionForm.medical_checked} onChange={e => setInspectionForm({ ...inspectionForm, medical_checked: e.target.checked })} />
-                        Obstetric delivery kit & oxygen tanks verified
+                        <span>Obstetric delivery kit & oxygen tanks verified</span>
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <label className="checklist-item">
                         <input type="checkbox" checked={inspectionForm.tires_ok} onChange={e => setInspectionForm({ ...inspectionForm, tires_ok: e.target.checked })} />
-                        Tire pressure and suspension ok
+                        <span>Tire pressure and suspension ok</span>
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                      <label className="checklist-item">
                         <input type="checkbox" checked={inspectionForm.engine_ok} onChange={e => setInspectionForm({ ...inspectionForm, engine_ok: e.target.checked })} />
-                        Engine fluid, oil, and coolant levels ok
+                        <span>Engine fluid, oil, and coolant levels ok</span>
                       </label>
                     </div>
 
-                    <button type="submit" className="btn btn-amber btn-block" style={{ marginTop: '1.5rem', background: 'var(--warning-500)', color: '#000', fontWeight: 700 }}>
+                    <button type="submit" className="btn btn-amber btn-block" style={{ marginTop: '1.5rem', width: '100%', height: '42px' }}>
                       Submit Inspection Log
                     </button>
                   </form>
@@ -369,24 +403,24 @@ export const DriverDashboard: React.FC = () => {
 
               {/* Fuel purchase logs */}
               <div className="card card-glass" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <PlusSquare size={18} /> Fuel purchase receipts
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', paddingBottom: '8px' }}>
+                  <PlusSquare size={20} style={{ color: '#fbbf24' }} /> Fuel Purchase receipts
                 </h3>
                 
                 <form onSubmit={handleFuelSubmit}>
-                  <div className="form-group" style={{ marginBottom: '10px' }}>
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
                     <label className="form-label">Fuel Quantity (Liters)</label>
-                    <input type="number" className="form-input" value={fuelForm.liters} onChange={e => setFuelForm({ ...fuelForm, liters: Number(e.target.value) })} required />
+                    <input type="number" className="form-input" style={{ width: '100%' }} value={fuelForm.liters} onChange={e => setFuelForm({ ...fuelForm, liters: Number(e.target.value) })} required />
                   </div>
-                  <div className="form-group" style={{ marginBottom: '10px' }}>
+                  <div className="form-group" style={{ marginBottom: '12px' }}>
                     <label className="form-label">Total Cost (UGX)</label>
-                    <input type="number" className="form-input" value={fuelForm.cost} onChange={e => setFuelForm({ ...fuelForm, cost: Number(e.target.value) })} required />
+                    <input type="number" className="form-input" style={{ width: '100%' }} value={fuelForm.cost} onChange={e => setFuelForm({ ...fuelForm, cost: Number(e.target.value) })} required />
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                     <label className="form-label">Filling Station Name</label>
-                    <input type="text" className="form-input" value={fuelForm.station} onChange={e => setFuelForm({ ...fuelForm, station: e.target.value })} required />
+                    <input type="text" className="form-input" style={{ width: '100%' }} value={fuelForm.station} onChange={e => setFuelForm({ ...fuelForm, station: e.target.value })} required />
                   </div>
-                  <button type="submit" className="btn btn-amber btn-block" style={{ background: 'var(--warning-500)', color: '#000', fontWeight: 700 }}>
+                  <button type="submit" className="btn btn-amber btn-block" style={{ width: '100%', height: '42px' }}>
                     Log Fuel Purchase
                   </button>
                 </form>
