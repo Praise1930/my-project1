@@ -396,7 +396,12 @@ export const MotherDashboard: React.FC = () => {
 
                   {/* Distinct hero actions: Get Started points to schedules, SOS triggers emergency */}
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
-                    <button className="btn-momentra-primary" onClick={() => setActiveTab('checkups')}>
+                    <button className="btn-momentra-primary" onClick={() => {
+                      const el = document.getElementById('dashboard-features');
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}>
                       Get Started
                     </button>
                     
@@ -480,7 +485,7 @@ export const MotherDashboard: React.FC = () => {
               </div>
 
               {/* Bottom clickable cards to display functional tabs */}
-              <div className="momentra-bottom-grid">
+              <div id="dashboard-features" className="momentra-bottom-grid">
                 <div className="momentra-feature-card" onClick={() => setActiveTab('emergency')}>
                   <div className="feature-icon-wrap">🚨</div>
                   <div className="feature-title">Real-Time Health Monitoring</div>
