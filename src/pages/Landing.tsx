@@ -95,7 +95,7 @@ export const Landing: React.FC = () => {
       </header>
 
       {/* HERO SLIDER SECTION */}
-      <section id="home" className="slider-area" style={{ position: 'relative', height: '620px', overflow: 'hidden', background: '#0b162b url(/assets/img/hero/h1_hero.png) no-repeat center center / cover' }}>
+      <section id="home" className="slider-area" style={{ position: 'relative', height: '620px', overflow: 'hidden', background: '#ffffff url(/assets/img/hero/h1_hero.png) no-repeat center center / cover' }}>
         {slides.map((slide, idx) => (
           <div
             key={idx}
@@ -145,6 +145,25 @@ export const Landing: React.FC = () => {
 
       {/* SYSTEM PORTALS SECTION */}
       <section id="portals" className="team-area section-padding30" style={{ padding: '90px 0', background: '#f8fafd' }}>
+        <style>{`
+          .portal-hover-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
+          }
+          .portal-hover-card:hover {
+            transform: translateY(-6px) !important;
+          }
+          /* Prevent template hovers from overriding portal text colors */
+          .portal-hover-card:hover h3 {
+            color: inherit !important;
+          }
+          .portal-hover-card:hover span {
+            color: #4b5563 !important; /* Enforces highly readable dark gray */
+          }
+          .portal-hover-card:hover a.btn {
+            color: #ffffff !important;
+            opacity: 0.95 !important;
+          }
+        `}</style>
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-lg-8">
@@ -162,7 +181,7 @@ export const Landing: React.FC = () => {
             
             {/* Expectant Mother */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(244,63,94,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🤰</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
@@ -178,7 +197,7 @@ export const Landing: React.FC = () => {
 
             {/* Clinical Doctor */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(16,185,129,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🩺</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
@@ -194,7 +213,7 @@ export const Landing: React.FC = () => {
 
             {/* Ambulance Driver */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(245,158,11,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🚑</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
@@ -210,7 +229,7 @@ export const Landing: React.FC = () => {
 
             {/* System Admin */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(59,130,246,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>📡</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>

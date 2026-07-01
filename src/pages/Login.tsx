@@ -1,9 +1,16 @@
-// MamaTrack GPS — Login Portal
+// MamaTrack GPS — Login Portal (With Medical Center UI Theme)
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../services/db';
 import { Key, Mail, UserCheck } from 'lucide-react';
+
+// Import template stylesheets
+import '../styles/medical-center/bootstrap.min.css';
+import '../styles/medical-center/flaticon.css';
+import '../styles/medical-center/themify-icons.css';
+import '../styles/medical-center/fontawesome-all.min.css';
+import '../styles/medical-center/style.css';
 
 export const Login: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -67,7 +74,7 @@ export const Login: React.FC = () => {
   const themeSettings = {
     mother: {
       bgGradient: 'radial-gradient(circle at 10% 20%, rgba(255, 241, 242, 0.6) 0%, rgba(255, 255, 255, 1) 90%)',
-      cardBg: 'rgba(255, 255, 255, 0.8)',
+      cardBg: 'rgba(255, 255, 255, 0.92)',
       cardBorder: '1px solid rgba(244, 63, 94, 0.25)',
       textColor: '#1f2937',
       labelColor: '#374151',
@@ -77,7 +84,7 @@ export const Login: React.FC = () => {
     },
     doctor: {
       bgGradient: 'radial-gradient(circle at 10% 20%, rgba(236, 253, 245, 0.6) 0%, rgba(255, 255, 255, 1) 90%)',
-      cardBg: 'rgba(255, 255, 255, 0.85)',
+      cardBg: 'rgba(255, 255, 255, 0.92)',
       cardBorder: '1px solid rgba(16, 185, 129, 0.25)',
       textColor: '#111827',
       labelColor: '#374151',
@@ -87,7 +94,7 @@ export const Login: React.FC = () => {
     },
     driver: {
       bgGradient: 'radial-gradient(circle at 10% 20%, rgba(255, 251, 235, 0.6) 0%, rgba(255, 255, 255, 1) 90%)',
-      cardBg: 'rgba(255, 255, 255, 0.85)',
+      cardBg: 'rgba(255, 255, 255, 0.92)',
       cardBorder: '1px solid rgba(245, 158, 11, 0.25)',
       textColor: '#1f2937',
       labelColor: '#374151',
@@ -108,93 +115,154 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: themeSettings[role].bgGradient, transition: 'all 0.5s' }}>
-      <div className="bg-orbs">
-        <div className="orb orb-1" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.25 : 0.18 }} />
-        <div className="orb orb-2" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.25 : 0.18 }} />
-      </div>
-
-      <div className="card card-glass" style={{ width: '100%', maxWidth: '540px', padding: '4rem 3.5rem', position: 'relative', zIndex: 10, background: themeSettings[role].cardBg, border: themeSettings[role].cardBorder, boxShadow: themeSettings[role].shadow, color: themeSettings[role].textColor }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '0.8rem' }}>{roleLabels[role].icon}</div>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: themeSettings[role].textColor }}>{roleLabels[role].title}</h2>
-          <p style={{ fontSize: '1.05rem', color: role === 'admin' ? '#94a3b8' : 'var(--text-muted)', marginTop: '6px' }}>MamaTrack GPS — Mukono District</p>
-        </div>
-
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--danger-400)', padding: '12px 16px', borderRadius: '8px', fontSize: '0.95rem', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>⚠️</span> {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: themeSettings[role].labelColor, marginBottom: '8px' }}>
-              <Mail size={16} style={{ color: 'var(--text-muted)' }} /> Email Address
-            </label>
-            <input
-              type="email"
-              className="form-input"
-              style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px', background: themeSettings[role].inputBg, color: themeSettings[role].textColor, border: role === 'admin' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)' }}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. fatima@gmail.com"
-              required
-            />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: '2rem' }}>
-            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: themeSettings[role].labelColor, marginBottom: '8px' }}>
-              <Key size={16} style={{ color: 'var(--text-muted)' }} /> Account Password
-            </label>
-            <input
-              type="password"
-              className="form-input"
-              style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px', background: themeSettings[role].inputBg, color: themeSettings[role].textColor, border: role === 'admin' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)' }}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-block"
-            style={{
-              background: roleLabels[role].color,
-              color: role === 'driver' ? '#000000' : '#ffffff',
-              fontWeight: 700,
-              boxShadow: `0 4px 15px rgba(0,0,0,0.2)`,
-              padding: '14px 24px',
-              fontSize: '1.15rem',
-              borderRadius: '10px'
-            }}
-          >
-            Authenticate Portal →
-          </button>
-        </form>
-
-        <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
-          <button
-            onClick={handleFillCredentials}
-            className="btn btn-sm btn-ghost"
-            style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: role === 'admin' ? '#94a3b8' : 'inherit' }}
-          >
-            <UserCheck size={14} /> Auto-fill Demo Credentials
-          </button>
-
-          <div style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', gap: '12px' }}>
-            <Link to="/" style={{ color: role === 'admin' ? '#94a3b8' : 'var(--text-muted)', textDecoration: 'underline' }}>← Change Role</Link>
-            {role === 'mother' && (
-              <>
-                <span>•</span>
-                <Link to="/register" style={{ color: 'var(--rose-400)', fontWeight: 700, textDecoration: 'underline' }}>Create Account</Link>
-              </>
-            )}
+    <div className="medical-login-root" style={{ background: '#ffffff', color: '#757575', fontFamily: "'Muli', sans-serif" }}>
+      
+      {/* HEADER START */}
+      <header>
+        <div className="header-area">
+          <div className="main-header header-sticky" style={{ background: '#ffffff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+            <div className="container-fluid" style={{ padding: '0 40px' }}>
+              <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
+                <div className="logo">
+                  <Link to="/" style={{ fontSize: '1.9rem', fontWeight: 800, color: '#030431', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ background: '#0f61ef', color: '#ffffff', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                      <i className="fa fa-h-square"></i>
+                    </span>
+                    <span>Mama<span style={{ color: '#0f61ef' }}>Track</span></span>
+                  </Link>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                  <Link to="/" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
+                  <Link to="/register" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
+                    Register Mother
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      {/* CENTERED LOGIN FORM SECTION */}
+      <section className="login-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: `linear-gradient(rgba(244, 247, 250, 0.82), rgba(244, 247, 250, 0.82)), url('/assets/img/hero/hero2.png') no-repeat center center / cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+        
+        {/* Floating Orbs inside the section wrapper */}
+        <div className="bg-orbs" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', zIndex: 1, pointerEvents: 'none' }}>
+          <div className="orb orb-1" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.18 : 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', top: '10%', left: '10%', filter: 'blur(80px)' }} />
+          <div className="orb orb-2" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.18 : 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', bottom: '10%', right: '10%', filter: 'blur(80px)' }} />
+        </div>
+
+        {/* Card Component */}
+        <div className="card card-glass" style={{ width: '100%', maxWidth: '540px', padding: '4rem 3.5rem', position: 'relative', zIndex: 10, background: themeSettings[role].cardBg, border: themeSettings[role].cardBorder, boxShadow: themeSettings[role].shadow, color: themeSettings[role].textColor, borderRadius: '16px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: '0.8rem' }}>{roleLabels[role].icon}</div>
+            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: themeSettings[role].textColor }}>{roleLabels[role].title}</h2>
+            <p style={{ fontSize: '1.05rem', color: role === 'admin' ? '#94a3b8' : 'var(--text-muted)', marginTop: '6px' }}>MamaTrack GPS — Mukono District</p>
+          </div>
+
+          {error && (
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--danger-400)', padding: '12px 16px', borderRadius: '8px', fontSize: '0.95rem', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>⚠️</span> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: themeSettings[role].labelColor, marginBottom: '8px' }}>
+                <Mail size={16} style={{ color: 'var(--text-muted)' }} /> Email Address
+              </label>
+              <input
+                type="email"
+                className="form-input"
+                style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px', background: themeSettings[role].inputBg, color: themeSettings[role].textColor, border: role === 'admin' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)', width: '100%' }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. fatima@gmail.com"
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '2rem' }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: themeSettings[role].labelColor, marginBottom: '8px' }}>
+                <Key size={16} style={{ color: 'var(--text-muted)' }} /> Account Password
+              </label>
+              <input
+                type="password"
+                className="form-input"
+                style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px', background: themeSettings[role].inputBg, color: themeSettings[role].textColor, border: role === 'admin' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)', width: '100%' }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-block"
+              style={{
+                background: roleLabels[role].color,
+                color: role === 'driver' ? '#000000' : '#ffffff',
+                fontWeight: 700,
+                boxShadow: `0 4px 15px rgba(0,0,0,0.2)`,
+                padding: '14px 24px',
+                fontSize: '1.15rem',
+                borderRadius: '10px',
+                width: '100%',
+                border: 'none'
+              }}
+            >
+              Authenticate Portal →
+            </button>
+          </form>
+
+          <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
+            <button
+              onClick={handleFillCredentials}
+              className="btn btn-sm btn-ghost"
+              style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: role === 'admin' ? '#94a3b8' : 'inherit' }}
+            >
+              <UserCheck size={14} /> Auto-fill Demo Credentials
+            </button>
+
+            <div style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', gap: '12px' }}>
+              <Link to="/" style={{ color: role === 'admin' ? '#94a3b8' : 'var(--text-muted)', textDecoration: 'underline' }}>← Change Role</Link>
+              {role === 'mother' && (
+                <>
+                  <span>•</span>
+                  <Link to="/register" style={{ color: 'var(--rose-400)', fontWeight: 700, textDecoration: 'underline' }}>Create Account</Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ padding: '40px 0 20px', background: '#0b162b', color: '#909090' }}>
+        <div className="container">
+          <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', justifyContent: 'space-between' }}>
+            <div className="col-md-5">
+              <h4 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>MamaTrack System Access</h4>
+              <p style={{ color: '#909090', fontSize: '13px', lineHeight: 1.6 }}>
+                Secure gateway portal for Mukono District responders. Ensure your credentials are kept confidential and your GPS location receiver status is active.
+              </p>
+            </div>
+            <div className="col-md-4">
+              <h4 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Helpline Info</h4>
+              <p style={{ color: '#909090', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-phone" style={{ marginRight: '5px' }}></i> Emergency Helpline: 0800-MAMATRACK</p>
+              <p style={{ color: '#909090', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> support@mamatrack.go.ug</p>
+            </div>
+          </div>
+          <div className="row border-top" style={{ borderTop: '1px solid #16243d', marginTop: '30px', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ margin: 0, fontSize: '12px' }}>
+              Copyright &copy; 2026 MamaTrack GPS. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 };
