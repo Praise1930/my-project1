@@ -390,7 +390,7 @@ export const MotherDashboard: React.FC = () => {
                 {/* Left column hero texts & details */}
                 <div className="momentra-left-col">
                   {/* Eyebrow maternal health slogan */}
-                  <div style={{ display: 'inline-block', fontSize: '0.72rem', color: '#f43f5e', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase', background: 'rgba(244, 63, 94, 0.08)', padding: '4px 12px', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '1.25rem', color: '#4b5563', fontWeight: 700, letterSpacing: '0.02em', marginBottom: '12px', fontFamily: 'var(--font-heading)' }}>
                     Bringing a life should not end another
                   </div>
 

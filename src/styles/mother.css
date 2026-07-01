@@ -109,11 +109,10 @@ body.mother-theme-active::after {
     box-shadow: 0 15px 45px -10px rgba(251, 113, 133, 0.08), 0 25px 45px -20px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Momentra Hero Grid Structure */
 .momentra-hero-grid {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: var(--space-lg);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
     align-items: center;
     margin-bottom: var(--space-xl);
     flex: 1;
@@ -279,11 +278,10 @@ body.mother-theme-active::after {
     margin-left: 0;
 }
 
-/* Mother Frame & Visual Layering */
 .momentra-mother-frame {
     position: relative;
-    width: 320px;
-    height: 380px;
+    width: 440px;
+    height: 520px;
 }
 
 .momentra-mother-img {

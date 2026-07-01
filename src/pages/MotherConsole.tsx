@@ -332,8 +332,8 @@ export const MotherConsole: React.FC = () => {
         {/* Main Content Layout */}
         <main className="main-content" style={{ flex: 1, padding: '2rem var(--space-xl)', display: 'flex', flexDirection: 'column', margin: 0, width: '100%', maxWidth: '100vw' }}>
           
-          {/* Eyebrow badge slogan without quotes or symbols */}
-          <div style={{ display: 'inline-block', alignSelf: 'flex-start', fontSize: '0.72rem', color: '#f43f5e', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '14px', textTransform: 'uppercase', background: 'rgba(244, 63, 94, 0.08)', padding: '4px 12px', borderRadius: '12px' }}>
+          {/* Eyebrow slogan without quotes or symbols */}
+          <div style={{ fontSize: '1.25rem', color: '#4b5563', fontWeight: 700, letterSpacing: '0.02em', marginBottom: '14px', fontFamily: 'var(--font-heading)' }}>
             Bringing a life should not end another
           </div>
 
