@@ -168,7 +168,10 @@ export const Landing: React.FC = () => {
             border-color: rgba(59, 130, 246, 0.45) !important;
             box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12) !important;
           }
-          /* Prevent template hovers from overriding portal text colors */
+          /* Prevent template hovers from overriding portal text and background colors */
+          .portal-hover-card:hover .team-caption {
+            background: #ffffff !important;
+          }
           .portal-hover-card:hover h3 {
             color: inherit !important;
           }
@@ -289,9 +292,9 @@ export const Landing: React.FC = () => {
               </div>
             </div>
             
-            <div className="col-lg-6 col-md-10">
-              <div className="about-img" style={{ display: 'flex', gap: '15px' }}>
-                <img src="/assets/img/gallery/about1.png" alt="Clinical Center" style={{ width: '100%', borderRadius: '8px', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }} />
+            <div className="col-lg-6 col-md-10" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div className="about-img" style={{ width: '100%' }}>
+                <img src="/assets/img/gallery/about1.png" alt="Clinical Center" style={{ width: '100%', maxWidth: '440px', display: 'block', margin: '0 auto', borderRadius: '8px', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }} />
               </div>
             </div>
           </div>
