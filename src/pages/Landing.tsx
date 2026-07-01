@@ -162,8 +162,8 @@ export const Landing: React.FC = () => {
             
             {/* Expectant Mother */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.03)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: 'rgba(244,63,94,0.04)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🤰</div>
+              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+                <div style={{ background: 'rgba(244,63,94,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🤰</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
                   <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: '#64676c', flex: 1 }}>
@@ -178,8 +178,8 @@ export const Landing: React.FC = () => {
 
             {/* Clinical Doctor */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.03)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: 'rgba(16,185,129,0.04)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🩺</div>
+              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+                <div style={{ background: 'rgba(16,185,129,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🩺</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
                   <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: '#64676c', flex: 1 }}>
@@ -194,8 +194,8 @@ export const Landing: React.FC = () => {
 
             {/* Ambulance Driver */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.03)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: 'rgba(245,158,11,0.04)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🚑</div>
+              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+                <div style={{ background: 'rgba(245,158,11,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🚑</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
                   <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: '#64676c', flex: 1 }}>
@@ -210,8 +210,8 @@ export const Landing: React.FC = () => {
 
             {/* System Admin */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team" style={{ background: '#ffffff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,0.03)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: 'rgba(59,130,246,0.04)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>📡</div>
+              <div className="single-team" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.3s' }}>
+                <div style={{ background: 'rgba(59,130,246,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>📡</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>
                   <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: '#64676c', flex: 1 }}>
