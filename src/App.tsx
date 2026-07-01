@@ -6,6 +6,7 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { MotherDashboard } from './pages/MotherDashboard';
+import { MotherConsole } from './pages/MotherConsole';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { DoctorDashboard } from './pages/DoctorDashboard';
 import { DriverDashboard } from './pages/DriverDashboard';
@@ -22,6 +23,7 @@ const App: React.FC = () => {
 
         {/* Private Dashboard Portals */}
         <Route path="/mother" element={<MotherDashboard />} />
+        <Route path="/mother-console" element={<MotherConsole />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/doctor" element={<DoctorDashboard />} />
         <Route path="/driver" element={<DriverDashboard />} />

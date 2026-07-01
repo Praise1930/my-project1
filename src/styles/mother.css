@@ -3,37 +3,37 @@
    Premium Soft Pastel Rose, Peach, and Calming Glassmorphism
    ============================================================ */
 
-/* Fullscreen Background visibility overrides */
-body:has(.mother-theme) {
+/* Fullscreen Background visibility via body class pseudo-elements */
+body.mother-theme-active {
     background: transparent !important;
+}
+
+body.mother-theme-active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('/mother.jpeg') center/cover no-repeat fixed !important;
+    filter: blur(18px) brightness(0.94);
+    transform: scale(1.08); /* Avoid white edges */
+    z-index: -10;
+}
+
+body.mother-theme-active::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(254, 250, 250, 0.88) 0%, rgba(246, 239, 246, 0.93) 100%) !important;
+    z-index: -9;
 }
 
 .mother-theme {
     background: transparent !important;
-}
-
-/* Soft Calming Ambient Background with Full Page Blurred Picture */
-.mother-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -10;
-    background: url('/mother.jpeg') center/cover no-repeat !important;
-    filter: blur(18px) brightness(0.94);
-    transform: scale(1.08); /* Avoid white edges */
-    background-size: cover;
-}
-
-.mother-bg-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -9;
-    background: linear-gradient(135deg, rgba(254, 250, 250, 0.88) 0%, rgba(246, 239, 246, 0.93) 100%) !important;
 }
 
 /* Base Light Theme Tokens */
@@ -100,7 +100,7 @@ body:has(.mother-theme) {
     -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
     border: 1px solid rgba(255, 255, 255, 0.6) !important;
     border-radius: 24px !important;
-    box-shadow: 0 10px 40px -10px rgba(220, 38, 38, 0.04), 0 20px 40px -20px rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 10px 40px -10 rgba(220, 38, 38, 0.04), 0 20px 40px -20px rgba(0, 0, 0, 0.06) !important;
     color: var(--text-primary) !important;
 }
 
@@ -650,6 +650,20 @@ body:has(.mother-theme) {
     backdrop-filter: blur(10px) !important;
 }
 
+/* Three-column layout grid for consolidated view page */
+.console-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .console-grid-3 {
+        grid-template-columns: 1fr 1.2fr;
+    }
+}
+
 /* Mobile layout adjustments */
 @media (max-width: 900px) {
     .momentra-hero-grid {
@@ -666,6 +680,10 @@ body:has(.mother-theme) {
     }
 
     .consultation-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .console-grid-3 {
         grid-template-columns: 1fr;
     }
 }

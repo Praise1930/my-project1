@@ -41,6 +41,14 @@ export const MotherDashboard: React.FC = () => {
   const [chatLogs, setChatLogs] = useState<Record<number, { sender: 'patient' | 'doctor'; text: string; time: string }[]>>({});
   const [isTyping, setIsTyping] = useState(false);
 
+  // Toggle background body class for whole dashboard image transparency
+  useEffect(() => {
+    document.body.classList.add('mother-theme-active');
+    return () => {
+      document.body.classList.remove('mother-theme-active');
+    };
+  }, []);
+
   // 1. Authentication check
   useEffect(() => {
     const sessionUser = db.getCurrentSessionUser();
@@ -382,8 +390,8 @@ export const MotherDashboard: React.FC = () => {
                 {/* Left column hero texts & details */}
                 <div className="momentra-left-col">
                   {/* Eyebrow maternal health slogan */}
-                  <div style={{ fontSize: '0.75rem', color: '#f43f5e', fontWeight: 800, letterSpacing: '0.08em', marginBottom: '2px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ animation: 'active-emergency-pulse 1s infinite alternate' }}>✨</span> "Bringing a life should not end another"
+                  <div style={{ display: 'inline-block', fontSize: '0.72rem', color: '#f43f5e', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '8px', textTransform: 'uppercase', background: 'rgba(244, 63, 94, 0.08)', padding: '4px 12px', borderRadius: '12px' }}>
+                    Bringing a life should not end another
                   </div>
 
                   <h1 className="momentra-title">
@@ -396,12 +404,7 @@ export const MotherDashboard: React.FC = () => {
 
                   {/* Distinct hero actions: Get Started points to schedules, SOS triggers emergency */}
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '10px' }}>
-                    <button className="btn-momentra-primary" onClick={() => {
-                      const el = document.getElementById('dashboard-features');
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}>
+                    <button className="btn-momentra-primary" onClick={() => navigate('/mother-console')}>
                       Get Started
                     </button>
                     
