@@ -1,106 +1,160 @@
-// MamaTrack GPS — Role Selection Landing Page
+// MamaTrack GPS — Role Selection Landing Page (Option A: Premium Editorial Split)
 
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 export const Landing: React.FC = () => {
   return (
-    <div className="landing-page-root" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
-      {/* Background orbs */}
+    <div className="landing-theme" style={{ minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+      
+      {/* Background drifting orbs */}
       <div className="bg-orbs">
         <div className="orb orb-1" />
         <div className="orb orb-2" />
         <div className="orb orb-3" />
       </div>
 
-      <div className="wrapper" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="wrapper" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', padding: '1rem 1.5rem var(--space-xl)' }}>
+        
         {/* Header */}
-        <header className="site-header" style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.25rem' }}>
-            <span style={{ fontSize: '1.75rem' }}>🚑</span>
-            <span className="logo-text">Mama<span style={{ color: 'var(--rose-500)' }}>Track</span> GPS</span>
+        <header className="site-header" style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 0' }}>
+          <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.35rem', fontWeight: 800 }}>
+            <span style={{ fontSize: '1.8rem', background: 'rgba(244,63,94,0.08)', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤱</span>
+            <span className="logo-text" style={{ color: '#1f2937' }}>Mama<span style={{ color: '#f43f5e' }}>Track</span></span>
           </div>
-          <div className="header-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ animation: 'pulse-slow 2s infinite' }}>🛰️</span> Live System
+          <div className="header-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)', color: '#f43f5e', fontSize: '0.72rem', fontWeight: 700, padding: '4px 12px', borderRadius: '999px' }}>
+            <span style={{ animation: 'active-emergency-pulse 1.2s infinite alternate', display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%' }} /> Live System Tracker
           </div>
         </header>
 
-        {/* Hero Area */}
-        <div className="hero" style={{ marginTop: '2rem' }}>
-          <div className="hero-eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <span>📍</span> Mukono District, Uganda
+        {/* Editorial Split Hero Grid */}
+        <div className="landing-split-grid">
+          
+          {/* Left Column - Content & Role Selectors */}
+          <div>
+            {/* Slogan - large, dark charcoal, no quotes, no symbols, clean style */}
+            <div className="landing-slogan">
+              Bringing a life should not end another
+            </div>
+
+            <h1 className="landing-title">
+              Maternal Emergency<br />
+              Response, Reimagined
+            </h1>
+            <p className="landing-subtitle">
+              A GPS-powered dispatch network connecting expectant mothers, VHT coordinators, ambulance drivers, and clinical doctors in real time.
+            </p>
+
+            {/* Statistics row */}
+            <div className="milestones-row">
+              <div className="milestone-stat">
+                <span className="stat-number">50k+</span>
+                <span className="stat-label">Mothers Registered</span>
+              </div>
+              <div className="milestone-stat">
+                <span className="stat-number">12s</span>
+                <span className="stat-label">Avg Dispatch Speed</span>
+              </div>
+              <div className="milestone-stat">
+                <span className="stat-number">99.4%</span>
+                <span className="stat-label">Successful Rescues</span>
+              </div>
+            </div>
+
+            {/* Portal selections */}
+            <div className="landing-roles-title">Select your portal to continue</div>
+            <div className="landing-roles-grid">
+              
+              {/* Expectant Mother */}
+              <Link to="/login?role=mother" className="landing-role-card mother">
+                <div className="role-icon-wrap-mini">🤰</div>
+                <div className="role-text-mini">
+                  <span className="role-title-mini" style={{ color: '#fb7185' }}>Expectant Mother</span>
+                  <span className="role-desc-mini">Trigger SOS & track dispatch</span>
+                </div>
+              </Link>
+
+              {/* System Admin */}
+              <Link to="/login?role=admin" className="landing-role-card admin">
+                <div className="role-icon-wrap-mini">📡</div>
+                <div className="role-text-mini">
+                  <span className="role-title-mini" style={{ color: '#3b82f6' }}>System Admin</span>
+                  <span className="role-desc-mini">Command Center Dispatching</span>
+                </div>
+              </Link>
+
+              {/* Clinical Doctor */}
+              <Link to="/login?role=doctor" className="landing-role-card doctor">
+                <div className="role-icon-wrap-mini">🩺</div>
+                <div className="role-text-mini">
+                  <span className="role-title-mini" style={{ color: '#10b981' }}>Clinical Doctor</span>
+                  <span className="role-desc-mini">Triage dashboard logs</span>
+                </div>
+              </Link>
+
+              {/* Ambulance Driver */}
+              <Link to="/login?role=driver" className="landing-role-card driver">
+                <div className="role-icon-wrap-mini">🚑</div>
+                <div className="role-text-mini">
+                  <span className="role-title-mini" style={{ color: '#f59e0b' }}>Ambulance Driver</span>
+                  <span className="role-desc-mini">Navigation coordinates</span>
+                </div>
+              </Link>
+
+            </div>
+
+            {/* Register helper Strip */}
+            <div className="register-strip" style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'rgba(244,63,94,0.04)', border: '1px solid rgba(244,63,94,0.12)', borderRadius: '16px', padding: '10px 16px', gap: '12px' }}>
+              <div style={{ fontSize: '1.5rem' }}>🤱</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1f2937' }}>New expectant mother?</div>
+                <p style={{ fontSize: '0.72rem', color: '#6b7280', lineHeight: 1.3 }}>Register your pregnancy profile for emergency dispatch support.</p>
+              </div>
+              <Link to="/register" className="btn-momentra-primary" style={{ padding: '0.45rem 1.1rem', fontSize: '0.75rem', textDecoration: 'none', borderRadius: '12px', textAlign: 'center' }}>Register Free</Link>
+            </div>
+
           </div>
-          <h1 style={{ marginTop: '1rem', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, lineHeight: 1.1 }}>
-            Maternal Emergency<br />Response, Reimagined
-          </h1>
-          <p style={{ marginTop: '1.2rem', fontSize: '1.1rem', maxWidth: '650px', marginLeft: 'auto', marginRight: 'auto' }}>
-            A GPS-powered dispatch platform connecting expectant mothers, ambulance drivers, clinical doctors, and emergency administrators — in real time.
-          </p>
-        </div>
 
-        {/* Role Selection section */}
-        <p className="roles-heading" style={{ fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-          Select your portal to continue
-        </p>
+          {/* Right Column - Premium layered graphics */}
+          <div className="landing-frame-collage">
+            <img className="landing-mother-img" src="/mother.jpeg" alt="Expectant Mother Support" />
 
-        <div className="roles-grid">
-          {/* Mother Card */}
-          <Link to="/login?role=mother" className="role-card mother" id="card-mother">
-            <div className="role-icon-wrap">🤰</div>
-            <div className="role-title">Expectant Mother</div>
-            <p className="role-subtitle">Trigger emergency alerts, view ANC timelines, and track your rescue in real time</p>
-            <span className="role-btn">Enter Portal →</span>
-          </Link>
+            {/* Layered dispatcher widget */}
+            <div className="landing-widget widget-dispatcher">
+              <span style={{ fontSize: '1.4rem' }}>🚑</span>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#f59e0b' }}>Ambulance Dispatched</div>
+                <div style={{ fontSize: '0.62rem', color: '#6b7280' }}>James: En Route Goma Clinic</div>
+              </div>
+            </div>
 
-          {/* Admin Card */}
-          <Link to="/login?role=admin" className="role-card admin" id="card-admin">
-            <div className="role-icon-wrap">📡</div>
-            <div className="role-title">System Admin</div>
-            <p className="role-subtitle">Manage ambulance dispatching, monitor active emergencies, and coordinate regional facilities</p>
-            <span className="role-btn">Command Center →</span>
-          </Link>
+            {/* Layered hospital availability widget */}
+            <div className="landing-widget widget-hospital">
+              <span style={{ fontSize: '1.4rem' }}>🏥</span>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#10b981' }}>Mukono General Hospital</div>
+                <div style={{ fontSize: '0.62rem', color: '#6b7280' }}>CEmONC active • 3 beds available</div>
+              </div>
+            </div>
 
-          {/* Doctor Card */}
-          <Link to="/login?role=doctor" className="role-card doctor" id="card-doctor">
-            <div className="role-icon-wrap">🩺</div>
-            <div className="role-title">Clinical Doctor</div>
-            <p className="role-subtitle">Receive incoming emergency patient briefs, manage bed capacity, and record triage logs</p>
-            <span className="role-btn">Clinical Console →</span>
-          </Link>
+            {/* Layered live emergency alarm flasher */}
+            <div className="landing-widget widget-alert">
+              <span style={{ fontSize: '1.4rem', animation: 'active-emergency-pulse 1s infinite alternate' }}>🚨</span>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#f43f5e' }}>SOS Dispatch Active</div>
+                <div style={{ fontSize: '0.62rem', color: '#6b7280' }}>GPS Coordinates Verified</div>
+              </div>
+            </div>
 
-          {/* Driver Card */}
-          <Link to="/login?role=driver" className="role-card driver" id="card-driver">
-            <div className="role-icon-wrap">🚑</div>
-            <div className="role-title">Ambulance Driver</div>
-            <p className="role-subtitle">Receive navigation requests, update trip progress coordinates, and submit pre-duty safety checklists</p>
-            <span className="role-btn">Navigation Panel →</span>
-          </Link>
-        </div>
-
-        {/* Key highlights panel */}
-        <div className="features-row">
-          <div className="feat"><div className="feat-dot rose" /> One-tap emergency trigger</div>
-          <div className="feat"><div className="feat-dot blue" /> Live GPS tracking</div>
-          <div className="feat"><div className="feat-dot green" /> CEmONC hospital matching</div>
-          <div className="feat"><div className="feat-dot rose" /> Works offline (PWA)</div>
-          <div className="feat"><div className="feat-dot blue" /> Role-based dashboards</div>
-          <div className="feat"><div className="feat-dot green" /> Instant notifications</div>
-        </div>
-
-        {/* Register Strip */}
-        <div className="register-strip" style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: '600px' }}>
-          <div className="register-strip-icon">🤱</div>
-          <div className="register-strip-text" style={{ flex: 1 }}>
-            <strong style={{ fontSize: '0.95rem' }}>New expectant mother?</strong>
-            <span style={{ fontSize: '0.78rem' }}>Create a free account and register your pregnancy profile for emergency dispatch support</span>
           </div>
-          <Link to="/register" style={{ textDecoration: 'none' }}>Register Free</Link>
+
         </div>
 
         {/* Footer */}
-        <footer className="site-footer" style={{ marginTop: 'auto', padding: '1.5rem 0', width: '100%', maxWidth: '1000px', display: 'flex', justifyContent: 'center' }}>
-          © 2026 MamaTrack GPS &nbsp;•&nbsp; Mukono District Health Department, Uganda &nbsp;•&nbsp; Secure Encryption Active
+        <footer className="site-footer" style={{ marginTop: 'auto', padding: '1.5rem 0', width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'center', fontSize: '0.75rem', color: '#8b96a5', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+          © 2026 MamaTrack GPS • Mukono District Health Department, Uganda • Secure System Active
         </footer>
+
       </div>
     </div>
   );

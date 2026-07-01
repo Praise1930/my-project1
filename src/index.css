@@ -3,6 +3,7 @@
 @import './styles/admin.css';
 @import './styles/doctor.css';
 @import './styles/driver.css';
+@import './styles/landing.css';
 
 /* Custom Leaflet Map styling and positioning overrides */
 .map-container {
