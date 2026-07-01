@@ -1,4 +1,4 @@
-// MamaTrack GPS — System Admin Command Center (Dasher Theme Redesign)
+// MamaTrack GPS — System Admin Command Center (Dasher Theme Redesign with Admin Actions)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +24,45 @@ export const AdminDashboard: React.FC = () => {
   const [dispatchDoctor, setDispatchDoctor] = useState<number>(0);
   const [dispatchHospital, setDispatchHospital] = useState<number>(0);
   const [dispatchEta, setDispatchEta] = useState<number>(20);
+
+  // --- ADMIN ACTIONS STATE ---
+  
+  // Facilities Modals
+  const [showFacilityModal, setShowFacilityModal] = useState(false);
+  const [editFacility, setEditFacility] = useState<Hospital | null>(null);
+  const [facilityForm, setFacilityForm] = useState({
+    name: '',
+    type: 'government' as Hospital['type'],
+    latitude: 0.3536,
+    longitude: 32.7554,
+    address: '',
+    sub_county: 'Goma',
+    phone: '',
+    email: '',
+    total_beds: 15,
+    has_cemonc: true,
+    has_blood_bank: true,
+    blood_types_available: 'O+, O-, A+, B+',
+    has_surgical_capacity: true,
+    has_ambulance: true,
+    operating_hours: '24 Hours',
+    facility_type: 'HC IV'
+  });
+
+  // Personnel Modals
+  const [showPersonnelModal, setShowPersonnelModal] = useState(false);
+  const [personnelRole, setPersonnelRole] = useState<'doctor' | 'driver'>('doctor');
+  const [editPersonnel, setEditPersonnel] = useState<Doctor | Driver | null>(null);
+  const [personnelForm, setPersonnelForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    specialization: '', // specialization for doctor, role tag for driver
+    license_number: '',
+    hospital_id: 1,
+    vehicle_id: 0, // vehicle_id for driver, if any
+    years_experience: 3
+  });
 
   // Dynamic Stylesheet Loading for isolating theme CSS
   useEffect(() => {
@@ -172,6 +211,248 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  // --- FACILITY CRUD ACTIONS ---
+  
+  const handleOpenAddFacility = () => {
+    setEditFacility(null);
+    setFacilityForm({
+      name: '',
+      type: 'government',
+      latitude: 0.3536,
+      longitude: 32.7554,
+      address: '',
+      sub_county: 'Goma',
+      phone: '',
+      email: '',
+      total_beds: 15,
+      has_cemonc: true,
+      has_blood_bank: true,
+      blood_types_available: 'O+, O-, A+, B+',
+      has_surgical_capacity: true,
+      has_ambulance: true,
+      operating_hours: '24 Hours',
+      facility_type: 'HC IV'
+    });
+    setShowFacilityModal(true);
+  };
+
+  const handleOpenEditFacility = (h: Hospital) => {
+    setEditFacility(h);
+    setFacilityForm({
+      name: h.name,
+      type: h.type,
+      latitude: h.latitude,
+      longitude: h.longitude,
+      address: h.address,
+      sub_county: h.sub_county,
+      phone: h.phone,
+      email: h.email,
+      total_beds: h.total_beds,
+      has_cemonc: h.has_cemonc,
+      has_blood_bank: h.has_blood_bank,
+      blood_types_available: h.blood_types_available,
+      has_surgical_capacity: h.has_surgical_capacity,
+      has_ambulance: h.has_ambulance,
+      operating_hours: h.operating_hours,
+      facility_type: h.facility_type
+    });
+    setShowFacilityModal(true);
+  };
+
+  const handleDeleteFacility = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this health facility?')) {
+      const updated = db.hospitals.filter(h => h.id !== id);
+      db.hospitals = updated;
+      loadData();
+      alert('Health facility removed successfully.');
+    }
+  };
+
+  const handleFacilitySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editFacility) {
+      // Edit mode
+      const updated = db.hospitals.map(h => h.id === editFacility.id ? { 
+        ...h, 
+        name: facilityForm.name,
+        type: facilityForm.type,
+        latitude: Number(facilityForm.latitude),
+        longitude: Number(facilityForm.longitude),
+        address: facilityForm.address,
+        sub_county: facilityForm.sub_county,
+        phone: facilityForm.phone,
+        email: facilityForm.email,
+        total_beds: Number(facilityForm.total_beds),
+        available_beds: Math.min(Number(facilityForm.total_beds), h.available_beds),
+        has_cemonc: facilityForm.has_cemonc,
+        has_blood_bank: facilityForm.has_blood_bank,
+        blood_types_available: facilityForm.blood_types_available,
+        has_surgical_capacity: facilityForm.has_surgical_capacity,
+        has_ambulance: facilityForm.has_ambulance,
+        operating_hours: facilityForm.operating_hours,
+        facility_type: facilityForm.facility_type
+      } : h);
+      db.hospitals = updated;
+      alert('Facility details updated successfully.');
+    } else {
+      // Add mode
+      const nextHospId = Math.max(...db.hospitals.map(h => h.id), 0) + 1;
+      const newHospital: Hospital = {
+        id: nextHospId,
+        name: facilityForm.name,
+        type: facilityForm.type,
+        latitude: Number(facilityForm.latitude),
+        longitude: Number(facilityForm.longitude),
+        address: facilityForm.address,
+        sub_county: facilityForm.sub_county,
+        phone: facilityForm.phone,
+        email: facilityForm.email,
+        total_beds: Number(facilityForm.total_beds),
+        available_beds: Number(facilityForm.total_beds),
+        has_cemonc: facilityForm.has_cemonc,
+        has_blood_bank: facilityForm.has_blood_bank,
+        blood_types_available: facilityForm.blood_types_available,
+        has_surgical_capacity: facilityForm.has_surgical_capacity,
+        has_ambulance: facilityForm.has_ambulance,
+        operating_hours: facilityForm.operating_hours,
+        facility_type: facilityForm.facility_type
+      };
+      db.hospitals = [...db.hospitals, newHospital];
+      alert('New health facility added.');
+    }
+    setShowFacilityModal(false);
+    loadData();
+  };
+
+  // --- PERSONNEL CRUD ACTIONS ---
+  
+  const handleOpenAddPersonnel = (role: 'doctor' | 'driver') => {
+    setPersonnelRole(role);
+    setEditPersonnel(null);
+    setPersonnelForm({
+      full_name: '',
+      email: '',
+      phone: '',
+      specialization: role === 'doctor' ? 'Obstetrician' : 'Ambulance Driver',
+      license_number: '',
+      hospital_id: db.hospitals[0]?.id || 1,
+      vehicle_id: role === 'driver' ? (db.vehicles[0]?.id || 1) : 0,
+      years_experience: 3
+    });
+    setShowPersonnelModal(true);
+  };
+
+  const handleOpenEditPersonnel = (role: 'doctor' | 'driver', person: Doctor | Driver) => {
+    setPersonnelRole(role);
+    setEditPersonnel(person);
+    const u = db.users.find(usr => usr.id === person.user_id);
+    
+    setPersonnelForm({
+      full_name: u?.full_name || '',
+      email: u?.email || '',
+      phone: u?.phone || '',
+      specialization: role === 'doctor' ? (person as Doctor).specialization : (person as Driver).driver_role,
+      license_number: person.license_number,
+      hospital_id: person.hospital_id,
+      vehicle_id: role === 'driver' ? ((person as Driver).vehicle_id || 0) : 0,
+      years_experience: role === 'doctor' ? ((person as Doctor).years_experience || 3) : 3
+    });
+    setShowPersonnelModal(true);
+  };
+
+  const handleDeletePersonnel = (role: 'doctor' | 'driver', id: number, userId: number) => {
+    if (window.confirm(`Are you sure you want to delete this ${role}?`)) {
+      if (role === 'doctor') {
+        db.doctors = db.doctors.filter(d => d.id !== id);
+      } else {
+        db.drivers = db.drivers.filter(d => d.id !== id);
+      }
+      db.users = db.users.filter(u => u.id !== userId);
+      loadData();
+      alert('Personnel profile deleted successfully.');
+    }
+  };
+
+  const handlePersonnelSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editPersonnel) {
+      // Edit User
+      db.users = db.users.map(u => u.id === editPersonnel.user_id ? {
+        ...u,
+        full_name: personnelForm.full_name,
+        email: personnelForm.email,
+        phone: personnelForm.phone
+      } : u);
+
+      if (personnelRole === 'doctor') {
+        db.doctors = db.doctors.map(d => d.id === editPersonnel.id ? {
+          ...d,
+          hospital_id: Number(personnelForm.hospital_id),
+          specialization: personnelForm.specialization,
+          license_number: personnelForm.license_number,
+          years_experience: Number(personnelForm.years_experience)
+        } as Doctor : d);
+      } else {
+        db.drivers = db.drivers.map(d => d.id === editPersonnel.id ? {
+          ...d,
+          hospital_id: Number(personnelForm.hospital_id),
+          vehicle_id: Number(personnelForm.vehicle_id) || null,
+          license_number: personnelForm.license_number
+        } as Driver : d);
+      }
+      alert('Personnel details updated successfully.');
+    } else {
+      // Create User
+      const nextUserId = Math.max(...db.users.map(u => u.id), 0) + 1;
+      const newUser: User = {
+        id: nextUserId,
+        full_name: personnelForm.full_name,
+        email: personnelForm.email,
+        phone: personnelForm.phone,
+        password_hash: 'password123', // default demo credential
+        role: personnelRole,
+        avatar: null,
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      db.users = [...db.users, newUser];
+
+      if (personnelRole === 'doctor') {
+        const nextDocId = Math.max(...db.doctors.map(d => d.id), 0) + 1;
+        const newDoctor: Doctor = {
+          id: nextDocId,
+          user_id: nextUserId,
+          hospital_id: Number(personnelForm.hospital_id),
+          specialization: personnelForm.specialization,
+          license_number: personnelForm.license_number,
+          is_on_duty: true,
+          shift_start: '08:00',
+          shift_end: '17:00',
+          years_experience: Number(personnelForm.years_experience)
+        };
+        db.doctors = [...db.doctors, newDoctor];
+      } else {
+        const nextDrvId = Math.max(...db.drivers.map(d => d.id), 0) + 1;
+        const newDriver: Driver = {
+          id: nextDrvId,
+          user_id: nextUserId,
+          hospital_id: Number(personnelForm.hospital_id),
+          vehicle_id: Number(personnelForm.vehicle_id) || null,
+          license_number: personnelForm.license_number,
+          driver_role: 'Ambulance Driver',
+          is_on_duty: true,
+          current_latitude: 0.3536,
+          current_longitude: 32.7554
+        };
+        db.drivers = [...db.drivers, newDriver];
+      }
+      alert(`New ${personnelRole} profile configured successfully.`);
+    }
+
+    setShowPersonnelModal(false);
+    loadData();
+  };
+
   return (
     <div className="dasher-dashboard" style={{ background: '#f8fafd', minHeight: '100vh', fontFamily: "'Public Sans', sans-serif", display: 'flex' }}>
       
@@ -272,6 +553,43 @@ export const AdminDashboard: React.FC = () => {
           padding: 3px 8px;
           border-radius: 4px;
         }
+        .dasher-dashboard .admin-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(15, 23, 42, 0.4);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .dasher-dashboard .admin-modal-container {
+          background: #ffffff;
+          border-radius: 8px;
+          width: 100%;
+          max-width: 520px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          overflow: hidden;
+          border: 1px solid #cbd5e1;
+        }
+        .dasher-dashboard .form-label-admin {
+          font-size: 12px;
+          font-weight: 600;
+          color: #475569;
+          display: block;
+          margin-bottom: 6px;
+        }
+        .dasher-dashboard .form-control-admin {
+          font-size: 13px;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #cbd5e1;
+          background: #f8fafc;
+          width: 100%;
+        }
       `}</style>
 
       {/* VERTICAL SIDEBAR */}
@@ -309,10 +627,12 @@ export const AdminDashboard: React.FC = () => {
         <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700 }}>
-              {user.full_name.charAt(0)}
+              {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').charAt(0)}
             </div>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>{user.full_name.split(' ')[0]}</div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
+                {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').split(' ')[0]}
+              </div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>System Admin</div>
             </div>
           </div>
@@ -339,7 +659,7 @@ export const AdminDashboard: React.FC = () => {
           <button 
             onClick={handleResetDatabase} 
             className="btn btn-outline-secondary" 
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155' }}
           >
             <RefreshCw size={13} /> Reset Database
           </button>
@@ -347,8 +667,10 @@ export const AdminDashboard: React.FC = () => {
 
         {/* GREETING BANNER WIDGET */}
         <div className="bg-gradient-mixed rounded-3 p-6 mb-6" style={{ padding: '24px', borderRadius: '8px', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 4px', color: '#ffffff' }}>👋 Hello, {user.full_name.split(' ')[0]}!</h2>
-          <p style={{ margin: 0, opacity: 0.85, fontSize: '14px', lineHeight: 1.5 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 4px', color: '#ffffff' }}>
+            👋 Hello, {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '')}!
+          </h2>
+          <p style={{ margin: 0, opacity: 0.95, fontSize: '14px', lineHeight: 1.5, color: '#cbd5e1' }}>
             Welcome to the regional command console. Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District.
           </p>
         </div>
@@ -522,22 +844,51 @@ export const AdminDashboard: React.FC = () => {
         {/* TAB 2: HEALTH FACILITIES */}
         {activeTab === 'facilities' && (
           <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>Hospital Referral Network Directory</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Hospital Referral Network Directory</h4>
+              <button 
+                onClick={handleOpenAddFacility}
+                className="btn btn-primary" 
+                style={{ fontSize: '13px', fontWeight: 700, padding: '6px 16px', border: 'none', background: '#3b82f6', borderRadius: '4px' }}
+              >
+                ➕ Add Health Facility
+              </button>
+            </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               {hospitals.map(h => (
-                <div key={h.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <strong style={{ fontSize: '15px', color: '#0f172a' }}>{h.name}</strong>
-                    <span className="badge-alert-success">{h.type.toUpperCase()}</span>
+                <div key={h.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>{h.name}</strong>
+                      <span className="badge-alert-success">{h.type.toUpperCase()}</span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>📍 {h.address}</div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', color: '#334155', borderTop: '1px dashed #e2e8f0', paddingTop: '10px', marginBottom: '14px' }}>
+                      <div>Ward Beds: <strong>{h.available_beds} / {h.total_beds}</strong></div>
+                      <div>Clinic Hotline: <strong>{h.phone}</strong></div>
+                      <div>Surgical Capacity: <strong>{h.has_surgical_capacity ? '✅ Available' : '❌ None'}</strong></div>
+                      <div>CEmONC capability: <strong>{h.has_cemonc ? '✅ Yes' : '❌ No'}</strong></div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>📍 {h.address}</div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', color: '#334155', borderTop: '1px dashed #e2e8f0', paddingTop: '10px' }}>
-                    <div>Ward Beds: <strong>{h.available_beds} / {h.total_beds}</strong></div>
-                    <div>Clinic Hotline: <strong>{h.phone}</strong></div>
-                    <div>Surgical Capacity: <strong>{h.has_surgical_capacity ? '✅ Available' : '❌ None'}</strong></div>
-                    <div>CEmONC capability: <strong>{h.has_cemonc ? '✅ Yes' : '❌ No'}</strong></div>
+
+                  {/* Actions bar */}
+                  <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '12px', justifyContent: 'flex-end' }}>
+                    <button 
+                      onClick={() => handleOpenEditFacility(h)}
+                      className="btn btn-sm btn-outline-secondary" 
+                      style={{ fontSize: '12px', padding: '4px 10px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteFacility(h.id)}
+                      className="btn btn-sm btn-outline-danger" 
+                      style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
+                    >
+                      🗑️ Delete
+                    </button>
                   </div>
                 </div>
               ))}
@@ -551,20 +902,48 @@ export const AdminDashboard: React.FC = () => {
             
             {/* Doctors roster */}
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-              <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>Medical Specialists Duty Schedule</h5>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Specialists Roster</h5>
+                <button 
+                  onClick={() => handleOpenAddPersonnel('doctor')}
+                  className="btn btn-sm btn-primary"
+                  style={{ fontSize: '12px', fontWeight: 700, padding: '4px 12px', border: 'none', background: '#3b82f6' }}
+                >
+                  ➕ Add Doctor
+                </button>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {doctors.map(d => {
                   const u = db.users.find(usr => usr.id === d.user_id);
                   const h = hospitals.find(hosp => hosp.id === d.hospital_id);
                   return (
-                    <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '12px', background: '#f8fafc' }}>
-                      <div>
-                        <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{d.specialization} · {h?.name}</div>
+                    <div key={d.id} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '12px', background: '#f8fafc' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <div>
+                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{d.specialization} · {h?.name}</div>
+                        </div>
+                        <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                          {d.is_on_duty ? 'ON SHIFT' : 'STANDBY'}
+                        </span>
                       </div>
-                      <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                        {d.is_on_duty ? 'ON SHIFT' : 'STANDBY'}
-                      </span>
+
+                      {/* Doctor actions row */}
+                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                        <button 
+                          onClick={() => handleOpenEditPersonnel('doctor', d)}
+                          style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
+                          style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -573,20 +952,48 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Drivers roster */}
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-              <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>Ambulance Drivers Duty Schedule</h5>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Ambulance Drivers</h5>
+                <button 
+                  onClick={() => handleOpenAddPersonnel('driver')}
+                  className="btn btn-sm btn-primary"
+                  style={{ fontSize: '12px', fontWeight: 700, padding: '4px 12px', border: 'none', background: '#3b82f6' }}
+                >
+                  ➕ Add Driver
+                </button>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {drivers.map(d => {
                   const u = db.users.find(usr => usr.id === d.user_id);
                   const v = vehicles.find(veh => veh.id === d.vehicle_id);
                   return (
-                    <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '12px', background: '#f8fafc' }}>
-                      <div>
-                        <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Plate: {v?.plate_number || 'No vehicle'} ({v?.vehicle_type})</div>
+                    <div key={d.id} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '12px', background: '#f8fafc' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <div>
+                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Plate: {v?.plate_number || 'No vehicle'} ({v?.vehicle_type})</div>
+                        </div>
+                        <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                          {d.is_on_duty ? 'ACTIVE SHIFT' : 'OFF SHIFT'}
+                        </span>
                       </div>
-                      <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                        {d.is_on_duty ? 'ACTIVE SHIFT' : 'OFF SHIFT'}
-                      </span>
+
+                      {/* Driver actions row */}
+                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                        <button 
+                          onClick={() => handleOpenEditPersonnel('driver', d)}
+                          style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
+                          style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -703,6 +1110,312 @@ export const AdminDashboard: React.FC = () => {
         )}
 
       </main>
+
+      {/* --- ADD/EDIT HEALTH FACILITY MODAL --- */}
+      {showFacilityModal && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-container">
+            <div style={{ background: '#3b82f6', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
+                {editFacility ? '✏️ Edit Referral Facility' : '🏥 Add New Referral Facility'}
+              </h5>
+              <button onClick={() => setShowFacilityModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <form onSubmit={handleFacilitySubmit} style={{ padding: '20px', maxHeight: '480px', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Facility Name</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin" 
+                  value={facilityForm.name} 
+                  onChange={e => setFacilityForm({ ...facilityForm, name: e.target.value })} 
+                  placeholder="e.g. Mukono General Hospital" 
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Facility Type</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={facilityForm.type} 
+                    onChange={e => setFacilityForm({ ...facilityForm, type: e.target.value as Hospital['type'] })}
+                  >
+                    <option value="government">Government</option>
+                    <option value="private">Private</option>
+                    <option value="ngo">NGO / Mission</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Level Class</label>
+                  <input 
+                    type="text" 
+                    className="form-control-admin" 
+                    value={facilityForm.facility_type} 
+                    onChange={e => setFacilityForm({ ...facilityForm, facility_type: e.target.value })} 
+                    placeholder="e.g. General Hospital / HC IV" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Latitude</label>
+                  <input 
+                    type="number" 
+                    step="0.000001" 
+                    className="form-control-admin" 
+                    value={facilityForm.latitude} 
+                    onChange={e => setFacilityForm({ ...facilityForm, latitude: Number(e.target.value) })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="form-label-admin">Longitude</label>
+                  <input 
+                    type="number" 
+                    step="0.000001" 
+                    className="form-control-admin" 
+                    value={facilityForm.longitude} 
+                    onChange={e => setFacilityForm({ ...facilityForm, longitude: Number(e.target.value) })} 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Physical Address</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin" 
+                  value={facilityForm.address} 
+                  onChange={e => setFacilityForm({ ...facilityForm, address: e.target.value })} 
+                  placeholder="e.g. Kampala-Jinja Highway, Mukono Town" 
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Sub County</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={facilityForm.sub_county} 
+                    onChange={e => setFacilityForm({ ...facilityForm, sub_county: e.target.value })}
+                  >
+                    <option value="Goma">Goma</option>
+                    <option value="Nama">Nama</option>
+                    <option value="Mukono Municipality">Mukono Municipality</option>
+                    <option value="Koome">Koome</option>
+                    <option value="Ntenjeru">Ntenjeru</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Hotline Phone</label>
+                  <input 
+                    type="tel" 
+                    className="form-control-admin" 
+                    value={facilityForm.phone} 
+                    onChange={e => setFacilityForm({ ...facilityForm, phone: e.target.value })} 
+                    placeholder="e.g. +256-788-000-000" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Total Ward Beds</label>
+                  <input 
+                    type="number" 
+                    className="form-control-admin" 
+                    value={facilityForm.total_beds} 
+                    onChange={e => setFacilityForm({ ...facilityForm, total_beds: Number(e.target.value) })} 
+                    min={1} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="form-label-admin">Facility Email</label>
+                  <input 
+                    type="email" 
+                    className="form-control-admin" 
+                    value={facilityForm.email} 
+                    onChange={e => setFacilityForm({ ...facilityForm, email: e.target.value })} 
+                    placeholder="clinic@mamatrack.go.ug" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <input 
+                    type="checkbox" 
+                    id="has_surgical_capacity"
+                    checked={facilityForm.has_surgical_capacity} 
+                    onChange={e => setFacilityForm({ ...facilityForm, has_surgical_capacity: e.target.checked })} 
+                  />
+                  <label htmlFor="has_surgical_capacity" style={{ fontSize: '11px', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>Surgical Theater</label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <input 
+                    type="checkbox" 
+                    id="has_cemonc"
+                    checked={facilityForm.has_cemonc} 
+                    onChange={e => setFacilityForm({ ...facilityForm, has_cemonc: e.target.checked })} 
+                  />
+                  <label htmlFor="has_cemonc" style={{ fontSize: '11px', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>CEmONC Capability</label>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+                <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => setShowFacilityModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#3b82f6', border: 'none' }}>Save Facility</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- ADD/EDIT PERSONNEL MODAL --- */}
+      {showPersonnelModal && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-container">
+            <div style={{ background: '#3b82f6', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
+                {editPersonnel ? `✏️ Edit ${personnelRole.toUpperCase()}` : `👥 Add New ${personnelRole.toUpperCase()}`}
+              </h5>
+              <button onClick={() => setShowPersonnelModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <form onSubmit={handlePersonnelSubmit} style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Full Name</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin" 
+                  value={personnelForm.full_name} 
+                  onChange={e => setPersonnelForm({ ...personnelForm, full_name: e.target.value })} 
+                  placeholder="e.g. Dr. Dan Ssemanda" 
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Email Address</label>
+                  <input 
+                    type="email" 
+                    className="form-control-admin" 
+                    value={personnelForm.email} 
+                    onChange={e => setPersonnelForm({ ...personnelForm, email: e.target.value })} 
+                    placeholder="name@mamatrack.go.ug" 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="form-label-admin">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    className="form-control-admin" 
+                    value={personnelForm.phone} 
+                    onChange={e => setPersonnelForm({ ...personnelForm, phone: e.target.value })} 
+                    placeholder="+256-772-000-000" 
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Assigned Facility</label>
+                <select 
+                  className="form-control-admin" 
+                  value={personnelForm.hospital_id} 
+                  onChange={e => setPersonnelForm({ ...personnelForm, hospital_id: Number(e.target.value) })}
+                >
+                  {hospitals.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                {personnelRole === 'doctor' ? (
+                  <>
+                    <div>
+                      <label className="form-label-admin">Specialization</label>
+                      <input 
+                        type="text" 
+                        className="form-control-admin" 
+                        value={personnelForm.specialization} 
+                        onChange={e => setPersonnelForm({ ...personnelForm, specialization: e.target.value })} 
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label-admin">Years Experience</label>
+                      <input 
+                        type="number" 
+                        className="form-control-admin" 
+                        value={personnelForm.years_experience} 
+                        onChange={e => setPersonnelForm({ ...personnelForm, years_experience: Number(e.target.value) })} 
+                        required 
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="form-label-admin">Driver License No.</label>
+                      <input 
+                        type="text" 
+                        className="form-control-admin" 
+                        value={personnelForm.license_number} 
+                        onChange={e => setPersonnelForm({ ...personnelForm, license_number: e.target.value })} 
+                        required 
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label-admin">Assigned Ambulance</label>
+                      <select 
+                        className="form-control-admin" 
+                        value={personnelForm.vehicle_id} 
+                        onChange={e => setPersonnelForm({ ...personnelForm, vehicle_id: Number(e.target.value) })}
+                      >
+                        <option value="0">-- None / Standby --</option>
+                        {vehicles.map(v => (
+                          <option key={v.id} value={v.id}>{v.plate_number} ({v.vehicle_type})</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label className="form-label-admin">Professional License / Registration No.</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin" 
+                  value={personnelForm.license_number} 
+                  onChange={e => setPersonnelForm({ ...personnelForm, license_number: e.target.value })} 
+                  placeholder="e.g. MOH/DOC-8321"
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+                <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => setShowPersonnelModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#3b82f6', border: 'none' }}>Save Personnel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
