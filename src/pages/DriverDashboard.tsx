@@ -359,6 +359,7 @@ export const DriverDashboard: React.FC = () => {
                     zoom={13}
                     markers={getMapMarkers()}
                     routePoints={getRoutePoints()}
+                    theme="dark"
                   />
                 </div>
               </div>
@@ -456,6 +457,7 @@ export const DriverDashboard: React.FC = () => {
                     zoom={13}
                     markers={getMapMarkers()}
                     routePoints={getRoutePoints()}
+                    theme="dark"
                   />
                 </div>
               </div>

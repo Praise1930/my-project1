@@ -20,6 +20,7 @@ interface MapComponentProps {
   routePoints?: [number, number][]; // [lat, lng] array
   emergencyCircle?: { lat: number; lng: number; radius: number } | null;
   interactive?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 // Marker icon generator using Emojis and styled HTML divs for maximum reliability
@@ -75,13 +76,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   markers = [],
   routePoints = [],
   emergencyCircle = null,
-  interactive = true
+  interactive = true,
+  theme = 'light'
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const routeLineRef = useRef<L.Polyline | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   // 1. Initialize Map Object (only once)
   useEffect(() => {
@@ -96,12 +99,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       scrollWheelZoom: false,
     });
 
-    // Clear and high-contrast standard OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
-    }).addTo(map);
-
     mapRef.current = map;
     markersGroupRef.current = L.layerGroup().addTo(map);
 
@@ -112,6 +109,31 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       }
     };
   }, []);
+
+  // Update Tile Layer dynamically when theme changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Remove existing tile layer if it exists
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+    }
+
+    const tileUrl = theme === 'dark'
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+    const attribution = theme === 'dark'
+      ? '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    const tileLayer = L.tileLayer(tileUrl, {
+      attribution: attribution,
+      maxZoom: 19
+    }).addTo(mapRef.current);
+
+    tileLayerRef.current = tileLayer;
+  }, [theme]);
 
   // 2. Update Map view on center coordinates change
   useEffect(() => {
