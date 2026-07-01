@@ -75,7 +75,6 @@ export const Landing: React.FC = () => {
                           <li><a href="#top" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>Home</a></li>
                           <li><a href="#portals" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>System Portals</a></li>
                           <li><a href="#about" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>About</a></li>
-                          <li><a href="#gallery" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>Camp Gallery</a></li>
                           <li><a href="#news" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>News</a></li>
                         </ul>
                       </nav>
@@ -152,12 +151,29 @@ export const Landing: React.FC = () => {
           .portal-hover-card:hover {
             transform: translateY(-6px) !important;
           }
+          /* Dynamic operational hover overrides matching UI themes */
+          .portal-mother:hover {
+            border-color: rgba(244, 63, 94, 0.45) !important;
+            box-shadow: 0 12px 30px rgba(244, 63, 94, 0.12) !important;
+          }
+          .portal-doctor:hover {
+            border-color: rgba(16, 185, 129, 0.45) !important;
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.12) !important;
+          }
+          .portal-driver:hover {
+            border-color: rgba(245, 158, 11, 0.45) !important;
+            box-shadow: 0 12px 30px rgba(245, 158, 11, 0.12) !important;
+          }
+          .portal-admin:hover {
+            border-color: rgba(59, 130, 246, 0.45) !important;
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12) !important;
+          }
           /* Prevent template hovers from overriding portal text colors */
           .portal-hover-card:hover h3 {
             color: inherit !important;
           }
           .portal-hover-card:hover span {
-            color: #4b5563 !important; /* Enforces highly readable dark gray */
+            color: #4b5563 !important;
           }
           .portal-hover-card:hover a.btn {
             color: #ffffff !important;
@@ -181,7 +197,7 @@ export const Landing: React.FC = () => {
             
             {/* Expectant Mother */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div className="single-team portal-hover-card portal-mother" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(244,63,94,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🤰</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
@@ -197,7 +213,7 @@ export const Landing: React.FC = () => {
 
             {/* Clinical Doctor */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div className="single-team portal-hover-card portal-doctor" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(16,185,129,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🩺</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
@@ -213,7 +229,7 @@ export const Landing: React.FC = () => {
 
             {/* Ambulance Driver */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div className="single-team portal-hover-card portal-driver" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(245,158,11,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>🚑</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
@@ -229,7 +245,7 @@ export const Landing: React.FC = () => {
 
             {/* System Admin */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
-              <div className="single-team portal-hover-card" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div className="single-team portal-hover-card portal-admin" style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: 'rgba(59,130,246,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center', fontSize: '3.5rem' }}>📡</div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>
@@ -282,61 +298,6 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* GALLERY AREA */}
-      <section id="gallery" className="gallery-area section-padding30" style={{ padding: '90px 0', background: '#f8fafd' }}>
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-lg-6">
-              <div className="section-tittle text-center mb-100" style={{ textAlign: 'center', marginBottom: '60px' }}>
-                <span style={{ color: '#0f61ef', fontWeight: 700 }}>Our Camp Gallery</span>
-                <h2>Maternal Care Facilities</h2>
-              </div>
-            </div>
-          </div>
-          <div className="row">
-            {/* Left Column */}
-            <div className="col-lg-6">
-              <div className="row">
-                <div className="col-lg-12" style={{ marginBottom: '24px' }}>
-                  <div className="single-gallery" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                    <div className="gallery-img big-img" style={{ backgroundImage: 'url(/assets/img/gallery/gallery1.png)', height: '400px', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  </div>
-                </div>
-                <div className="col-lg-6 col-md-6 col-sm-6" style={{ marginBottom: '24px' }}>
-                  <div className="single-gallery" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                    <div className="gallery-img small-img" style={{ backgroundImage: 'url(/assets/img/gallery/gallery2.png)', height: '200px', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  </div>
-                </div>
-                <div className="col-lg-6 col-md-6 col-sm-6" style={{ marginBottom: '24px' }}>
-                  <div className="single-gallery" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                    <div className="gallery-img small-img" style={{ backgroundImage: 'url(/assets/img/gallery/gallery3.png)', height: '200px', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Right Column */}
-            <div className="col-lg-6">
-              <div className="row">
-                <div className="col-lg-6 col-md-6 col-sm-6" style={{ marginBottom: '24px' }}>
-                  <div className="single-gallery" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                    <div className="gallery-img small-img" style={{ backgroundImage: 'url(/assets/img/gallery/gallery4.png)', height: '200px', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  </div>
-                </div>
-                <div className="col-lg-6 col-md-6 col-sm-6" style={{ marginBottom: '24px' }}>
-                  <div className="single-gallery" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                    <div className="gallery-img small-img" style={{ backgroundImage: 'url(/assets/img/gallery/gallery5.png)', height: '200px', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  </div>
-                </div>
-                <div className="col-lg-12" style={{ marginBottom: '24px' }}>
-                  <div className="single-gallery" style={{ borderRadius: '8px', overflow: 'hidden' }}>
-                    <div className="gallery-img big-img" style={{ backgroundImage: 'url(/assets/img/gallery/gallery6.png)', height: '400px', backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* TESTIMONIAL STARUPS START */}
       <section className="all-starups-area testimonial-area fix" style={{ display: 'flex', alignItems: 'center', background: '#0b162b', color: '#ffffff', minHeight: '480px' }}>
