@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../services/db';
-import { Key, Mail, UserCheck } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -153,87 +153,96 @@ export const Login: React.FC = () => {
           <div className="orb orb-2" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.18 : 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', bottom: '10%', right: '10%', filter: 'blur(80px)' }} />
         </div>
 
-        {/* Card Component */}
-        <div className="card card-glass" style={{ width: '100%', maxWidth: '540px', padding: '4rem 3.5rem', position: 'relative', zIndex: 10, background: themeSettings[role].cardBg, border: themeSettings[role].cardBorder, boxShadow: themeSettings[role].shadow, color: themeSettings[role].textColor, borderRadius: '16px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '0.8rem' }}>{roleLabels[role].icon}</div>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: themeSettings[role].textColor }}>{roleLabels[role].title}</h2>
-            <p style={{ fontSize: '1.05rem', color: role === 'admin' ? '#94a3b8' : 'var(--text-muted)', marginTop: '6px' }}>MamaTrack GPS — Mukono District</p>
+        {/* Card Component (cloudbau Bootstrap Login Style) */}
+        <div className="card" style={{ width: '100%', maxWidth: '440px', padding: 0, position: 'relative', zIndex: 10, background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', boxShadow: '0 8px 30px rgba(0,0,0,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
+          
+          {/* cloudbau themed header block */}
+          <div style={{ background: role === 'admin' ? '#0f172a' : roleLabels[role].color, padding: '28px 24px', textAlign: 'center', color: '#ffffff' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '4px' }}>
+              MAMATRACK
+            </div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.1em', opacity: 0.85, textTransform: 'uppercase' }}>
+              {roleLabels[role].title}
+            </div>
           </div>
 
-          {error && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--danger-400)', padding: '12px 16px', borderRadius: '8px', fontSize: '0.95rem', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>⚠️</span> {error}
-            </div>
-          )}
+          {/* Form Content Body */}
+          <div style={{ padding: '36px 30px', background: '#ffffff' }}>
+            
+            {error && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>⚠️</span> {error}
+              </div>
+            )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group" style={{ marginBottom: '1.75rem' }}>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: themeSettings[role].labelColor, marginBottom: '8px' }}>
-                <Mail size={16} style={{ color: 'var(--text-muted)' }} /> Email Address
-              </label>
-              <input
-                type="email"
-                className="form-input"
-                style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px', background: themeSettings[role].inputBg, color: themeSettings[role].textColor, border: role === 'admin' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)', width: '100%' }}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. fatima@gmail.com"
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: '#4b5563', marginBottom: '6px' }}>
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  className="form-input"
+                  style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. fatima@gmail.com"
+                  required
+                />
+              </div>
 
-            <div className="form-group" style={{ marginBottom: '2rem' }}>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem', fontWeight: 600, color: themeSettings[role].labelColor, marginBottom: '8px' }}>
-                <Key size={16} style={{ color: 'var(--text-muted)' }} /> Account Password
-              </label>
-              <input
-                type="password"
-                className="form-input"
-                style={{ padding: '14px 20px', fontSize: '1.1rem', borderRadius: '10px', background: themeSettings[role].inputBg, color: themeSettings[role].textColor, border: role === 'admin' ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.12)', width: '100%' }}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
+              <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: '#4b5563', marginBottom: '6px' }}>
+                  Account Password
+                </label>
+                <input
+                  type="password"
+                  className="form-input"
+                  style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
 
-            <button
-              type="submit"
-              className="btn btn-block"
-              style={{
-                background: roleLabels[role].color,
-                color: role === 'driver' ? '#000000' : '#ffffff',
-                fontWeight: 700,
-                boxShadow: `0 4px 15px rgba(0,0,0,0.2)`,
-                padding: '14px 24px',
-                fontSize: '1.15rem',
-                borderRadius: '10px',
-                width: '100%',
-                border: 'none'
-              }}
-            >
-              Authenticate Portal →
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="btn btn-block"
+                style={{
+                  background: role === 'admin' ? '#0f172a' : roleLabels[role].color,
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  padding: '12px 20px',
+                  fontSize: '1.05rem',
+                  borderRadius: '4px',
+                  width: '100%',
+                  border: 'none',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                }}
+              >
+                Authenticate Portal →
+              </button>
+            </form>
 
-          <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
-            <button
-              onClick={handleFillCredentials}
-              className="btn btn-sm btn-ghost"
-              style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: role === 'admin' ? '#94a3b8' : 'inherit' }}
-            >
-              <UserCheck size={14} /> Auto-fill Demo Credentials
-            </button>
+            <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+              <button
+                onClick={handleFillCredentials}
+                className="btn btn-sm btn-ghost"
+                style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: '#6b7280', textDecoration: 'underline' }}
+              >
+                <UserCheck size={14} /> Auto-fill Demo Credentials
+              </button>
 
-            <div style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '8px', display: 'flex', gap: '12px' }}>
-              <Link to="/" style={{ color: role === 'admin' ? '#94a3b8' : 'var(--text-muted)', textDecoration: 'underline' }}>← Change Role</Link>
-              {role === 'mother' && (
-                <>
-                  <span>•</span>
-                  <Link to="/register" style={{ color: 'var(--rose-400)', fontWeight: 700, textDecoration: 'underline' }}>Create Account</Link>
-                </>
-              )}
+              <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '12px', display: 'flex', gap: '12px' }}>
+                <Link to="/" style={{ color: '#4b5563', textDecoration: 'underline' }}>← Change Role</Link>
+                {role === 'mother' && (
+                  <>
+                    <span>•</span>
+                    <Link to="/register" style={{ color: 'var(--rose-500)', fontWeight: 700, textDecoration: 'underline' }}>Create Account</Link>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
