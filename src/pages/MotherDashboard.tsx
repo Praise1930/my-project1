@@ -226,7 +226,7 @@ export const MotherDashboard: React.FC = () => {
         {/* Sidebar Nav */}
         <aside className="sidebar">
           <div className="sidebar-logo">
-            <div className="logo-icon" style={{ background: 'rgba(244,114,182,0.15)', color: 'var(--rose-400)' }}>🤰</div>
+            <div className="logo-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}>🤰</div>
             <div>
               <h2 style={{ fontSize: '1rem', fontWeight: 800 }}>MamaTrack</h2>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Maternal Dispatch Portal</p>
@@ -255,10 +255,10 @@ export const MotherDashboard: React.FC = () => {
           </nav>
 
           <div className="sidebar-user">
-            <div className="user-avatar" style={{ background: 'linear-gradient(135deg, var(--rose-400), var(--purple-400))' }}>🤰</div>
+            <div className="user-avatar" style={{ background: 'linear-gradient(135deg, #ef4444, #a855f7)' }}>🤰</div>
             <div className="user-info">
               <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{user.full_name}</div>
-              <div className="user-role" style={{ fontSize: '0.7rem', color: 'var(--rose-400)' }}>{trimester} ({weeks}w)</div>
+              <div className="user-role" style={{ fontSize: '0.7rem', color: '#ff8080' }}>{trimester} ({weeks}w)</div>
             </div>
             <button className="btn-logout" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '4px' }}>
               <LogOut size={16} />
@@ -320,16 +320,23 @@ export const MotherDashboard: React.FC = () => {
                     {!activeEmergency ? (
                       <button className="emergency-btn" onClick={handleTriggerSOS}>
                         <span className="btn-emoji">🆘</span>
-                        <span style={{ fontWeight: 800 }}>Trigger Alert</span>
+                        <span style={{ fontWeight: 800 }}>Trigger SOS</span>
                       </button>
                     ) : (
-                      <div className="emergency-btn triggered" style={{ animation: 'none' }}>
+                      <div className="emergency-btn triggered">
                         <span className="btn-emoji">🚨</span>
-                        <span>Alert Broadcasted</span>
+                        <span>SOS Active</span>
                       </div>
                     )}
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '12px' }}>
-                      {!activeEmergency ? 'Tap to dispatch ambulance' : 'GPS Beacon actively transmitting coordinates...'}
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {!activeEmergency ? (
+                        <span>Tap to dispatch ambulance</span>
+                      ) : (
+                        <>
+                          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#f97316', boxShadow: '0 0 10px #f97316', animation: 'active-emergency-pulse 1s infinite alternate' }} />
+                          <span style={{ color: '#fdba74', fontWeight: 700 }}>GPS Beacon Actively Broadcasting Location</span>
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -364,28 +371,28 @@ export const MotherDashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="nav-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '1.25rem', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px' }}>
+                      <div className="nav-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '1.25rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--rose-400)' }}>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f97316' }}>
                             {activeEmergency.eta_minutes !== null ? `${activeEmergency.eta_minutes} Min` : 'Calculating'}
                           </div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Ambulance ETA</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc' }}>
                             {activeEmergency.driver_id ? db.users.find(u => u.id === activeEmergency.driver_id)?.full_name.split(' ')[0] : 'Searching'}
                           </div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Assigned Driver</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#cbd5e1' }}>
                             {activeEmergency.vehicle_id ? db.vehicles.find(v => v.id === activeEmergency.vehicle_id)?.plate_number : '-'}
                           </div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Plate No</div>
                         </div>
                       </div>
 
-                      <button className="cancel-alert-btn btn-block" onClick={handleCancelSOS} style={{ marginTop: '1.25rem' }}>
+                      <button className="cancel-alert-btn" onClick={handleCancelSOS}>
                         Cancel Rescue Beacon
                       </button>
                     </div>
@@ -395,9 +402,12 @@ export const MotherDashboard: React.FC = () => {
 
               {/* Right: Map view */}
               <div className="card card-glass" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px 12px', alignItems: 'center' }}>
                   <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>📍 Live Tracking Map</h3>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--rose-400)' }}>GPS Accuracy: ±15m</span>
+                  <span style={{ fontSize: '0.72rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)', animation: 'active-emergency-pulse 1.5s infinite alternate' }} />
+                    Live Tracking (±15m)
+                  </span>
                 </div>
                 <div style={{ flex: 1, minHeight: '350px', position: 'relative' }}>
                   <MapComponent
@@ -419,7 +429,7 @@ export const MotherDashboard: React.FC = () => {
               <div className="card card-glass" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Pregnancy Progress</h3>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--rose-400)', margin: '15px 0 5px' }}>{weeks} Weeks</div>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f43f5e', margin: '15px 0 5px' }}>{weeks} Weeks</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{trimester}</div>
                 </div>
 
@@ -429,10 +439,10 @@ export const MotherDashboard: React.FC = () => {
                     <span>{progressPercent}%</span>
                   </div>
                   <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%` }} />
+                    <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%`, background: 'var(--accent-gradient)' }} />
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', marginTop: '15px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px' }}>
-                    <span>📅</span> Expected Due Date: <strong style={{ color: 'var(--rose-400)' }}>{new Date(profile.expected_due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', marginTop: '15px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px' }}>
+                    <span>📅</span> Expected Due Date: <strong style={{ color: '#f43f5e' }}>{new Date(profile.expected_due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
                   </div>
                 </div>
               </div>
@@ -450,10 +460,10 @@ export const MotherDashboard: React.FC = () => {
                     {checkups.map(c => {
                       const dt = new Date(c.scheduled_date);
                       return (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px' }}>
-                          <div style={{ background: c.status === 'completed' ? 'var(--success-700)' : 'var(--border)', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>{dt.getDate()}</span>
-                            <span style={{ fontSize: '0.6rem', textTransform: 'uppercase' }}>{dt.toLocaleString('default', { month: 'short' })}</span>
+                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '10px' }}>
+                          <div style={{ background: c.status === 'completed' ? '#16a34a' : 'rgba(255,255,255,0.06)', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc' }}>{dt.getDate()}</span>
+                            <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{dt.toLocaleString('default', { month: 'short' })}</span>
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{c.checkup_type}</div>
@@ -569,13 +579,35 @@ export const MotherDashboard: React.FC = () => {
                   <textarea className="form-input" style={{ minHeight: '80px', padding: '8px', resize: 'vertical' }} value={profileForm.medical_history} onChange={e => setProfileForm({ ...profileForm, medical_history: e.target.value })} />
                 </div>
 
-                <button type="submit" className="btn btn-rose btn-block" style={{ background: 'var(--rose-500)' }}>
+                <button type="submit" className="btn btn-rose btn-block" style={{ background: 'var(--accent-gradient)', border: 'none', fontWeight: 800 }}>
                   Update Profile Details
                 </button>
               </form>
             </div>
           )}
         </main>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div className="mobile-bottom-nav">
+        <div className="nav-items">
+          <div className={`nav-item ${activeTab === 'emergency' ? 'active' : ''}`} onClick={() => setActiveTab('emergency')}>
+            <span className="nav-icon">🚨</span>
+            <span>Emergency</span>
+          </div>
+          <div className={`nav-item ${activeTab === 'checkups' ? 'active' : ''}`} onClick={() => setActiveTab('checkups')}>
+            <span className="nav-icon">📅</span>
+            <span>Schedules</span>
+          </div>
+          <div className={`nav-item ${activeTab === 'anc-timeline' ? 'active' : ''}`} onClick={() => setActiveTab('anc-timeline')}>
+            <span className="nav-icon">🗓️</span>
+            <span>Timeline</span>
+          </div>
+          <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+            <span className="nav-icon">👤</span>
+            <span>Profile</span>
+          </div>
+        </div>
       </div>
 
       {/* CONFIRM TRIGGER SOS MODAL */}
