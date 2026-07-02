@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
+import { ThemeToggle } from '../contexts/ThemeContext';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -113,12 +114,14 @@ export const MotherDashboard: React.FC = () => {
   }, [navigate]);
 
   // 2. Poll active emergency status or run simulation
+  const activeEmgId = activeEmergency?.id;
+  const activeEmgStatus = activeEmergency?.status;
   useEffect(() => {
-    if (!activeEmergency) return;
+    if (!activeEmgId) return;
     
     // If en route, start simulation listener
-    if (['dispatched', 'en_route'].includes(activeEmergency.status)) {
-      SimulationEngine.startAmbulanceSimulation(activeEmergency.id, (updatedEmg) => {
+    if (activeEmgStatus && ['dispatched', 'en_route'].includes(activeEmgStatus)) {
+      SimulationEngine.startAmbulanceSimulation(activeEmgId, (updatedEmg) => {
         setActiveEmergency(updatedEmg);
         // Refresh notifications
         if (user) {
@@ -140,11 +143,11 @@ export const MotherDashboard: React.FC = () => {
 
     return () => {
       clearInterval(poller);
-      if (activeEmergency) {
-        SimulationEngine.stopSimulation(activeEmergency.id);
+      if (activeEmgId) {
+        SimulationEngine.stopSimulation(activeEmgId);
       }
     };
-  }, [activeEmergency?.id, activeEmergency?.status, user]);
+  }, [activeEmgId, activeEmgStatus, user, activeEmergency]);
 
   if (!user || !profile) return <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading Mother Profile...</div>;
 
@@ -374,6 +377,7 @@ export const MotherDashboard: React.FC = () => {
           </nav>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <ThemeToggle style={{ fontSize: '0.75rem', padding: '6px 12px' }} />
             {/* Notifications */}
             <div style={{ position: 'relative' }}>
               <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>

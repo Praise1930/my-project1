@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../services/db';
 import { User, Phone, Mail, Calendar, MapPin, Heart, Users } from 'lucide-react';
+import { ThemeToggle } from '../contexts/ThemeContext';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -68,7 +69,8 @@ export const Register: React.FC = () => {
                   </Link>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <ThemeToggle />
                   <Link to="/" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
                   <Link to="/login?role=mother" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
                     Login Mother

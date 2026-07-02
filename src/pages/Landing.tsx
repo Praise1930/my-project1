@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ThemeToggle } from '../contexts/ThemeContext';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -80,7 +81,8 @@ export const Landing: React.FC = () => {
                       </nav>
                     </div>
                     
-                    <div className="header-right-btn f-right d-none d-lg-block ml-30">
+                    <div className="header-right-btn f-right d-none d-lg-block ml-30" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <ThemeToggle />
                       <Link to="/register" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
                         Register Profile
                       </Link>

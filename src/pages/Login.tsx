@@ -1,9 +1,9 @@
 // MamaTrack GPS — Login Portal (With Medical Center UI Theme)
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { db, AuthService } from '../services/db';
-import { UserCheck } from 'lucide-react';
+import { ThemeToggle } from '../contexts/ThemeContext';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -24,27 +24,11 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Set default credentials based on selected role to make demo testing seamless
-  const getDemoCredentials = () => {
-    switch (role) {
-      case 'admin':
-        return { email: 'admin@mukonogeneral.go.ug', password: 'password123' };
-      case 'doctor':
-        return { email: 'james.ssemakula@mukonogeneral.go.ug', password: 'password123' };
-      case 'driver':
-        return { email: 'moses.kiggundu@mukonogeneral.go.ug', password: 'password123' };
-      case 'mother':
-      default:
-        return { email: 'fatima.nakato@gmail.com', password: 'password123' };
-    }
-  };
-
-  useEffect(() => {
-    const creds = getDemoCredentials();
-    setEmail(creds.email);
-    setPassword(creds.password);
+  // Clear error when role changes
+  React.useEffect(() => {
     setError(null);
   }, [role]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +42,7 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleFillCredentials = () => {
-    const creds = getDemoCredentials();
-    setEmail(creds.email);
-    setPassword(creds.password);
-  };
+
 
   const handleForgotPassword = () => {
     const userEmail = window.prompt("Enter your registered email address to recover your password:");
@@ -144,7 +124,8 @@ export const Login: React.FC = () => {
                   </Link>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <ThemeToggle />
                   <Link to="/" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
                   <Link to="/register" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
                     Register Mother
@@ -247,15 +228,7 @@ export const Login: React.FC = () => {
             </form>
 
             <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-              <button
-                onClick={handleFillCredentials}
-                className="btn btn-sm btn-ghost"
-                style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', color: '#6b7280', textDecoration: 'underline' }}
-              >
-                <UserCheck size={14} /> Auto-fill Demo Credentials
-              </button>
-
-              <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '12px', display: 'flex', gap: '12px' }}>
+              <div style={{ fontSize: '0.85rem', color: '#6b7280', display: 'flex', gap: '12px' }}>
                 <Link to="/" style={{ color: '#4b5563', textDecoration: 'underline' }}>← Change Role</Link>
                 {role === 'mother' && (
                   <>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DoctorService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
+import { ThemeToggle } from '../contexts/ThemeContext';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -327,6 +328,7 @@ export const DoctorDashboard: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <ThemeToggle />
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '14px', fontWeight: 600, color: '#2c4964' }}>{user.full_name}</div>
             <div style={{ fontSize: '11px', color: '#777777' }}>Clinical Specialist</div>

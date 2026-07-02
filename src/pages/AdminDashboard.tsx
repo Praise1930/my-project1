@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
+import { ThemeToggle } from '../contexts/ThemeContext';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -819,6 +820,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <RefreshCw size={13} /> Reset Database
             </button>
+            <ThemeToggle />
           </div>
         </header>
 

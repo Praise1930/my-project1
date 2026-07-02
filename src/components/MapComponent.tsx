@@ -1,6 +1,6 @@
 // MamaTrack GPS — Leaflet Map Component
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -86,7 +86,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const circleRef = useRef<L.Circle | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
-  // 1. Initialize Map Object (only once)
+  // 1. Initialize Map Object (only once on mount)
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -108,6 +108,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         mapRef.current = null;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update Tile Layer dynamically when theme changes
@@ -136,11 +137,13 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   }, [theme]);
 
   // 2. Update Map view on center coordinates change
+  const centerLat = center[0];
+  const centerLng = center[1];
   useEffect(() => {
     if (mapRef.current) {
-      mapRef.current.setView(center, mapRef.current.getZoom());
+      mapRef.current.setView([centerLat, centerLng], mapRef.current.getZoom());
     }
-  }, [center[0], center[1]]);
+  }, [centerLat, centerLng]);
 
   // 3. Render and Update Markers
   useEffect(() => {
@@ -213,6 +216,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   }, [emergencyCircle]);
 
   // 6. Invalidate map size on window/render updates to prevent rendering glitches
+  const markersKey = useMemo(() => markers.map(m => `${m.id}-${m.lat}-${m.lng}`).join(','), [markers]);
+  const routeKey = useMemo(() => routePoints.map(p => p.join(',')).join('|'), [routePoints]);
   useEffect(() => {
     const timer = setTimeout(() => {
       if (mapRef.current) {
@@ -220,7 +225,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [markers, routePoints]);
+  }, [markersKey, routeKey]);
 
   return <div ref={mapContainerRef} className="map-container" style={{ width: '100%', height: '100%', minHeight: '350px' }} />;
 };

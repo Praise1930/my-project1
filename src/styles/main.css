@@ -128,6 +128,117 @@
 }
 
 /* ============================================================
+   Dark Mode Overrides (activated via data-theme="dark" on <html>)
+   ============================================================ */
+[data-theme="dark"] {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2128;
+    --bg-glass: rgba(255, 255, 255, 0.04);
+
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+
+    --border-color: #30363d;
+    --border-light: #21262d;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* Dark mode — dashboard layout surfaces */
+[data-theme="dark"] .dashboard-layout {
+    background: #0d1117;
+}
+
+[data-theme="dark"] .sidebar {
+    background: rgba(22, 27, 34, 0.95) !important;
+    border-right-color: #30363d !important;
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-glass {
+    background: rgba(28, 33, 40, 0.9) !important;
+    border-color: rgba(48, 54, 61, 0.8) !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .main-content {
+    background: transparent;
+}
+
+/* Dark mode — form inputs across all dashboards */
+[data-theme="dark"] .form-input,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="tel"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: #161b22 !important;
+    border-color: #30363d !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus {
+    border-color: #388bfd !important;
+    box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15) !important;
+}
+
+/* Dark mode — table rows */
+[data-theme="dark"] table {
+    color: #e6edf3;
+}
+[data-theme="dark"] th {
+    background: #161b22 !important;
+    color: #8b949e !important;
+    border-color: #30363d !important;
+}
+[data-theme="dark"] td {
+    border-color: #21262d !important;
+    color: #c9d1d9 !important;
+}
+[data-theme="dark"] tr:hover {
+    background: rgba(255,255,255,0.03) !important;
+}
+
+/* Dark mode — modals */
+[data-theme="dark"] .modal {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+    color: #e6edf3 !important;
+}
+
+/* Dark mode — Mother theme glass cards */
+[data-theme="dark"] .mother-theme .card-glass {
+    background: rgba(22, 27, 34, 0.85) !important;
+    border-color: rgba(48, 54, 61, 0.6) !important;
+}
+
+/* Dark mode — Landing & public pages header */
+[data-theme="dark"] .main-header {
+    background: #0d1117 !important;
+    border-bottom: 1px solid #21262d !important;
+}
+
+/* Dark mode — smooth body transition */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+[data-theme="dark"] body {
+    background: #0d1117 !important;
+    color: #e6edf3 !important;
+}
+
+/* ============================================================
+
    Reset & Base
    ============================================================ */
 *, *::before, *::after {

@@ -2,6 +2,7 @@
 
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
 
 // Public routes — eagerly loaded (small, always needed)
@@ -42,28 +43,31 @@ const PageLoader: React.FC = () => (
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+    <ThemeProvider>
+      <Router>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Private Dashboard Portals (lazy-loaded) */}
-          <Route path="/mother" element={<MotherDashboard />} />
-          <Route path="/mother-console" element={<MotherConsole />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/doctor" element={<DoctorDashboard />} />
-          <Route path="/driver" element={<DriverDashboard />} />
+            {/* Private Dashboard Portals (lazy-loaded) */}
+            <Route path="/mother" element={<MotherDashboard />} />
+            <Route path="/mother-console" element={<MotherConsole />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/doctor" element={<DoctorDashboard />} />
+            <Route path="/driver" element={<DriverDashboard />} />
 
-          {/* Fallback Catch-All */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </Router>
+            {/* Fallback Catch-All */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </Router>
+    </ThemeProvider>
   );
 };
+
 
 export default App;
 
