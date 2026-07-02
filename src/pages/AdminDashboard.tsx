@@ -894,6 +894,7 @@ export const AdminDashboard: React.FC = () => {
                           onClick={() => {
                             setSelectedEmergency(e);
                             setDispatchHospital(e.hospital_id || 1);
+                            setDispatchDoctor(0); // Reset previously selected receiving doctor
                             const availableDrv = drivers.find(d => d.is_on_duty && d.vehicle_id);
                             if (availableDrv) setDispatchDriver(availableDrv.user_id);
                           }}

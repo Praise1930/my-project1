@@ -150,6 +150,10 @@ export const DriverDashboard: React.FC = () => {
 
   // Toggle Duty
   const handleToggleDuty = () => {
+    if (activeEmergency && driver.is_on_duty) {
+      alert('⚠️ Active emergency dispatch in progress! You cannot go off-duty or standby until the current maternal patient rescue is completed.');
+      return;
+    }
     const newVal = DriverService.toggleDuty(user.id);
     setDriver({ ...driver, is_on_duty: newVal });
     // Reload vehicle status from local db to keep UI synchronized
