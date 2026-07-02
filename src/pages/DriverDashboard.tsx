@@ -390,7 +390,7 @@ export const DriverDashboard: React.FC = () => {
                     <form onSubmit={handleInspectionSubmit}>
                       <div className="form-group" style={{ marginBottom: '14px' }}>
                         <label className="form-label">Inspected Fuel Level</label>
-                        <select className="form-input" style={{ width: '100%' }} value={inspectionForm.fuel_level} onChange={e => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value as any })}>
+                        <select className="form-input" style={{ width: '100%' }} value={inspectionForm.fuel_level} onChange={e => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value as 'full' | 'half' | 'low' })}>
                           <option value="full">Full Tank</option>
                           <option value="half">Half Tank</option>
                           <option value="low">Low Tank</option>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification } from '../services/db';
+import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, LogOut, ArrowLeft, Send } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export const MotherConsole: React.FC = () => {
   });
 
   // Chat consultation states
-  const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<(Doctor & { name: string; phone: string; hospitalName: string }) | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatLogs, setChatLogs] = useState<Record<number, { sender: 'patient' | 'doctor'; text: string; time: string }[]>>({});
   const [isTyping, setIsTyping] = useState(false);

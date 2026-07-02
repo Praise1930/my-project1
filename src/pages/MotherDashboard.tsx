@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification } from '../services/db';
+import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 
@@ -36,7 +36,7 @@ export const MotherDashboard: React.FC = () => {
   const [checkups, setCheckups] = useState<CheckupSchedule[]>([]);
 
   // Doctor Consultation States
-  const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<(Doctor & { name: string; phone: string; hospitalName: string }) | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatLogs, setChatLogs] = useState<Record<number, { sender: 'patient' | 'doctor'; text: string; time: string }[]>>({});
   const [isTyping, setIsTyping] = useState(false);

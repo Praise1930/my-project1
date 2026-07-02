@@ -252,8 +252,9 @@ export const AdminDashboard: React.FC = () => {
       setDispatchHospital(0);
       loadData();
       alert('Ambulance driver has been dispatched successfully!');
-    } catch (err: any) {
-      alert(err.message || 'Dispatch failed');
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Dispatch failed';
+      alert(errMsg);
     }
   };
 
