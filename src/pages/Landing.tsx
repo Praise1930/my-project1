@@ -13,6 +13,7 @@ import '../styles/medical-center/style.css';
 
 export const Landing: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Auto-cycle slides every 6 seconds
   useEffect(() => {
@@ -52,7 +53,7 @@ export const Landing: React.FC = () => {
       {/* HEADER START */}
       <header>
         <div className="header-area">
-          <div className="main-header header-sticky" style={{ background: '#ffffff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+          <div className="main-header header-sticky" style={{ background: '#ffffff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'relative' }}>
             <div className="container-fluid" style={{ padding: '0 40px' }}>
               <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
                 {/* Logo */}
@@ -87,10 +88,45 @@ export const Landing: React.FC = () => {
                         Register Profile
                       </Link>
                     </div>
+
+                    {/* Mobile Hamburger Toggle (visible on mobile only) */}
+                    <div className="d-flex d-lg-none" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <ThemeToggle />
+                      <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          fontSize: '24px',
+                          cursor: 'pointer',
+                          color: 'inherit',
+                          padding: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        aria-label="Toggle Menu"
+                      >
+                        <i className={mobileMenuOpen ? "fa fa-times" : "fa fa-bars"}></i>
+                      </button>
+                    </div>
                   </div>
                 </div>   
               </div>
             </div>
+
+            {/* Mobile Navigation Dropdown Overlay */}
+            {mobileMenuOpen && (
+              <div className="mobile-nav-dropdown d-lg-none">
+                <a href="#top" onClick={() => setMobileMenuOpen(false)}>Home</a>
+                <a href="#portals" onClick={() => setMobileMenuOpen(false)}>System Portals</a>
+                <a href="#about" onClick={() => setMobileMenuOpen(false)}>About</a>
+                <a href="#news" onClick={() => setMobileMenuOpen(false)}>News</a>
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none', textAlign: 'center', marginTop: '8px' }}>
+                  Register Profile
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>

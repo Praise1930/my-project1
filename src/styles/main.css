@@ -1976,3 +1976,111 @@ img {
 .timeline-content {
     font-size: 0.85rem;
 }
+
+/* ============================================================
+   Mobile Responsiveness Overrides
+   ============================================================ */
+
+/* ─── Mobile Navigation Dropdown ─── */
+.mobile-nav-dropdown {
+    background: #ffffff;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding: 15px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    z-index: 9999;
+}
+
+[data-theme="dark"] .mobile-nav-dropdown {
+    background: #161b22 !important;
+    border-top-color: #30363d !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+
+.mobile-nav-dropdown a {
+    text-decoration: none;
+    font-weight: 600;
+    color: #102039;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    transition: color 0.2s ease-in-out;
+    display: block;
+}
+
+[data-theme="dark"] .mobile-nav-dropdown a {
+    color: #c9d1d9 !important;
+    border-bottom-color: rgba(255,255,255,0.04) !important;
+}
+
+.mobile-nav-dropdown a:hover {
+    color: #0f61ef;
+}
+
+@media (max-width: 768px) {
+    /* ─── Hero Slider Mobile Scaling ─── */
+    .slider-area {
+        height: 540px !important; /* Shorter slider on mobile */
+    }
+    
+    .hero__caption {
+        padding: 20px 0 !important;
+    }
+    
+    .hero__caption h1 {
+        font-size: 2.0rem !important; /* Smaller, readable h1 */
+        line-height: 1.25 !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .hero__caption p {
+        font-size: 0.95rem !important; /* Smaller description */
+        margin-bottom: 24px !important;
+    }
+    
+    .hero__caption span {
+        font-size: 1rem !important; /* Smaller operational line */
+        margin-bottom: 8px !important;
+    }
+
+    /* Align background image to center right on mobile so doctor face is not text-overlapped */
+    [data-theme="dark"] .slider-area,
+    .slider-area {
+        background-position: center right !important;
+    }
+
+    /* ─── Portals spacing on mobile ─── */
+    .team-area {
+        padding: 50px 0 !important; /* Smaller section padding */
+    }
+    
+    .team-area .section-title h2 {
+        font-size: 2.0rem !important;
+    }
+    
+    .single-team {
+        margin-bottom: 20px !important;
+    }
+
+    /* ─── Form Card Mobile Adjustments ─── */
+    .medical-login-root .card > div:last-child {
+        padding: 28px 20px !important;
+    }
+
+    .health-register-card > div:last-child {
+        padding: 28px 20px !important;
+    }
+    
+    .health-register-card h2 {
+        font-size: 1.75rem !important;
+    }
+    
+    .health-register-card .card-body {
+        padding: 24px 16px !important;
+    }
+}

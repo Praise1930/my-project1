@@ -71,8 +71,11 @@ export const Register: React.FC = () => {
                 
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                   <ThemeToggle />
-                  <Link to="/" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
-                  <Link to="/login?role=mother" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
+                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
+                  <Link to="/" className="d-inline-block d-sm-none" style={{ color: '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
+                    <i className="fa fa-home"></i>
+                  </Link>
+                  <Link to="/login?role=mother" className="btn header-btn d-none d-md-inline-block" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
                     Login Mother
                   </Link>
                 </div>
