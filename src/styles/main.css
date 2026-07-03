@@ -128,49 +128,139 @@
 }
 
 /* ============================================================
-   Dark Mode Overrides (activated via data-theme="dark" on <html>)
+   Dark Mode — Full-Page Override (data-theme="dark" on <html>)
    ============================================================ */
+
+/* ─── Core tokens ─────────────────────────────────────────── */
 [data-theme="dark"] {
-    --bg-primary: #0d1117;
-    --bg-secondary: #161b22;
-    --bg-card: #1c2128;
-    --bg-glass: rgba(255, 255, 255, 0.04);
-
-    --text-primary: #e6edf3;
-    --text-secondary: #8b949e;
-    --text-muted: #6e7681;
-
-    --border-color: #30363d;
-    --border-light: #21262d;
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    --bg-primary:    #0d1117;
+    --bg-secondary:  #161b22;
+    --bg-card:       #1c2128;
+    --bg-glass:      rgba(255,255,255,0.04);
+    --text-primary:  #e6edf3;
+    --text-secondary:#8b949e;
+    --text-muted:    #6e7681;
+    --border-color:  #30363d;
+    --border-light:  #21262d;
+    color-scheme: dark;
 }
 
-/* Dark mode — dashboard layout surfaces */
-[data-theme="dark"] .dashboard-layout {
-    background: #0d1117;
-}
-
-[data-theme="dark"] .sidebar {
-    background: rgba(22, 27, 34, 0.95) !important;
-    border-right-color: #30363d !important;
-}
-
-[data-theme="dark"] .card,
-[data-theme="dark"] .card-glass {
-    background: rgba(28, 33, 40, 0.9) !important;
-    border-color: rgba(48, 54, 61, 0.8) !important;
+/* ─── HTML / Body ─────────────────────────────────────────── */
+html[data-theme="dark"],
+[data-theme="dark"] body {
+    background-color: #0d1117 !important;
     color: #e6edf3 !important;
 }
 
-[data-theme="dark"] .main-content {
-    background: transparent;
+/* ─── Universal surface reset (catches all div/section/article) ─ */
+[data-theme="dark"] div,
+[data-theme="dark"] section,
+[data-theme="dark"] article,
+[data-theme="dark"] main,
+[data-theme="dark"] aside,
+[data-theme="dark"] header:not(.medilab-navbar),
+[data-theme="dark"] footer,
+[data-theme="dark"] nav {
+    color: inherit;
 }
 
-/* Dark mode — form inputs across all dashboards */
+/* ─── Force white-background containers to dark ──────────── */
+/* Catches inline style="background:#fff" and similar white surfaces */
+[data-theme="dark"] .medical-login-root,
+[data-theme="dark"] .login-form-section,
+[data-theme="dark"] .register-section,
+[data-theme="dark"] .slider-area,
+[data-theme="dark"] .hero-area,
+[data-theme="dark"] .about-area,
+[data-theme="dark"] .services-area,
+[data-theme="dark"] .appointment-area,
+[data-theme="dark"] .doctors-area,
+[data-theme="dark"] .section-padding,
+[data-theme="dark"] .single-slider,
+[data-theme="dark"] .single-services,
+[data-theme="dark"] .single-doctor,
+[data-theme="dark"] .appointment-form,
+[data-theme="dark"] .contact-section {
+    background: #0d1117 !important;
+    color: #e6edf3 !important;
+}
+
+/* ─── Headings & text everywhere ─────────────────────────── */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] span:not(.badge):not(.pulse-dot),
+[data-theme="dark"] label,
+[data-theme="dark"] li,
+[data-theme="dark"] td,
+[data-theme="dark"] th,
+[data-theme="dark"] small,
+[data-theme="dark"] strong:not([class]) {
+    color: #c9d1d9 !important;
+}
+
+/* ─── Links ───────────────────────────────────────────────── */
+[data-theme="dark"] a:not(.btn):not(.btn-medilab):not(.header-btn):not(.nav-link) {
+    color: #58a6ff !important;
+}
+
+/* ─── Cards ───────────────────────────────────────────────── */
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-glass,
+[data-theme="dark"] .emergency-card,
+[data-theme="dark"] .stats-card,
+[data-theme="dark"] .metric-card,
+[data-theme="dark"] .widget,
+[data-theme="dark"] .appointment-card {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+    color: #e6edf3 !important;
+}
+
+/* ─── Navbar / Header ─────────────────────────────────────── */
+[data-theme="dark"] .main-header,
+[data-theme="dark"] .header-area,
+[data-theme="dark"] .site-header,
+[data-theme="dark"] .top-header,
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .nav-wrapper {
+    background: #161b22 !important;
+    border-bottom: 1px solid #30363d !important;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────── */
+[data-theme="dark"] .sidebar {
+    background: rgba(22,27,34,0.97) !important;
+    border-right-color: #30363d !important;
+}
+
+[data-theme="dark"] .sidebar .nav-item,
+[data-theme="dark"] .sidebar .nav-icon,
+[data-theme="dark"] .sidebar-nav span,
+[data-theme="dark"] .sidebar-logo h2,
+[data-theme="dark"] .sidebar-logo p,
+[data-theme="dark"] .user-name,
+[data-theme="dark"] .user-role {
+    color: #c9d1d9 !important;
+}
+
+[data-theme="dark"] .nav-item:hover {
+    background: rgba(255,255,255,0.06) !important;
+}
+
+[data-theme="dark"] .nav-item.active {
+    background: rgba(88,166,255,0.12) !important;
+    color: #58a6ff !important;
+}
+
+/* ─── Form inputs ─────────────────────────────────────────── */
 [data-theme="dark"] .form-input,
 [data-theme="dark"] input[type="text"],
 [data-theme="dark"] input[type="email"],
@@ -178,6 +268,7 @@
 [data-theme="dark"] input[type="number"],
 [data-theme="dark"] input[type="tel"],
 [data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="search"],
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
     background: #161b22 !important;
@@ -185,17 +276,25 @@
     color: #e6edf3 !important;
 }
 
-[data-theme="dark"] .form-input:focus,
-[data-theme="dark"] input:focus,
-[data-theme="dark"] select:focus {
-    border-color: #388bfd !important;
-    box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15) !important;
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #6e7681 !important;
 }
 
-/* Dark mode — table rows */
-[data-theme="dark"] table {
-    color: #e6edf3;
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: #388bfd !important;
+    box-shadow: 0 0 0 3px rgba(56,139,253,0.15) !important;
+    outline: none !important;
 }
+
+/* ─── Tables ──────────────────────────────────────────────── */
+[data-theme="dark"] table {
+    color: #e6edf3 !important;
+    background: transparent !important;
+}
+[data-theme="dark"] thead,
 [data-theme="dark"] th {
     background: #161b22 !important;
     color: #8b949e !important;
@@ -204,38 +303,154 @@
 [data-theme="dark"] td {
     border-color: #21262d !important;
     color: #c9d1d9 !important;
+    background: transparent !important;
 }
 [data-theme="dark"] tr:hover {
     background: rgba(255,255,255,0.03) !important;
 }
+[data-theme="dark"] tr:nth-child(even) {
+    background: rgba(255,255,255,0.02) !important;
+}
 
-/* Dark mode — modals */
-[data-theme="dark"] .modal {
+/* ─── Modals ──────────────────────────────────────────────── */
+[data-theme="dark"] .modal,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .modal-box {
     background: #1c2128 !important;
     border-color: #30363d !important;
     color: #e6edf3 !important;
 }
 
-/* Dark mode — Mother theme glass cards */
-[data-theme="dark"] .mother-theme .card-glass {
-    background: rgba(22, 27, 34, 0.85) !important;
-    border-color: rgba(48, 54, 61, 0.6) !important;
+/* ─── Bootstrap card overrides (medical-center template) ─── */
+[data-theme="dark"] .card-body,
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+    color: #e6edf3 !important;
 }
 
-/* Dark mode — Landing & public pages header */
-[data-theme="dark"] .main-header {
+/* ─── Admin dashboard (Dasher) ────────────────────────────── */
+[data-theme="dark"] .admin-bg,
+[data-theme="dark"] .doctor-bg {
     background: #0d1117 !important;
-    border-bottom: 1px solid #21262d !important;
+    filter: none;
 }
 
-/* Dark mode — smooth body transition */
-body {
-    transition: background-color 0.3s ease, color 0.3s ease;
+[data-theme="dark"] .main-content-area,
+[data-theme="dark"] .main-content,
+[data-theme="dark"] .content-area {
+    background: transparent !important;
+    color: #e6edf3 !important;
 }
-[data-theme="dark"] body {
+
+[data-theme="dark"] .dasher-layout,
+[data-theme="dark"] .dashboard-layout {
+    background: #0d1117 !important;
+}
+
+/* Admin command center stat widgets */
+[data-theme="dark"] [class*="bg-white"],
+[data-theme="dark"] [class*="bg-light"],
+[data-theme="dark"] [class*="rounded-"][class*="p-"] {
+    background: #1c2128 !important;
+    color: #e6edf3 !important;
+}
+
+/* ─── Doctor MediLab theme ─────────────────────────────────── */
+[data-theme="dark"] .medilab-dashboard {
     background: #0d1117 !important;
     color: #e6edf3 !important;
 }
+
+[data-theme="dark"] .medilab-navbar {
+    background: #161b22 !important;
+    border-bottom: 1px solid #30363d !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .medilab-navbar .nav-logo span,
+[data-theme="dark"] .medilab-navbar div {
+    color: #c9d1d9 !important;
+}
+
+[data-theme="dark"] .medical-card {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .medical-card-header {
+    background: rgba(255,255,255,0.03) !important;
+    border-bottom-color: #30363d !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .medilab-section {
+    background: #0d1117 !important;
+}
+
+/* ─── Mother dashboard (Momentra) ─────────────────────────── */
+[data-theme="dark"] .mother-theme {
+    --bg-card: rgba(28,33,40,0.9);
+    --bg-glass: rgba(28,33,40,0.8);
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --border-color: #30363d;
+}
+
+[data-theme="dark"] body.mother-theme-active::after {
+    background: linear-gradient(135deg, rgba(13,17,23,0.92) 0%, rgba(22,27,34,0.95) 100%) !important;
+}
+
+[data-theme="dark"] .mother-theme .card-glass,
+[data-theme="dark"] .mother-theme .card {
+    background: rgba(28,33,40,0.88) !important;
+    border-color: rgba(48,54,61,0.7) !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .mother-theme .site-header {
+    background: rgba(22,27,34,0.92) !important;
+    border-bottom-color: #30363d !important;
+}
+
+[data-theme="dark"] .mother-theme h1,
+[data-theme="dark"] .mother-theme h2,
+[data-theme="dark"] .mother-theme h3 {
+    color: #e6edf3 !important;
+}
+
+/* ─── Login/Register card box (catches inline white card) ─── */
+[data-theme="dark"] .medical-login-root .card {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+    color: #e6edf3 !important;
+}
+
+/* ─── Footer ──────────────────────────────────────────────── */
+[data-theme="dark"] footer {
+    background: #010409 !important;
+    color: #8b949e !important;
+}
+
+/* ─── Medical Center template specific ────────────────────── */
+[data-theme="dark"] .box-shadow,
+[data-theme="dark"] .single-services,
+[data-theme="dark"] .our-doctors,
+[data-theme="dark"] .appointment-form-area {
+    background: #1c2128 !important;
+    color: #e6edf3 !important;
+}
+
+/* ─── Scroll and smooth transition ───────────────────────── */
+html {
+    transition: color-scheme 0.3s ease;
+}
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 
 /* ============================================================
 
