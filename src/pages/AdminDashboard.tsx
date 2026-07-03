@@ -27,6 +27,9 @@ export const AdminDashboard: React.FC = () => {
   const [dispatchHospital, setDispatchHospital] = useState<number>(0);
   const [dispatchEta, setDispatchEta] = useState<number>(20);
 
+  // --- SEARCH QUERY STATE ---
+  const [searchQuery, setSearchQuery] = useState('');
+
   // --- UNDO/BACKUP HISTORY STATE ---
   const [undoStack, setUndoStack] = useState<string[]>([]);
 
@@ -181,6 +184,63 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   if (!user) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading Admin Workspace...</div>;
+
+  // Contextual search filters
+  const filteredMothers = mothers.filter(m => {
+    const u = db.users.find(usr => usr.id === m.user_id);
+    const q = searchQuery.toLowerCase();
+    return (
+      u?.full_name.toLowerCase().includes(q) ||
+      u?.email.toLowerCase().includes(q) ||
+      u?.phone.toLowerCase().includes(q) ||
+      m.village.toLowerCase().includes(q) ||
+      m.sub_county.toLowerCase().includes(q) ||
+      m.blood_type.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredHospitals = hospitals.filter(h => {
+    const q = searchQuery.toLowerCase();
+    return (
+      h.name.toLowerCase().includes(q) ||
+      h.sub_county.toLowerCase().includes(q) ||
+      h.address.toLowerCase().includes(q) ||
+      h.facility_type.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredDoctors = doctors.filter(doc => {
+    const u = db.users.find(usr => usr.id === doc.user_id);
+    const q = searchQuery.toLowerCase();
+    return (
+      u?.full_name.toLowerCase().includes(q) ||
+      doc.specialization.toLowerCase().includes(q) ||
+      doc.license_number.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredDrivers = drivers.filter(drv => {
+    const u = db.users.find(usr => usr.id === drv.user_id);
+    const q = searchQuery.toLowerCase();
+    return (
+      u?.full_name.toLowerCase().includes(q) ||
+      drv.driver_role.toLowerCase().includes(q) ||
+      drv.license_number.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredEmergencies = emergencies.filter(emg => {
+    const m = mothers.find(moth => moth.user_id === emg.mother_id);
+    const u = m ? db.users.find(usr => usr.id === m.user_id) : null;
+    const q = searchQuery.toLowerCase();
+    return (
+      emg.code.toLowerCase().includes(q) ||
+      emg.status.toLowerCase().includes(q) ||
+      emg.severity.toLowerCase().includes(q) ||
+      (u && u.full_name.toLowerCase().includes(q)) ||
+      emg.notes.toLowerCase().includes(q)
+    );
+  });
 
   // Stats calculation
   const pendingCount = emergencies.filter(e => e.status === 'pending').length;
@@ -796,11 +856,34 @@ export const AdminDashboard: React.FC = () => {
       <main className="main-content-area">
         
         {/* TOPBAR HEADER */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Command Center Workspace</h4>
             <span style={{ fontSize: '13px', color: '#64748b' }}>Mukono Regional Ambulance Dispatch Fleet Monitor</span>
           </div>
+
+          {activeTab !== 'reports' && (
+            <div style={{ flex: 1, maxWidth: '300px', position: 'relative', margin: '0 16px' }}>
+              <i className="ti ti-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '16px' }}></i>
+              <input 
+                type="text" 
+                placeholder={`Search ${activeTab}...`} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="admin-search-input"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 36px',
+                  fontSize: '13px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          )}
           
           <div style={{ display: 'flex', gap: '10px' }}>
             {undoStack.length > 0 && (
@@ -883,12 +966,12 @@ export const AdminDashboard: React.FC = () => {
                 </div>
                 
                 <div style={{ padding: '16px', maxHeight: '420px', overflowY: 'auto' }}>
-                  {emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).length === 0 ? (
+                  {filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '13px', color: '#64748b' }}>
-                      🟢 No active emergencies reported in the region
+                      🟢 No matching active emergencies reported in the region
                     </div>
                   ) : (
-                    emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
+                    filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
                       const m = db.users.find(usr => usr.id === e.mother_id);
                       return (
                         <div
@@ -1016,7 +1099,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {hospitals.map(h => (
+              {filteredHospitals.map(h => (
                 <div key={h.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -1074,7 +1157,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {doctors.map(d => {
+                {filteredDoctors.map(d => {
                   const u = db.users.find(usr => usr.id === d.user_id);
                   const h = hospitals.find(hosp => hosp.id === d.hospital_id);
                   return (
@@ -1132,7 +1215,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {drivers.map(d => {
+                {filteredDrivers.map(d => {
                   const u = db.users.find(usr => usr.id === d.user_id);
                   const v = vehicles.find(veh => veh.id === d.vehicle_id);
                   return (
@@ -1185,7 +1268,7 @@ export const AdminDashboard: React.FC = () => {
             <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>Registered Expectant Mothers Profiles</h4>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {mothers.map(m => {
+              {filteredMothers.map(m => {
                 const u = db.users.find(usr => usr.id === m.user_id);
                 return (
                   <div key={m.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -1265,7 +1348,7 @@ export const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {emergencies.map(e => {
+                    {filteredEmergencies.map(e => {
                       const m = db.users.find(u => u.id === e.mother_id);
                       const h = hospitals.find(hosp => hosp.id === e.hospital_id);
                       const d = db.users.find(u => u.id === e.driver_id);
