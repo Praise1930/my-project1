@@ -169,14 +169,12 @@ html[data-theme="dark"],
 [data-theme="dark"] .medical-login-root,
 [data-theme="dark"] .login-form-section,
 [data-theme="dark"] .register-section,
-[data-theme="dark"] .slider-area,
 [data-theme="dark"] .hero-area,
 [data-theme="dark"] .about-area,
 [data-theme="dark"] .services-area,
 [data-theme="dark"] .appointment-area,
 [data-theme="dark"] .doctors-area,
 [data-theme="dark"] .section-padding,
-[data-theme="dark"] .single-slider,
 [data-theme="dark"] .single-services,
 [data-theme="dark"] .single-doctor,
 [data-theme="dark"] .appointment-form,
@@ -467,6 +465,14 @@ body {
 [data-theme="dark"] .medical-landing-root,
 [data-theme="dark"] .medical-register-root {
     background: #0d1117 !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .slider-area {
+    background-image: linear-gradient(rgba(13, 17, 23, 0.72), rgba(13, 17, 23, 0.88)), url('/assets/img/hero/h1_hero.png') !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
     color: #e6edf3 !important;
 }
 

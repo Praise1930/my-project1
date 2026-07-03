@@ -127,9 +127,11 @@ export const Login: React.FC = () => {
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                   <ThemeToggle />
                   <Link to="/" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
-                  <Link to="/register" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
-                    Register Mother
-                  </Link>
+                  {role === 'mother' && (
+                    <Link to="/register" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
+                      Register Mother
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
