@@ -1,9 +1,20 @@
 // MamaTrack GPS — Main Application Entry and Router
 
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import './index.css';
+
+// Helper component to scroll window to top on client-side route changes
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
 
 // Public routes — eagerly loaded (small, always needed)
 import { Landing } from './pages/Landing';
@@ -45,6 +56,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <Router>
+        <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public Routes */}
