@@ -451,6 +451,107 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ─── Hero Slider active/inactive transitions ─────────────── */
+.single-slider.inactive-slide {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+.single-slider.active-slide {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* ─── Premium Landing page & Login/Register overrides ─── */
+[data-theme="dark"] .medical-landing-root,
+[data-theme="dark"] .medical-register-root {
+    background: #0d1117 !important;
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] #portals {
+    background: #161b22 !important;
+}
+
+[data-theme="dark"] .single-team {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+}
+
+[data-theme="dark"] .single-team .team-caption {
+    background: #1c2128 !important;
+}
+
+[data-theme="dark"] .portal-hover-card:hover .team-caption {
+    background: #1c2128 !important;
+}
+
+[data-theme="dark"] .portal-mother h3 { color: #fb7185 !important; }
+[data-theme="dark"] .portal-doctor h3 { color: #34d399 !important; }
+[data-theme="dark"] .portal-driver h3 { color: #fbbf24 !important; }
+[data-theme="dark"] .portal-admin h3 { color: #60a5fa !important; }
+
+[data-theme="dark"] #news {
+    background: #0d1117 !important;
+}
+
+[data-theme="dark"] .news-thumb {
+    background: #1c2128 !important;
+    border-color: #30363d !important;
+}
+
+[data-theme="dark"] .logo a {
+    color: #e6edf3 !important;
+}
+
+[data-theme="dark"] .logo a span span {
+    color: #0f61ef !important;
+}
+
+[data-theme="dark"] .main-menu nav ul li a {
+    color: #c9d1d9 !important;
+}
+
+[data-theme="dark"] .main-menu nav ul li a:hover {
+    color: #0f61ef !important;
+}
+
+[data-theme="dark"] .hero__caption span {
+    color: #3b82f6 !important;
+}
+
+/* Form linear gradient dark overlay */
+[data-theme="dark"] .login-form-section,
+[data-theme="dark"] .register-form-section {
+    background: linear-gradient(rgba(13, 17, 23, 0.9), rgba(13, 17, 23, 0.95)), url('/assets/img/hero/hero2.png') no-repeat center center / cover !important;
+}
+
+/* Scoped Login/Register inner form card dark overrides */
+[data-theme="dark"] .medical-login-root .card > div:last-child,
+[data-theme="dark"] .medical-register-root .card > div:last-child,
+[data-theme="dark"] .health-register-card .card-body,
+[data-theme="dark"] .health-register-card div {
+    background: #1c2128 !important;
+    color: #e6edf3 !important;
+    border-color: #30363d !important;
+}
+
+[data-theme="dark"] .medical-login-root .form-input,
+[data-theme="dark"] .medical-login-root input,
+[data-theme="dark"] .medical-register-root .form-input,
+[data-theme="dark"] .medical-register-root input,
+[data-theme="dark"] .medical-register-root select {
+    background: #161b22 !important;
+    color: #e6edf3 !important;
+    border-color: #30363d !important;
+}
+
+/* Mother dashboard Satisfied Mothers span contrast adjustment */
+[data-theme="dark"] .momentra-right-col span {
+    color: #c9d1d9 !important;
+}
+
 
 /* ============================================================
 

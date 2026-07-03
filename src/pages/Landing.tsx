@@ -100,7 +100,7 @@ export const Landing: React.FC = () => {
         {slides.map((slide, idx) => (
           <div
             key={idx}
-            className="single-slider slider-height d-flex align-items-center"
+            className={`single-slider slider-height d-flex align-items-center ${activeSlide === idx ? 'active-slide' : 'inactive-slide'}`}
             style={{
               position: 'absolute',
               top: 0,
