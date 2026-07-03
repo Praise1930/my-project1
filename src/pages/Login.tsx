@@ -181,7 +181,7 @@ export const Login: React.FC = () => {
                   style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. fatima@gmail.com"
+                  placeholder="e.g. email@example.com"
                   required
                 />
               </div>
