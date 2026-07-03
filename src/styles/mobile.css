@@ -1,0 +1,592 @@
+/* ============================================================
+   MamaTrack GPS — Global Mobile Responsive Stylesheet
+   Covers ALL pages, tabs, and sections across the entire system
+   These !important rules override inline React styles on mobile.
+   ============================================================ */
+
+/* ── Global: prevent any horizontal overflow anywhere ─────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BREAKPOINT: ≤ 768px  (phones and small tablets)
+───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── 1. UNIVERSAL GRID OVERRIDE ─────────────────────────── */
+  /* Every element that uses display:grid collapses to 1 column.
+     This catches both CSS classes AND inline style= grids       */
+  .mother-theme [style*="grid-template-columns"],
+  .mother-theme [class*="grid-"],
+  .driver-theme [style*="grid-template-columns"],
+  .driver-theme [class*="grid-"],
+  .medilab-dashboard [style*="grid-template-columns"],
+  .medilab-dashboard [class*="grid-"],
+  .dasher-dashboard [style*="grid-template-columns"],
+  .dasher-dashboard [class*="grid-"],
+  .MotherConsole-root [style*="grid-template-columns"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns: 1.05fr 1.15fr"],
+  [style*="grid-template-columns: 1fr 1.2fr"],
+  [style*="grid-template-columns: 1fr 1.3fr"],
+  [style*="grid-template-columns: 1.2fr 1fr"],
+  [style*="grid-template-columns: 1.4fr 1fr"],
+  [style*="grid-template-columns: 1.2fr 1.8fr"],
+  [style*="grid-template-columns: repeat(4, 1fr)"],
+  [style*="grid-template-columns: repeat(3, 1fr)"],
+  [style*="grid-template-columns: repeat(2, 1fr)"] {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  /* ── 2. UNIVERSAL FLEX ROW WRAP ──────────────────────────── */
+  /* Flex rows that would overflow horizontally wrap to new lines */
+  [style*="display: flex"][style*="gap"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* Explicitly make padding containers not overflow */
+  [style*="padding: '20px 40px"],
+  [style*="padding: '30px 40px"] {
+    padding: 1rem !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     MOTHER DASHBOARD
+  ───────────────────────────────────────────────────────── */
+
+  /* Header bar */
+  .mother-theme .site-header {
+    flex-wrap: wrap !important;
+    padding: 0.75rem 1rem !important;
+    gap: 8px !important;
+    position: relative !important;
+  }
+
+  /* Logo stays on its own row */
+  .mother-theme .site-header .logo {
+    font-size: 1.1rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Nav links become a full-width scrollable horizontal strip */
+  .mother-theme .site-header .header-nav {
+    order: 3 !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    gap: 1rem !important;
+    padding: 6px 0 4px !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  .mother-theme .site-header .header-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Nav links don't wrap inside the strip */
+  .mother-theme .site-header .header-nav > span {
+    flex-shrink: 0 !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Right side icons (theme toggle, bell, logout) stay compact */
+  .mother-theme .site-header > div:last-child {
+    gap: 0.5rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Hide logout text on smallest screens, keep icon */
+  .mother-theme .site-header .btn-momentra-outline {
+    padding: 0.4rem 0.7rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Main content padding */
+  .mother-theme .main-content {
+    padding: 1rem !important;
+  }
+
+  /* Tab content areas */
+  .mother-theme .tab-content-container {
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Home hero grid: text stacks above image */
+  .mother-theme .momentra-hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Feature cards: 2 per row on mobile */
+  .mother-theme .momentra-bottom-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Rescue tab: the 2-column left/right grid becomes single column */
+  .mother-theme .tab-content-container .grid-2 {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Map inside rescue tab: full width, reasonable height */
+  .mother-theme .tab-content-container .card-glass [style*="minHeight: '380px'"] {
+    min-height: 260px !important;
+  }
+
+  /* Checkups tab: same 2-col grid collapses */
+  .mother-theme .tab-content-container [style*="gridTemplateColumns: '1fr 1.2fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ANC timeline visit card header: allow wrap */
+  .mother-theme .tab-content-container [style*="justifyContent: 'space-between'"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* Profile tab consultation panel: side-by-side becomes stacked */
+  .mother-theme .consultation-panel {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+    display: flex !important;
+    gap: 1rem !important;
+  }
+
+  /* Profile form rows: 2-col becomes single column */
+  .mother-theme .form-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Notification panel: full width, anchored left */
+  .mother-theme .notifications-panel {
+    width: calc(100vw - 2rem) !important;
+    right: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: 50px !important;
+  }
+
+  /* Mother hero image shrinks */
+  .mother-theme .momentra-mother-frame {
+    width: 200px !important;
+    height: 240px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Hide floating decorative widgets (they cause overflow) */
+  .mother-theme .widget-health,
+  .mother-theme .widget-heart,
+  .mother-theme .widget-appointment,
+  .mother-theme [style*="position: 'absolute'"][style*="top: '-30px'"],
+  .mother-theme [style*="position: 'absolute'"][style*="bottom: '-30px'"] {
+    display: none !important;
+  }
+
+  /* Home page quick-action cards row wraps */
+  .mother-theme .momentra-bottom-grid > div {
+    min-width: 0 !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     DRIVER DASHBOARD
+  ───────────────────────────────────────────────────────── */
+
+  /* Root container */
+  .driver-theme {
+    overflow-x: hidden !important;
+  }
+
+  .driver-theme .dashboard-layout {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
+  /* Sidebar → fixed bottom nav bar */
+  .driver-theme .sidebar {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: row !important;
+    border-right: none !important;
+    border-top: 1px solid rgba(245,158,11,0.2) !important;
+    z-index: 300 !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide logo and user sections in mobile sidebar */
+  .driver-theme .sidebar .sidebar-logo,
+  .driver-theme .sidebar .sidebar-user {
+    display: none !important;
+  }
+
+  /* Sidebar nav items go horizontal */
+  .driver-theme .sidebar .sidebar-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    padding: 0 !important;
+    justify-content: space-around !important;
+  }
+
+  .driver-theme .sidebar .sidebar-nav .nav-item {
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 10px 6px !important;
+    gap: 3px !important;
+    font-size: 9px !important;
+    border-left: none !important;
+    border-top: 3px solid transparent !important;
+    flex: 1 !important;
+    text-align: center !important;
+  }
+
+  .driver-theme .sidebar .sidebar-nav .nav-item.active {
+    border-left: none !important;
+    border-top: 3px solid #f59e0b !important;
+  }
+
+  .driver-theme .sidebar .sidebar-nav .nav-item span {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Main content: fills full width */
+  .driver-theme .main-content {
+    margin-left: 0 !important;
+    padding: 1rem !important;
+    padding-bottom: 80px !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Grid-2 collapses */
+  .driver-theme .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Top header wraps */
+  .driver-theme .top-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Map container: full width, shorter height */
+  .driver-theme .map-hud-container {
+    height: 260px !important;
+    width: 100% !important;
+  }
+
+  /* Dispatch card button row wraps */
+  .driver-theme .card-glass > div[style*="display: 'flex'"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     DOCTOR DASHBOARD (medilab)
+  ───────────────────────────────────────────────────────── */
+
+  .medilab-dashboard {
+    overflow-x: hidden !important;
+  }
+
+  /* Navbar wraps */
+  .medilab-dashboard header.medilab-navbar {
+    flex-wrap: wrap !important;
+    padding: 12px 16px !important;
+    gap: 10px !important;
+  }
+
+  .medilab-dashboard .nav-logo {
+    font-size: 1.2rem !important;
+  }
+
+  .medilab-dashboard header.medilab-navbar > div:last-child {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  /* Metric bar: 2x2 grid */
+  .medilab-dashboard [style*="gridTemplateColumns: 'repeat(4, 1fr)'"] {
+    grid-template-columns: 1fr 1fr !important;
+    padding: 16px !important;
+  }
+
+  /* Main 2-column layout → single column */
+  .medilab-dashboard [style*="gridTemplateColumns: '1.4fr 1fr'"],
+  .medilab-dashboard [style*="padding: '20px 40px 40px'"] {
+    grid-template-columns: 1fr !important;
+    padding: 1rem !important;
+  }
+
+  /* Metric box text scales */
+  .medilab-dashboard .metric-number {
+    font-size: 1.5rem !important;
+  }
+
+  /* Blood request grid: 3 cells → 1 column */
+  .medilab-dashboard [style*="gridTemplateColumns: 'repeat(3, 1fr)'"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Modals slide up from bottom */
+  .medilab-dashboard .medilab-modal-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  .medilab-dashboard .medilab-modal-overlay {
+    align-items: flex-end !important;
+  }
+
+  /* Card body scroll */
+  .medilab-dashboard .medical-card-body {
+    max-height: none !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     ADMIN DASHBOARD (dasher)
+  ───────────────────────────────────────────────────────── */
+
+  .dasher-dashboard {
+    overflow-x: hidden !important;
+  }
+
+  /* Sidebar → fixed bottom nav */
+  .dasher-dashboard aside.sidebar-admin {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: row !important;
+    border-right: none !important;
+    border-top: 1px solid rgba(255,255,255,0.08) !important;
+    z-index: 200 !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide logo and user strip */
+  .dasher-dashboard aside.sidebar-admin > div:first-child,
+  .dasher-dashboard aside.sidebar-admin > div:last-child {
+    display: none !important;
+  }
+
+  /* Nav goes horizontal */
+  .dasher-dashboard aside.sidebar-admin nav {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    padding: 0 !important;
+    justify-content: space-around !important;
+  }
+
+  .dasher-dashboard .sidebar-nav-item {
+    flex-direction: column !important;
+    padding: 10px 6px !important;
+    gap: 3px !important;
+    font-size: 9px !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    border-left: none !important;
+    border-top: 3px solid transparent !important;
+  }
+
+  .dasher-dashboard .sidebar-nav-item.active {
+    border-left: none !important;
+    border-top: 3px solid #3b82f6 !important;
+  }
+
+  .dasher-dashboard .sidebar-nav-item span {
+    font-size: 9px !important;
+    display: block !important;
+  }
+
+  /* Main content area */
+  .dasher-dashboard .main-content-area {
+    margin-left: 0 !important;
+    padding: 1rem !important;
+    padding-bottom: 80px !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Topbar header */
+  .dasher-dashboard header {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 1rem !important;
+  }
+
+  .dasher-dashboard header > div {
+    flex-wrap: wrap !important;
+  }
+
+  .dasher-dashboard header button {
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+  }
+
+  /* Greeting banner text */
+  .dasher-dashboard .bg-gradient-mixed h2 {
+    font-size: 1.15rem !important;
+  }
+
+  .dasher-dashboard .bg-gradient-mixed p {
+    font-size: 11px !important;
+  }
+
+  /* Metric val number */
+  .dasher-dashboard .metric-val {
+    font-size: 1.4rem !important;
+  }
+
+  /* Dispatch: triage list + map → single column */
+  .dasher-dashboard .dispatch-grid,
+  .dasher-dashboard [style*="gridTemplateColumns: '1.2fr 1.8fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Facilities: 2-col doctor+driver cards → 1 col */
+  .dasher-dashboard [style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Reports tab: inspections + fuel logs side by side → stacked */
+  .dasher-dashboard [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '24px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Mother cards: 2-col → 1-col */
+  .dasher-dashboard [style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: '20px'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Data rows inside cards don't overflow */
+  .dasher-dashboard .triage-card > div {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* Modals slide from bottom */
+  .dasher-dashboard .admin-modal-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  .dasher-dashboard .admin-modal-overlay {
+    align-items: flex-end !important;
+  }
+
+  /* Admin modal forms: 2-col → 1-col */
+  .dasher-dashboard .admin-modal-container [style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     REGISTRATION PAGE
+  ───────────────────────────────────────────────────────── */
+
+  /* Form rows with 2 columns collapse */
+  .form-row[style*="gridTemplateColumns: '1fr 1fr'"],
+  [style*="display: 'grid'"][style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     TABLES — allow horizontal scroll inside their container
+  ───────────────────────────────────────────────────────── */
+
+  .table-responsive,
+  [style*="overflowX: 'auto'"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+  }
+
+  /* Don't collapse tables themselves — they scroll inside */
+  table {
+    min-width: 480px !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     MAP COMPONENTS — fit to mobile width
+  ───────────────────────────────────────────────────────── */
+
+  .leaflet-container {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     COMMON CARD OVERRIDES
+  ───────────────────────────────────────────────────────── */
+
+  /* Cards don't overflow phone width */
+  .card-glass,
+  .card,
+  .medical-card {
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     MODALS — always slide from bottom on mobile
+  ───────────────────────────────────────────────────────── */
+
+  [style*="position: 'fixed'"][style*="display: 'flex'"][style*="alignItems: 'center'"][style*="justifyContent: 'center'"] {
+    align-items: flex-end !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BREAKPOINT: ≤ 430px  (narrow phones — iPhone SE etc.)
+───────────────────────────────────────────────────────────── */
+@media (max-width: 430px) {
+
+  /* Mother bottom grid collapses to 1 column on tiny screens */
+  .mother-theme .momentra-bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Doctor metric bar: 2 → 1 column on very narrow screens */
+  .medilab-dashboard [style*="gridTemplateColumns: 'repeat(4, 1fr)'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Admin stat cards: 2 → 1 col */
+  .dasher-dashboard .card-metric {
+    width: 100% !important;
+  }
+
+  /* Logout button — icon only */
+  .mother-theme .site-header .btn-momentra-outline {
+    padding: 0.4rem 0.6rem !important;
+    min-width: 36px !important;
+  }
+}
