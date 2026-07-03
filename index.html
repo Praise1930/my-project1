@@ -11,6 +11,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f61ef" />
+    <link rel="apple-touch-icon" href="/vite.svg" />
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+            .catch(err => console.log('Service Worker registration failed:', err));
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

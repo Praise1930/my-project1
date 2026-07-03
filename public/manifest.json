@@ -1,0 +1,23 @@
+{
+  "short_name": "MamaTrack",
+  "name": "MamaTrack GPS Maternal Emergency Response System",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0d1117",
+  "theme_color": "#0f61ef",
+  "display": "standalone",
+  "orientation": "portrait"
+}
