@@ -794,6 +794,138 @@ export const AdminDashboard: React.FC = () => {
         }
       `}</style>
 
+      {/* MOBILE RESPONSIVE + DARK MODE OVERRIDES */}
+      <style>{`
+        /* ── Admin Dashboard Responsive Mobile Rules ── */
+
+        /* On mobile: sidebar becomes a fixed bottom navigation bar */
+        @media (max-width: 768px) {
+          .dasher-dashboard {
+            flex-direction: column !important;
+          }
+          .dasher-dashboard aside.sidebar-admin {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            flex-direction: row !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(255,255,255,0.08) !important;
+            z-index: 200 !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+          }
+          /* Hide the logo and user profile in mobile sidebar */
+          .dasher-dashboard aside.sidebar-admin > div:first-child,
+          .dasher-dashboard aside.sidebar-admin > div:last-child {
+            display: none !important;
+          }
+          .dasher-dashboard aside.sidebar-admin nav {
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100% !important;
+            padding: 0 !important;
+            justify-content: space-around !important;
+          }
+          .dasher-dashboard .sidebar-nav-item {
+            flex-direction: column !important;
+            padding: 10px 8px !important;
+            gap: 4px !important;
+            font-size: 10px !important;
+            flex: 1 !important;
+            justify-content: center !important;
+            text-align: center !important;
+            border-left: none !important;
+            border-top: 3px solid transparent !important;
+          }
+          .dasher-dashboard .sidebar-nav-item.active {
+            border-left: none !important;
+            border-top: 3px solid #3b82f6 !important;
+          }
+          .dasher-dashboard .sidebar-nav-item span {
+            display: block !important;
+            font-size: 9px !important;
+            line-height: 1.2 !important;
+          }
+          .dasher-dashboard .main-content-area {
+            margin-left: 0 !important;
+            padding: 1rem !important;
+            padding-bottom: 80px !important; /* space for bottom nav */
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          /* Stack stat cards into 2 columns */
+          .dasher-dashboard .row.mb-6.g-4 {
+            flex-wrap: wrap !important;
+          }
+          .dasher-dashboard .row.mb-6.g-4 > div {
+            flex: 0 0 calc(50% - 10px) !important;
+            min-width: 0 !important;
+          }
+          /* Stack dispatch grid: triage queue above, map below */
+          .dasher-dashboard .dispatch-grid {
+            grid-template-columns: 1fr !important;
+          }
+          /* Stack all 2-column grids */
+          .dasher-dashboard [style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+          /* Search bar full width on mobile */
+          .dasher-dashboard header > div:nth-child(2) {
+            flex: 1 1 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            order: 3 !important;
+          }
+          /* Header wraps to rows on mobile */
+          .dasher-dashboard header {
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+          }
+          /* Topbar action buttons shrink */
+          .dasher-dashboard header > div:last-child {
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+          }
+          .dasher-dashboard header > div:last-child button {
+            font-size: 11px !important;
+            padding: 6px 10px !important;
+          }
+          /* Modal becomes full-screen on mobile */
+          .dasher-dashboard .admin-modal-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 16px 16px 0 0 !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+          }
+          .dasher-dashboard .admin-modal-overlay {
+            align-items: flex-end !important;
+          }
+          /* Metric value text scales down */
+          .dasher-dashboard .metric-val {
+            font-size: 1.4rem !important;
+          }
+          /* Tables scroll horizontally within their container */
+          .dasher-dashboard .table-responsive {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          /* Keep the greeting banner readable */
+          .dasher-dashboard .bg-gradient-mixed h2 {
+            font-size: 1.2rem !important;
+          }
+          .dasher-dashboard .bg-gradient-mixed p {
+            font-size: 12px !important;
+          }
+        }
+      `}</style>
+
       {/* VERTICAL SIDEBAR */}
       <aside className="sidebar-admin">
         <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '10px' }}>

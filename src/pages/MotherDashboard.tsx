@@ -353,7 +353,7 @@ export const MotherDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="mother-theme" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="mother-theme momentra-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Blurred background image & light tint overlay */}
       <div className="mother-bg" />
       <div className="mother-bg-overlay" />
