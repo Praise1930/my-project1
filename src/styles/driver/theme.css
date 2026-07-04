@@ -342,7 +342,7 @@ body.driver-theme-active::before {
     min-width: 0 !important;
     border-right: none !important;
     border-top: 1px solid rgba(245, 158, 11, 0.2) !important;
-    z-index: 300 !important;
+    z-index: 2000 !important;
     overflow-x: hidden !important;
     overflow-y: hidden !important;
   }
