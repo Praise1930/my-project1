@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DriverService, EmergencyService, SimulationEngine, User, Driver, Emergency, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import '../styles/driver/theme.css';
 
 export const DriverDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -396,7 +397,7 @@ export const DriverDashboard: React.FC = () => {
                     zoom={13}
                     markers={getMapMarkers()}
                     routePoints={getRoutePoints()}
-                    theme="dark"
+                    theme={theme}
                   />
                 </div>
               </div>
@@ -494,12 +495,17 @@ export const DriverDashboard: React.FC = () => {
                     zoom={13}
                     markers={getMapMarkers()}
                     routePoints={getRoutePoints()}
-                    theme="dark"
+                    theme={theme}
                   />
                 </div>
               </div>
             </div>
           )}
+
+          {/* FOOTER */}
+          <footer className="dashboard-footer">
+            <p>© 2026 MamaTrack GPS · Regional Maternal Emergency Response System. All rights reserved.</p>
+          </footer>
         </main>
       </div>
     </div>

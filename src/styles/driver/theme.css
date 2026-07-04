@@ -414,3 +414,196 @@ body.driver-theme-active::before {
   }
 }
 
+/* ============================================================
+   Driver Dashboard — Light Theme Overrides
+   ============================================================ */
+
+/* Light theme overrides */
+[data-theme="light"] body.driver-theme-active {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+[data-theme="light"] body.driver-theme-active::before {
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 80%),
+        radial-gradient(circle at 10% 20%, rgba(13, 148, 136, 0.04) 0%, transparent 60%) !important;
+}
+
+[data-theme="light"] .driver-theme .driver-bg {
+    background: #f1f5f9 !important;
+    opacity: 0.8 !important;
+}
+
+/* Sidebar */
+[data-theme="light"] .driver-theme .sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar .sidebar-logo {
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar .sidebar-logo h2 {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar-nav .nav-item {
+    color: #475569 !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar-nav .nav-item:hover {
+    background: rgba(245, 158, 11, 0.08) !important;
+    color: #b45309 !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar-nav .nav-item.active {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #b45309 !important;
+    border-left: 3px solid #f59e0b !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar-user {
+    background: #f8fafc !important;
+    border-top: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar-user .user-name {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .driver-theme .sidebar-user .user-role {
+    color: #b45309 !important;
+}
+
+/* Mobile Sidebar bottom nav bar overrides in light mode */
+@media (max-width: 768px) {
+  [data-theme="light"] .driver-theme .sidebar {
+    border-top: 1px solid #cbd5e1 !important;
+    border-right: none !important;
+    background: #ffffff !important;
+  }
+
+  [data-theme="light"] .driver-theme .sidebar-nav .nav-item {
+    border-top: 3px solid transparent !important;
+    border-left: none !important;
+  }
+
+  [data-theme="light"] .driver-theme .sidebar-nav .nav-item.active {
+    border-top: 3px solid #f59e0b !important;
+    border-left: none !important;
+    background: rgba(245, 158, 11, 0.08) !important;
+  }
+}
+
+/* Text */
+[data-theme="light"] .driver-theme h1,
+[data-theme="light"] .driver-theme h2,
+[data-theme="light"] .driver-theme h3,
+[data-theme="light"] .driver-theme h4 {
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .driver-theme .top-header p {
+    color: #475569 !important;
+}
+
+/* Glassmorphic Tactical Card */
+[data-theme="light"] .driver-theme .card-glass,
+[data-theme="light"] .driver-theme .card.card-glass {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+}
+
+[data-theme="light"] .driver-theme .card-glass:hover,
+[data-theme="light"] .driver-theme .card.card-glass:hover {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Active Dispatch Alert Card */
+[data-theme="light"] .driver-theme .active-dispatch-glow {
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    background: #fef2f2 !important;
+    box-shadow: 
+        0 12px 30px rgba(239, 68, 68, 0.1), 
+        inset 0 0 12px rgba(239, 68, 68, 0.02) !important;
+}
+
+/* Forms */
+[data-theme="light"] .driver-theme .form-label {
+    color: #475569 !important;
+}
+
+[data-theme="light"] .driver-theme .form-input {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme="light"] .driver-theme .form-input:focus {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+}
+
+[data-theme="light"] .driver-theme .form-input option {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+/* Checkboxes */
+[data-theme="light"] .driver-theme .checklist-item {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .driver-theme .checklist-item:hover {
+    background: rgba(245, 158, 11, 0.05) !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+[data-theme="light"] .driver-theme .checklist-item input[type="checkbox"]:checked::after {
+    color: #ffffff !important;
+}
+
+/* Buttons */
+[data-theme="light"] .driver-theme .btn-ghost {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .driver-theme .btn-ghost:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Map HUD Container */
+[data-theme="light"] .driver-theme .map-hud-container {
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+}
+
+/* Telemetry Info item */
+[data-theme="light"] .driver-theme .nav-info-grid .nav-info-item {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .driver-theme .waypoint-dot.pickup {
+    background: #dcfce7 !important;
+    border-color: #10b981 !important;
+    color: #15803d !important;
+}
+
+[data-theme="light"] .driver-theme .waypoint-dot.dropoff {
+    background: #fee2e2 !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
+}
+
+

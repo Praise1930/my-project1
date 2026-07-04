@@ -481,6 +481,11 @@ export const DoctorDashboard: React.FC = () => {
 
       </div>
 
+      {/* FOOTER */}
+      <footer className="dashboard-footer" style={{ borderTop: '1px solid #eef2f7' }}>
+        <p>© 2026 MamaTrack GPS · Regional Maternal Emergency Response System. All rights reserved.</p>
+      </footer>
+
       {/* BLOOD REQUEST MODAL */}
       {showBloodModal && (
         <div className="medilab-modal-overlay">

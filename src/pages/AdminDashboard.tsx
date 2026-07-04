@@ -5,10 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'reports'>('dispatch');
 
@@ -1218,6 +1219,7 @@ export const AdminDashboard: React.FC = () => {
                   zoom={12}
                   markers={getMapMarkers()}
                   routePoints={getRoutePoints()}
+                  theme={theme}
                 />
               </div>
             </div>
@@ -1574,6 +1576,10 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* FOOTER */}
+        <footer className="dashboard-footer">
+          <p>© 2026 MamaTrack GPS · Regional Maternal Emergency Response System. All rights reserved.</p>
+        </footer>
       </main>
 
       {/* --- PASSWORD RESET MODAL --- */}
