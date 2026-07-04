@@ -168,45 +168,53 @@ body.driver-theme-active::before {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(245, 158, 11, 0.15);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    color: #cbd5e1;
+    font-size: 0.875rem;
 }
 
 .driver-theme .checklist-item:hover {
-    background: rgba(245, 158, 11, 0.04);
-    border-color: rgba(245, 158, 11, 0.15);
+    background: rgba(245, 158, 11, 0.06);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f1f5f9;
 }
 
 .driver-theme .checklist-item input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(245, 158, 11, 0.4);
-    border-radius: 4px;
-    background: transparent;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 2px solid rgba(245, 158, 11, 0.5);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.04);
     cursor: pointer;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-shrink: 0;
     transition: all 0.15s ease;
 }
 
 .driver-theme .checklist-item input[type="checkbox"]:checked {
     background: #f59e0b;
-    border-color: #f59e0b;
+    border-color: #fbbf24;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
 }
 
 .driver-theme .checklist-item input[type="checkbox"]:checked::after {
     content: '✓';
-    color: #060b13;
-    font-size: 11px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffff;
+    font-size: 13px;
     font-weight: 900;
+    line-height: 1;
 }
 
 /* Glowing Tactical Buttons */
