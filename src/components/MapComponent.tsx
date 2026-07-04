@@ -90,12 +90,13 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
+    const isMobileViewport = window.innerWidth <= 768;
     const map = L.map(mapContainerRef.current, {
       center: center,
       zoom: zoom,
-      zoomControl: interactive,
-      dragging: interactive,
-      touchZoom: interactive,
+      zoomControl: interactive && !isMobileViewport,
+      dragging: interactive && !isMobileViewport,
+      touchZoom: interactive && !isMobileViewport,
       scrollWheelZoom: false,
     });
 
