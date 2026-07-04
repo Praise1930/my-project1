@@ -289,6 +289,9 @@ html, body {
   .driver-theme .map-hud-container {
     height: auto !important;
     width: 100% !important;
+    /* Establish new stacking context to contain Leaflet z-index layers */
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   .driver-theme .map-hud-container [style*="minHeight"],
@@ -296,6 +299,19 @@ html, body {
   .driver-theme .map-hud-container .map-container {
     min-height: 250px !important;
     height: 250px !important;
+  }
+
+  /* Contain all Leaflet internal panes to not bleed outside the card */
+  .driver-theme .map-hud-container .leaflet-pane,
+  .driver-theme .map-hud-container .leaflet-top,
+  .driver-theme .map-hud-container .leaflet-bottom {
+    z-index: 1 !important;
+  }
+
+  /* Ensure footer always sits above map cards */
+  .driver-theme .dashboard-footer {
+    position: relative !important;
+    z-index: 10 !important;
   }
 
   /* Dispatch card button row wraps */
