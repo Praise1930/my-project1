@@ -401,10 +401,16 @@ body.driver-theme-active::before {
     grid-template-columns: 1fr !important;
   }
 
-  /* Make map container full-width on mobile */
   .driver-theme .map-hud-container {
-    height: 280px !important;
+    height: auto !important;
     width: 100% !important;
+  }
+
+  .driver-theme .map-hud-container [style*="minHeight"],
+  .driver-theme .map-hud-container [style*="min-height"],
+  .driver-theme .map-hud-container .map-container {
+    min-height: 250px !important;
+    height: 250px !important;
   }
 
   /* Stack top header row */

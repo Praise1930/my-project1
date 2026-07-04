@@ -287,8 +287,15 @@ html, body {
 
   /* Map container: full width, shorter height */
   .driver-theme .map-hud-container {
-    height: 260px !important;
+    height: auto !important;
     width: 100% !important;
+  }
+
+  .driver-theme .map-hud-container [style*="minHeight"],
+  .driver-theme .map-hud-container [style*="min-height"],
+  .driver-theme .map-hud-container .map-container {
+    min-height: 250px !important;
+    height: 250px !important;
   }
 
   /* Dispatch card button row wraps */
