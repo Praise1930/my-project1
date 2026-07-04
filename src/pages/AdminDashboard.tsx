@@ -1036,6 +1036,15 @@ export const AdminDashboard: React.FC = () => {
               <RefreshCw size={13} /> Reset Database
             </button>
             <ThemeToggle />
+            <button 
+              onClick={() => { AuthService.logout(); navigate('/'); }}
+              className="admin-logout-btn"
+              style={{ display: 'none', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}
+              title="Logout"
+            >
+              <i className="ti ti-logout" style={{ fontSize: '16px' }}></i>
+              <span>Logout</span>
+            </button>
           </div>
         </header>
 

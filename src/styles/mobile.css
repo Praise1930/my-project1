@@ -297,6 +297,10 @@ html, body {
     gap: 8px !important;
   }
 
+  .driver-theme .driver-logout-btn {
+    display: inline-flex !important;
+  }
+
   /* ─────────────────────────────────────────────────────────
      DOCTOR DASHBOARD (medilab)
   ───────────────────────────────────────────────────────── */
@@ -447,6 +451,10 @@ html, body {
   .dasher-dashboard header button {
     font-size: 11px !important;
     padding: 5px 10px !important;
+  }
+
+  .dasher-dashboard .admin-logout-btn {
+    display: flex !important;
   }
 
   /* Greeting banner text */

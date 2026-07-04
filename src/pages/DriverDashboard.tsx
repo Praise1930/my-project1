@@ -309,6 +309,15 @@ export const DriverDashboard: React.FC = () => {
               >
                 <span>{driver.is_on_duty ? '🟢 Active On-Duty' : '🔴 Go Standby'}</span>
               </button>
+              <button
+                onClick={() => { AuthService.logout(); navigate('/'); }}
+                className="driver-logout-btn"
+                style={{ display: 'none', alignItems: 'center', gap: '5px', padding: '8px 16px', fontSize: '0.82rem', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
+                title="Logout"
+              >
+                <LogOut size={13} />
+                <span>Logout</span>
+              </button>
             </div>
           </header>
 
