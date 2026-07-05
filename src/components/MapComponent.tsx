@@ -97,7 +97,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       dragging: interactive,
       touchZoom: interactive,
       scrollWheelZoom: false,
-      tap: false,
     });
 
     mapRef.current = map;
