@@ -185,6 +185,45 @@ export const AdminDashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  const playAlertSound = () => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3); // Drop pitch
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.log('Audio play blocked or failed', e);
+    }
+  };
+
+  const [prevEmergencyCount, setPrevEmergencyCount] = useState(0);
+
+  useEffect(() => {
+    if (emergencies.length > prevEmergencyCount) {
+      if (prevEmergencyCount !== 0) {
+        const newEmergency = emergencies[0]; // reversed in loadData
+        if (newEmergency && newEmergency.status === 'pending') {
+          playAlertSound();
+        }
+      }
+      setPrevEmergencyCount(emergencies.length);
+    }
+  }, [emergencies, prevEmergencyCount]);
+
   if (!user) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading Admin Workspace...</div>;
 
   // Contextual search filters
