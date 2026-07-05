@@ -6,6 +6,7 @@ import { db, AuthService, UserService, EmergencyService, NotificationService, Si
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -408,6 +409,9 @@ export const MotherDashboard: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Profile Photo */}
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
 
             {/* Logout button */}
             <button className="btn-momentra-outline" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }}>
@@ -956,7 +960,9 @@ export const MotherDashboard: React.FC = () => {
                 {/* Right panel: Profile Form */}
                 <div className="card-glass" style={{ padding: '1.5rem' }}>
                   <div style={{ textAlign: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-                    <div className="profile-avatar-large" style={{ margin: '0 auto 8px', background: 'linear-gradient(135deg, #fb7185, #f43f5e)', fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '64px', height: '64px', borderRadius: '50%', boxShadow: '0 6px 15px rgba(244, 63, 94, 0.15)' }}>🤰</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                      <ProfilePhotoUpload user={user} onUpdated={setUser} size={64} showLabel={true} />
+                    </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1f2937' }}>{user.full_name}</h3>
                     <span style={{ fontSize: '0.7rem', color: '#f43f5e', fontWeight: 600 }}>Maternal ID: MT-{String(profile.id).padStart(5, '0')}</span>
                   </div>

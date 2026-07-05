@@ -3,6 +3,7 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 import './index.css';
 
 // Helper component to scroll window to top on client-side route changes
@@ -55,6 +56,7 @@ const PageLoader: React.FC = () => (
 const App: React.FC = () => {
   return (
     <ThemeProvider>
+      <PWAInstallBanner />
       <Router>
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>

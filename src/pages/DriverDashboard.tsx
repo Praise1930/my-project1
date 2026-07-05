@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DriverService, EmergencyService, SimulationEngine, User, Driver, Emergency, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
 import { ThemeToggle } from '../contexts/ThemeContext';
 import '../styles/driver/theme.css';
@@ -261,7 +262,7 @@ export const DriverDashboard: React.FC = () => {
           </nav>
 
           <div className="sidebar-user">
-            <div className="user-avatar" style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)', color: '#060b13', fontWeight: 800, width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>DF</div>
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
             <div className="user-info">
               <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>{user.full_name.split(' ')[0]}</div>
               <div className="user-role" style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Ambulance Driver</div>

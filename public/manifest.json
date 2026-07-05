@@ -1,23 +1,32 @@
 {
   "short_name": "MamaTrack",
   "name": "MamaTrack GPS Maternal Emergency Response System",
+  "description": "GPS-based maternal emergency response system for Mukono District, Uganda.",
   "icons": [
     {
-      "src": "/vite.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/vite.svg",
-      "type": "image/svg+xml",
-      "sizes": "192x192 512x512",
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
       "purpose": "maskable"
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "background_color": "#0d1117",
-  "theme_color": "#0f61ef",
+  "theme_color": "#6366f1",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "categories": ["health", "medical"]
 }

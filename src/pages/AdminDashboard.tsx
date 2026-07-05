@@ -6,6 +6,7 @@ import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, D
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -965,9 +966,7 @@ export const AdminDashboard: React.FC = () => {
         {/* Sidebar Footer User profile */}
         <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700 }}>
-              {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').charAt(0)}
-            </div>
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
             <div>
               <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
                 {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').split(' ')[0]}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DoctorService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
 import { ThemeToggle } from '../contexts/ThemeContext';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -333,6 +334,7 @@ export const DoctorDashboard: React.FC = () => {
             <div style={{ fontSize: '14px', fontWeight: 600, color: '#2c4964' }}>{user.full_name}</div>
             <div style={{ fontSize: '11px', color: '#777777' }}>Clinical Specialist</div>
           </div>
+          <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
           <button 
             onClick={() => { AuthService.logout(); navigate('/'); }}
             style={{ border: 'none', background: 'rgba(220,53,69,0.1)', color: '#dc3545', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}

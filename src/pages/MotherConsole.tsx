@@ -6,6 +6,7 @@ import { db, AuthService, UserService, EmergencyService, NotificationService, Si
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, LogOut, ArrowLeft, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 
 export const MotherConsole: React.FC = () => {
   const navigate = useNavigate();
@@ -326,6 +327,8 @@ export const MotherConsole: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
 
             <button className="btn-momentra-outline" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }}>
               <LogOut size={14} style={{ marginRight: '4px' }} />
