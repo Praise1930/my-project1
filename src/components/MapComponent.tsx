@@ -102,11 +102,20 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     mapRef.current = map;
     markersGroupRef.current = L.layerGroup().addTo(map);
 
+    // Use ResizeObserver to ensure map size is always correct
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapRef.current) {
+        mapRef.current.invalidateSize();
+      }
+    });
+    resizeObserver.observe(mapContainerRef.current);
+
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
+      resizeObserver.disconnect();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
