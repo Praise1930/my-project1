@@ -415,10 +415,26 @@ html, body {
   }
 
   /* Hide logo and user strip */
-  .dasher-dashboard aside.sidebar-admin > div:first-child,
-  .dasher-dashboard aside.sidebar-admin > div:last-child {
-    display: none !important;
-  }
+  .dasher-dashboard aside.sidebar-admin > div:first-child {
+        display: none !important;
+      }
+      /* Keep logout button visible */
+      .dasher-dashboard aside.sidebar-admin > div:last-child {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 0;
+      }
+      .dasher-dashboard aside.sidebar-admin > div:last-child button[title="Logout"] {
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        color: #ef4444;
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+      }
 
   /* Nav goes horizontal */
   .dasher-dashboard aside.sidebar-admin nav {
