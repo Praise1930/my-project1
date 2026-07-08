@@ -76,7 +76,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         ref={cameraRef}
         type="file"
         accept="image/*"
-        capture="user"
+        capture="environment"
         style={{ display: 'none' }}
         onChange={e => e.target.files?.[0] && processFile(e.target.files[0])}
       />
