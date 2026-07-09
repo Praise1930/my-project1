@@ -6,11 +6,12 @@ import { db, AuthService, DriverService, EmergencyService, SimulationEngine, Use
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import '../styles/driver/theme.css';
 
 export const DriverDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -222,19 +223,92 @@ export const DriverDashboard: React.FC = () => {
     <div className="driver-theme" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="driver-bg" />
 
+      {/* SCOPED THEME OVERRIDES FOR SIDEBAR */}
+      <style>{`
+        /* Default/Light mode styles for driver sidebar */
+        .dashboard-layout aside.sidebar {
+          background: #ffffff !important;
+          border-right: 1px solid #e2e8f0 !important;
+        }
+        .dashboard-layout aside.sidebar h2,
+        .dashboard-layout aside.sidebar strong,
+        .dashboard-layout aside.sidebar .user-name {
+          color: #0f172a !important;
+        }
+        .dashboard-layout aside.sidebar p,
+        .dashboard-layout aside.sidebar .user-role {
+          color: #475569 !important;
+        }
+        .dashboard-layout aside.sidebar .logo-icon {
+          background: rgba(245,158,11,0.08) !important;
+        }
+        .dashboard-layout aside.sidebar div[style*="border-bottom"],
+        .dashboard-layout aside.sidebar div[style*="border-top"] {
+          border-color: #cbd5e1 !important;
+        }
+        .dashboard-layout aside.sidebar .nav-item {
+          color: #475569 !important;
+        }
+        .dashboard-layout aside.sidebar .nav-item.active {
+          color: #b45309 !important;
+          background: rgba(245,158,11,0.08) !important;
+        }
+
+        /* Dark mode overrides for driver sidebar */
+        html[data-theme="dark"] .dashboard-layout aside.sidebar,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar {
+          background: #11151d !important;
+          border-right: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        html[data-theme="dark"] .dashboard-layout aside.sidebar h2,
+        html[data-theme="dark"] .dashboard-layout aside.sidebar strong,
+        html[data-theme="dark"] .dashboard-layout aside.sidebar .user-name,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar h2,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar strong,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar .user-name {
+          color: #f8fafc !important;
+        }
+        html[data-theme="dark"] .dashboard-layout aside.sidebar p,
+        html[data-theme="dark"] .dashboard-layout aside.sidebar .user-role,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar p,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar .user-role {
+          color: #94a3b8 !important;
+        }
+        html[data-theme="dark"] .dashboard-layout aside.sidebar div[style*="border-bottom"],
+        html[data-theme="dark"] .dashboard-layout aside.sidebar div[style*="border-top"],
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar div[style*="border-bottom"],
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar div[style*="border-top"] {
+          border-color: rgba(245,158,11,0.12) !important;
+        }
+        html[data-theme="dark"] .dashboard-layout aside.sidebar .nav-item.active,
+        [data-bs-theme="dark"] .dashboard-layout aside.sidebar .nav-item.active {
+          color: #fbbf24 !important;
+          background: rgba(245,158,11,0.15) !important;
+        }
+      `}</style>
+
       <div className="dashboard-layout">
         {/* Sidebar Nav */}
-        <aside className="sidebar">
+        <aside className="sidebar" style={{
+          background: theme === 'light' ? '#ffffff' : '#11151d',
+          borderRight: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
+        }}>
           <div className="sidebar-logo">
             <div className="logo-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', fontSize: '1.5rem', width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🚑</div>
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>MamaTrack</h2>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>MamaTrack</h2>
               <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>Ambulance Deck</p>
             </div>
           </div>
 
-          <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid rgba(245, 158, 11, 0.12)', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '10px' }}>Ambulance: <strong style={{ color: '#f8fafc' }}>{vehicle.plate_number}</strong></div>
+          <div style={{
+            padding: '1.25rem 1rem',
+            borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(245, 158, 11, 0.12)',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '10px' }}>
+              Ambulance: <strong style={{ color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>{vehicle.plate_number}</strong>
+            </div>
             <div
               style={{
                 display: 'inline-block',
@@ -261,10 +335,12 @@ export const DriverDashboard: React.FC = () => {
             </div>
           </nav>
 
-          <div className="sidebar-user">
+          <div className="sidebar-user" style={{
+            borderTop: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
             <div className="user-info">
-              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>{user.full_name.split(' ')[0]}</div>
+              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>{user.full_name.split(' ')[0]}</div>
               <div className="user-role" style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Ambulance Driver</div>
             </div>
             <button
@@ -397,7 +473,7 @@ export const DriverDashboard: React.FC = () => {
                     zoom={13}
                     markers={getMapMarkers()}
                     routePoints={getRoutePoints()}
-                    theme="light"
+                    theme={theme}
                   />
                 </div>
               </div>
@@ -495,7 +571,7 @@ export const DriverDashboard: React.FC = () => {
                     zoom={13}
                     markers={getMapMarkers()}
                     routePoints={getRoutePoints()}
-                    theme="light"
+                    theme={theme}
                   />
                 </div>
               </div>

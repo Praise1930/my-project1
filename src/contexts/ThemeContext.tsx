@@ -26,10 +26,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (saved === 'dark' || saved === 'light') ? saved : 'light';
   });
 
-  // Apply data-theme attribute to <html> element on every change
+  // Apply data-theme and data-bs-theme attributes to <html> element on every change
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-theme', theme);
+    root.setAttribute('data-bs-theme', theme);
     localStorage.setItem('mamatrack-theme', theme);
   }, [theme]);
 

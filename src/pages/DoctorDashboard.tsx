@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DoctorService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [hospital, setHospital] = useState<Hospital | null>(null);
@@ -42,7 +43,7 @@ export const DoctorDashboard: React.FC = () => {
     // Add Medilab CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = '/src/styles/medilab/main.css';
+    link.href = '/styles/medilab/main.css';
     link.id = 'medilab-theme-css';
     document.head.appendChild(link);
 
@@ -303,12 +304,12 @@ export const DoctorDashboard: React.FC = () => {
       <header className="medilab-navbar d-flex align-items-center justify-content-between">
         <div className="nav-logo">
           <i className="bi bi-heart-pulse-fill" style={{ color: '#1977cc' }}></i>
-          <span>Mama<span style={{ color: '#2c4964' }}>Track GPS</span></span>
+          <span>Mama<span style={{ color: theme === 'light' ? '#2c4964' : '#e6edf3' }}>Track GPS</span></span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ fontSize: '14px', color: '#555555' }}>
-            🏥 Facility: <strong>{hospital.name}</strong>
+          <div style={{ fontSize: '14px', color: theme === 'light' ? '#555555' : '#cbd5e1' }}>
+            🏥 Facility: <strong style={{ color: theme === 'light' ? '#2c4964' : '#ffffff' }}>{hospital.name}</strong>
           </div>
           
           <button
@@ -331,8 +332,8 @@ export const DoctorDashboard: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <ThemeToggle />
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#2c4964' }}>{user.full_name}</div>
-            <div style={{ fontSize: '11px', color: '#777777' }}>Clinical Specialist</div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: theme === 'light' ? '#2c4964' : '#ffffff' }}>{user.full_name}</div>
+            <div style={{ fontSize: '11px', color: theme === 'light' ? '#777777' : '#94a3b8' }}>Clinical Specialist</div>
           </div>
           <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
           <button 

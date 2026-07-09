@@ -648,54 +648,396 @@ html, body {
    ───────────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   /* Global background and text */
-  html, body {
+  html:not([data-theme="light"]),
+  html:not([data-theme="light"]) body {
     background: #121212 !important;
     color: #e0e0e0 !important;
   }
   /* Dashboard containers */
-  .mother-theme,
-  .driver-theme,
-  .dasher-dashboard,
-  .medilab-dashboard {
+  html:not([data-theme="light"]) .mother-theme,
+  html:not([data-theme="light"]) .driver-theme,
+  html:not([data-theme="light"]) .dasher-dashboard,
+  html:not([data-theme="light"]) .medilab-dashboard {
     background: #121212 !important;
     color: #e0e0e0 !important;
   }
   /* Headers, footers, sidebars, navbars */
-  .site-header,
-  .dashboard-footer,
-  .sidebar,
-  .sidebar-admin,
-  header.medilab-navbar {
+  html:not([data-theme="light"]) .site-header,
+  html:not([data-theme="light"]) .dashboard-footer,
+  html:not([data-theme="light"]) .sidebar,
+  html:not([data-theme="light"]) .sidebar-admin,
+  html:not([data-theme="light"]) header.medilab-navbar {
     background: #1a1a1a !important;
     color: #e0e0e0 !important;
   }
   /* Cards and modals */
-  .card,
-  .card-glass,
-  .medical-card,
-  .admin-modal-container,
-  .medilab-modal-container {
+  html:not([data-theme="light"]) .card,
+  html:not([data-theme="light"]) .card-glass,
+  html:not([data-theme="light"]) .medical-card,
+  html:not([data-theme="light"]) .admin-modal-container,
+  html:not([data-theme="light"]) .medilab-modal-container {
     background: #1e1e1e !important;
     color: #e0e0e0 !important;
     border-color: #333 !important;
   }
   /* Tables */
-  table {
+  html:not([data-theme="light"]) table {
     background: #1e1e1e !important;
     color: #e0e0e0 !important;
   }
-  th, td {
+  html:not([data-theme="light"]) th,
+  html:not([data-theme="light"]) td {
     background: #1e1e1e !important;
     color: #e0e0e0 !important;
     border-color: #333 !important;
   }
   /* Links */
-  a {
+  html:not([data-theme="light"]) a {
     color: #90caf9 !important;
   }
-  /* Leaflet maps – invert to stay visible on dark */
-  .leaflet-container {
-    filter: invert(0.9) hue-rotate(180deg) !important;
+  /* Ensure root components have dark backgrounds */
+  html:not([data-theme="light"]) .medical-register-root,
+  html:not([data-theme="light"]) .medical-login-root,
+  html:not([data-theme="light"]) .medical-landing-root {
+    background: #121212 !important;
+    color: #e0e0e0 !important;
   }
 }
+
+/* Explicit data-theme dark overrides */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: #121212 !important;
+  color: #e0e0e0 !important;
+}
+html[data-theme="dark"] .mother-theme,
+html[data-theme="dark"] .driver-theme,
+html[data-theme="dark"] .dasher-dashboard,
+html[data-theme="dark"] .medilab-dashboard {
+  background: #121212 !important;
+  color: #e0e0e0 !important;
+}
+html[data-theme="dark"] .site-header,
+html[data-theme="dark"] .dashboard-footer,
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .sidebar-admin,
+html[data-theme="dark"] header.medilab-navbar {
+  background: #1a1a1a !important;
+  color: #e0e0e0 !important;
+}
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .card-glass,
+html[data-theme="dark"] .medical-card,
+html[data-theme="dark"] .admin-modal-container,
+html[data-theme="dark"] .medilab-modal-container {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border-color: #333 !important;
+}
+html[data-theme="dark"] table {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+}
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border-color: #333 !important;
+}
+html[data-theme="dark"] a {
+  color: #90caf9 !important;
+}
+html[data-theme="dark"] .medical-register-root,
+html[data-theme="dark"] .medical-login-root,
+html[data-theme="dark"] .medical-landing-root {
+  background: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LIGHT MODE OVERRIDES (applies to all dashboards)
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  html:not([data-theme="dark"]),
+  html:not([data-theme="dark"]) body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+  html:not([data-theme="dark"]) .mother-theme,
+  html:not([data-theme="dark"]) .driver-theme,
+  html:not([data-theme="dark"]) .dasher-dashboard,
+  html:not([data-theme="dark"]) .medilab-dashboard {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+  html:not([data-theme="dark"]) .site-header,
+  html:not([data-theme="dark"]) .dashboard-footer,
+  html:not([data-theme="dark"]) .sidebar,
+  html:not([data-theme="dark"]) .sidebar-admin,
+  html:not([data-theme="dark"]) header.medilab-navbar {
+    background: #f8f9fa !important;
+    color: #111111 !important;
+  }
+  html:not([data-theme="dark"]) .card,
+  html:not([data-theme="dark"]) .card-glass,
+  html:not([data-theme="dark"]) .medical-card,
+  html:not([data-theme="dark"]) .admin-modal-container,
+  html:not([data-theme="dark"]) .medilab-modal-container {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border-color: #e2e8f0 !important;
+  }
+  html:not([data-theme="dark"]) table {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+  html:not([data-theme="dark"]) th,
+  html:not([data-theme="dark"]) td {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border-color: #e2e8f0 !important;
+  }
+  html:not([data-theme="dark"]) a {
+    color: #2563eb !important;
+  }
+}
+
+/* Explicit data-theme light overrides */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] .mother-theme,
+html[data-theme="light"] .driver-theme,
+html[data-theme="light"] .dasher-dashboard,
+html[data-theme="light"] .medilab-dashboard {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] .site-header,
+html[data-theme="light"] .dashboard-footer,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .sidebar-admin,
+html[data-theme="light"] header.medilab-navbar {
+  background: #f8f9fa !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] .card,
+html[data-theme="light"] .card-glass,
+html[data-theme="light"] .medical-card,
+html[data-theme="light"] .admin-modal-container,
+html[data-theme="light"] .medilab-modal-container {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-theme="light"] table {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] th,
+html[data-theme="light"] td {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-theme="light"] a {
+  color: #2563eb !important;
+}
+
+/* Light mode specific classes for Admin & Driver Dashboards */
+html:not([data-theme="dark"]) .dasher-dashboard aside.sidebar-admin,
+html[data-theme="light"] .dasher-dashboard aside.sidebar-admin {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard aside.sidebar-admin h5,
+html:not([data-theme="dark"]) .dasher-dashboard aside.sidebar-admin span,
+html:not([data-theme="dark"]) .dasher-dashboard aside.sidebar-admin div,
+html[data-theme="light"] .dasher-dashboard aside.sidebar-admin h5,
+html[data-theme="light"] .dasher-dashboard aside.sidebar-admin span,
+html[data-theme="light"] .dasher-dashboard aside.sidebar-admin div {
+  color: #334155 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard aside.sidebar-admin h5,
+html[data-theme="light"] .dasher-dashboard aside.sidebar-admin h5 {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard aside.sidebar-admin div,
+html[data-theme="light"] .dasher-dashboard aside.sidebar-admin div {
+  border-color: #cbd5e1 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .sidebar-nav-item,
+html[data-theme="light"] .dasher-dashboard .sidebar-nav-item {
+  color: #475569 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .sidebar-nav-item:hover,
+html:not([data-theme="dark"]) .dasher-dashboard .sidebar-nav-item.active,
+html[data-theme="light"] .dasher-dashboard .sidebar-nav-item:hover,
+html[data-theme="light"] .dasher-dashboard .sidebar-nav-item.active {
+  color: #2563eb !important;
+  background: #eff6ff !important;
+  border-left: 4px solid #3b82f6 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .sidebar-logo h3,
+html[data-theme="light"] .dasher-dashboard .sidebar-logo h3 {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .bg-gradient-mixed,
+html[data-theme="light"] .dasher-dashboard .bg-gradient-mixed {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .bg-gradient-mixed h2,
+html[data-theme="light"] .dasher-dashboard .bg-gradient-mixed h2 {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .bg-gradient-mixed p,
+html[data-theme="light"] .dasher-dashboard .bg-gradient-mixed p {
+  color: #475569 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .card-metric,
+html[data-theme="light"] .dasher-dashboard .card-metric {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .card-metric .metric-val,
+html[data-theme="light"] .dasher-dashboard .card-metric .metric-val {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .dasher-dashboard .card-metric div:last-child,
+html[data-theme="light"] .dasher-dashboard .card-metric div:last-child {
+  color: #475569 !important;
+}
+html:not([data-theme="dark"]) body.driver-theme-active,
+html[data-theme="light"] body.driver-theme-active {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) body.driver-theme-active::before,
+html[data-theme="light"] body.driver-theme-active::before {
+  background: none !important;
+}
+html:not([data-theme="dark"]) .driver-theme .driver-bg,
+html[data-theme="light"] .driver-theme .driver-bg {
+  background: #f8fafc !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar,
+html[data-theme="light"] .driver-theme .sidebar {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar .sidebar-logo,
+html[data-theme="light"] .driver-theme .sidebar .sidebar-logo {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar .sidebar-logo h2,
+html[data-theme="light"] .driver-theme .sidebar .sidebar-logo h2 {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar-nav .nav-item,
+html[data-theme="light"] .driver-theme .sidebar-nav .nav-item {
+  color: #475569 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar-nav .nav-item:hover,
+html[data-theme="light"] .driver-theme .sidebar-nav .nav-item:hover {
+  background: #f1f5f9 !important;
+  color: #d97706 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar-nav .nav-item.active,
+html[data-theme="light"] .driver-theme .sidebar-nav .nav-item.active {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+  border-left: 3px solid #f59e0b !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar-user,
+html[data-theme="light"] .driver-theme .sidebar-user {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar-user .user-name,
+html[data-theme="light"] .driver-theme .sidebar-user .user-name {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .sidebar-user .user-role,
+html[data-theme="light"] .driver-theme .sidebar-user .user-role {
+  color: #d97706 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .main-content,
+html[data-theme="light"] .driver-theme .main-content {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme h1, 
+html:not([data-theme="dark"]) .driver-theme h2, 
+html:not([data-theme="dark"]) .driver-theme h3, 
+html:not([data-theme="dark"]) .driver-theme h4,
+html[data-theme="light"] .driver-theme h1, 
+html[data-theme="light"] .driver-theme h2, 
+html[data-theme="light"] .driver-theme h3, 
+html[data-theme="light"] .driver-theme h4 {
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .top-header p,
+html[data-theme="light"] .driver-theme .top-header p {
+  color: #475569 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .card-glass,
+html:not([data-theme="dark"]) .driver-theme .card.card-glass,
+html[data-theme="light"] .driver-theme .card-glass,
+html[data-theme="light"] .driver-theme .card.card-glass {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .card-glass:hover,
+html:not([data-theme="dark"]) .driver-theme .card.card-glass:hover,
+html[data-theme="light"] .driver-theme .card-glass:hover,
+html[data-theme="light"] .driver-theme .card.card-glass:hover {
+  border-color: #cbd5e1 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .form-label,
+html[data-theme="light"] .driver-theme .form-label {
+  color: #475569 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .form-input,
+html[data-theme="light"] .driver-theme .form-input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .form-input option,
+html[data-theme="light"] .driver-theme .form-input option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .checklist-item,
+html[data-theme="light"] .driver-theme .checklist-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .checklist-item:hover,
+html[data-theme="light"] .driver-theme .checklist-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html:not([data-theme="dark"]) .driver-theme .checklist-item input[type="checkbox"],
+html[data-theme="light"] .driver-theme .checklist-item input[type="checkbox"] {
+  border: 2px solid #cbd5e1 !important;
+  background: #ffffff !important;
+}
+html:not([data-theme="dark"]) .driver-theme .btn-ghost,
+html[data-theme="light"] .driver-theme .btn-ghost {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+html:not([data-theme="dark"]) .driver-theme .btn-ghost:hover,
+html[data-theme="light"] .driver-theme .btn-ghost:hover {
+  background: #e2e8f0 !important;
+}
+
 

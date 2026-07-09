@@ -128,7 +128,7 @@ export const AdminDashboard: React.FC = () => {
     // Add Dasher CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = '/src/styles/dasher/theme.css';
+    link.href = '/styles/dasher/theme.css';
     link.id = 'dasher-theme-css';
     document.head.appendChild(link);
 
@@ -701,25 +701,45 @@ export const AdminDashboard: React.FC = () => {
       
       {/* SCOPED OVERRIDES */}
       <style>{`
+        /* Default (Light) theme rules */
+        .dasher-dashboard {
+          background: #f8fafc !important;
+          color: #1c252e !important;
+        }
         .dasher-dashboard aside.sidebar-admin {
-          width: 260px;
-          background: #0f172a;
-          color: #94a3b8;
-          display: flex;
-          flex-direction: column;
-          border-right: 1px solid rgba(255,255,255,0.08);
-          position: fixed;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          z-index: 100;
+          width: 260px !important;
+          background: #ffffff !important;
+          color: #475569 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          border-right: 1px solid #e2e8f0 !important;
+          position: fixed !important;
+          top: 0 !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          z-index: 100 !important;
+        }
+        .dasher-dashboard .sidebar-logo h3 {
+          color: #0f172a !important;
+        }
+        .dasher-dashboard .sidebar-header {
+          border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .dasher-dashboard .sidebar-title {
+          color: #0f172a !important;
+        }
+        .dasher-dashboard .sidebar-footer-profile {
+          border-top: 1px solid #e2e8f0 !important;
+        }
+        .dasher-dashboard .sidebar-username {
+          color: #0f172a !important;
         }
         .dasher-dashboard .sidebar-nav-item {
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 12px 24px;
-          color: #94a3b8;
+          color: #475569;
           font-weight: 500;
           font-size: 14px;
           cursor: pointer;
@@ -727,8 +747,8 @@ export const AdminDashboard: React.FC = () => {
         }
         .dasher-dashboard .sidebar-nav-item:hover,
         .dasher-dashboard .sidebar-nav-item.active {
-          color: #ffffff;
-          background: rgba(255,255,255,0.06);
+          color: #2563eb;
+          background: #eff6ff;
           border-left: 4px solid #3b82f6;
         }
         .dasher-dashboard .main-content-area {
@@ -738,8 +758,16 @@ export const AdminDashboard: React.FC = () => {
           background: #f8fafc;
         }
         .dasher-dashboard .bg-gradient-mixed {
-          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-          color: #ffffff;
+          background: #ffffff !important;
+          border: 1px solid #cbd5e1 !important;
+          color: #0f172a !important;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+        }
+        .dasher-dashboard .bg-gradient-mixed h2 {
+          color: #0f172a !important;
+        }
+        .dasher-dashboard .bg-gradient-mixed p {
+          color: #475569 !important;
         }
         .dasher-dashboard .card-metric {
           background: #ffffff;
@@ -753,21 +781,128 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 800;
           line-height: 1.2;
         }
+        .dasher-dashboard .card,
+        .dasher-dashboard .triage-card {
+          background: #ffffff !important;
+          color: #1c252e !important;
+          border: 1px solid #cbd5e1 !important;
+          border-radius: 8px;
+        }
+        .dasher-dashboard .card h5,
+        .dasher-dashboard .card h6,
+        .dasher-dashboard .card strong,
+        .dasher-dashboard .card span:not([class*="badge"]),
+        .dasher-dashboard .card div:not([class*="badge"]),
+        .dasher-dashboard .triage-card strong,
+        .dasher-dashboard .triage-card div:not([class*="badge"]) {
+          color: #0f172a !important;
+        }
         .dasher-dashboard .triage-card {
           padding: 16px;
-          border-radius: 8px;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
           margin-bottom: 12px;
           transition: all 0.2s ease;
         }
         .dasher-dashboard .triage-card:hover {
-          border-color: #3b82f6;
+          border-color: #3b82f6 !important;
           box-shadow: 0 4px 12px rgba(59,130,246,0.06);
         }
         .dasher-dashboard .triage-card.selected {
-          border-color: #3b82f6;
-          background: #eff6ff;
+          border-color: #3b82f6 !important;
+          background: #eff6ff !important;
+        }
+        .dasher-dashboard .dashboard-footer {
+          background: #f8fafc !important;
+          color: #475569 !important;
+          border-top: 1px solid #e2e8f0 !important;
+        }
+        .dasher-dashboard .dashboard-footer p {
+          color: #475569 !important;
+        }
+
+        /* Dark theme overrides */
+        html[data-theme="dark"] .dasher-dashboard,
+        [data-bs-theme="dark"] .dasher-dashboard {
+          background: #0d1117 !important;
+          color: #e6edf3 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard aside.sidebar-admin,
+        [data-bs-theme="dark"] .dasher-dashboard aside.sidebar-admin {
+          background: #0f172a;
+          color: #94a3b8;
+          border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        html[data-theme="dark"] .dasher-dashboard .sidebar-logo h3,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-logo h3 {
+          color: #ffffff;
+        }
+        html[data-theme="dark"] .dasher-dashboard .sidebar-nav-item,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-nav-item {
+          color: #94a3b8;
+        }
+        html[data-theme="dark"] .dasher-dashboard .sidebar-nav-item:hover,
+        html[data-theme="dark"] .dasher-dashboard .sidebar-nav-item.active,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-nav-item:hover,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-nav-item.active {
+          color: #ffffff;
+          background: rgba(255,255,255,0.06);
+          border-left: 4px solid #3b82f6;
+        }
+        html[data-theme="dark"] .dasher-dashboard .main-content-area,
+        [data-bs-theme="dark"] .dasher-dashboard .main-content-area {
+          background: #0d1117;
+        }
+        html[data-theme="dark"] .dasher-dashboard .bg-gradient-mixed,
+        [data-bs-theme="dark"] .dasher-dashboard .bg-gradient-mixed {
+          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .bg-gradient-mixed h2,
+        [data-bs-theme="dark"] .dasher-dashboard .bg-gradient-mixed h2 {
+          color: #ffffff !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .bg-gradient-mixed p,
+        [data-bs-theme="dark"] .dasher-dashboard .bg-gradient-mixed p {
+          color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .card,
+        [data-bs-theme="dark"] .dasher-dashboard .card,
+        html[data-theme="dark"] .dasher-dashboard .triage-card,
+        [data-bs-theme="dark"] .dasher-dashboard .triage-card {
+          background: #1c2128 !important;
+          color: #e6edf3 !important;
+          border: 1px solid #30363d !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .card h5,
+        [data-bs-theme="dark"] .dasher-dashboard .card h5,
+        html[data-theme="dark"] .dasher-dashboard .card h6,
+        [data-bs-theme="dark"] .dasher-dashboard .card h6,
+        html[data-theme="dark"] .dasher-dashboard .card strong,
+        [data-bs-theme="dark"] .dasher-dashboard .card strong,
+        html[data-theme="dark"] .dasher-dashboard .card span:not([class*="badge"]),
+        [data-bs-theme="dark"] .dasher-dashboard .card span:not([class*="badge"]),
+        html[data-theme="dark"] .dasher-dashboard .card div:not([class*="badge"]),
+        [data-bs-theme="dark"] .dasher-dashboard .card div:not([class*="badge"]),
+        html[data-theme="dark"] .dasher-dashboard .triage-card strong,
+        [data-bs-theme="dark"] .dasher-dashboard .triage-card strong,
+        html[data-theme="dark"] .dasher-dashboard .triage-card div:not([class*="badge"]),
+        [data-bs-theme="dark"] .dasher-dashboard .triage-card div:not([class*="badge"]) {
+          color: #e6edf3 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .triage-card.selected,
+        [data-bs-theme="dark"] .dasher-dashboard .triage-card.selected {
+          border-color: #3b82f6 !important;
+          background: #1e293b !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .dashboard-footer,
+        [data-bs-theme="dark"] .dasher-dashboard .dashboard-footer {
+          background: #0d1117 !important;
+          color: #8b949e !important;
+          border-top: 1px solid #30363d !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .dashboard-footer p,
+        [data-bs-theme="dark"] .dasher-dashboard .dashboard-footer p {
+          color: #8b949e !important;
         }
         .dasher-dashboard .badge-alert-pending {
           background: #fef2f2;
@@ -968,13 +1103,28 @@ export const AdminDashboard: React.FC = () => {
       `}</style>
 
       {/* VERTICAL SIDEBAR */}
-      <aside className="sidebar-admin">
-        <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <aside className="sidebar-admin" style={{
+        background: theme === 'light' ? '#ffffff' : '#0f172a',
+        borderRight: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
+      }}>
+        <div className="sidebar-header" style={{
+          padding: '24px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
+        }}>
           <div style={{ background: '#3b82f6', color: '#ffffff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 800 }}>
             M
           </div>
           <div>
-            <h5 style={{ color: '#ffffff', fontSize: '15px', fontWeight: 700, margin: 0, letterSpacing: '0.04em' }}>MamaTrack</h5>
+            <h5 className="sidebar-title" style={{
+              fontSize: '15px',
+              fontWeight: 700,
+              margin: 0,
+              letterSpacing: '0.04em',
+              color: theme === 'light' ? '#0f172a' : '#ffffff'
+            }}>MamaTrack</h5>
             <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Command Desk</span>
           </div>
         </div>
@@ -1003,11 +1153,21 @@ export const AdminDashboard: React.FC = () => {
         </nav>
 
         {/* Sidebar Footer User profile */}
-        <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="sidebar-footer-profile" style={{
+          padding: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderTop: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
+              <div className="sidebar-username" style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: theme === 'light' ? '#0f172a' : '#ffffff'
+              }}>
                 {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').split(' ')[0]}
               </div>
               <div style={{ fontSize: '11px', color: '#64748b' }}>System Admin</div>
@@ -1088,11 +1248,18 @@ export const AdminDashboard: React.FC = () => {
         </header>
 
         {/* GREETING BANNER WIDGET */}
-        <div className="bg-gradient-mixed rounded-3 p-6 mb-6" style={{ padding: '24px', borderRadius: '8px', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 4px', color: '#ffffff' }}>
+        <div className="bg-gradient-mixed rounded-3 p-6 mb-6" style={{
+          padding: '24px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          background: theme === 'light' ? '#ffffff' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+          border: theme === 'light' ? '1px solid #cbd5e1' : 'none',
+          boxShadow: theme === 'light' ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : 'none'
+        }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 4px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>
             👋 Hello, {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '')}!
           </h2>
-          <p style={{ margin: 0, opacity: 0.95, fontSize: '14px', lineHeight: 1.5, color: '#cbd5e1' }}>
+          <p style={{ margin: 0, opacity: 0.95, fontSize: '14px', lineHeight: 1.5, color: theme === 'light' ? '#475569' : '#cbd5e1' }}>
             Welcome to the regional command console. Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District.
           </p>
         </div>
