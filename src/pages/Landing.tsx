@@ -32,16 +32,16 @@ export const Landing: React.FC = () => {
       link: "#portals",
     },
     {
-      subtitle: "Professional Medical Guidance Anywhere, Anytime",
-      title: "24/7 On-Duty Clinical Doctor Consultations",
-      desc: "Expectant mothers are matched directly with local medical practitioners for symptom chats.",
+      subtitle: "24/7 Emergency Medical Response & Support",
+      title: "Direct Doctor-to-Mother Referral Pathways",
+      desc: "Connect expectant mothers directly with duty obstetricians and midwives for real-time symptom consultations and referrals.",
       buttonText: "Clinical Portal",
       link: "/login?role=doctor",
     },
     {
       subtitle: "Transmitting Live Coordinates to Responder Networks",
-      title: "GPS-Powered Ambulance Navigation Logs",
-      desc: "Drivers receive alerts and routing paths dynamically to reduce transport delays.",
+      title: "GPS-Driven Ambulance Dispatch Navigation",
+      desc: "Ambulance teams receive live coordinates of maternal distress calls with optimized routing to minimize travel delays.",
       buttonText: "Driver Portal",
       link: "/login?role=driver",
     }
@@ -492,7 +492,7 @@ export const Landing: React.FC = () => {
             </div>
             <div className="col-md-6 col-sm-6 text-right text-align-right">
               <p style={{ margin: 0, fontSize: '12px', color: '#909090' }}>
-                Design integrated with Medical Center template styles.
+                MamaTrack GPS · Regional Maternal Emergency Response System.
               </p>
             </div>
           </div>
