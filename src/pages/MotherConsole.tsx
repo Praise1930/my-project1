@@ -286,10 +286,10 @@ export const MotherConsole: React.FC = () => {
       <div className="dashboard-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         
         {/* Navbar */}
-        <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.03)', zIndex: 100 }}>
+        <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
           <div className="logo" onClick={() => navigate('/mother')} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.35rem', cursor: 'pointer', fontWeight: 800 }}>
             <span style={{ fontSize: '1.8rem', background: 'rgba(244,63,94,0.1)', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤱</span>
-            <span className="logo-text" style={{ color: '#1f2937' }}>Momentra Console</span>
+            <span className="logo-text" style={{ color: theme === 'light' ? '#1f2937' : '#ffffff' }}>Momentra Console</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -301,7 +301,7 @@ export const MotherConsole: React.FC = () => {
             {/* Notifications */}
             <ThemeToggle style={{ fontSize: '0.75rem', padding: '6px 12px' }} />
             <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'white', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+              <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
                 <Bell size={18} />
                 {notifications.some(n => !n.is_read) && (
                   <span style={{ position: 'absolute', top: '1px', right: '1px', background: '#f43f5e', width: '8px', height: '8px', borderRadius: '50%' }} />

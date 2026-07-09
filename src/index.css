@@ -30,6 +30,10 @@
     background-color: #1e293b !important;
 }
 
+[data-theme="dark"] .leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 [data-theme="light"] .driver-theme-active .leaflet-container {
     background-color: #f1f5f9 !important;
 }

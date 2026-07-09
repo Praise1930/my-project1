@@ -724,12 +724,14 @@ export const AdminDashboard: React.FC = () => {
         }
         .dasher-dashboard .sidebar-header {
           border-bottom: 1px solid #e2e8f0 !important;
+          background: #ffffff !important;
         }
         .dasher-dashboard .sidebar-title {
           color: #0f172a !important;
         }
         .dasher-dashboard .sidebar-footer-profile {
           border-top: 1px solid #e2e8f0 !important;
+          background: #ffffff !important;
         }
         .dasher-dashboard .sidebar-username {
           color: #0f172a !important;
@@ -827,9 +829,22 @@ export const AdminDashboard: React.FC = () => {
         }
         html[data-theme="dark"] .dasher-dashboard aside.sidebar-admin,
         [data-bs-theme="dark"] .dasher-dashboard aside.sidebar-admin {
-          background: #0f172a;
+          background: #0f172a !important;
           color: #94a3b8;
           border-right: 1px solid rgba(255,255,255,0.08);
+        }
+        html[data-theme="dark"] .dasher-dashboard .sidebar-header,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-header,
+        html[data-theme="dark"] .dasher-dashboard .sidebar-footer-profile,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-footer-profile {
+          background: #0f172a !important;
+          border-color: rgba(255,255,255,0.08) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .sidebar-title,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-title,
+        html[data-theme="dark"] .dasher-dashboard .sidebar-username,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-username {
+          color: #ffffff !important;
         }
         html[data-theme="dark"] .dasher-dashboard .sidebar-logo h3,
         [data-bs-theme="dark"] .dasher-dashboard .sidebar-logo h3 {
