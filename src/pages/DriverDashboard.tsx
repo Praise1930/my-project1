@@ -301,6 +301,45 @@ export const DriverDashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* Relocated Profile Section to the Top */}
+          <div className="sidebar-user" style={{
+            borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.08)',
+            borderTop: 'none',
+            background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.03)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
+            <div className="user-info" style={{ flex: 1 }}>
+              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>{user.full_name.split(' ')[0]}</div>
+              <div className="user-role" style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Ambulance Driver</div>
+            </div>
+            <button
+              onClick={() => { AuthService.logout(); navigate('/'); }}
+              title="Logout"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(239,68,68,0.3)',
+                background: 'rgba(239,68,68,0.1)',
+                color: '#f87171',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.2)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.1)'; }}
+            >
+              <LogOut size={13} />
+            </button>
+          </div>
+
           <div style={{
             padding: '1.25rem 1rem',
             borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(245, 158, 11, 0.12)',
@@ -334,39 +373,6 @@ export const DriverDashboard: React.FC = () => {
               </div>
             </div>
           </nav>
-
-          <div className="sidebar-user" style={{
-            borderTop: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
-            <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
-            <div className="user-info">
-              <div className="user-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>{user.full_name.split(' ')[0]}</div>
-              <div className="user-role" style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Ambulance Driver</div>
-            </div>
-            <button
-              onClick={() => { AuthService.logout(); navigate('/'); }}
-              title="Logout"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '6px 10px',
-                borderRadius: '8px',
-                border: '1px solid rgba(239,68,68,0.3)',
-                background: 'rgba(239,68,68,0.1)',
-                color: '#f87171',
-                cursor: 'pointer',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.2)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.1)'; }}
-            >
-              <LogOut size={13} />
-              <span>Logout</span>
-            </button>
-          </div>
         </aside>
 
         {/* Main Panel Workspace */}

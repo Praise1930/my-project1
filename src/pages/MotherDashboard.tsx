@@ -355,71 +355,284 @@ export const MotherDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="mother-theme momentra-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="mother-theme momentra-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>
+      {/* Scoped style overrides for sidebar layout */}
+      <style>{`
+        .momentra-root aside.sidebar-mother {
+          width: 260px !important;
+          background: ${theme === 'light' ? 'rgba(255, 255, 255, 0.75)' : 'rgba(15, 23, 42, 0.85)'} !important;
+          backdrop-filter: blur(20px);
+          color: ${theme === 'light' ? '#1f2937' : '#e6edf3'} !important;
+          display: flex !important;
+          flex-direction: column !important;
+          border-right: 1px solid ${theme === 'light' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255,255,255,0.08)'} !important;
+          position: fixed !important;
+          top: 0 !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          z-index: 100 !important;
+        }
+        @media (max-width: 768px) {
+          .momentra-root .dashboard-layout {
+            flex-direction: column !important;
+          }
+          .momentra-root aside.sidebar-mother {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            flex-direction: row !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(255,255,255,0.08) !important;
+            z-index: 2000 !important;
+            overflow: hidden !important;
+          }
+          .momentra-root aside.sidebar-mother > div:first-child,
+          .momentra-root aside.sidebar-mother .sidebar-profile {
+            display: none !important;
+          }
+          .momentra-root aside.sidebar-mother nav {
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100% !important;
+            padding: 0 !important;
+            justify-content: space-around !important;
+            margin-top: 0 !important;
+          }
+          .momentra-root aside.sidebar-mother nav > div {
+            flex: 1 !important;
+            justify-content: center !important;
+            padding: 10px !important;
+            margin: 0 !important;
+          }
+          .momentra-root aside.sidebar-mother nav > div span:first-child {
+            font-size: 1.2rem !important;
+          }
+          .momentra-root aside.sidebar-mother nav > div span:last-child {
+            display: none !important;
+          }
+          .momentra-root .main-content-area {
+            margin-left: 0 !important;
+            padding-bottom: 80px !important;
+          }
+        }
+      `}</style>
+
       {/* Blurred background image & light tint overlay */}
       <div className="mother-bg" />
       <div className="mother-bg-overlay" />
 
-      <div className="dashboard-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Top Navbar */}
-        <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
-          <div className="logo" onClick={() => setActiveTab('home')} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.35rem', cursor: 'pointer', fontWeight: 800 }}>
-            <span style={{ fontSize: '1.8rem', background: 'rgba(244,63,94,0.1)', width: '38px', height: '38px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🤱</span>
-            <span className="logo-text" style={{ color: theme === 'light' ? '#1f2937' : '#ffffff' }}>Momentra</span>
+      <div className="dashboard-layout" style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
+        
+        {/* VERTICAL SIDEBAR */}
+        <aside className="sidebar-mother" style={{
+          width: '260px',
+          background: theme === 'light' ? 'rgba(255, 255, 255, 0.75)' : 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(20px)',
+          color: theme === 'light' ? '#1f2937' : '#e6edf3',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: theme === 'light' ? '1px solid rgba(255, 255, 255, 0.5)' : '1px solid rgba(255,255,255,0.08)',
+          position: 'fixed',
+          top: 0,
+          bottom: 0,
+          left: 0,
+          zIndex: 100,
+          fontFamily: "'Outfit', sans-serif"
+        }}>
+          {/* Logo block */}
+          <div style={{
+            padding: '24px 20px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div style={{ background: 'rgba(244,63,94,0.1)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+              🤱
+            </div>
+            <div>
+              <h5 style={{
+                fontSize: '16px',
+                fontWeight: 800,
+                margin: 0,
+                letterSpacing: '0.04em',
+                color: '#f43f5e'
+              }}>Momentra</h5>
+              <span style={{ fontSize: '11px', color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maternal Console</span>
+            </div>
           </div>
 
-          <nav className="header-nav" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <span onClick={() => setActiveTab('home')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'home' ? 700 : 500, color: activeTab === 'home' ? '#f43f5e' : (theme === 'light' ? '#4b5563' : '#cbd5e1'), cursor: 'pointer' }}>Home</span>
-            <span onClick={() => setActiveTab('emergency')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'emergency' ? 700 : 500, color: activeTab === 'emergency' ? '#f43f5e' : (theme === 'light' ? '#4b5563' : '#cbd5e1'), cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              Rescue {activeEmergency && <span className="pulse-dot" style={{ width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%' }} />}
-            </span>
-            <span onClick={() => setActiveTab('checkups')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'checkups' ? 700 : 500, color: activeTab === 'checkups' ? '#f43f5e' : (theme === 'light' ? '#4b5563' : '#cbd5e1'), cursor: 'pointer' }}>Schedules</span>
-            <span onClick={() => setActiveTab('anc-timeline')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'anc-timeline' ? 700 : 500, color: activeTab === 'anc-timeline' ? '#f43f5e' : (theme === 'light' ? '#4b5563' : '#cbd5e1'), cursor: 'pointer' }}>Timeline</span>
-            <span onClick={() => setActiveTab('profile')} style={{ fontSize: '0.85rem', fontWeight: activeTab === 'profile' ? 700 : 500, color: activeTab === 'profile' ? '#f43f5e' : (theme === 'light' ? '#4b5563' : '#cbd5e1'), cursor: 'pointer' }}>Profile & Doctors</span>
-          </nav>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <ThemeToggle style={{ fontSize: '0.75rem', padding: '6px 12px' }} />
-            {/* Notifications */}
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-                <Bell size={18} />
-                {notifications.some(n => !n.is_read) && (
-                  <span style={{ position: 'absolute', top: '1px', right: '1px', background: '#f43f5e', width: '8px', height: '8px', borderRadius: '50%' }} />
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="card-glass notifications-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', maxHeight: '400px', overflowY: 'auto', zIndex: 999, padding: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '8px' }}>
-                    <strong style={{ fontSize: '0.85rem' }}>Alert Notifications</strong>
-                    <button onClick={() => { NotificationService.markAllAsRead(user.id); setNotifications(NotificationService.getNotificationsForUser(user.id)); }} style={{ background: 'none', border: 'none', color: '#f43f5e', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div style={{ padding: '20px 0', textAlign: 'center', fontSize: '0.78rem', color: '#8b96a5' }}>No messages</div>
-                  ) : (
-                    notifications.map(n => (
-                      <div key={n.id} style={{ padding: '8px', borderRadius: '6px', background: n.is_read ? 'transparent' : 'rgba(244,63,94,0.03)', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '2px', opacity: n.is_read ? 0.7 : 1 }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: n.is_read ? 600 : 700, color: n.type === 'emergency' ? '#f43f5e' : '#1f2937' }}>{n.title}</span>
-                        <p style={{ fontSize: '0.72rem', color: '#4b5563', lineHeight: 1.3 }}>{n.message}</p>
-                        <span style={{ fontSize: '0.65rem', color: '#9ca3af', textAlign: 'right' }}>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                    ))
-                  )}
+          {/* Relocated Profile Section to the Top */}
+          <div className="sidebar-profile" style={{
+            padding: '16px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.08)',
+            background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.02)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
+              <div>
+                <div style={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: theme === 'light' ? '#1f2937' : '#ffffff'
+                }}>
+                  {user.full_name.split(' ')[0]}
                 </div>
-              )}
+                <div style={{ fontSize: '11px', color: '#f43f5e', fontWeight: 600 }}>Mother</div>
+              </div>
             </div>
-
-            {/* Profile Photo */}
-            <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
-
-            {/* Logout button */}
-            <button className="btn-momentra-outline" onClick={() => { AuthService.logout(); navigate('/'); }} style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }}>
-              <LogOut size={14} style={{ marginRight: '4px' }} />
-              Logout
+            <button 
+              onClick={() => { AuthService.logout(); navigate('/'); }}
+              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Logout"
+            >
+              <LogOut size={16} />
             </button>
           </div>
-        </header>
+
+          {/* Sidebar Nav Links */}
+          <nav style={{ flex: 1, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div onClick={() => setActiveTab('home')} className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: activeTab === 'home' ? 'rgba(251, 113, 133, 0.1)' : 'transparent',
+              color: activeTab === 'home' ? '#e11d48' : (theme === 'light' ? '#4b5563' : '#cbd5e1'),
+              fontWeight: activeTab === 'home' ? 700 : 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}>
+              <span>🏠</span>
+              <span>Home Overview</span>
+            </div>
+
+            <div onClick={() => setActiveTab('emergency')} className={`nav-item ${activeTab === 'emergency' ? 'active' : ''}`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: activeTab === 'emergency' ? 'rgba(251, 113, 133, 0.1)' : 'transparent',
+              color: activeTab === 'emergency' ? '#e11d48' : (theme === 'light' ? '#4b5563' : '#cbd5e1'),
+              fontWeight: activeTab === 'emergency' ? 700 : 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span>🆘</span>
+                <span>Emergency Rescue</span>
+              </div>
+              {activeEmergency && <span style={{ width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', display: 'inline-block' }} />}
+            </div>
+
+            <div onClick={() => setActiveTab('checkups')} className={`nav-item ${activeTab === 'checkups' ? 'active' : ''}`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: activeTab === 'checkups' ? 'rgba(251, 113, 133, 0.1)' : 'transparent',
+              color: activeTab === 'checkups' ? '#e11d48' : (theme === 'light' ? '#4b5563' : '#cbd5e1'),
+              fontWeight: activeTab === 'checkups' ? 700 : 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}>
+              <span>📅</span>
+              <span>Checkup Schedules</span>
+            </div>
+
+            <div onClick={() => setActiveTab('anc-timeline')} className={`nav-item ${activeTab === 'anc-timeline' ? 'active' : ''}`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: activeTab === 'anc-timeline' ? 'rgba(251, 113, 133, 0.1)' : 'transparent',
+              color: activeTab === 'anc-timeline' ? '#e11d48' : (theme === 'light' ? '#4b5563' : '#cbd5e1'),
+              fontWeight: activeTab === 'anc-timeline' ? 700 : 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}>
+              <span>📈</span>
+              <span>WHO ANC Timeline</span>
+            </div>
+
+            <div onClick={() => setActiveTab('profile')} className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: activeTab === 'profile' ? 'rgba(251, 113, 133, 0.1)' : 'transparent',
+              color: activeTab === 'profile' ? '#e11d48' : (theme === 'light' ? '#4b5563' : '#cbd5e1'),
+              fontWeight: activeTab === 'profile' ? 700 : 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}>
+              <span>🩺</span>
+              <span>Profile & Doctors</span>
+            </div>
+          </nav>
+        </aside>
+
+        {/* MAIN VIEWPORT */}
+        <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Top Navbar */}
+          <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
+            <div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
+                {activeTab === 'anc-timeline' ? 'WHO ANC Timeline' : activeTab === 'profile' ? 'Profile & Doctors' : activeTab} Panel
+              </h3>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <ThemeToggle style={{ fontSize: '0.75rem', padding: '6px 12px' }} />
+              
+              {/* Notifications */}
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                  <Bell size={18} />
+                  {notifications.some(n => !n.is_read) && (
+                    <span style={{ position: 'absolute', top: '1px', right: '1px', background: '#f43f5e', width: '8px', height: '8px', borderRadius: '50%' }} />
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="card-glass notifications-panel" style={{ position: 'absolute', right: 0, top: '48px', width: '320px', maxHeight: '400px', overflowY: 'auto', zIndex: 999, padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '0.85rem' }}>Alert Notifications</strong>
+                      <button onClick={() => { NotificationService.markAllAsRead(user.id); setNotifications(NotificationService.getNotificationsForUser(user.id)); }} style={{ background: 'none', border: 'none', color: '#f43f5e', fontSize: '0.7rem', cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '20px 0', textAlign: 'center', fontSize: '0.78rem', color: '#8b96a5' }}>No messages</div>
+                    ) : (
+                      notifications.map(n => (
+                        <div key={n.id} style={{ padding: '8px', borderRadius: '6px', background: n.is_read ? 'transparent' : 'rgba(244,63,94,0.03)', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: '2px', opacity: n.is_read ? 0.7 : 1 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: n.is_read ? 600 : 700, color: n.type === 'emergency' ? '#f43f5e' : '#1f2937' }}>{n.title}</span>
+                          <p style={{ fontSize: '0.72rem', color: '#4b5563', lineHeight: 1.3 }}>{n.message}</p>
+                          <span style={{ fontSize: '0.65rem', color: '#9ca3af', textAlign: 'right' }}>{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
 
         <main className="main-content" style={{ flex: 1, padding: '2rem var(--space-xl)', display: 'flex', flexDirection: 'column' }}>
           
@@ -1020,6 +1233,7 @@ export const MotherDashboard: React.FC = () => {
             <p>© 2026 MamaTrack GPS · Regional Maternal Emergency Response System. All rights reserved.</p>
           </footer>
         </main>
+      </div>
       </div>
 
       {/* CONFIRM TRIGGER SOS MODAL */}

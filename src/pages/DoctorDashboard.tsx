@@ -172,7 +172,7 @@ export const DoctorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="medilab-dashboard" style={{ background: '#f6f9fe', minHeight: '100vh', display: 'flex', flexDirection: 'column', color: '#444444', fontFamily: "'Poppins', sans-serif" }}>
+    <div className="medilab-dashboard" style={{ background: theme === 'light' ? '#f6f9fe' : '#0d1117', minHeight: '100vh', display: 'flex', color: theme === 'light' ? '#444444' : '#cbd5e1', fontFamily: "'Poppins', sans-serif" }}>
       
       {/* SCOPED OVERRIDES */}
       <style>{`
@@ -298,56 +298,221 @@ export const DoctorDashboard: React.FC = () => {
           box-shadow: 0 10px 30px rgba(0,0,0,0.1);
           overflow: hidden;
         }
+        .medilab-dashboard aside.sidebar-medilab {
+          width: 260px !important;
+          background: #ffffff !important;
+          color: #2c4964 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          border-right: 1px solid #eef2f7 !important;
+          position: fixed !important;
+          top: 0 !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          z-index: 100 !important;
+        }
+        html[data-theme="dark"] .medilab-dashboard aside.sidebar-medilab {
+          background: #111827 !important;
+          border-right: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        @media (max-width: 768px) {
+          .medilab-dashboard {
+            flex-direction: column !important;
+          }
+          .medilab-dashboard aside.sidebar-medilab {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            flex-direction: row !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(255,255,255,0.08) !important;
+            z-index: 2000 !important;
+            overflow: hidden !important;
+          }
+          .medilab-dashboard aside.sidebar-medilab > div:first-child,
+          .medilab-dashboard aside.sidebar-medilab .sidebar-profile,
+          .medilab-dashboard aside.sidebar-medilab .btn-danger,
+          .medilab-dashboard aside.sidebar-medilab div[style*="background:"] {
+            display: none !important;
+          }
+          .medilab-dashboard aside.sidebar-medilab nav {
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100% !important;
+            padding: 0 !important;
+            justify-content: space-around !important;
+            margin-top: 0 !important;
+          }
+          .medilab-dashboard aside.sidebar-medilab nav > div {
+            flex: 1 !important;
+            justify-content: center !important;
+            padding: 10px !important;
+            margin: 0 !important;
+          }
+          .medilab-dashboard .main-content-area {
+            margin-left: 0 !important;
+            padding-bottom: 80px !important;
+          }
+        }
       `}</style>
 
-      {/* HEADER NAVBAR */}
-      <header className="medilab-navbar d-flex align-items-center justify-content-between">
-        <div className="nav-logo">
-          <i className="bi bi-heart-pulse-fill" style={{ color: '#1977cc' }}></i>
-          <span>Mama<span style={{ color: theme === 'light' ? '#2c4964' : '#e6edf3' }}>Track GPS</span></span>
+      {/* VERTICAL SIDEBAR */}
+      <aside className="sidebar-medilab" style={{
+        width: '260px',
+        background: theme === 'light' ? '#ffffff' : '#111827',
+        color: theme === 'light' ? '#2c4964' : '#e6edf3',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRight: theme === 'light' ? '1px solid #eef2f7' : '1px solid rgba(255,255,255,0.08)',
+        position: 'fixed',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        zIndex: 100,
+        fontFamily: "'Poppins', sans-serif"
+      }}>
+        {/* Logo block */}
+        <div style={{
+          padding: '24px 20px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <div style={{ background: '#1977cc', color: '#ffffff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 800 }}>
+            🩺
+          </div>
+          <div>
+            <h5 style={{
+              fontSize: '15px',
+              fontWeight: 700,
+              margin: 0,
+              letterSpacing: '0.04em',
+              color: theme === 'light' ? '#1977cc' : '#ffffff'
+            }}>MamaTrack</h5>
+            <span style={{ fontSize: '11px', color: '#777777', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clinical Deck</span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ fontSize: '14px', color: theme === 'light' ? '#555555' : '#cbd5e1' }}>
-            🏥 Facility: <strong style={{ color: theme === 'light' ? '#2c4964' : '#ffffff' }}>{hospital.name}</strong>
+        {/* Relocated Profile Section to the Top */}
+        <div className="sidebar-profile" style={{
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
+          background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.03)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
+            <div>
+              <div style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: theme === 'light' ? '#2c4964' : '#ffffff'
+              }}>
+                {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').split(' ')[0]}
+              </div>
+              <div style={{ fontSize: '11px', color: '#777777' }}>Specialist</div>
+            </div>
           </div>
-          
-          <button
-            onClick={handleToggleDuty}
-            className={`btn-medilab`}
-            style={{
-              background: doctor.is_on_duty ? '#1977cc' : '#6c757d',
-              fontSize: '13px',
-              padding: '6px 18px'
-            }}
-          >
-            {doctor.is_on_duty ? '🟢 Active On-Duty' : '🔴 Standby'}
-          </button>
-
-          <button className="btn-blood-req" onClick={() => setShowBloodModal(true)} style={{ fontSize: '13px', padding: '6px 18px' }}>
-            🩸 Request Blood
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <ThemeToggle />
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: theme === 'light' ? '#2c4964' : '#ffffff' }}>{user.full_name}</div>
-            <div style={{ fontSize: '11px', color: theme === 'light' ? '#777777' : '#94a3b8' }}>Clinical Specialist</div>
-          </div>
-          <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
           <button 
             onClick={() => { AuthService.logout(); navigate('/'); }}
-            style={{ border: 'none', background: 'rgba(220,53,69,0.1)', color: '#dc3545', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-            title="Sign Out"
+            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Logout"
           >
-            <i className="bi bi-box-arrow-right"></i>
+            <i className="bi bi-box-arrow-right" style={{ fontSize: '18px' }}></i>
           </button>
         </div>
-      </header>
 
-      {/* METRIC COUNTERS BAR */}
-      <div style={{ padding: '30px 40px 10px' }}>
+        {/* Sidebar Controls and Links */}
+        <div style={{ flex: 1, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {/* Active Status Control in Sidebar */}
+          <div style={{ padding: '10px 12px', borderRadius: '8px', background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.02)', border: theme === 'light' ? '1px solid #eef2f7' : '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontSize: '11px', color: '#777777', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>Duty Status</div>
+            <button
+              onClick={handleToggleDuty}
+              className="btn btn-sm w-100"
+              style={{
+                background: doctor.is_on_duty ? '#1977cc' : '#6c757d',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                padding: '8px'
+              }}
+            >
+              {doctor.is_on_duty ? '🟢 Active On-Duty' : '🔴 Standby'}
+            </button>
+          </div>
+
+          {/* Blood Request Control in Sidebar */}
+          <button 
+            className="btn btn-danger btn-sm w-100" 
+            onClick={() => setShowBloodModal(true)} 
+            style={{ 
+              background: '#dc3545',
+              border: 'none',
+              fontSize: '12px', 
+              fontWeight: 600,
+              borderRadius: '6px',
+              padding: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            🩸 Request Blood
+          </button>
+
+          <nav style={{ marginTop: '20px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: theme === 'light' ? '#eef2f7' : 'rgba(255,255,255,0.06)',
+              color: theme === 'light' ? '#1977cc' : '#ffffff',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}>
+              <i className="bi bi-grid-1x2-fill"></i>
+              <span>Overview Console</span>
+            </div>
+          </nav>
+        </div>
+      </aside>
+
+      {/* MAIN VIEWPORT */}
+      <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        
+        {/* TOP NAVBAR */}
+        <header className="medilab-top-header" style={{
+          padding: '20px 30px',
+          background: theme === 'light' ? '#ffffff' : '#111827',
+          borderBottom: theme === 'light' ? '1px solid #eef2f7' : '1px solid rgba(255,255,255,0.08)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0 }}>Clinical Portal Console</h4>
+            <span style={{ fontSize: '12px', color: '#777777' }}>🏥 Facility: <strong>{hospital.name}</strong></span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <ThemeToggle />
+          </div>
+        </header>
+
+        {/* METRIC COUNTERS BAR */}
+        <div style={{ padding: '30px 40px 10px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
           <div className="metric-box" style={{ borderBottomColor: '#22c55e' }}>
             <div className="metric-title">Available Ward Beds</div>
@@ -488,6 +653,8 @@ export const DoctorDashboard: React.FC = () => {
       <footer className="dashboard-footer" style={{ borderTop: '1px solid #eef2f7' }}>
         <p>© 2026 MamaTrack GPS · Regional Maternal Emergency Response System. All rights reserved.</p>
       </footer>
+
+      </div>
 
       {/* BLOOD REQUEST MODAL */}
       {showBloodModal && (

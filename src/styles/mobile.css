@@ -1040,4 +1040,28 @@ html[data-theme="light"] .driver-theme .btn-ghost:hover {
   background: #e2e8f0 !important;
 }
 
+/* ── Doctor & Mother Sidebars theme overrides ── */
+html:not([data-theme="dark"]) .medilab-dashboard aside.sidebar-medilab,
+html[data-theme="light"] .medilab-dashboard aside.sidebar-medilab {
+  background: #ffffff !important;
+  border-right: 1px solid #eef2f7 !important;
+  color: #2c4964 !important;
+}
+html:not([data-theme="dark"]) .medilab-dashboard .sidebar-profile,
+html[data-theme="light"] .medilab-dashboard .sidebar-profile {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+html:not([data-theme="dark"]) .momentra-root aside.sidebar-mother,
+html[data-theme="light"] .momentra-root aside.sidebar-mother {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #1f2937 !important;
+}
+html:not([data-theme="dark"]) .momentra-root .sidebar-profile,
+html[data-theme="light"] .momentra-root .sidebar-profile {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
 

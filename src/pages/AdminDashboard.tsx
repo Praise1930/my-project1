@@ -723,15 +723,16 @@ export const AdminDashboard: React.FC = () => {
           color: #0f172a !important;
         }
         .dasher-dashboard .sidebar-header {
-          border-bottom: 1px solid #e2e8f0 !important;
+          border-bottom: none !important;
           background: #ffffff !important;
         }
         .dasher-dashboard .sidebar-title {
           color: #0f172a !important;
         }
         .dasher-dashboard .sidebar-footer-profile {
-          border-top: 1px solid #e2e8f0 !important;
-          background: #ffffff !important;
+          border-bottom: 1px solid #e2e8f0 !important;
+          border-top: none !important;
+          background: #f8fafc !important;
         }
         .dasher-dashboard .sidebar-username {
           color: #0f172a !important;
@@ -834,11 +835,15 @@ export const AdminDashboard: React.FC = () => {
           border-right: 1px solid rgba(255,255,255,0.08);
         }
         html[data-theme="dark"] .dasher-dashboard .sidebar-header,
-        [data-bs-theme="dark"] .dasher-dashboard .sidebar-header,
+        [data-bs-theme="dark"] .dasher-dashboard .sidebar-header {
+          background: #0f172a !important;
+          border-bottom: none !important;
+        }
         html[data-theme="dark"] .dasher-dashboard .sidebar-footer-profile,
         [data-bs-theme="dark"] .dasher-dashboard .sidebar-footer-profile {
-          background: #0f172a !important;
-          border-color: rgba(255,255,255,0.08) !important;
+          background: rgba(255,255,255,0.03) !important;
+          border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+          border-top: none !important;
         }
         html[data-theme="dark"] .dasher-dashboard .sidebar-title,
         [data-bs-theme="dark"] .dasher-dashboard .sidebar-title,
@@ -1123,11 +1128,10 @@ export const AdminDashboard: React.FC = () => {
         borderRight: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
       }}>
         <div className="sidebar-header" style={{
-          padding: '24px 20px',
+          padding: '24px 20px 12px',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
+          gap: '10px'
         }}>
           <div style={{ background: '#3b82f6', color: '#ffffff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 800 }}>
             M
@@ -1144,36 +1148,14 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <nav style={{ flex: 1, paddingTop: '20px' }}>
-          <div className={`sidebar-nav-item ${activeTab === 'dispatch' ? 'active' : ''}`} onClick={() => setActiveTab('dispatch')}>
-            <i className="ti ti-alert-triangle" style={{ fontSize: '18px' }}></i>
-            <span>Active Dispatch</span>
-          </div>
-          <div className={`sidebar-nav-item ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}>
-            <i className="ti ti-building-hospital" style={{ fontSize: '18px' }}></i>
-            <span>Health Facilities</span>
-          </div>
-          <div className={`sidebar-nav-item ${activeTab === 'personnel' ? 'active' : ''}`} onClick={() => setActiveTab('personnel')}>
-            <i className="ti ti-users" style={{ fontSize: '18px' }}></i>
-            <span>Duty Personnel</span>
-          </div>
-          <div className={`sidebar-nav-item ${activeTab === 'mothers' ? 'active' : ''}`} onClick={() => setActiveTab('mothers')}>
-            <i className="ti ti-user-heart" style={{ fontSize: '18px' }}></i>
-            <span>Expectant Mothers</span>
-          </div>
-          <div className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
-            <i className="ti ti-file-analytics" style={{ fontSize: '18px' }}></i>
-            <span>Audit & Fuel Logs</span>
-          </div>
-        </nav>
-
-        {/* Sidebar Footer User profile */}
+        {/* Relocated Profile & Logout Section at the Top */}
         <div className="sidebar-footer-profile" style={{
-          padding: '20px',
+          padding: '16px 20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderTop: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
+          borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
+          background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.03)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
@@ -1196,6 +1178,29 @@ export const AdminDashboard: React.FC = () => {
             <i className="ti ti-logout" style={{ fontSize: '18px' }}></i>
           </button>
         </div>
+
+        <nav style={{ flex: 1, paddingTop: '10px' }}>
+          <div className={`sidebar-nav-item ${activeTab === 'dispatch' ? 'active' : ''}`} onClick={() => setActiveTab('dispatch')}>
+            <i className="ti ti-alert-triangle" style={{ fontSize: '18px' }}></i>
+            <span>Active Dispatch</span>
+          </div>
+          <div className={`sidebar-nav-item ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}>
+            <i className="ti ti-building-hospital" style={{ fontSize: '18px' }}></i>
+            <span>Health Facilities</span>
+          </div>
+          <div className={`sidebar-nav-item ${activeTab === 'personnel' ? 'active' : ''}`} onClick={() => setActiveTab('personnel')}>
+            <i className="ti ti-users" style={{ fontSize: '18px' }}></i>
+            <span>Duty Personnel</span>
+          </div>
+          <div className={`sidebar-nav-item ${activeTab === 'mothers' ? 'active' : ''}`} onClick={() => setActiveTab('mothers')}>
+            <i className="ti ti-user-heart" style={{ fontSize: '18px' }}></i>
+            <span>Expectant Mothers</span>
+          </div>
+          <div className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+            <i className="ti ti-file-analytics" style={{ fontSize: '18px' }}></i>
+            <span>Audit & Fuel Logs</span>
+          </div>
+        </nav>
       </aside>
 
       {/* MAIN CONTAINER CONTENT AREA */}

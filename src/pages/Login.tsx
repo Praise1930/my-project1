@@ -22,6 +22,7 @@ export const Login: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Clear error when role changes
@@ -202,15 +203,40 @@ export const Login: React.FC = () => {
                     Forgot Password?
                   </button>
                 </div>
-                <input
-                  type="password"
-                  className="form-input"
-                  style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-input"
+                    style={{ padding: '12px 45px 12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#6b7280',
+                      fontSize: '1rem',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      outline: 'none'
+                    }}
+                    title={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: '#6b7280' }}></i>
+                  </button>
+                </div>
               </div>
 
               <button
