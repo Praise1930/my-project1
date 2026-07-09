@@ -533,6 +533,40 @@ export const DoctorDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* CLINICAL REFERENCE HUB */}
+      <div style={{ padding: '0 40px 10px' }}>
+        <div style={{
+          background: theme === 'light' ? '#ffffff' : '#1e293b',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: theme === 'light' ? '1px solid #eef2f7' : '1px solid rgba(255,255,255,0.08)',
+          display: 'flex',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ flex: '1.2', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+            <span style={{ fontSize: '11px', color: '#1977cc', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Clinical Reference Hub</span>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 10px', color: theme === 'light' ? '#2c4964' : '#ffffff' }}>Obstetric Emergency Triage Guidelines</h3>
+            <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#777777', margin: '0 0 16px', maxWidth: '600px' }}>
+              Follow the standard WHO safe childbirth protocols. Screen patient vitals (Blood Pressure, Heart Rate, Temperature) instantly during triage handovers. Coordinate emergency blood supply dispatch via the sidebar deck.
+            </p>
+            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', background: 'rgba(25, 119, 204, 0.08)', color: '#1977cc', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}>⏱️ Critical response &le; 15 mins</span>
+              <span style={{ fontSize: '12px', background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}>🏥 Direct Ward Transfer</span>
+              <span style={{ fontSize: '12px', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}>📞 District Dispatch: 0800-MAMATRACK</span>
+            </div>
+          </div>
+          <div style={{
+            flex: '0.8',
+            backgroundImage: 'url(/assets/img/gallery/blog2.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center center',
+            minHeight: '180px',
+            minWidth: '240px'
+          }} />
+        </div>
+      </div>
+
       {/* MAIN CONTENT WORKSPACE */}
       <div style={{ flex: 1, padding: '20px 40px 40px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '30px' }}>
         

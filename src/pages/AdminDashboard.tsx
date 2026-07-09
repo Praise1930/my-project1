@@ -1268,20 +1268,33 @@ export const AdminDashboard: React.FC = () => {
         </header>
 
         {/* GREETING BANNER WIDGET */}
-        <div className="bg-gradient-mixed rounded-3 p-6 mb-6" style={{
-          padding: '24px',
-          borderRadius: '8px',
+        <div className="bg-gradient-mixed rounded-3" style={{
+          borderRadius: '12px',
           marginBottom: '24px',
           background: theme === 'light' ? '#ffffff' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-          border: theme === 'light' ? '1px solid #cbd5e1' : 'none',
-          boxShadow: theme === 'light' ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)' : 'none'
+          border: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
+          boxShadow: theme === 'light' ? '0 4px 20px rgba(0, 0, 0, 0.02)' : 'none',
+          display: 'flex',
+          overflow: 'hidden',
+          flexWrap: 'wrap'
         }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 4px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>
-            👋 Hello, {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '')}!
-          </h2>
-          <p style={{ margin: 0, opacity: 0.95, fontSize: '14px', lineHeight: 1.5, color: theme === 'light' ? '#475569' : '#cbd5e1' }}>
-            Welcome to the regional command console. Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District.
-          </p>
+          <div style={{ flex: '1.3', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+            <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>System Command Console</span>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 8px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>
+              👋 Hello, {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '')}!
+            </h2>
+            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: theme === 'light' ? '#475569' : '#cbd5e1' }}>
+              Welcome to the regional command console. Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District. Use the navigation panel on the left to review maps, drivers, and hospitals.
+            </p>
+          </div>
+          <div style={{
+            flex: '0.7',
+            backgroundImage: 'url(/assets/img/gallery/about1.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center center',
+            minHeight: '150px',
+            minWidth: '220px'
+          }} />
         </div>
 
         {/* STATS COUNT METRICS ROW */}

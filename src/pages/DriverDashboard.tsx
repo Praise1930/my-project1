@@ -404,6 +404,39 @@ export const DriverDashboard: React.FC = () => {
             </div>
           </header>
 
+          {/* DRIVER REFERENCE BANNER */}
+          <div style={{
+            background: theme === 'light' ? '#ffffff' : '#1e293b',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            border: theme === 'light' ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+            color: theme === 'light' ? '#334155' : '#cbd5e1'
+          }}>
+            <div style={{ flex: '1.2', padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+              <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Ambulance Response Deck</span>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 6px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>Emergency Dispatch Response Protocol</h3>
+              <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: theme === 'light' ? '#64748b' : '#94a3b8', margin: '0 0 12px' }}>
+                Ensure your siren and beacons are fully operational. Drive with caution along rural pathways. Transmit GPS telemetry to the regional hospital dispatch team automatically, and review next of kin contact information before picking up the patient.
+              </p>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '0.75rem' }}>
+                <span style={{ background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>🚨 High Priority Response</span>
+                <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>📞 Help Center: 0800-MAMATRACK</span>
+              </div>
+            </div>
+            <div style={{
+              flex: '0.8',
+              backgroundImage: 'url(/assets/img/gallery/blog1.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              minHeight: '140px',
+              minWidth: '240px'
+            }} />
+          </div>
+
           {/* ACTIVE DISPATCH ALERT / MAP */}
           {activeEmergency ? (
             <div className="grid-2" style={{ gridTemplateColumns: '1fr 1.3fr', gap: '1.5rem' }}>

@@ -1,6 +1,6 @@
 // MamaTrack GPS — Leaflet Map Component
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -79,6 +79,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   interactive = true,
   theme = 'light'
 }) => {
+  const [viewMode, setViewMode] = useState<'street' | 'satellite'>('street');
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
@@ -120,7 +121,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update Tile Layer dynamically when theme changes
+  // Update Tile Layer dynamically when theme or viewMode changes
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -129,8 +130,13 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       tileLayerRef.current.remove();
     }
 
-        const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    let tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    let attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    if (viewMode === 'satellite') {
+      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+    }
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution: attribution,
@@ -138,7 +144,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }).addTo(mapRef.current);
 
     tileLayerRef.current = tileLayer;
-  }, [theme]);
+  }, [theme, viewMode]);
 
   // 2. Update Map view on center coordinates change
   const centerLat = center[0];
@@ -231,5 +237,61 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     return () => clearTimeout(timer);
   }, [markersKey, routeKey]);
 
-  return <div ref={mapContainerRef} className="map-container" style={{ width: '100%', height: '100%', minHeight: '350px' }} />;
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '350px' }}>
+      <div 
+        ref={mapContainerRef} 
+        className={`map-container ${viewMode === 'satellite' ? 'satellite-mode' : ''}`} 
+        style={{ width: '100%', height: '100%' }} 
+      />
+      {/* Floating Toggle Controls */}
+      <div style={{
+        position: 'absolute',
+        top: '12px',
+        right: '12px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '6px',
+        background: theme === 'dark' ? '#1e293b' : '#ffffff',
+        padding: '4px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+      }}>
+        <button
+          onClick={() => setViewMode('street')}
+          style={{
+            padding: '6px 12px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            background: viewMode === 'street' ? '#0f61ef' : 'transparent',
+            color: viewMode === 'street' ? '#ffffff' : (theme === 'dark' ? '#94a3b8' : '#64748b'),
+          }}
+        >
+          🗺️ Street
+        </button>
+        <button
+          onClick={() => setViewMode('satellite')}
+          style={{
+            padding: '6px 12px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            background: viewMode === 'satellite' ? '#0f61ef' : 'transparent',
+            color: viewMode === 'satellite' ? '#ffffff' : (theme === 'dark' ? '#94a3b8' : '#64748b'),
+          }}
+        >
+          🛰️ Satellite
+        </button>
+      </div>
+    </div>
+  );
 };

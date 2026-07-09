@@ -741,6 +741,40 @@ export const MotherDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* MATERNAL CARE BANNER */}
+              <div style={{
+                background: theme === 'light' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(15, 23, 42, 0.5)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                border: theme === 'light' ? '1px solid rgba(255, 255, 255, 0.6)' : '1px solid rgba(255,255,255,0.06)',
+                display: 'flex',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.03)',
+                margin: '1.5rem 0',
+                flexWrap: 'wrap',
+                color: theme === 'light' ? '#374151' : '#cbd5e1'
+              }}>
+                <div style={{ flex: '1.2', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+                  <span style={{ fontSize: '10px', color: '#f43f5e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Maternal Wellness Guide</span>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 6px', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>Safe Antenatal Care Guidelines</h3>
+                  <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: theme === 'light' ? '#4b5563' : '#9ca3af', margin: '0 0 12px' }}>
+                    Follow WHO guidelines for a safe pregnancy. Sign up for monthly VHT home checkups, record critical blood pressure results inside your profile log, and communicate live symptoms with on-duty specialists via the clinical deck.
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '0.75rem' }}>
+                    <span style={{ background: 'rgba(244, 63, 94, 0.08)', color: '#f43f5e', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>🛡️ Healthy Pregnancy Milestones</span>
+                    <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>🤰 WHO Checked</span>
+                  </div>
+                </div>
+                <div style={{
+                  flex: '0.8',
+                  backgroundImage: 'url(/assets/img/gallery/startup.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center center',
+                  minHeight: '140px',
+                  minWidth: '240px'
+                }} />
+              </div>
+
               {/* Bottom clickable cards to display functional tabs */}
               <div id="dashboard-features" className="momentra-bottom-grid">
                 <div className="momentra-feature-card" onClick={() => setActiveTab('emergency')}>
