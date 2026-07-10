@@ -13,6 +13,9 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
+import { auth } from '../services/firebase';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+
 export const Register: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -31,6 +34,7 @@ export const Register: React.FC = () => {
   });
   
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -39,15 +43,40 @@ export const Register: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
-    const res = AuthService.registerMother(formData);
-    if (res.success) {
-      navigate('/mother');
-    } else {
-      setError(res.error || 'Failed to create account');
+    try {
+      // 1. Register with Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password_hash);
+      
+      // 2. Send Email Verification
+      await sendEmailVerification(userCredential.user);
+      
+      // 3. Register user in the local simulated database
+      const res = AuthService.registerMother(formData);
+      
+      if (res.success) {
+        // Force sign out until email is verified
+        await signOut(auth);
+        alert('Registration successful! Please check your email to verify your account before logging in.');
+        navigate('/login?role=mother');
+      } else {
+        setError(res.error || 'Failed to create local account profile');
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already in use by another account.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('The password is too weak. Please use a stronger password.');
+      } else {
+        setError(err.message || 'Failed to register account via Firebase.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 

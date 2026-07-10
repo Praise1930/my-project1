@@ -12,6 +12,9 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
+import { auth } from '../services/firebase';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+
 export const Login: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Clear error when role changes
   React.useEffect(() => {
@@ -31,30 +35,56 @@ export const Login: React.FC = () => {
   }, [role]);
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
 
-    const res = AuthService.login(email, password, role);
-    if (res.success) {
-      navigate(`/${role}`);
-    } else {
-      setError(res.error || 'Authentication failed');
+    try {
+      // 1. Try Firebase Authentication First
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // 2. Enforce Email Verification for Firebase Users
+        if (!userCredential.user.emailVerified) {
+          setError('Please verify your email address. Check your inbox for the verification link.');
+          await signOut(auth);
+          setIsLoading(false);
+          return;
+        }
+
+        // 3. If Firebase auth succeeds and is verified, sign into local mock DB for session/role
+        const res = AuthService.login(email, password, role);
+        if (res.success) {
+          navigate(`/${role}`);
+        } else {
+          setError('Local mock profile not found. Please contact an administrator.');
+        }
+
+      } catch (firebaseErr: any) {
+        // If Firebase login fails (e.g. user not found), it might be a legacy mock user
+        if (firebaseErr.code === 'auth/user-not-found' || firebaseErr.code === 'auth/invalid-credential' || firebaseErr.code === 'auth/invalid-login-credentials') {
+          // Fallback to local mock DB login
+          const res = AuthService.login(email, password, role);
+          if (res.success) {
+            navigate(`/${role}`);
+          } else {
+             setError('Invalid credentials.');
+          }
+        } else {
+          setError(firebaseErr.message || 'Authentication failed');
+        }
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
 
 
-  const handleForgotPassword = () => {
-    const userEmail = window.prompt("Enter your registered email address to recover your password:");
-    if (!userEmail) return;
-
-    const matchedUser = db.users.find(u => u.email.toLowerCase() === userEmail.trim().toLowerCase());
-    if (matchedUser) {
-      alert(`🔐 Account Verified!\n\nFor this simulator, your password is:\n👉 "${matchedUser.password_hash}"\n\nPlease use this credentials to authenticate your portal.`);
-    } else {
-      alert("❌ Registered account not found with this email. Please check your credentials or contact VHT/Admin.");
-    }
+  const handleForgotPassword = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate('/forgot-password');
   };
 
   const roleLabels = {
@@ -253,8 +283,9 @@ export const Login: React.FC = () => {
                   border: 'none',
                   boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
                 }}
+                disabled={isLoading}
               >
-                Authenticate Portal →
+                {isLoading ? 'Authenticating...' : 'Authenticate Portal →'}
               </button>
             </form>
 

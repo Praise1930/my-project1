@@ -21,6 +21,7 @@ const ScrollToTop: React.FC = () => {
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { ForgotPassword } from './pages/ForgotPassword';
 
 // Dashboard portals — lazily loaded (heavy, role-specific)
 const MotherDashboard = lazy(() => import('./pages/MotherDashboard').then(m => ({ default: m.MotherDashboard })));
@@ -65,6 +66,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Private Dashboard Portals (lazy-loaded) */}
             <Route path="/mother" element={<MotherDashboard />} />
