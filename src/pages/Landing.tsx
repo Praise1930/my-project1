@@ -133,6 +133,7 @@ export const Landing: React.FC = () => {
 
       {/* HERO SLIDER SECTION */}
       <section id="home" className="slider-area" style={{ position: 'relative', height: '620px', overflow: 'hidden', background: '#ffffff url(/assets/img/hero/h1_hero.png) no-repeat center center / cover' }}>
+        <div className="hero-blur-overlay"></div>
         {slides.map((slide, idx) => (
           <div
             key={idx}
