@@ -57,21 +57,40 @@ export const Landing: React.FC = () => {
   return (
     <div id="top" className="medical-landing-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       <style>{`
-        /* Dynamic theme navigation link overrides */
-        #navigation li a {
-          color: ${isDark ? '#f1f5f9' : '#102039'} !important;
+        /* Strict CSS Overrides for Header Navigation and Buttons */
+        html[data-theme='dark'] #navigation li a,
+        html[data-theme='dark'] .main-menu ul li a,
+        html[data-theme='dark'] .slicknav_nav a,
+        html[data-theme='dark'] .sticky-bar a,
+        html[data-theme='dark'] .mobile-nav-dropdown a {
+          color: #ffffff !important;
         }
-        #navigation li a:hover {
+        html[data-theme='dark'] #navigation li a:hover,
+        html[data-theme='dark'] .main-menu ul li a:hover {
+          color: #60a5fa !important;
+        }
+
+        html[data-theme='light'] #navigation li a,
+        html[data-theme='light'] .main-menu ul li a,
+        html[data-theme='light'] .slicknav_nav a,
+        html[data-theme='light'] .sticky-bar a,
+        html[data-theme='light'] .mobile-nav-dropdown a {
+          color: #102039 !important;
+        }
+        html[data-theme='light'] #navigation li a:hover,
+        html[data-theme='light'] .main-menu ul li a:hover {
           color: #0f61ef !important;
         }
+
+        /* Force button text to always be visible (white) */
         .btn, .hero-btn, .header-btn {
           color: #ffffff !important;
         }
         .btn:hover, .hero-btn:hover, .header-btn:hover {
           color: #ffffff !important;
         }
-        .mobile-nav-dropdown a {
-          color: ${isDark ? '#f1f5f9' : '#102039'} !important;
+        .header-btn {
+          background-image: linear-gradient(to left, #559af3, #1462f3, #559af3) !important;
         }
       `}</style>
       
@@ -180,22 +199,41 @@ export const Landing: React.FC = () => {
               <div className="row">
                 <div className="col-xl-8 col-lg-10 col-md-10">
                   <div className="hero__caption" style={{ 
-                    padding: '36px 40px', 
-                    background: isDark ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.75)', 
-                    borderRadius: '12px', 
-                    backdropFilter: 'blur(10px)', 
-                    border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.08)',
-                    boxShadow: isDark ? '0 10px 30px rgba(0, 0, 0, 0.5)' : '0 10px 30px rgba(0, 0, 0, 0.06)',
+                    padding: '40px 0', 
                     maxWidth: '750px',
-                    margin: '30px 0'
+                    margin: '30px 0',
+                    background: 'transparent'
                   }}>
-                    <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontSize: '1.2rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '14px' }}>
+                    <span style={{ 
+                      color: isDark ? '#60a5fa' : '#0f61ef', 
+                      fontSize: '1.2rem', 
+                      fontWeight: 800, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.04em', 
+                      display: 'block', 
+                      marginBottom: '14px',
+                      textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.9)' : '0 1px 2px rgba(255, 255, 255, 0.9)'
+                    }}>
                       {slide.subtitle}
                     </span>
-                    <h1 style={{ color: isDark ? '#ffffff' : '#030431', fontSize: '3.2rem', fontWeight: 900, lineHeight: 1.15, marginBottom: '20px' }}>
+                    <h1 style={{ 
+                      color: isDark ? '#ffffff' : '#030431', 
+                      fontSize: '3.6rem', 
+                      fontWeight: 900, 
+                      lineHeight: 1.15, 
+                      marginBottom: '20px',
+                      textShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 0, 0, 0.6)' : '0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px rgba(255, 255, 255, 0.9)'
+                    }}>
                       {slide.title}
                     </h1>
-                    <p style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: '1.1rem', marginBottom: '35px', lineHeight: 1.6 }}>
+                    <p style={{ 
+                      color: isDark ? '#ffffff' : '#111827', 
+                      fontSize: '1.15rem', 
+                      fontWeight: 500,
+                      marginBottom: '35px', 
+                      lineHeight: 1.6,
+                      textShadow: isDark ? '0 1px 4px rgba(0, 0, 0, 0.9)' : '0 1px 3px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 255, 255, 0.9)'
+                    }}>
                       {slide.desc}
                     </p>
                     {slide.link.startsWith('#') ? (
