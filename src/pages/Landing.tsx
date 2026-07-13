@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
-import { Heart, Stethoscope, Ambulance, Radio } from 'lucide-react';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -316,8 +315,8 @@ export const Landing: React.FC = () => {
             {/* Expectant Mother */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
               <div className="single-team portal-hover-card portal-mother" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
-                <div style={{ background: isDark ? 'rgba(244,63,94,0.1)' : 'rgba(244,63,94,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center' }}>
-                  <Heart size={56} color="#fb7185" strokeWidth={1.5} />
+                <div style={{ background: isDark ? 'rgba(244,63,94,0.1)' : 'rgba(244,63,94,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src="/assets/img/portals/portal_mother.png" alt="Expectant Mother" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
@@ -334,8 +333,8 @@ export const Landing: React.FC = () => {
             {/* Clinical Doctor */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
               <div className="single-team portal-hover-card portal-doctor" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
-                <div style={{ background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center' }}>
-                  <Stethoscope size={56} color="#10b981" strokeWidth={1.5} />
+                <div style={{ background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src="/assets/img/portals/portal_doctor.png" alt="Clinical Doctor" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
@@ -352,8 +351,8 @@ export const Landing: React.FC = () => {
             {/* Ambulance Driver */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
               <div className="single-team portal-hover-card portal-driver" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
-                <div style={{ background: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center' }}>
-                  <Ambulance size={56} color="#f59e0b" strokeWidth={1.5} />
+                <div style={{ background: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src="/assets/img/portals/portal_driver.png" alt="Ambulance Driver" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
@@ -370,8 +369,8 @@ export const Landing: React.FC = () => {
             {/* System Admin */}
             <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
               <div className="single-team portal-hover-card portal-admin" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
-                <div style={{ background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)', padding: '30px 0', display: 'flex', justifyContent: 'center' }}>
-                  <Radio size={56} color="#3b82f6" strokeWidth={1.5} />
+                <div style={{ background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src="/assets/img/portals/portal_admin.png" alt="System Admin" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
                 <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>
