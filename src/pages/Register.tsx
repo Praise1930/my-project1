@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../services/db';
 import { User, Phone, Mail, Calendar, MapPin, Heart, Users } from 'lucide-react';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -17,6 +17,8 @@ import { auth, isFirebaseConfigured } from '../services/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 
 export const Register: React.FC = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     full_name: '',
@@ -87,16 +89,16 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="medical-register-root" style={{ background: '#ffffff', color: '#757575', fontFamily: "'Muli', sans-serif" }}>
+    <div className="medical-register-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       
       {/* HEADER START */}
       <header>
         <div className="header-area">
-          <div className="main-header header-sticky" style={{ background: '#ffffff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
             <div className="container-fluid" style={{ padding: '0 40px' }}>
               <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
                 <div className="logo">
-                  <Link to="/" style={{ fontSize: '1.9rem', fontWeight: 800, color: '#030431', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Link to="/" style={{ fontSize: '1.9rem', fontWeight: 800, color: isDark ? '#ffffff' : '#030431', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ background: '#0f61ef', color: '#ffffff', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
                       <i className="fa fa-h-square"></i>
                     </span>
@@ -106,8 +108,8 @@ export const Register: React.FC = () => {
                 
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                   <ThemeToggle />
-                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
-                  <Link to="/" className="d-inline-block d-sm-none" style={{ color: '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
+                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
+                  <Link to="/" className="d-inline-block d-sm-none" style={{ color: isDark ? '#f1f5f9' : '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
                     <i className="fa fa-home"></i>
                   </Link>
                   <Link to="/login?role=mother" className="btn header-btn d-none d-md-inline-block" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
@@ -129,27 +131,29 @@ export const Register: React.FC = () => {
             max-width: 780px !important;
             padding: 0px !important;
             border-radius: 6px !important;
-            border: 1px solid rgba(0, 0, 0, 0.12) !important;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08) !important;
-            background: #ffffff !important;
+            border: ${isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.12)'} !important;
+            box-shadow: ${isDark ? '0 8px 30px rgba(0, 0, 0, 0.3)' : '0 8px 30px rgba(0,0,0,0.08)'} !important;
+            background: ${isDark ? '#1e293b' : '#ffffff'} !important;
             overflow: hidden !important;
           }
           .health-register-card h2 {
             font-size: 2.2rem !important;
             font-weight: 800 !important;
-            color: #1f2937 !important;
+            color: ${isDark ? '#ffffff' : '#1f2937'} !important;
           }
           .health-register-card p.subtitle-desc {
             font-size: 1.05rem !important;
+            color: ${isDark ? '#cbd5e1' : '#6b7280'} !important;
           }
           .health-register-card h3 {
             font-size: 1.15rem !important;
             margin-top: 1.5rem !important;
+            color: ${isDark ? '#ffffff' : '#1f2937'} !important;
           }
           .health-register-card .form-label {
             font-size: 1.02rem !important;
             font-weight: 600 !important;
-            color: #374151 !important;
+            color: ${isDark ? '#cbd5e1' : '#374151'} !important;
             margin-bottom: 6px !important;
             display: flex !important;
             align-items: center !important;
@@ -160,9 +164,9 @@ export const Register: React.FC = () => {
             font-size: 1rem !important;
             border-radius: 4px !important;
             width: 100% !important;
-            border: 1px solid #d1d5db !important;
-            background: #f9fafb !important;
-            color: #1f2937 !important;
+            border: ${isDark ? '1px solid #475569' : '1px solid #d1d5db'} !important;
+            background: ${isDark ? '#0f172a' : '#f9fafb'} !important;
+            color: ${isDark ? '#f1f5f9' : '#1f2937'} !important;
           }
           .health-register-card select.form-input {
             height: auto !important;
@@ -174,9 +178,11 @@ export const Register: React.FC = () => {
             width: 100% !important;
             border: none !important;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+            color: #ffffff !important;
           }
           .health-register-card .footer-link-text {
             font-size: 0.98rem !important;
+            color: ${isDark ? '#cbd5e1' : '#6b7280'} !important;
           }
         `}</style>
 
@@ -200,7 +206,7 @@ export const Register: React.FC = () => {
           </div>
 
           {/* Form Content Body */}
-          <div style={{ padding: '36px 30px', background: '#ffffff' }}>
+          <div style={{ padding: '36px 30px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
             {error && (
               <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem' }}>

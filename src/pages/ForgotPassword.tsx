@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { auth, isFirebaseConfigured } from '../services/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 export const ForgotPassword: React.FC = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -34,11 +36,11 @@ export const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="login-area section-padding" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="login-area section-padding" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? '#0f172a' : '#f8fafd', color: isDark ? '#cbd5e1' : '#757575', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-5 col-lg-6 col-md-8 col-sm-10">
-            <div className="login-form-area login-bg" style={{ padding: '40px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', position: 'relative' }}>
+            <div className="login-form-area login-bg" style={{ padding: '40px', borderRadius: '12px', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 4px 15px rgba(0,0,0,0.05)', position: 'relative', background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)', transition: 'background-color 0.3s ease' }}>
               <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
                 <ThemeToggle />
               </div>
@@ -47,8 +49,8 @@ export const ForgotPassword: React.FC = () => {
                 <div style={{ fontSize: '2.5rem', marginBottom: '15px', color: '#0f61ef' }}>
                   <i className="fa fa-unlock-alt"></i>
                 </div>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '10px' }}>Reset Password</h2>
-                <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>Enter your registered email address and we will send you a link to reset your password.</p>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '10px', color: isDark ? '#ffffff' : '#030431' }}>Reset Password</h2>
+                <p style={{ color: isDark ? '#cbd5e1' : '#6b7280', fontSize: '0.95rem' }}>Enter your registered email address and we will send you a link to reset your password.</p>
               </div>
 
               {status === 'success' ? (
@@ -58,14 +60,14 @@ export const ForgotPassword: React.FC = () => {
               ) : (
                 <form onSubmit={handleSubmit}>
                   {status === 'error' && (
-                    <div className="alert alert-danger" style={{ background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '12px', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '20px' }}>
+                    <div className="alert alert-danger" style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#991b1b', border: '1px solid #fecaca', padding: '12px', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '20px' }}>
                       {message}
                     </div>
                   )}
 
                   <div className="input-box mb-20" style={{ marginBottom: '20px' }}>
                     <div className="single-input-fields">
-                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#374151' }}>Email Address</label>
+                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#374151' }}>Email Address</label>
                       <input 
                         type="email" 
                         placeholder="e.g. user@example.com" 
@@ -75,11 +77,11 @@ export const ForgotPassword: React.FC = () => {
                         style={{
                           width: '100%',
                           padding: '12px 16px',
-                          border: '1px solid #d1d5db',
+                          border: isDark ? '1px solid #475569' : '1px solid #d1d5db',
                           borderRadius: '6px',
                           fontSize: '1rem',
-                          background: 'transparent',
-                          color: 'inherit'
+                          background: isDark ? '#0f172a' : '#f9fafb',
+                          color: isDark ? '#f1f5f9' : '#1f2937'
                         }}
                       />
                     </div>
@@ -107,7 +109,7 @@ export const ForgotPassword: React.FC = () => {
               )}
 
               <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
-                <Link to="/login" style={{ color: '#4b5563', textDecoration: 'underline', fontSize: '0.9rem' }}>← Back to Login</Link>
+                <Link to="/login" style={{ color: isDark ? '#60a5fa' : '#cbd5e1', textDecoration: 'underline', fontSize: '0.9rem' }}>← Back to Login</Link>
               </div>
             </div>
           </div>

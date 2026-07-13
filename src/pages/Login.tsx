@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../services/db';
-import { ThemeToggle } from '../contexts/ThemeContext';
+import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -16,6 +16,8 @@ import { auth, isFirebaseConfigured } from '../services/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 export const Login: React.FC = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const rawRole = searchParams.get('role') || 'mother';
@@ -149,16 +151,16 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="medical-login-root" style={{ background: '#ffffff', color: '#757575', fontFamily: "'Muli', sans-serif" }}>
+    <div className="medical-login-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       
       {/* HEADER START */}
       <header>
         <div className="header-area">
-          <div className="main-header header-sticky" style={{ background: '#ffffff', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', transition: 'background-color 0.3s ease' }}>
             <div className="container-fluid" style={{ padding: '0 40px' }}>
               <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
                 <div className="logo">
-                  <Link to="/" style={{ fontSize: '1.9rem', fontWeight: 800, color: '#030431', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Link to="/" style={{ fontSize: '1.9rem', fontWeight: 800, color: isDark ? '#ffffff' : '#030431', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ background: '#0f61ef', color: '#ffffff', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
                       <i className="fa fa-h-square"></i>
                     </span>
@@ -168,8 +170,8 @@ export const Login: React.FC = () => {
                 
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                   <ThemeToggle />
-                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
-                  <Link to="/" className="d-inline-block d-sm-none" style={{ color: '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
+                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
+                  <Link to="/" className="d-inline-block d-sm-none" style={{ color: isDark ? '#f1f5f9' : '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
                     <i className="fa fa-home"></i>
                   </Link>
                   {role === 'mother' && (
@@ -194,7 +196,7 @@ export const Login: React.FC = () => {
         </div>
 
         {/* Card Component (cloudbau Bootstrap Login Style) */}
-        <div className="card" style={{ width: '100%', maxWidth: '440px', padding: 0, position: 'relative', zIndex: 10, background: '#ffffff', border: '1px solid rgba(0,0,0,0.12)', boxShadow: '0 8px 30px rgba(0,0,0,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
+        <div className="card" style={{ width: '100%', maxWidth: '440px', padding: 0, position: 'relative', zIndex: 10, background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.12)', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 8px 30px rgba(0,0,0,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
           
           {/* cloudbau themed header block */}
           <div style={{ background: role === 'admin' ? '#0f172a' : roleLabels[role].color, padding: '28px 24px', textAlign: 'center', color: '#ffffff' }}>
@@ -207,7 +209,7 @@ export const Login: React.FC = () => {
           </div>
 
           {/* Form Content Body */}
-          <div style={{ padding: '36px 30px', background: '#ffffff' }}>
+          <div style={{ padding: '36px 30px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
             {error && (
               <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -217,13 +219,13 @@ export const Login: React.FC = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: '#4b5563', marginBottom: '6px' }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: isDark ? '#cbd5e1' : '#4b5563', marginBottom: '6px' }}>
                   Email Address
                 </label>
                 <input
                   type="email"
                   className="form-input"
-                  style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
+                  style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: isDark ? '#0f172a' : '#f9fafb', color: isDark ? '#f1f5f9' : '#1f2937', border: isDark ? '1px solid #475569' : '1px solid #d1d5db', width: '100%' }}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. email@example.com"
@@ -233,13 +235,13 @@ export const Login: React.FC = () => {
 
               <div className="form-group" style={{ marginBottom: '1.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: '#4b5563', margin: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: isDark ? '#cbd5e1' : '#4b5563', margin: 0 }}>
                     Account Password
                   </label>
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '0.82rem', textDecoration: 'underline', cursor: 'pointer', outline: 'none', padding: 0 }}
+                    style={{ background: 'none', border: 'none', color: isDark ? '#60a5fa' : '#6b7280', fontSize: '0.82rem', textDecoration: 'underline', cursor: 'pointer', outline: 'none', padding: 0 }}
                   >
                     Forgot Password?
                   </button>
@@ -248,7 +250,7 @@ export const Login: React.FC = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="form-input"
-                    style={{ padding: '12px 45px 12px 16px', fontSize: '1rem', borderRadius: '4px', background: '#f9fafb', color: '#1f2937', border: '1px solid #d1d5db', width: '100%' }}
+                    style={{ padding: '12px 45px 12px 16px', fontSize: '1rem', borderRadius: '4px', background: isDark ? '#0f172a' : '#f9fafb', color: isDark ? '#f1f5f9' : '#1f2937', border: isDark ? '1px solid #475569' : '1px solid #d1d5db', width: '100%' }}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -265,7 +267,7 @@ export const Login: React.FC = () => {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#6b7280',
+                      color: isDark ? '#cbd5e1' : '#6b7280',
                       fontSize: '1rem',
                       padding: '4px',
                       display: 'flex',
@@ -275,7 +277,7 @@ export const Login: React.FC = () => {
                     }}
                     title={showPassword ? 'Hide Password' : 'Show Password'}
                   >
-                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: '#6b7280' }}></i>
+                    <i className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: isDark ? '#cbd5e1' : '#6b7280' }}></i>
                   </button>
                 </div>
               </div>
@@ -301,8 +303,8 @@ export const Login: React.FC = () => {
             </form>
 
             <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.85rem', color: '#6b7280', display: 'flex', gap: '12px' }}>
-                <Link to="/" style={{ color: '#4b5563', textDecoration: 'underline' }}>← Change Role</Link>
+              <div style={{ fontSize: '0.85rem', color: isDark ? '#94a3b8' : '#6b7280', display: 'flex', gap: '12px' }}>
+                <Link to="/" style={{ color: isDark ? '#cbd5e1' : '#4b5563', textDecoration: 'underline' }}>← Change Role</Link>
                 {role === 'mother' && (
                   <>
                     <span>•</span>
