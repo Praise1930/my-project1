@@ -106,10 +106,8 @@ export const Landing: React.FC = () => {
                 {/* Logo */}
                 <div className="col-xl-3 col-lg-3 col-md-3">
                   <div className="logo">
-                    <Link to="/" style={{ fontSize: '1.9rem', fontWeight: 800, color: isDark ? '#ffffff' : '#030431', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ background: '#0f61ef', color: '#ffffff', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
-                        <i className="fa fa-h-square"></i>
-                      </span>
+                    <Link to="/" style={{ fontSize: '1.7rem', fontWeight: 800, color: isDark ? '#ffffff' : '#030431', display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+                      <img src="/assets/img/icons/logo.png" alt="MamaTrack Logo" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '10px' }} />
                       <span>Mama<span style={{ color: '#0f61ef' }}>Track</span></span>
                     </Link>
                   </div>
@@ -384,6 +382,30 @@ export const Landing: React.FC = () => {
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* KEY FEATURES STRIP */}
+      <section style={{ padding: '70px 0', background: isDark ? '#0f172a' : '#f0f6ff', transition: 'background-color 0.3s ease' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+            <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Platform Capabilities</span>
+            <h2 style={{ color: isDark ? '#ffffff' : '#030431', marginTop: '8px' }}>Powered by Real-Time Technology</h2>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
+            {[
+              { img: '/assets/img/icons/icon_gps.png', title: 'Live GPS Tracking', desc: 'Satellite-grade location beacons transmit mother coordinates to nearby ambulance units in real-time.' },
+              { img: '/assets/img/icons/icon_beacon.png', title: 'Emergency SOS Beacon', desc: 'One-tap distress alerts trigger dispatch notifications across all registered response teams instantly.' },
+              { img: '/assets/img/icons/icon_consult.png', title: 'Doctor Consultations', desc: 'Direct encrypted channels between expectant mothers and duty obstetricians for remote symptom assessment.' },
+              { img: '/assets/img/icons/icon_dispatch.png', title: 'Ambulance Dispatch', desc: 'AI-optimized routing dispatches the nearest ambulance with live navigation to minimize response time.' },
+            ].map((feat, i) => (
+              <div key={i} style={{ flex: '1 1 220px', maxWidth: '260px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '14px', padding: '28px 22px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(15,97,239,0.08)', transition: 'background-color 0.3s ease' }}>
+                <img src={feat.img} alt={feat.title} style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '16px' }} />
+                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: isDark ? '#ffffff' : '#030431', marginBottom: '10px' }}>{feat.title}</h4>
+                <p style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#64676c', lineHeight: 1.6, margin: 0 }}>{feat.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
