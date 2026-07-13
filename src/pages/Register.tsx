@@ -13,7 +13,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { auth } from '../services/firebase';
+import { auth, isFirebaseConfigured } from '../services/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 
 export const Register: React.FC = () => {
@@ -49,19 +49,25 @@ export const Register: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 1. Register with Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password_hash);
-      
-      // 2. Send Email Verification
-      await sendEmailVerification(userCredential.user);
+      // 1. Register with Firebase Authentication if configured
+      if (isFirebaseConfigured && auth) {
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password_hash);
+        
+        // 2. Send Email Verification
+        await sendEmailVerification(userCredential.user);
+      }
       
       // 3. Register user in the local simulated database
       const res = AuthService.registerMother(formData);
       
       if (res.success) {
-        // Force sign out until email is verified
-        await signOut(auth);
-        alert('Registration successful! Please check your email to verify your account before logging in.');
+        if (isFirebaseConfigured && auth) {
+          // Force sign out until email is verified
+          await signOut(auth);
+          alert('Registration successful! Please check your email to verify your account before logging in.');
+        } else {
+          alert('Registration successful! (Running in mock database mode)');
+        }
         navigate('/login?role=mother');
       } else {
         setError(res.error || 'Failed to create local account profile');

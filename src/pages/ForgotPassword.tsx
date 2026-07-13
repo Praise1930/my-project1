@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { auth } from '../services/firebase';
+import { auth, isFirebaseConfigured } from '../services/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { ThemeToggle } from '../contexts/ThemeContext';
 
@@ -15,6 +15,12 @@ export const ForgotPassword: React.FC = () => {
 
     setStatus('loading');
     setMessage('');
+
+    if (!isFirebaseConfigured || !auth) {
+      setStatus('error');
+      setMessage('Firebase is not configured. Local mock accounts cannot receive password reset emails.');
+      return;
+    }
 
     try {
       await sendPasswordResetEmail(auth, email);

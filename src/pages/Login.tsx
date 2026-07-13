@@ -12,7 +12,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { auth } from '../services/firebase';
+import { auth, isFirebaseConfigured } from '../services/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 export const Login: React.FC = () => {
@@ -41,6 +41,17 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // If Firebase is not configured, directly fall back to local mock DB login
+      if (!isFirebaseConfigured || !auth) {
+        const res = AuthService.login(email, password, role);
+        if (res.success) {
+          navigate(`/${role}`);
+        } else {
+          setError('Invalid credentials.');
+        }
+        return;
+      }
+
       // 1. Try Firebase Authentication First
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
