@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { db, AuthService } from '../services/db';
+import { AuthService } from '../services/db';
 import { ThemeToggle } from '../contexts/ThemeContext';
 
 // Import template stylesheets
@@ -174,12 +174,12 @@ export const Login: React.FC = () => {
       </header>
 
       {/* CENTERED LOGIN FORM SECTION */}
-      <section className="login-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: `linear-gradient(rgba(244, 247, 250, 0.82), rgba(244, 247, 250, 0.82)), url('/assets/img/hero/hero2.png') no-repeat center center / cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+      <section className="login-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: `url('/assets/img/hero/hero2.png') no-repeat center center / cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
         
         {/* Floating Orbs inside the section wrapper */}
         <div className="bg-orbs" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', zIndex: 1, pointerEvents: 'none' }}>
-          <div className="orb orb-1" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.18 : 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', top: '10%', left: '10%', filter: 'blur(80px)' }} />
-          <div className="orb orb-2" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.18 : 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', bottom: '10%', right: '10%', filter: 'blur(80px)' }} />
+          <div className="orb orb-1" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.12 : 0.08, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', top: '10%', left: '10%' }} />
+          <div className="orb orb-2" style={{ background: themeSettings[role].orbColor, opacity: role === 'admin' ? 0.12 : 0.08, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', bottom: '10%', right: '10%' }} />
         </div>
 
         {/* Card Component (cloudbau Bootstrap Login Style) */}

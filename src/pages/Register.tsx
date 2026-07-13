@@ -115,7 +115,7 @@ export const Register: React.FC = () => {
       </header>
 
       {/* CENTERED REGISTRATION FORM SECTION */}
-      <section className="register-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: `linear-gradient(rgba(255, 241, 242, 0.82), rgba(255, 241, 242, 0.82)), url('/assets/img/hero/hero2.png') no-repeat center center / cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+      <section className="register-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: `url('/assets/img/hero/hero2.png') no-repeat center center / cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
         
         {/* Scoped card styling overrides */}
         <style>{`
@@ -176,8 +176,8 @@ export const Register: React.FC = () => {
 
         {/* Floating Orbs inside the section wrapper */}
         <div className="bg-orbs" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', zIndex: 1, pointerEvents: 'none' }}>
-          <div className="orb orb-1" style={{ background: '#fb7185', opacity: 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', top: '10%', left: '10%', filter: 'blur(80px)' }} />
-          <div className="orb orb-3" style={{ background: '#fda4af', opacity: 0.12, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', bottom: '10%', right: '10%', filter: 'blur(80px)' }} />
+          <div className="orb orb-1" style={{ background: '#fb7185', opacity: 0.08, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', top: '10%', left: '10%' }} />
+          <div className="orb orb-3" style={{ background: '#fda4af', opacity: 0.08, width: '300px', height: '300px', borderRadius: '50%', position: 'absolute', bottom: '10%', right: '10%' }} />
         </div>
 
         {/* Card Component (cloudbau Bootstrap Login Style) */}
@@ -305,8 +305,8 @@ export const Register: React.FC = () => {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-rose btn-block" style={{ fontWeight: 700, padding: '12px 20px', background: 'var(--rose-500)', color: '#ffffff' }}>
-                Complete Account Setup
+              <button type="submit" className="btn btn-rose btn-block" disabled={isLoading} style={{ fontWeight: 700, padding: '12px 20px', background: 'var(--rose-500)', color: '#ffffff' }}>
+                {isLoading ? 'Processing...' : 'Complete Account Setup'}
               </button>
             </form>
 

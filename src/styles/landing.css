@@ -24,8 +24,7 @@
 .orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.16;
+    opacity: 0.12;
     animation: drift 20s ease-in-out infinite alternate;
 }
 
@@ -124,7 +123,6 @@
 
 .landing-role-card {
     background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(16px);
     border: 1px solid rgba(255,255,255,0.6);
     border-radius: 20px;
     padding: var(--space-md);
@@ -197,7 +195,6 @@
 .landing-widget {
     position: absolute;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
     border: 1px solid rgba(255,255,255,0.8);
     border-radius: 16px;
     padding: 12px;
