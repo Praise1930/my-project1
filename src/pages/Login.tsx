@@ -152,6 +152,12 @@ export const Login: React.FC = () => {
 
   return (
     <div className="medical-login-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+      <style>{`
+        /* Prevent button hover effect overlay from covering button text */
+        .btn::before {
+          z-index: -1 !important;
+        }
+      `}</style>
       
       {/* HEADER START */}
       <header>

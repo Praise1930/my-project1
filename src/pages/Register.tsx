@@ -184,6 +184,10 @@ export const Register: React.FC = () => {
             font-size: 0.98rem !important;
             color: ${isDark ? '#cbd5e1' : '#6b7280'} !important;
           }
+          /* Prevent button hover effect overlay from covering button text */
+          .btn::before, .header-btn::before, .btn-rose::before {
+            z-index: -1 !important;
+          }
         `}</style>
 
         {/* Floating Orbs inside the section wrapper */}

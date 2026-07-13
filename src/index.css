@@ -161,3 +161,13 @@
     background: rgba(15, 23, 42, 0.35);
 }
 
+/* Accessibility and contrast fix for button links globally */
+a.btn, button.btn, .btn, .hero-btn, .header-btn,
+a.btn:hover, button.btn:hover, .btn:hover, .hero-btn:hover, .header-btn:hover,
+html[data-theme='light'] a.btn, html[data-theme='light'] a.hero-btn, html[data-theme='light'] a.header-btn,
+html[data-theme='dark'] a.btn, html[data-theme='dark'] a.hero-btn, html[data-theme='dark'] a.header-btn,
+html[data-theme='light'] .sticky-bar a.btn, html[data-theme='light'] .sticky-bar a.header-btn,
+html[data-theme='dark'] .sticky-bar a.btn, html[data-theme='dark'] .sticky-bar a.header-btn {
+  color: #ffffff !important;
+}
+

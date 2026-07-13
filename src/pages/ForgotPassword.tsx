@@ -37,6 +37,12 @@ export const ForgotPassword: React.FC = () => {
 
   return (
     <div className="login-area section-padding" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? '#0f172a' : '#f8fafd', color: isDark ? '#cbd5e1' : '#757575', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+      <style>{`
+        /* Prevent button hover effect overlay from covering button text */
+        .btn::before {
+          z-index: -1 !important;
+        }
+      `}</style>
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-5 col-lg-6 col-md-8 col-sm-10">

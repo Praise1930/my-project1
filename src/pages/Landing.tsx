@@ -82,12 +82,15 @@ export const Landing: React.FC = () => {
           color: #0f61ef !important;
         }
 
-        /* Force button text to always be visible (white) */
+        /* Force button text to always be visible (white) and prevent hover overlays from covering it */
         .btn, .hero-btn, .header-btn {
           color: #ffffff !important;
         }
         .btn:hover, .hero-btn:hover, .header-btn:hover {
           color: #ffffff !important;
+        }
+        .btn::before, .hero-btn::before, .header-btn::before {
+          z-index: -1 !important;
         }
         .header-btn {
           background-image: linear-gradient(to left, #559af3, #1462f3, #559af3) !important;
