@@ -115,6 +115,7 @@ export const SMSSimulator: React.FC = () => {
       {/* Floating Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        className="sms-simulator-float-btn"
         style={{
           position: 'fixed',
           bottom: '24px',
@@ -133,7 +134,7 @@ export const SMSSimulator: React.FC = () => {
           fontWeight: 700,
           cursor: 'pointer',
           fontFamily: 'inherit',
-          transition: 'transform 0.2s ease',
+          transition: 'transform 0.2s ease, bottom 0.3s ease, right 0.3s ease',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -160,27 +161,43 @@ export const SMSSimulator: React.FC = () => {
 
       {/* Simulator Drawer Panel */}
       {isOpen && (
-        <div style={{
-          position: 'fixed',
-          bottom: '85px',
-          right: '24px',
-          zIndex: 99999,
-          width: '420px',
-          height: '560px',
-          background: 'rgba(15, 23, 42, 0.95)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '20px',
-          boxShadow: '0 15px 45px rgba(0,0,0,0.5)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        }}>
+        <div 
+          className="sms-simulator-drawer"
+          style={{
+            position: 'fixed',
+            bottom: '85px',
+            right: '24px',
+            zIndex: 99999,
+            width: '420px',
+            height: '560px',
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '20px',
+            boxShadow: '0 15px 45px rgba(0,0,0,0.5)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transition: 'bottom 0.3s ease, right 0.3s ease, width 0.3s ease, height 0.3s ease',
+          }}
+        >
           <style>{`
             @keyframes slideUp {
               from { transform: translateY(20px) scale(0.95); opacity: 0; }
               to { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            @media (max-width: 640px) {
+              .sms-simulator-float-btn {
+                bottom: 110px !important;
+                right: 16px !important;
+              }
+              .sms-simulator-drawer {
+                width: calc(100% - 32px) !important;
+                height: 480px !important;
+                bottom: 165px !important;
+                right: 16px !important;
+              }
             }
           `}</style>
 
