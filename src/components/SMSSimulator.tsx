@@ -112,6 +112,27 @@ export const SMSSimulator: React.FC = () => {
 
   return (
     <>
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(20px) scale(0.95); opacity: 0; }
+          to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @media (max-width: 640px) {
+          .sms-simulator-float-btn {
+            top: 90px !important;
+            bottom: auto !important;
+            right: 16px !important;
+          }
+          .sms-simulator-drawer {
+            width: calc(100% - 32px) !important;
+            height: 480px !important;
+            top: 145px !important;
+            bottom: auto !important;
+            right: 16px !important;
+          }
+        }
+      `}</style>
+
       {/* Floating Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -182,26 +203,6 @@ export const SMSSimulator: React.FC = () => {
             transition: 'bottom 0.3s ease, right 0.3s ease, width 0.3s ease, height 0.3s ease',
           }}
         >
-          <style>{`
-            @keyframes slideUp {
-              from { transform: translateY(20px) scale(0.95); opacity: 0; }
-              to { transform: translateY(0) scale(1); opacity: 1; }
-            }
-            @media (max-width: 640px) {
-              .sms-simulator-float-btn {
-                top: 90px !important;
-                bottom: auto !important;
-                right: 16px !important;
-              }
-              .sms-simulator-drawer {
-                width: calc(100% - 32px) !important;
-                height: 480px !important;
-                top: 145px !important;
-                bottom: auto !important;
-                right: 16px !important;
-              }
-            }
-          `}</style>
 
           {/* Header */}
           <div style={{
