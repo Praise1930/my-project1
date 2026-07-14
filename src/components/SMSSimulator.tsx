@@ -134,7 +134,7 @@ export const SMSSimulator: React.FC = () => {
           fontWeight: 700,
           cursor: 'pointer',
           fontFamily: 'inherit',
-          transition: 'transform 0.2s ease, bottom 0.3s ease, right 0.3s ease',
+          transition: 'transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, right 0.3s ease',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -189,13 +189,15 @@ export const SMSSimulator: React.FC = () => {
             }
             @media (max-width: 640px) {
               .sms-simulator-float-btn {
-                bottom: 110px !important;
+                top: 90px !important;
+                bottom: auto !important;
                 right: 16px !important;
               }
               .sms-simulator-drawer {
                 width: calc(100% - 32px) !important;
                 height: 480px !important;
-                bottom: 165px !important;
+                top: 145px !important;
+                bottom: auto !important;
                 right: 16px !important;
               }
             }
