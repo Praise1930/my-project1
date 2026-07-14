@@ -312,18 +312,18 @@ export const Landing: React.FC = () => {
             </div>
           </div>
 
-          <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
+          <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
             
             {/* Expectant Mother */}
-            <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
+            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
               <div className="single-team portal-hover-card portal-mother" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
                 <div style={{ background: isDark ? 'rgba(244,63,94,0.1)' : 'rgba(244,63,94,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_mother.png" alt="Expectant Mother" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <img src="/assets/img/portals/portal_mother.png" alt="Expectant Mother" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
-                <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
-                  <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Trigger emergency beacons, check ANC milestones checklists, and chat with specialist doctors.
+                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
+                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
+                    Trigger emergency beacons, check ANC milestones, and chat with doctors.
                   </span>
                   <Link to="/login?role=mother" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #fb7185, #f43f5e, #fb7185)' }}>
                     Enter Portal
@@ -333,15 +333,15 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* Clinical Doctor */}
-            <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
+            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
               <div className="single-team portal-hover-card portal-doctor" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
                 <div style={{ background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_doctor.png" alt="Clinical Doctor" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <img src="/assets/img/portals/portal_doctor.png" alt="Clinical Doctor" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
-                <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
-                  <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Receive emergency alerts, view incoming patient logs, record diagnostics, and check bed availability.
+                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
+                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
+                    View patient logs, record diagnostics, and check clinic bed availability.
                   </span>
                   <Link to="/login?role=doctor" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #10b981, #059669, #10b981)' }}>
                     Enter Portal
@@ -351,15 +351,15 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* Ambulance Driver */}
-            <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
+            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
               <div className="single-team portal-hover-card portal-driver" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
                 <div style={{ background: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_driver.png" alt="Ambulance Driver" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <img src="/assets/img/portals/portal_driver.png" alt="Ambulance Driver" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
-                <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
-                  <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Receive dispatch route trips, update live trip coordinates, and submit pre-duty safety checklists.
+                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
+                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
+                    Receive dispatch route trips and submit pre-duty safety checklists.
                   </span>
                   <Link to="/login?role=driver" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #f59e0b, #d97706, #f59e0b)' }}>
                     Enter Portal
@@ -369,15 +369,15 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* System Admin */}
-            <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
+            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
               <div className="single-team portal-hover-card portal-admin" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
                 <div style={{ background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_admin.png" alt="System Admin" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <img src="/assets/img/portals/portal_admin.png" alt="System Admin" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
-                <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>
-                  <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Coordinate regional ambulance dispatches, monitor safety checklists, and manage clinic facility status parameters.
+                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>
+                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
+                    Coordinate dispatches, monitor checklists, and manage clinic facility status.
                   </span>
                   <Link to="/login?role=admin" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #3b82f6, #1d4ed8, #3b82f6)' }}>
                     Enter Portal
@@ -387,15 +387,15 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* Village Health Team (VHT) */}
-            <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
+            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
               <div className="single-team portal-hover-card portal-vht" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(14, 165, 233, 0.3)' : '1px solid rgba(14, 165, 233, 0.18)', boxShadow: '0 10px 30px rgba(14, 165, 233, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
                 <div style={{ background: isDark ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_driver.png" alt="VHT Responder" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px', filter: 'hue-rotate(180deg)' }} />
+                  <img src="/assets/img/portals/portal_vht.png" alt="VHT Responder" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
-                <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0ea5e9' }}>VHT Responder</h3>
-                  <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Register local expectant mothers, log home checkup vitals, and trigger emergency transport dispatches.
+                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0ea5e9' }}>VHT Responder</h3>
+                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
+                    Register local expectant mothers, log visits, and trigger emergency dispatches.
                   </span>
                   <Link to="/login?role=vht" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #0ea5e9, #0284c7, #0ea5e9)' }}>
                     Enter Portal
