@@ -16,6 +16,73 @@ export const SMSSimulator: React.FC = () => {
 
   const logsEndRef = useRef<HTMLDivElement>(null);
 
+  // Dragging state along the side (vertical)
+  const [yPos, setYPos] = useState<number | null>(null);
+  const isDragging = useRef(false);
+  const startY = useRef(0);
+  const startTop = useRef(0);
+  const hasDragged = useRef(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging.current) return;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const diffY = clientY - startY.current;
+      
+      if (Math.abs(diffY) > 5) {
+        hasDragged.current = true;
+      }
+      
+      let newTop = startTop.current + diffY;
+      // Clamp bounds: stay within top 10px and bottom 60px
+      newTop = Math.max(10, Math.min(window.innerHeight - 60, newTop));
+      setYPos(newTop);
+    };
+
+    const handleEnd = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        // Hold hasDragged value for a short moment so click event can check it
+        setTimeout(() => {
+          hasDragged.current = false;
+        }, 100);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+    };
+  }, []);
+
+  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    isDragging.current = true;
+    hasDragged.current = false;
+    startY.current = clientY;
+    
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      startTop.current = rect.top;
+    }
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    if (hasDragged.current) {
+      e.preventDefault();
+      return;
+    }
+    setIsOpen(!isOpen);
+  };
+
   // Poll for SMS logs to ensure real-time reactive display
   useEffect(() => {
     const timer = setInterval(() => {
@@ -119,14 +186,14 @@ export const SMSSimulator: React.FC = () => {
         }
         @media (max-width: 640px) {
           .sms-simulator-float-btn {
-            top: 90px !important;
+            top: ${yPos === null ? '90px' : `${yPos}px`} !important;
             bottom: auto !important;
             right: 16px !important;
           }
           .sms-simulator-drawer {
             width: calc(100% - 32px) !important;
             height: 480px !important;
-            top: 145px !important;
+            top: ${yPos === null ? '145px' : `${yPos > window.innerHeight / 2 ? yPos - 490 : yPos + 50}px`} !important;
             bottom: auto !important;
             right: 16px !important;
           }
@@ -135,11 +202,15 @@ export const SMSSimulator: React.FC = () => {
 
       {/* Floating Toggle Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={handleButtonClick}
+        onMouseDown={handleStart}
+        onTouchStart={handleStart}
         className="sms-simulator-float-btn"
         style={{
           position: 'fixed',
-          bottom: '24px',
+          bottom: yPos === null ? '24px' : 'auto',
+          top: yPos === null ? undefined : `${yPos}px`,
           right: '24px',
           zIndex: 99999,
           background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
@@ -153,9 +224,11 @@ export const SMSSimulator: React.FC = () => {
           gap: '8px',
           fontSize: '0.85rem',
           fontWeight: 700,
-          cursor: 'pointer',
+          cursor: isDragging.current ? 'grabbing' : 'grab',
           fontFamily: 'inherit',
-          transition: 'transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, right 0.3s ease',
+          transition: isDragging.current ? 'transform 0.2s ease' : 'transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, right 0.3s ease',
+          userSelect: 'none',
+          touchAction: 'none'
         }}
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -186,7 +259,8 @@ export const SMSSimulator: React.FC = () => {
           className="sms-simulator-drawer"
           style={{
             position: 'fixed',
-            bottom: '85px',
+            bottom: yPos === null ? '85px' : 'auto',
+            top: yPos === null ? undefined : `${yPos > window.innerHeight / 2 ? yPos - 570 : yPos + 50}px`,
             right: '24px',
             zIndex: 99999,
             width: '420px',
@@ -200,7 +274,7 @@ export const SMSSimulator: React.FC = () => {
             flexDirection: 'column',
             overflow: 'hidden',
             animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            transition: 'bottom 0.3s ease, right 0.3s ease, width 0.3s ease, height 0.3s ease',
+            transition: isDragging.current ? 'width 0.3s ease, height 0.3s ease' : 'bottom 0.3s ease, right 0.3s ease, width 0.3s ease, height 0.3s ease, top 0.3s ease',
           }}
         >
 
