@@ -21,8 +21,8 @@ export const Login: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const rawRole = searchParams.get('role') || 'mother';
-  const role = ['mother', 'admin', 'doctor', 'driver'].includes(rawRole)
-    ? (rawRole as 'mother' | 'admin' | 'doctor' | 'driver')
+  const role = ['mother', 'admin', 'doctor', 'driver', 'vht'].includes(rawRole)
+    ? (rawRole as 'mother' | 'admin' | 'doctor' | 'driver' | 'vht')
     : 'mother';
 
   const [email, setEmail] = useState('');
@@ -104,7 +104,8 @@ export const Login: React.FC = () => {
     mother: { title: 'Expectant Mother Portal', icon: '🤰', color: 'var(--rose-500)' },
     admin: { title: 'Command Control Center', icon: '📡', color: 'var(--primary-500)' },
     doctor: { title: 'Clinical Care Console', icon: '🩺', color: 'var(--success-500)' },
-    driver: { title: 'Ambulance Navigation Panel', icon: '🚑', color: 'var(--warning-500)' }
+    driver: { title: 'Ambulance Navigation Panel', icon: '🚑', color: 'var(--warning-500)' },
+    vht: { title: 'Village Health Team Portal', icon: '📳', color: 'var(--info-500)' }
   };
 
   const themeSettings = {
@@ -147,6 +148,16 @@ export const Login: React.FC = () => {
       inputBg: '#1e293b',
       shadow: '0 20px 50px rgba(59, 130, 246, 0.15)',
       orbColor: '#3b82f6',
+    },
+    vht: {
+      bgGradient: 'radial-gradient(circle at 10% 20%, rgba(224, 242, 254, 0.6) 0%, rgba(255, 255, 255, 1) 90%)',
+      cardBg: 'rgba(255, 255, 255, 0.92)',
+      cardBorder: '1px solid rgba(14, 165, 233, 0.25)',
+      textColor: '#1f2937',
+      labelColor: '#374151',
+      inputBg: '#ffffff',
+      shadow: '0 20px 50px rgba(14, 165, 233, 0.08)',
+      orbColor: '#0ea5e9',
     }
   };
 

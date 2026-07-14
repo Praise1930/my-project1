@@ -22,6 +22,7 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { SMSSimulator } from './components/SMSSimulator';
 
 // Dashboard portals — lazily loaded (heavy, role-specific)
 const MotherDashboard = lazy(() => import('./pages/MotherDashboard').then(m => ({ default: m.MotherDashboard })));
@@ -29,6 +30,7 @@ const MotherConsole   = lazy(() => import('./pages/MotherConsole').then(m => ({ 
 const AdminDashboard  = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const DoctorDashboard = lazy(() => import('./pages/DoctorDashboard').then(m => ({ default: m.DoctorDashboard })));
 const DriverDashboard = lazy(() => import('./pages/DriverDashboard').then(m => ({ default: m.DriverDashboard })));
+const VhtDashboard    = lazy(() => import('./pages/VhtDashboard').then(m => ({ default: m.VhtDashboard })));
 
 // Lightweight loading spinner shown while a lazy chunk loads
 const PageLoader: React.FC = () => (
@@ -58,6 +60,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <PWAInstallBanner />
+      <SMSSimulator />
       <Router>
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
@@ -74,6 +77,7 @@ const App: React.FC = () => {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/doctor" element={<DoctorDashboard />} />
             <Route path="/driver" element={<DriverDashboard />} />
+            <Route path="/vht" element={<VhtDashboard />} />
 
             {/* Fallback Catch-All */}
             <Route path="*" element={<Navigate to="/" replace />} />

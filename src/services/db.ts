@@ -10,11 +10,43 @@ export interface User {
   email: string;
   phone: string;
   password_hash: string;
-  role: 'mother' | 'admin' | 'doctor' | 'driver';
+  role: 'mother' | 'admin' | 'doctor' | 'driver' | 'vht';
   avatar: string | null; // base64 / dataUrl or placeholder emoji
   is_active: boolean;
   last_login?: string;
   created_at: string;
+}
+
+export interface VhtVisitLog {
+  id: number;
+  vht_id: number;
+  mother_id: number;
+  visit_date: string;
+  blood_pressure: string;
+  temperature: number;
+  fetal_movement: 'normal' | 'reduced' | 'none';
+  notes: string;
+  complications_observed: string;
+}
+
+export interface VitalsRecord {
+  id: number;
+  mother_id: number;
+  timestamp: string;
+  systolic: number;
+  diastolic: number;
+  glucose: number; // mg/dL
+  kick_count: number;
+  recorded_by: 'patient' | 'vht' | 'doctor';
+}
+
+export interface SmsLog {
+  id: number;
+  to_number: string;
+  to_name: string;
+  message: string;
+  timestamp: string;
+  status: 'sent' | 'failed';
 }
 
 export interface Hospital {
@@ -245,7 +277,8 @@ const SEED_USERS: User[] = [
   { id: 9, full_name: 'Auma Rosemary', email: 'rosemary.auma@gmail.com', phone: '+256-769-400-002', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-05T00:00:00Z' },
   { id: 10, full_name: 'Babirye Joan', email: 'joan.babirye@gmail.com', phone: '+256-769-400-003', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-10T00:00:00Z' },
   { id: 11, full_name: 'Namugga Esther', email: 'esther.namugga@gmail.com', phone: '+256-769-400-004', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-15T00:00:00Z' },
-  { id: 12, full_name: 'Kyomuhendo Ruth', email: 'ruth.kyomuhendo@gmail.com', phone: '+256-769-400-005', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-20T00:00:00Z' }
+  { id: 12, full_name: 'Kyomuhendo Ruth', email: 'ruth.kyomuhendo@gmail.com', phone: '+256-769-400-005', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-20T00:00:00Z' },
+  { id: 13, full_name: 'Nakitto Sarah (VHT)', email: 'vht@mamatrack.go.ug', phone: '+256-788-000-111', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, created_at: '2026-06-01T00:00:00Z' }
 ];
 
 const SEED_DOCTORS: Doctor[] = [
@@ -298,6 +331,17 @@ const SEED_NOTIFICATIONS: Notification[] = [
   { id: 3, user_id: 2, title: 'New Assignment', message: 'You have been assigned to emergency clinical support for Joan (EMG-2026-0001).', type: 'dispatch', reference_id: 1, is_read: true, created_at: '2026-06-15T14:32:00Z' }
 ];
 
+const SEED_VHT_VISITS: VhtVisitLog[] = [
+  { id: 1, vht_id: 13, mother_id: 8, visit_date: '2026-07-01', blood_pressure: '120/80', temperature: 36.6, fetal_movement: 'normal', notes: 'Mother feels healthy. Prescribed folate compliance.', complications_observed: 'None' },
+  { id: 2, vht_id: 13, mother_id: 9, visit_date: '2026-07-03', blood_pressure: '115/75', temperature: 36.8, fetal_movement: 'normal', notes: 'Fetal movement is active. Checked hemoglobin card.', complications_observed: 'None' }
+];
+
+const SEED_VITALS: VitalsRecord[] = [
+  { id: 1, mother_id: 8, timestamp: '2026-07-10T09:00:00Z', systolic: 120, diastolic: 80, glucose: 95, kick_count: 12, recorded_by: 'patient' },
+  { id: 2, mother_id: 8, timestamp: '2026-07-12T10:00:00Z', systolic: 122, diastolic: 82, glucose: 98, kick_count: 10, recorded_by: 'patient' },
+  { id: 3, mother_id: 8, timestamp: '2026-07-14T08:30:00Z', systolic: 121, diastolic: 79, glucose: 92, kick_count: 11, recorded_by: 'vht' }
+];
+
 // ============================================================================
 // 3. DATABASE CLASS IMPLEMENTATION
 // ============================================================================
@@ -317,6 +361,15 @@ class LocalDatabase {
   }
 
   // Schema state accessors
+  get smsLogs(): SmsLog[] { return this.getStore('sms_logs', []); }
+  set smsLogs(val: SmsLog[]) { this.setStore('sms_logs', val); }
+
+  get vitals(): VitalsRecord[] { return this.getStore('vitals', SEED_VITALS); }
+  set vitals(val: VitalsRecord[]) { this.setStore('vitals', val); }
+
+  get vhtVisits(): VhtVisitLog[] { return this.getStore('vht_visits', SEED_VHT_VISITS); }
+  set vhtVisits(val: VhtVisitLog[]) { this.setStore('vht_visits', val); }
+
   get users(): User[] { return this.getStore('users', SEED_USERS); }
   set users(val: User[]) { this.setStore('users', val); }
 
@@ -391,18 +444,81 @@ class LocalDatabase {
     localStorage.removeItem('mamatrack_fuel_logs');
     localStorage.removeItem('mamatrack_clinical_assessments');
     localStorage.removeItem('mamatrack_blood_requests');
+    localStorage.removeItem('mamatrack_sms_logs');
+    localStorage.removeItem('mamatrack_vitals');
+    localStorage.removeItem('mamatrack_vht_visits');
     sessionStorage.removeItem('mamatrack_session');
   }
 }
 
 export const db = new LocalDatabase();
 
+export const SmsService = {
+  getLogs(): SmsLog[] {
+    return db.smsLogs;
+  },
+  sendSms(toName: string, toNumber: string, message: string): SmsLog {
+    const logs = db.smsLogs;
+    const nextId = Math.max(...logs.map(l => l.id), 0) + 1;
+    const newLog: SmsLog = {
+      id: nextId,
+      to_name: toName,
+      to_number: toNumber,
+      message,
+      timestamp: new Date().toISOString(),
+      status: 'sent'
+    };
+    db.smsLogs = [...logs, newLog];
+    return newLog;
+  },
+  clearLogs() {
+    db.smsLogs = [];
+  }
+};
+
+export const VitalsService = {
+  getVitalsForMother(motherId: number): VitalsRecord[] {
+    return db.vitals.filter(v => v.mother_id === motherId);
+  },
+  addVitalsRecord(motherId: number, record: { systolic: number; diastolic: number; glucose: number; kick_count: number; recorded_by: 'patient' | 'vht' | 'doctor' }): VitalsRecord {
+    const records = db.vitals;
+    const nextId = Math.max(...records.map(r => r.id), 0) + 1;
+    const newRecord: VitalsRecord = {
+      id: nextId,
+      mother_id: motherId,
+      timestamp: new Date().toISOString(),
+      ...record
+    };
+    db.vitals = [...records, newRecord];
+    return newRecord;
+  }
+};
+
+export const VhtService = {
+  getVisitsForMother(motherId: number): VhtVisitLog[] {
+    return db.vhtVisits.filter(v => v.mother_id === motherId);
+  },
+  getVisitsByVht(vhtId: number): VhtVisitLog[] {
+    return db.vhtVisits.filter(v => v.vht_id === vhtId);
+  },
+  addVisitLog(log: Omit<VhtVisitLog, 'id'>): VhtVisitLog {
+    const logs = db.vhtVisits;
+    const nextId = Math.max(...logs.map(l => l.id), 0) + 1;
+    const newLog: VhtVisitLog = {
+      id: nextId,
+      ...log
+    };
+    db.vhtVisits = [...logs, newLog];
+    return newLog;
+  }
+};
+
 // ============================================================================
 // 4. API METHOD ACTIONS (SERVICES)
 // ============================================================================
 
 export const AuthService = {
-  login(email: string, password_hash: string, role: 'mother' | 'admin' | 'doctor' | 'driver', bypassPasswordCheck = false): { success: boolean; user?: User; error?: string } {
+  login(email: string, password_hash: string, role: 'mother' | 'admin' | 'doctor' | 'driver' | 'vht', bypassPasswordCheck = false): { success: boolean; user?: User; error?: string } {
     const users = db.users;
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.role === role);
     if (!user) {
@@ -611,6 +727,16 @@ export const EmergencyService = {
       );
     });
 
+    // Send simulated SMS alerts
+    const motherUser = db.users.find(u => u.id === motherUserId);
+    if (motherUser) {
+      SmsService.sendSms(
+        motherUser.full_name,
+        motherUser.phone,
+        `MamaTrack SOS: Emergency beacon activated. Mukono emergency responders are preparing dispatch.`
+      );
+    }
+
     return newEmergency;
   },
 
@@ -685,6 +811,32 @@ export const EmergencyService = {
         'dispatch',
         emergencyId
       );
+    }
+
+    // Send simulated SMS alerts
+    if (motherUser) {
+      SmsService.sendSms(
+        motherUser.full_name,
+        motherUser.phone,
+        `MamaTrack: Ambulance dispatched! Driver ${driverUser?.full_name || 'Emergency Team'} is on the way. ETA: ${etaMinutes} mins.`
+      );
+    }
+    if (driverUser) {
+      SmsService.sendSms(
+        driverUser.full_name,
+        driverUser.phone,
+        `MamaTrack dispatch: Go to ${motherUser?.full_name || 'Patient'} at Mukono coords. Hospital: ${hosp?.name}. ETA: ${etaMinutes} mins.`
+      );
+    }
+    if (doctorUserId) {
+      const doctorUser = db.users.find(u => u.id === doctorUserId);
+      if (doctorUser) {
+        SmsService.sendSms(
+          doctorUser.full_name,
+          doctorUser.phone,
+          `MamaTrack alert: Inbound maternal patient ${motherUser?.full_name || 'Patient'} dispatched to ${hosp?.name || 'clinic'}. Standby.`
+        );
+      }
     }
 
     return updatedEmg;

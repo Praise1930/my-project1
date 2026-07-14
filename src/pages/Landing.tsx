@@ -280,6 +280,10 @@ export const Landing: React.FC = () => {
             border-color: rgba(59, 130, 246, 0.45) !important;
             box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12) !important;
           }
+          .portal-vht:hover {
+            border-color: rgba(14, 165, 233, 0.45) !important;
+            box-shadow: 0 12px 30px rgba(14, 165, 233, 0.12) !important;
+          }
           /* Prevent template hovers from overriding portal text and background colors */
           .portal-hover-card:hover .team-caption {
             background: ${isDark ? '#0f172a' : '#ffffff'} !important;
@@ -376,6 +380,24 @@ export const Landing: React.FC = () => {
                     Coordinate regional ambulance dispatches, monitor safety checklists, and manage clinic facility status parameters.
                   </span>
                   <Link to="/login?role=admin" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #3b82f6, #1d4ed8, #3b82f6)' }}>
+                    Enter Portal
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Village Health Team (VHT) */}
+            <div className="col-xl-3 col-lg-3 col-md-6 col-sm-6" style={{ flex: '1 1 240px', maxWidth: '270px' }}>
+              <div className="single-team portal-hover-card portal-vht" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(14, 165, 233, 0.3)' : '1px solid rgba(14, 165, 233, 0.18)', boxShadow: '0 10px 30px rgba(14, 165, 233, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
+                <div style={{ background: isDark ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src="/assets/img/portals/portal_driver.png" alt="VHT Responder" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '8px', filter: 'hue-rotate(180deg)' }} />
+                </div>
+                <div className="team-caption" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0ea5e9' }}>VHT Responder</h3>
+                  <span style={{ display: 'block', fontSize: '13px', margin: '6px 0 16px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
+                    Register local expectant mothers, log home checkup vitals, and trigger emergency transport dispatches.
+                  </span>
+                  <Link to="/login?role=vht" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #0ea5e9, #0284c7, #0ea5e9)' }}>
                     Enter Portal
                   </Link>
                 </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor } from '../services/db';
+import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor, VitalsService, SmsService, VitalsRecord } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -13,7 +13,7 @@ export const MotherDashboard: React.FC = () => {
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Mother | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'emergency' | 'checkups' | 'anc-timeline' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'emergency' | 'checkups' | 'anc-timeline' | 'profile' | 'ledger'>('home');
   
   // States for active emergency
   const [activeEmergency, setActiveEmergency] = useState<Emergency | null>(null);
@@ -37,6 +37,13 @@ export const MotherDashboard: React.FC = () => {
 
   // Lists
   const [checkups, setCheckups] = useState<CheckupSchedule[]>([]);
+
+  // Vitals states
+  const [vitalsList, setVitalsList] = useState<VitalsRecord[]>([]);
+  const [sysInput, setSysInput] = useState('');
+  const [diaInput, setDiaInput] = useState('');
+  const [glucInput, setGlucInput] = useState('');
+  const [kickInput, setKickInput] = useState('');
 
   // Doctor Consultation States
   const [selectedDoctor, setSelectedDoctor] = useState<(Doctor & { name: string; phone: string; hospitalName: string }) | null>(null);
@@ -108,6 +115,7 @@ export const MotherDashboard: React.FC = () => {
 
     // Load static lists
     setCheckups(db.checkups.filter(c => c.mother_id === sessionUser.id));
+    setVitalsList(VitalsService.getVitalsForMother(sessionUser.id));
     setNotifications(NotificationService.getNotificationsForUser(sessionUser.id));
 
     // Get active emergency
@@ -570,6 +578,23 @@ export const MotherDashboard: React.FC = () => {
               <span>WHO ANC Timeline</span>
             </div>
 
+            <div onClick={() => setActiveTab('ledger')} className={`nav-item ${activeTab === 'ledger' ? 'active' : ''}`} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: activeTab === 'ledger' ? 'rgba(251, 113, 133, 0.1)' : 'transparent',
+              color: activeTab === 'ledger' ? '#e11d48' : (theme === 'light' ? '#4b5563' : '#cbd5e1'),
+              fontWeight: activeTab === 'ledger' ? 700 : 500,
+              fontSize: '13px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}>
+              <span>📊</span>
+              <span>Health Ledger</span>
+            </div>
+
             <div onClick={() => setActiveTab('profile')} className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} style={{
               display: 'flex',
               alignItems: 'center',
@@ -595,7 +620,7 @@ export const MotherDashboard: React.FC = () => {
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
             <div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
-                {activeTab === 'anc-timeline' ? 'WHO ANC Timeline' : activeTab === 'profile' ? 'Profile & Doctors' : activeTab} Panel
+                {activeTab === 'anc-timeline' ? 'WHO ANC Timeline' : activeTab === 'profile' ? 'Profile & Doctors' : activeTab === 'ledger' ? 'Health Ledger & Vitals' : activeTab} Panel
               </h3>
             </div>
 
@@ -1090,6 +1115,300 @@ export const MotherDashboard: React.FC = () => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: HEALTH LEDGER */}
+          {activeTab === 'ledger' && (
+            <div className="tab-content-container" style={{ padding: '24px' }}>
+              <button className="btn-momentra-outline" onClick={() => setActiveTab('home')} style={{ marginBottom: '1.25rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                <ArrowLeft size={14} style={{ marginRight: '6px' }} /> Back to Home
+              </button>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+                {/* Vitals Form Card */}
+                <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(251, 113, 133, 0.2)', borderRadius: '12px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📥 Record Daily Vitals
+                  </h3>
+                  
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!user) return;
+                    const sys = parseInt(sysInput);
+                    const dia = parseInt(diaInput);
+                    const gluc = parseInt(glucInput);
+                    const kicks = parseInt(kickInput);
+
+                    if (isNaN(sys) || isNaN(dia) || isNaN(gluc) || isNaN(kicks)) {
+                      alert('Please fill out all vitals correctly.');
+                      return;
+                    }
+
+                    VitalsService.addVitalsRecord(user.id, {
+                      systolic: sys,
+                      diastolic: dia,
+                      glucose: gluc,
+                      kick_count: kicks,
+                      recorded_by: 'patient'
+                    });
+
+                    // Trigger SMS warning alert if needed
+                    let hasAlert = false;
+                    let alertMsg = '';
+                    if (sys >= 140 || dia >= 90) {
+                      hasAlert = true;
+                      alertMsg += `Elevated BP (${sys}/${dia} mmHg - Pre-eclampsia risk) `;
+                    }
+                    if (gluc >= 140) {
+                      hasAlert = true;
+                      alertMsg += `High Blood Glucose (${gluc} mg/dL - Gestational Diabetes risk) `;
+                    }
+                    if (kicks < 10) {
+                      hasAlert = true;
+                      alertMsg += `Reduced fetal movement (${kicks} kicks - distress risk) `;
+                    }
+
+                    if (hasAlert && profile) {
+                      // Find doctor user
+                      const doctorUser = db.users.find(u => u.role === 'doctor') || db.users.find(u => u.role === 'admin');
+                      if (doctorUser) {
+                        SmsService.sendSms(
+                          doctorUser.full_name,
+                          doctorUser.phone,
+                          `CLINICAL ALERT: Patient ${user.full_name} registered danger-level vitals: ${alertMsg}. Follow up urgently.`
+                        );
+                      }
+                      // SMS to mother kin
+                      SmsService.sendSms(
+                        profile.next_of_kin_name,
+                        profile.next_of_kin_phone,
+                        `MamaTrack Alert: Your relative ${user.full_name} registered abnormal pregnancy readings: ${alertMsg}. Please ensure she rests and contacts a health worker.`
+                      );
+                    }
+
+                    setVitalsList(VitalsService.getVitalsForMother(user.id));
+                    setSysInput('');
+                    setDiaInput('');
+                    setGlucInput('');
+                    setKickInput('');
+                    alert('Vitals logged successfully!' + (hasAlert ? ' ⚠️ Warnings dispatched to clinical team.' : ''));
+                  }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                      <div className="form-group">
+                        <label className="form-label" style={{ fontSize: '0.82rem', fontWeight: 600, color: theme === 'light' ? '#374151' : '#cbd5e1' }}>Systolic BP (mmHg)</label>
+                        <input type="number" placeholder="e.g. 120" value={sysInput} onChange={e => setSysInput(e.target.value)} className="form-input" style={{ padding: '8px 12px', fontSize: '0.9rem' }} required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" style={{ fontSize: '0.82rem', fontWeight: 600, color: theme === 'light' ? '#374151' : '#cbd5e1' }}>Diastolic BP (mmHg)</label>
+                        <input type="number" placeholder="e.g. 80" value={diaInput} onChange={e => setDiaInput(e.target.value)} className="form-input" style={{ padding: '8px 12px', fontSize: '0.9rem' }} required />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                      <div className="form-group">
+                        <label className="form-label" style={{ fontSize: '0.82rem', fontWeight: 600, color: theme === 'light' ? '#374151' : '#cbd5e1' }}>Blood Sugar (mg/dL)</label>
+                        <input type="number" placeholder="e.g. 95" value={glucInput} onChange={e => setGlucInput(e.target.value)} className="form-input" style={{ padding: '8px 12px', fontSize: '0.9rem' }} required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" style={{ fontSize: '0.82rem', fontWeight: 600, color: theme === 'light' ? '#374151' : '#cbd5e1' }}>Fetal Kicks (2hrs)</label>
+                        <input type="number" placeholder="e.g. 10" value={kickInput} onChange={e => setKickInput(e.target.value)} className="form-input" style={{ padding: '8px 12px', fontSize: '0.9rem' }} required />
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn btn-rose btn-block" style={{ padding: '10px', fontSize: '0.88rem', fontWeight: 700, color: '#fff', background: 'var(--rose-500)', border: 'none', borderRadius: '6px' }}>
+                      Save & Validate Vitals
+                    </button>
+                  </form>
+                </div>
+
+                {/* Complications Checklist Card */}
+                <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(251, 113, 133, 0.2)', borderRadius: '12px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '12px' }}>
+                    ⚠️ Complications Checker
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: theme === 'light' ? '#6b7280' : '#94a3b8', lineHeight: 1.4, marginBottom: '16px' }}>
+                    Our automated clinical validation scanner checks your logged pregnancy vitals against safe clinical thresholds:
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {/* BP Alert Status */}
+                    {vitalsList.length > 0 && (() => {
+                      const latest = vitalsList[vitalsList.length - 1];
+                      const isHigh = latest.systolic >= 140 || latest.diastolic >= 90;
+                      return (
+                        <div style={{ background: isHigh ? 'rgba(239, 68, 68, 0.08)' : 'rgba(34, 197, 94, 0.08)', border: `1px solid ${isHigh ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`, borderRadius: '6px', padding: '10px 12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isHigh ? '#ef4444' : '#22c55e', display: 'block' }}>
+                            {isHigh ? '⚠️ Elevated Blood Pressure (Pre-eclampsia Risk)' : '✅ Healthy Blood Pressure'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1' }}>
+                            Last Reading: {latest.systolic}/{latest.diastolic} mmHg (Threshold: &lt; 140/90)
+                          </span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Sugar Alert Status */}
+                    {vitalsList.length > 0 && (() => {
+                      const latest = vitalsList[vitalsList.length - 1];
+                      const isHigh = latest.glucose >= 140;
+                      return (
+                        <div style={{ background: isHigh ? 'rgba(239, 68, 68, 0.08)' : 'rgba(34, 197, 94, 0.08)', border: `1px solid ${isHigh ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`, borderRadius: '6px', padding: '10px 12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isHigh ? '#ef4444' : '#22c55e', display: 'block' }}>
+                            {isHigh ? '⚠️ Gestational Diabetes Risk detected' : '✅ Healthy Blood Glucose'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1' }}>
+                            Last Reading: {latest.glucose} mg/dL (Threshold: &lt; 140)
+                          </span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Fetal movement status */}
+                    {vitalsList.length > 0 && (() => {
+                      const latest = vitalsList[vitalsList.length - 1];
+                      const isLow = latest.kick_count < 10;
+                      return (
+                        <div style={{ background: isLow ? 'rgba(245, 158, 11, 0.08)' : 'rgba(34, 197, 94, 0.08)', border: `1px solid ${isLow ? 'rgba(245, 158, 11, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`, borderRadius: '6px', padding: '10px 12px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isLow ? '#f59e0b' : '#22c55e', display: 'block' }}>
+                            {isLow ? '⚠️ Reduced Fetal Kick Counts' : '✅ Healthy Fetal Movements'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1' }}>
+                            Last Reading: {latest.kick_count} kicks in 2 hours (Recommended: &gt;= 10)
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Vitals History & Trends Chart */}
+              <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '20px' }}>
+                  📈 Vitals Trend Visualizations
+                </h3>
+
+                {vitalsList.length < 2 ? (
+                  <p style={{ fontSize: '0.82rem', color: '#64748b', textAlign: 'center', padding: '20px 0' }}>Log at least 2 readings to generate historical SVG graphs.</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                    {/* SVG BP Chart */}
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '12px', textAlign: 'center', color: theme === 'light' ? '#4b5563' : '#f1f5f9' }}>Blood Pressure (Systolic Trends)</span>
+                      <svg viewBox="0 0 300 100" style={{ width: '100%', height: '100px', overflow: 'visible' }}>
+                        {/* Render lines and grid */}
+                        <line x1="0" y1="50" x2="300" y2="50" stroke="#475569" strokeWidth="0.5" strokeDasharray="3 3" />
+                        <text x="5" y="45" fill="#64748b" fontSize="6">Danger Threshold (140)</text>
+                        
+                        {/* Map Points */}
+                        {(() => {
+                          const maxReadings = vitalsList.slice(-6);
+                          const stepX = 300 / Math.max(1, maxReadings.length - 1);
+                          const points = maxReadings.map((r, i) => {
+                            // Map systolic range [90, 160] to SVG range [80, 10]
+                            const val = r.systolic;
+                            const y = 80 - ((val - 90) / 70) * 70;
+                            return { x: i * stepX, y, val };
+                          });
+
+                          const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+                          return (
+                            <>
+                              <path d={pathD} fill="none" stroke="#f43f5e" strokeWidth="2" />
+                              {points.map((p, idx) => (
+                                <g key={idx}>
+                                  <circle cx={p.x} cy={p.y} r="3.5" fill="#ffffff" stroke="#f43f5e" strokeWidth="2" />
+                                  <text x={p.x} y={p.y - 6} fill={theme === 'light' ? '#1f2937' : '#ffffff'} fontSize="8" fontWeight="bold" textAnchor="middle">{p.val}</text>
+                                </g>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+
+                    {/* SVG Blood Glucose Chart */}
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '16px', borderRadius: '8px' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '12px', textAlign: 'center', color: theme === 'light' ? '#4b5563' : '#f1f5f9' }}>Blood Glucose (Sugar Trends)</span>
+                      <svg viewBox="0 0 300 100" style={{ width: '100%', height: '100px', overflow: 'visible' }}>
+                        <line x1="0" y1="50" x2="300" y2="50" stroke="#475569" strokeWidth="0.5" strokeDasharray="3 3" />
+                        <text x="5" y="45" fill="#64748b" fontSize="6">Threshold (140)</text>
+
+                        {/* Map Points */}
+                        {(() => {
+                          const maxReadings = vitalsList.slice(-6);
+                          const stepX = 300 / Math.max(1, maxReadings.length - 1);
+                          const points = maxReadings.map((r, i) => {
+                            // Map glucose range [60, 200] to SVG range [80, 10]
+                            const val = r.glucose;
+                            const y = 80 - ((val - 60) / 140) * 70;
+                            return { x: i * stepX, y, val };
+                          });
+
+                          const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+                          return (
+                            <>
+                              <path d={pathD} fill="none" stroke="#0ea5e9" strokeWidth="2" />
+                              {points.map((p, idx) => (
+                                <g key={idx}>
+                                  <circle cx={p.x} cy={p.y} r="3.5" fill="#ffffff" stroke="#0ea5e9" strokeWidth="2" />
+                                  <text x={p.x} y={p.y - 6} fill={theme === 'light' ? '#1f2937' : '#ffffff'} fontSize="8" fontWeight="bold" textAnchor="middle">{p.val}</text>
+                                </g>
+                              ))}
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Log History list */}
+              <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '14px' }}>
+                  📋 Vitals Log Registry
+                </h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table table-borderless" style={{ fontSize: '0.82rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1', width: '100%' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
+                        <th>Recorded Date/Time</th>
+                        <th>Blood Pressure</th>
+                        <th>Glucose Level</th>
+                        <th>Fetal Kicks (2h)</th>
+                        <th>Recorded By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vitalsList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: 'center', padding: '16px', color: '#64748b' }}>No clinical vitals logged yet.</td>
+                        </tr>
+                      ) : (
+                        vitalsList.map((rec) => (
+                          <tr key={rec.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <td>{new Date(rec.timestamp).toLocaleString()}</td>
+                            <td style={{ fontWeight: 700, color: (rec.systolic >= 140 || rec.diastolic >= 90) ? '#ef4444' : 'inherit' }}>
+                              {rec.systolic}/{rec.diastolic} mmHg
+                            </td>
+                            <td style={{ fontWeight: 700, color: rec.glucose >= 140 ? '#ef4444' : 'inherit' }}>
+                              {rec.glucose} mg/dL
+                            </td>
+                            <td style={{ fontWeight: 700, color: rec.kick_count < 10 ? '#f59e0b' : 'inherit' }}>
+                              {rec.kick_count} kicks
+                            </td>
+                            <td style={{ textTransform: 'capitalize' }}>{rec.recorded_by}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
