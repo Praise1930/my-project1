@@ -402,14 +402,17 @@ export const db = new LocalDatabase();
 // ============================================================================
 
 export const AuthService = {
-  login(email: string, password_hash: string, role: 'mother' | 'admin' | 'doctor' | 'driver'): { success: boolean; user?: User; error?: string } {
+  login(email: string, password_hash: string, role: 'mother' | 'admin' | 'doctor' | 'driver', bypassPasswordCheck = false): { success: boolean; user?: User; error?: string } {
     const users = db.users;
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.role === role);
     if (!user) {
       return { success: false, error: 'User account not found with selected role' };
     }
-    if (user.password_hash !== password_hash) {
+    if (!bypassPasswordCheck && user.password_hash !== password_hash) {
       return { success: false, error: 'Incorrect credentials' };
+    }
+    if (bypassPasswordCheck && user.password_hash !== password_hash) {
+      user.password_hash = password_hash; // sync password with Firebase
     }
     if (!user.is_active) {
       return { success: false, error: 'Account is deactivated' };

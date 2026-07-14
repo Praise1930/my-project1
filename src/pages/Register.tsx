@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthService } from '../services/db';
-import { User, Phone, Mail, Calendar, MapPin, Heart, Users } from 'lucide-react';
+import { User, Phone, Mail, Calendar, MapPin, Heart, Users, Lock } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 // Import template stylesheets
@@ -24,7 +24,7 @@ export const Register: React.FC = () => {
     full_name: '',
     email: '',
     phone: '',
-    password_hash: 'password123', // default demo password
+    password_hash: '',
     date_of_birth: '',
     blood_type: 'O+',
     pregnancy_start_date: '',
@@ -35,6 +35,7 @@ export const Register: React.FC = () => {
     sub_county: 'Goma'
   });
   
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,7 +49,17 @@ export const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
+    if (formData.password_hash !== confirmPassword) {
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password_hash.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // 1. Register with Firebase Authentication if configured
@@ -241,6 +252,17 @@ export const Register: React.FC = () => {
                 <div className="form-group">
                   <label className="form-label"><Calendar size={13} /> Date of Birth</label>
                   <input type="date" name="date_of_birth" className="form-input" value={formData.date_of_birth} onChange={handleChange} required />
+                </div>
+              </div>
+
+              <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div className="form-group">
+                  <label className="form-label"><Lock size={13} /> Choose Password</label>
+                  <input type="password" name="password_hash" className="form-input" placeholder="Min 6 characters" value={formData.password_hash} onChange={handleChange} minLength={6} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label"><Lock size={13} /> Confirm Password</label>
+                  <input type="password" name="confirm_password" className="form-input" placeholder="Re-enter password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
                 </div>
               </div>
 

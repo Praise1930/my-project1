@@ -67,7 +67,7 @@ export const Login: React.FC = () => {
         }
 
         // 3. If Firebase auth succeeds and is verified, sign into local mock DB for session/role
-        const res = AuthService.login(email, password, role);
+        const res = AuthService.login(email, password, role, true);
         if (res.success) {
           navigate(`/${role}`);
         } else {
