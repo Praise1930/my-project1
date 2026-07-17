@@ -186,19 +186,59 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     }
 
     if (routePoints.length > 1) {
-      const polyline = L.polyline(routePoints, {
-        color: '#f43f5e', // rose color matching mother/emergency path
-        weight: 4,
-        opacity: 0.8,
-        dashArray: '8, 8',
-        lineJoin: 'round'
-      }).addTo(mapRef.current);
-      
-      routeLineRef.current = polyline;
+      let active = true;
 
-      // Fit map bounds to show route path
-      const bounds = L.latLngBounds(routePoints);
-      mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+      const fetchRoadRoute = async () => {
+        try {
+          const coordsString = routePoints.map(p => `${p[1]},${p[0]}`).join(';');
+          const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+
+          const res = await fetch(url);
+          if (!res.ok) throw new Error('OSRM routing request failed');
+          const data = await res.json();
+
+          if (active && data.routes && data.routes.length > 0) {
+            const osrmCoords = data.routes[0].geometry.coordinates;
+            const roadPoints: [number, number][] = osrmCoords.map((c: any) => [c[1], c[0]]);
+
+            if (mapRef.current) {
+              const polyline = L.polyline(roadPoints, {
+                color: '#f43f5e',
+                weight: 5,
+                opacity: 0.85,
+                lineJoin: 'round'
+              }).addTo(mapRef.current);
+
+              routeLineRef.current = polyline;
+
+              // Fit map bounds to show route path
+              const bounds = L.latLngBounds(roadPoints);
+              mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+            }
+          }
+        } catch (e) {
+          console.warn('MapComponent: OSRM routing failed, falling back to straight-line polyline.', e);
+          if (active && mapRef.current) {
+            const polyline = L.polyline(routePoints, {
+              color: '#f43f5e',
+              weight: 4,
+              opacity: 0.8,
+              dashArray: '8, 8',
+              lineJoin: 'round'
+            }).addTo(mapRef.current);
+
+            routeLineRef.current = polyline;
+            const bounds = L.latLngBounds(routePoints);
+            mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+          }
+        }
+      };
+
+      fetchRoadRoute();
+
+      return () => {
+        active = false;
+      };
     }
   }, [routePoints]);
 

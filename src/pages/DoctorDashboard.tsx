@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, DoctorService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
+import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 
@@ -17,6 +17,7 @@ export const DoctorDashboard: React.FC = () => {
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
   const [assessments, setAssessments] = useState<ClinicalAssessment[]>([]);
   const [bloodRequests, setBloodRequests] = useState<BloodRequest[]>([]);
+  const [selectedMotherId, setSelectedMotherId] = useState<number>(8);
 
   // Forms
   const [activeEmergency, setActiveEmergency] = useState<Emergency | null>(null);
@@ -630,6 +631,156 @@ export const DoctorDashboard: React.FC = () => {
         {/* RIGHT COLUMN: BED MANAGEMENT & TRIAGE LOGS */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
+          {/* Patient Vitals Trend Chart Panel */}
+          <div className="medical-card">
+            <div className="medical-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>📈 Obstetric Patient Vitals Trend</span>
+              <i className="bi bi-graph-up-line" style={{ color: '#1977cc' }}></i>
+            </div>
+            <div className="medical-card-body" style={{ padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#666', fontWeight: 600, textTransform: 'uppercase' }}>Select Patient:</span>
+                <select 
+                  value={selectedMotherId} 
+                  onChange={(e) => setSelectedMotherId(Number(e.target.value))}
+                  className="form-control-medilab"
+                  style={{ flex: 1, padding: '4px 8px', fontSize: '12px', height: '32px' }}
+                >
+                  {db.mothers.map(m => {
+                    const userObj = db.users.find(u => u.id === m.user_id);
+                    return (
+                      <option key={m.user_id} value={m.user_id}>
+                        {userObj?.full_name || 'Expectant Mother'} (Blood: {m.blood_type})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* SVG Trend Rendering */}
+              {(() => {
+                const vitalsList = VitalsService.getVitalsForMother(selectedMotherId);
+                if (vitalsList.length === 0) {
+                  return (
+                    <div style={{ padding: '40px 0', textAlign: 'center', color: '#888', fontSize: '12px' }}>
+                      No vital trend logs recorded for this patient.
+                    </div>
+                  );
+                }
+
+                // Sort by timestamp asc
+                const sortedVitals = [...vitalsList].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                
+                // SVG dimensions
+                const width = 360;
+                const height = 160;
+                const paddingLeft = 30;
+                const paddingRight = 10;
+                const paddingTop = 10;
+                const paddingBottom = 20;
+
+                const chartWidth = width - paddingLeft - paddingRight;
+                const chartHeight = height - paddingTop - paddingBottom;
+
+                // Max value is always capped for BP/Glucose scaling (say 50 to 180)
+                const minY = 50;
+                const maxY = 180;
+                const rangeY = maxY - minY;
+
+                const getX = (index: number) => {
+                  if (sortedVitals.length <= 1) return paddingLeft + chartWidth / 2;
+                  return paddingLeft + (index / (sortedVitals.length - 1)) * chartWidth;
+                };
+
+                const getY = (val: number) => {
+                  const clamped = Math.max(minY, Math.min(maxY, val));
+                  return paddingTop + chartHeight - ((clamped - minY) / rangeY) * chartHeight;
+                };
+
+                // Generate points
+                const sysPoints = sortedVitals.map((v, i) => `${getX(i)},${getY(v.systolic)}`).join(' ');
+                const diaPoints = sortedVitals.map((v, i) => `${getX(i)},${getY(v.diastolic)}`).join(' ');
+                const glucPoints = sortedVitals.map((v, i) => `${getX(i)},${getY(v.glucose)}`).join(' ');
+
+                return (
+                  <div>
+                    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} style={{ background: '#f8fafc', borderRadius: '6px', border: '1px solid #eef2f7' }}>
+                      {/* Danger Grid Area for Pre-eclampsia threshold (Systolic >= 140) */}
+                      <rect 
+                        x={paddingLeft} 
+                        y={getY(180)} 
+                        width={chartWidth} 
+                        height={getY(140) - getY(180)} 
+                        fill="#fee2e2" 
+                        opacity={0.5} 
+                      />
+                      
+                      {/* Guideline values */}
+                      <line x1={paddingLeft} y1={getY(140)} x2={width - paddingRight} y2={getY(140)} stroke="#f87171" strokeDasharray="4,4" />
+                      <text x={paddingLeft + 5} y={getY(140) - 3} fill="#ef4444" fontSize="8" fontWeight="bold">BP Threshold (140)</text>
+
+                      {/* Grid Lines */}
+                      <line x1={paddingLeft} y1={getY(90)} x2={width - paddingRight} y2={getY(90)} stroke="#e2e8f0" strokeDasharray="2,2" />
+                      
+                      {/* Axes */}
+                      <line x1={paddingLeft} y1={paddingTop} x2={paddingLeft} y2={height - paddingBottom} stroke="#cbd5e1" />
+                      <line x1={paddingLeft} y1={height - paddingBottom} x2={width - paddingRight} y2={height - paddingBottom} stroke="#cbd5e1" />
+
+                      {/* Y-Axis Labels */}
+                      <text x={paddingLeft - 5} y={getY(140)} textAnchor="end" dominantBaseline="middle" fill="#64748b" fontSize="8">140</text>
+                      <text x={paddingLeft - 5} y={getY(90)} textAnchor="end" dominantBaseline="middle" fill="#64748b" fontSize="8">90</text>
+                      <text x={paddingLeft - 5} y={getY(50)} textAnchor="end" dominantBaseline="middle" fill="#64748b" fontSize="8">50</text>
+
+                      {/* Line paths */}
+                      {sortedVitals.length > 1 && (
+                        <>
+                          {/* Systolic (rose/pink) */}
+                          <polyline fill="none" stroke="#f43f5e" strokeWidth="2.5" points={sysPoints} />
+                          {/* Diastolic (blue) */}
+                          <polyline fill="none" stroke="#3b82f6" strokeWidth="2.5" points={diaPoints} />
+                          {/* Glucose (orange) */}
+                          <polyline fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="3,3" points={glucPoints} />
+                        </>
+                      )}
+
+                      {/* Data Dots */}
+                      {sortedVitals.map((v, i) => (
+                        <g key={v.id}>
+                          <circle cx={getX(i)} cy={getY(v.systolic)} r="4" fill="#f43f5e" />
+                          <circle cx={getX(i)} cy={getY(v.diastolic)} r="4" fill="#3b82f6" />
+                        </g>
+                      ))}
+
+                      {/* X-Axis labels (dates) */}
+                      {sortedVitals.map((v, i) => {
+                        const date = new Date(v.timestamp);
+                        const label = `${date.getMonth() + 1}/${date.getDate()}`;
+                        return (
+                          <text key={v.id} x={getX(i)} y={height - 5} textAnchor="middle" fill="#64748b" fontSize="8">
+                            {label}
+                          </text>
+                        );
+                      })}
+                    </svg>
+                    
+                    {/* Legend */}
+                    <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '10px', fontSize: '11px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ width: '12px', height: '4px', background: '#f43f5e', borderRadius: '2px' }}></span> Systolic BP
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ width: '12px', height: '4px', background: '#3b82f6', borderRadius: '2px' }}></span> Diastolic BP
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ width: '12px', height: '4px', background: '#f59e0b', borderRadius: '2px', borderTop: '2px dashed #f59e0b' }}></span> Glucose
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
           {/* Bed allocation console */}
           <div className="medical-card">
             <div className="medical-card-header">

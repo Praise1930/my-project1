@@ -23,6 +23,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { SMSSimulator } from './components/SMSSimulator';
+import { SyncService } from './services/syncService';
 
 // Dashboard portals — lazily loaded (heavy, role-specific)
 const MotherDashboard = lazy(() => import('./pages/MotherDashboard').then(m => ({ default: m.MotherDashboard })));
@@ -57,6 +58,10 @@ const PageLoader: React.FC = () => (
 );
 
 const App: React.FC = () => {
+  useEffect(() => {
+    SyncService.init();
+  }, []);
+
   return (
     <ThemeProvider>
       <PWAInstallBanner />

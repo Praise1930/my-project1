@@ -357,7 +357,27 @@ class LocalDatabase {
   }
 
   private setStore<T>(key: string, data: T[]): void {
+    const oldDataRaw = localStorage.getItem(`mamatrack_${key}`);
     localStorage.setItem(`mamatrack_${key}`, JSON.stringify(data));
+
+    if (['emergencies', 'vitals', 'vht_visits', 'users'].includes(key)) {
+      try {
+        const oldData: any[] = oldDataRaw ? JSON.parse(oldDataRaw) : [];
+        const oldMap = new Map(oldData.map(item => [String(item.id), item]));
+
+        data.forEach((newItem: any) => {
+          const oldItem = oldMap.get(String(newItem.id));
+          if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+            // Lazy import SyncService to prevent circular dependency imports
+            import('./syncService').then(({ SyncService }) => {
+              SyncService.syncLocalChange(key, newItem.id, newItem);
+            });
+          }
+        });
+      } catch (e) {
+        console.warn('SyncService: Error checking list diff in setStore:', e);
+      }
+    }
   }
 
   // Schema state accessors
@@ -469,6 +489,19 @@ export const SmsService = {
       status: 'sent'
     };
     db.smsLogs = [...logs, newLog];
+
+    // Real gateway proxy trigger if configured
+    const gatewayUrl = import.meta.env.VITE_SMS_GATEWAY_URL;
+    if (gatewayUrl && gatewayUrl.trim() !== '') {
+      fetch(gatewayUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: toNumber, name: toName, message })
+      }).catch(err => {
+        console.warn("SmsService: Direct gateway proxy delivery failed.", err);
+      });
+    }
+
     return newLog;
   },
   clearLogs() {
