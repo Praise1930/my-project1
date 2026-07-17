@@ -136,19 +136,24 @@ export const SMSSimulator: React.FC = () => {
     if (ussdScreen === 'menu') {
       if (val === '1') {
         // Trigger SOS
-        const mId = sessionMother ? sessionMother.user_id : 8; // fallback to seed mother
-        const motherProfile = db.mothers.find(m => m.user_id === mId);
-        const motherUser = db.users.find(u => u.id === mId);
-        if (motherProfile && motherUser) {
-          EmergencyService.triggerEmergency(
-            mId,
-            motherProfile.home_latitude,
-            motherProfile.home_longitude,
-            'USSD: SOS rescue requested via dialer menu.',
-            false
-          );
-          setUssdMessage(`SOS beacon active! Ambulance dispatch is being processed for ${motherUser.full_name}.`);
-          setUssdScreen('sos_result');
+        if (sessionMother) {
+          const mId = sessionMother.user_id;
+          const motherProfile = db.mothers.find(m => m.user_id === mId);
+          const motherUser = db.users.find(u => u.id === mId);
+          if (motherProfile && motherUser) {
+            EmergencyService.triggerEmergency(
+              mId,
+              motherProfile.home_latitude,
+              motherProfile.home_longitude,
+              'USSD: SOS rescue requested via dialer menu.',
+              false
+            );
+            setUssdMessage(`SOS beacon active! Ambulance dispatch is being processed for ${motherUser.full_name}.`);
+            setUssdScreen('sos_result');
+          } else {
+            setUssdMessage('Failed to identify patient account.');
+            setUssdScreen('sos_result');
+          }
         } else {
           setUssdMessage('Failed to identify patient account.');
           setUssdScreen('sos_result');
