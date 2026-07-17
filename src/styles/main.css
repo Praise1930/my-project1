@@ -2374,3 +2374,38 @@ html, body {
   }
 }
 
+/* ============================================================
+   Dark Mode Dashboard Enhancements & Specificity Corrections
+   ============================================================ */
+
+/* ─── Background Overlays for Portals ─── */
+[data-theme="dark"] .admin-bg,
+[data-theme="dark"] .doctor-bg,
+[data-theme="dark"] .driver-bg {
+    background: 
+        linear-gradient(135deg, 
+            rgba(13, 17, 23, 0.96) 0%, 
+            rgba(22, 27, 34, 0.98) 50%, 
+            rgba(13, 17, 23, 0.96) 100%
+        ),
+        url('/images/admin_bg.png') center/cover no-repeat !important;
+}
+
+/* ─── Role-Specific Dashboard Components ─── */
+[data-theme="dark"] .incoming-emergency {
+    background: linear-gradient(135deg, rgba(127, 29, 29, 0.4) 0%, rgba(153, 27, 27, 0.2) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    color: #fca5a5 !important;
+}
+
+[data-theme="dark"] .incoming-emergency p,
+[data-theme="dark"] .incoming-emergency span,
+[data-theme="dark"] .incoming-emergency h3 {
+    color: #fee2e2 !important;
+}
+
+[data-theme="dark"] .incoming-emergency .emergency-pulse-icon {
+    background: rgba(239, 68, 68, 0.25) !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+

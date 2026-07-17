@@ -12,7 +12,7 @@
             rgba(255, 255, 255, 0.97) 50%, 
             rgba(240, 244, 248, 0.95) 100%
         ),
-        url('../images/admin_bg.jpg') center/cover no-repeat;
+        url('/images/admin_bg.png') center/cover no-repeat;
 }
 
 /* Emergency Alert Panel */
