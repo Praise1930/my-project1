@@ -638,23 +638,29 @@ export const Register: React.FC = () => {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ padding: '40px 0 20px', background: '#0b162b', color: '#909090' }}>
+      <footer style={{
+        padding: '40px 0 20px',
+        background: isDark ? '#0b162b' : '#f8fafc',
+        color: isDark ? '#909090' : '#475569',
+        borderTop: isDark ? 'none' : '1px solid #e2e8f0',
+        transition: 'background-color 0.3s ease, color 0.3s ease'
+      }}>
         <div className="container">
           <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', justifyContent: 'space-between' }}>
             <div className="col-md-5">
-              <h4 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>MamaTrack Mother Registration</h4>
-              <p style={{ color: '#909090', fontSize: '13px', lineHeight: 1.6 }}>
+              <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>MamaTrack Mother Registration</h4>
+              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', lineHeight: 1.6 }}>
                 By registering, your residential sub-county and clinical parameters are mapped to the local GPS rescue responder dispatch network. Keep your profile updated for safe ANC transport tracking.
               </p>
             </div>
             <div className="col-md-4">
-              <h4 style={{ color: '#ffffff', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Helpline Info</h4>
-              <p style={{ color: '#909090', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-phone" style={{ marginRight: '5px' }}></i> Emergency Helpline: 0800-MAMATRACK</p>
-              <p style={{ color: '#909090', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> support@mamatrack.go.ug</p>
+              <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Helpline Info</h4>
+              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-phone" style={{ marginRight: '5px' }}></i> Emergency Helpline: 0800-MAMATRACK</p>
+              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> support@mamatrack.go.ug</p>
             </div>
           </div>
-          <div className="row border-top" style={{ borderTop: '1px solid #16243d', marginTop: '30px', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ margin: 0, fontSize: '12px' }}>
+          <div className="row border-top" style={{ borderTop: isDark ? '1px solid #16243d' : '1px solid #e2e8f0', marginTop: '30px', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: isDark ? '#909090' : '#64748b' }}>
               Copyright &copy; 2026 MamaTrack GPS. All rights reserved.
             </p>
           </div>
