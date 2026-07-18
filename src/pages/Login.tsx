@@ -29,18 +29,34 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Clear error when role changes
   React.useEffect(() => {
     setError(null);
+    setEmailError(null);
   }, [role]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setEmailError(null);
     setIsLoading(true);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      setEmailError("Email is required.");
+      setError("Please check your input fields.");
+      setIsLoading(false);
+      return;
+    } else if (!emailRegex.test(email)) {
+      setEmailError("Invalid email format.");
+      setError("Invalid email format (e.g. user@example.com).");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // If Firebase is not configured, directly fall back to local mock DB login
@@ -227,7 +243,7 @@ export const Login: React.FC = () => {
           <div style={{ padding: '36px 30px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
             {error && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>⚠️</span> {error}
               </div>
             )}
@@ -240,12 +256,25 @@ export const Login: React.FC = () => {
                 <input
                   type="email"
                   className="form-input"
-                  style={{ padding: '12px 16px', fontSize: '1rem', borderRadius: '4px', background: isDark ? '#0f172a' : '#f9fafb', color: isDark ? '#f1f5f9' : '#1f2937', border: isDark ? '1px solid #475569' : '1px solid #d1d5db', width: '100%' }}
+                  style={{
+                    padding: '12px 16px',
+                    fontSize: '1rem',
+                    borderRadius: '4px',
+                    background: isDark ? '#0f172a' : '#f9fafb',
+                    color: isDark ? '#f1f5f9' : '#1f2937',
+                    border: emailError ? '1px solid #ef4444' : (isDark ? '1px solid #475569' : '1px solid #d1d5db'),
+                    width: '100%'
+                  }}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
                   placeholder="e.g. email@example.com"
-                  required
                 />
+                {emailError && (
+                  <span style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{emailError}</span>
+                )}
               </div>
 
               <div className="form-group" style={{ marginBottom: '1.75rem' }}>

@@ -347,7 +347,7 @@ export const Register: React.FC = () => {
           <div style={{ padding: '36px 30px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
             {error && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger-600)', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                 ⚠️ {error}
               </div>
             )}
