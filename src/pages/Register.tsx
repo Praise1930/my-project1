@@ -96,7 +96,7 @@ export const Register: React.FC = () => {
     setIsLoading(true);
 
     const errors: Record<string, string> = {};
-    const phoneRegex = /^(07|7)\d{8}$/;
+    const phoneRegex = /^7\d{7}$/;
 
     if (!formData.full_name.trim()) errors.full_name = "Full name is required.";
     if (!formData.email.trim()) {
@@ -108,7 +108,7 @@ export const Register: React.FC = () => {
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required.";
     } else if (!phoneRegex.test(formData.phone)) {
-      errors.phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+      errors.phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
     }
 
     if (!formData.date_of_birth) {
@@ -136,7 +136,7 @@ export const Register: React.FC = () => {
     if (!formData.next_of_kin_phone.trim()) {
       errors.next_of_kin_phone = "Kin phone number is required.";
     } else if (!phoneRegex.test(formData.next_of_kin_phone)) {
-      errors.next_of_kin_phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+      errors.next_of_kin_phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
     }
 
     if (!formData.village.trim()) {
@@ -150,12 +150,18 @@ export const Register: React.FC = () => {
       return;
     }
 
+    const submissionData = {
+      ...formData,
+      phone: `+267${formData.phone}`,
+      next_of_kin_phone: `+267${formData.next_of_kin_phone}`
+    };
+
     try {
       let registeredInFirebase = false;
       // 1. Register with Firebase Authentication if configured
       if (isFirebaseConfigured && auth) {
         try {
-          const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password_hash);
+          const userCredential = await createUserWithEmailAndPassword(auth, submissionData.email, submissionData.password_hash);
           // 2. Send Email Verification
           await sendEmailVerification(userCredential.user);
           registeredInFirebase = true;
@@ -171,7 +177,7 @@ export const Register: React.FC = () => {
       }
       
       // 3. Register user in the local simulated database
-      const res = AuthService.registerMother(formData);
+      const res = AuthService.registerMother(submissionData);
       
       if (res.success) {
         if (isFirebaseConfigured && auth && registeredInFirebase) {
@@ -270,6 +276,28 @@ export const Register: React.FC = () => {
             background: ${isDark ? '#0f172a' : '#f9fafb'} !important;
             color: ${isDark ? '#f1f5f9' : '#1f2937'} !important;
           }
+          .health-register-card .phone-input-group {
+            display: flex !important;
+            align-items: stretch !important;
+            width: 100% !important;
+          }
+          .health-register-card .phone-input-group .phone-prefix {
+            display: flex !important;
+            align-items: center !important;
+            background: ${isDark ? '#334155' : '#e2e8f0'} !important;
+            color: ${isDark ? '#cbd5e1' : '#475569'} !important;
+            padding: 0 12px !important;
+            border: ${isDark ? '1px solid #475569' : '1px solid #d1d5db'} !important;
+            border-right: none !important;
+            border-radius: 4px 0 0 4px !important;
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
+            user-select: none !important;
+          }
+          .health-register-card .phone-input-group .form-input {
+            border-radius: 0 4px 4px 0 !important;
+            border-left: none !important;
+          }
           .health-register-card .form-input.has-error {
             border: 1px solid #ef4444 !important;
             background: ${isDark ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.02)'} !important;
@@ -347,14 +375,17 @@ export const Register: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label"><Phone size={13} /> Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    className={`form-input ${validationErrors.phone ? 'has-error' : ''}`}
-                    placeholder="e.g. 772000000"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
+                  <div className="phone-input-group">
+                    <span className="phone-prefix">+267</span>
+                    <input
+                      type="tel"
+                      name="phone"
+                      className={`form-input ${validationErrors.phone ? 'has-error' : ''}`}
+                      placeholder="e.g. 71234567"
+                      value={formData.phone}
+                      onChange={handleChange}
+                    />
+                  </div>
                   {validationErrors.phone && (
                     <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.phone}</span>
                   )}
@@ -544,14 +575,17 @@ export const Register: React.FC = () => {
 
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label"><Phone size={13} /> Kin Phone Number</label>
-                <input
-                  type="tel"
-                  name="next_of_kin_phone"
-                  className={`form-input ${validationErrors.next_of_kin_phone ? 'has-error' : ''}`}
-                  placeholder="e.g. 751000000"
-                  value={formData.next_of_kin_phone}
-                  onChange={handleChange}
-                />
+                <div className="phone-input-group">
+                  <span className="phone-prefix">+267</span>
+                  <input
+                    type="tel"
+                    name="next_of_kin_phone"
+                    className={`form-input ${validationErrors.next_of_kin_phone ? 'has-error' : ''}`}
+                    placeholder="e.g. 71234567"
+                    value={formData.next_of_kin_phone}
+                    onChange={handleChange}
+                  />
+                </div>
                 {validationErrors.next_of_kin_phone && (
                   <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.next_of_kin_phone}</span>
                 )}

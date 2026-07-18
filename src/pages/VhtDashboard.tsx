@@ -126,7 +126,7 @@ export const VhtDashboard: React.FC = () => {
     setRegErrors({});
 
     const errors: Record<string, string> = {};
-    const phoneRegex = /^(07|7)\d{8}$/;
+    const phoneRegex = /^7\d{7}$/;
 
     if (!regForm.full_name.trim()) errors.full_name = "Full name is required.";
     if (!regForm.email.trim()) {
@@ -138,7 +138,7 @@ export const VhtDashboard: React.FC = () => {
     if (!regForm.phone.trim()) {
       errors.phone = "Phone number is required.";
     } else if (!phoneRegex.test(regForm.phone)) {
-      errors.phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+      errors.phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
     }
 
     if (!regForm.date_of_birth) {
@@ -160,20 +160,26 @@ export const VhtDashboard: React.FC = () => {
     if (!regForm.next_of_kin_phone.trim()) {
       errors.next_of_kin_phone = "Kin phone is required.";
     } else if (!phoneRegex.test(regForm.next_of_kin_phone)) {
-      errors.next_of_kin_phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+      errors.next_of_kin_phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
     }
 
     if (Object.keys(errors).length > 0) {
       setRegErrors(errors);
       return;
     }
+
+    const submissionData = {
+      ...regForm,
+      phone: `+267${regForm.phone}`,
+      next_of_kin_phone: `+267${regForm.next_of_kin_phone}`
+    };
     
-    const res = AuthService.registerMother(regForm);
+    const res = AuthService.registerMother(submissionData);
     if (res.success) {
       // Send Welcome SMS
       SmsService.sendSms(
-        regForm.full_name,
-        regForm.phone,
+        submissionData.full_name,
+        submissionData.phone,
         `MamaTrack: Welcome! VHT ${user.full_name} has registered you to the Mukono health monitoring network. Download the app or dial *270#.`
       );
       
@@ -588,17 +594,41 @@ export const VhtDashboard: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Phone Number</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="e.g. 772000000"
-                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.phone ? '#ef4444' : undefined }}
-                    value={regForm.phone}
-                    onChange={e => {
-                      setRegForm({ ...regForm, phone: e.target.value });
-                      if (regErrors.phone) setRegErrors(prev => ({ ...prev, phone: '' }));
-                    }}
-                  />
+                  <div style={{ display: 'flex', width: '100%' }}>
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: isDark ? '#334155' : '#e2e8f0',
+                      color: isDark ? '#cbd5e1' : '#475569',
+                      padding: '0 12px',
+                      border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
+                      borderRight: 'none',
+                      borderRadius: '6px 0 0 6px',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      userSelect: 'none'
+                    }}>
+                      +267
+                    </span>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      placeholder="e.g. 71234567"
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        fontSize: '0.85rem',
+                        borderRadius: '0 6px 6px 0',
+                        borderLeft: 'none',
+                        borderColor: regErrors.phone ? '#ef4444' : undefined
+                      }}
+                      value={regForm.phone}
+                      onChange={e => {
+                        setRegForm({ ...regForm, phone: e.target.value });
+                        if (regErrors.phone) setRegErrors(prev => ({ ...prev, phone: '' }));
+                      }}
+                    />
+                  </div>
                   {regErrors.phone && (
                     <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.phone}</span>
                   )}
@@ -753,17 +783,41 @@ export const VhtDashboard: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Kin Phone Number</label>
-                  <input
-                    type="tel"
-                    className="form-input"
-                    placeholder="e.g. 751000000"
-                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.next_of_kin_phone ? '#ef4444' : undefined }}
-                    value={regForm.next_of_kin_phone}
-                    onChange={e => {
-                      setRegForm({ ...regForm, next_of_kin_phone: e.target.value });
-                      if (regErrors.next_of_kin_phone) setRegErrors(prev => ({ ...prev, next_of_kin_phone: '' }));
-                    }}
-                  />
+                  <div style={{ display: 'flex', width: '100%' }}>
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: isDark ? '#334155' : '#e2e8f0',
+                      color: isDark ? '#cbd5e1' : '#475569',
+                      padding: '0 12px',
+                      border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
+                      borderRight: 'none',
+                      borderRadius: '6px 0 0 6px',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      userSelect: 'none'
+                    }}>
+                      +267
+                    </span>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      placeholder="e.g. 71234567"
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        fontSize: '0.85rem',
+                        borderRadius: '0 6px 6px 0',
+                        borderLeft: 'none',
+                        borderColor: regErrors.next_of_kin_phone ? '#ef4444' : undefined
+                      }}
+                      value={regForm.next_of_kin_phone}
+                      onChange={e => {
+                        setRegForm({ ...regForm, next_of_kin_phone: e.target.value });
+                        if (regErrors.next_of_kin_phone) setRegErrors(prev => ({ ...prev, next_of_kin_phone: '' }));
+                      }}
+                    />
+                  </div>
                   {regErrors.next_of_kin_phone && (
                     <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.next_of_kin_phone}</span>
                   )}
