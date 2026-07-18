@@ -46,6 +46,41 @@ export const VhtDashboard: React.FC = () => {
     sub_county: 'Goma'
   });
 
+  const [regErrors, setRegErrors] = useState<Record<string, string>>({});
+  const [regDobDay, setRegDobDay] = useState('');
+  const [regDobMonth, setRegDobMonth] = useState('');
+  const [regDobYear, setRegDobYear] = useState('');
+
+  const handleRegDobChange = (part: 'day' | 'month' | 'year', value: string) => {
+    let d = regDobDay;
+    let m = regDobMonth;
+    let y = regDobYear;
+    if (part === 'day') {
+      setRegDobDay(value);
+      d = value;
+    } else if (part === 'month') {
+      setRegDobMonth(value);
+      m = value;
+    } else if (part === 'year') {
+      setRegDobYear(value);
+      y = value;
+    }
+    
+    const nextDob = (d && m && y) ? `${y}-${m}-${d}` : '';
+    setRegForm(prev => ({
+      ...prev,
+      date_of_birth: nextDob
+    }));
+
+    if (nextDob) {
+      setRegErrors(prev => {
+        const copy = { ...prev };
+        delete copy.date_of_birth;
+        return copy;
+      });
+    }
+  };
+
   // Load VHT Session & Data
   useEffect(() => {
     const session = db.getCurrentSessionUser();
@@ -88,6 +123,50 @@ export const VhtDashboard: React.FC = () => {
 
   const handleRegisterMother = (e: React.FormEvent) => {
     e.preventDefault();
+    setRegErrors({});
+
+    const errors: Record<string, string> = {};
+    const phoneRegex = /^(07|7)\d{8}$/;
+
+    if (!regForm.full_name.trim()) errors.full_name = "Full name is required.";
+    if (!regForm.email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regForm.email)) {
+      errors.email = "Invalid email format.";
+    }
+    
+    if (!regForm.phone.trim()) {
+      errors.phone = "Phone number is required.";
+    } else if (!phoneRegex.test(regForm.phone)) {
+      errors.phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+    }
+
+    if (!regForm.date_of_birth) {
+      errors.date_of_birth = "Date of birth is required.";
+    }
+
+    if (!regForm.pregnancy_start_date) {
+      errors.pregnancy_start_date = "Pregnancy start date is required.";
+    }
+
+    if (!regForm.village.trim()) {
+      errors.village = "Village name is required.";
+    }
+
+    if (!regForm.next_of_kin_name.trim()) {
+      errors.next_of_kin_name = "Kin name is required.";
+    }
+
+    if (!regForm.next_of_kin_phone.trim()) {
+      errors.next_of_kin_phone = "Kin phone is required.";
+    } else if (!phoneRegex.test(regForm.next_of_kin_phone)) {
+      errors.next_of_kin_phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setRegErrors(errors);
+      return;
+    }
     
     const res = AuthService.registerMother(regForm);
     if (res.success) {
@@ -95,7 +174,7 @@ export const VhtDashboard: React.FC = () => {
       SmsService.sendSms(
         regForm.full_name,
         regForm.phone,
-        `MamaTrack: Welcome! VHT Sarah has registered you to the Mukono health monitoring network. Download the app or dial *270#.`
+        `MamaTrack: Welcome! VHT ${user.full_name} has registered you to the Mukono health monitoring network. Download the app or dial *270#.`
       );
       
       // Update state
@@ -120,6 +199,9 @@ export const VhtDashboard: React.FC = () => {
         village: '',
         sub_county: 'Goma'
       });
+      setRegDobDay('');
+      setRegDobMonth('');
+      setRegDobYear('');
       setActiveTab('mothers');
     } else {
       alert(res.error || 'Failed to register mother.');
@@ -486,26 +568,113 @@ export const VhtDashboard: React.FC = () => {
         {activeTab === 'register' && (
           <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', maxWidth: '680px', margin: '0 auto' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0284c7', marginBottom: '16px', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '6px' }}>🤰 Expectant Mother Enrollment Form</h3>
-            <form onSubmit={handleRegisterMother}>
+            <form onSubmit={handleRegisterMother} noValidate>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Mother Full Name</label>
-                  <input type="text" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.full_name} onChange={e => setRegForm({ ...regForm, full_name: e.target.value })} required />
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.full_name ? '#ef4444' : undefined }}
+                    value={regForm.full_name}
+                    onChange={e => {
+                      setRegForm({ ...regForm, full_name: e.target.value });
+                      if (regErrors.full_name) setRegErrors(prev => ({ ...prev, full_name: '' }));
+                    }}
+                  />
+                  {regErrors.full_name && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.full_name}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Phone Number</label>
-                  <input type="tel" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} required />
+                  <input
+                    type="tel"
+                    className="form-input"
+                    placeholder="e.g. 772000000"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.phone ? '#ef4444' : undefined }}
+                    value={regForm.phone}
+                    onChange={e => {
+                      setRegForm({ ...regForm, phone: e.target.value });
+                      if (regErrors.phone) setRegErrors(prev => ({ ...prev, phone: '' }));
+                    }}
+                  />
+                  {regErrors.phone && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.phone}</span>
+                  )}
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Email Address</label>
-                  <input type="email" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.email} onChange={e => setRegForm({ ...regForm, email: e.target.value })} required />
+                  <input
+                    type="email"
+                    className="form-input"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.email ? '#ef4444' : undefined }}
+                    value={regForm.email}
+                    onChange={e => {
+                      setRegForm({ ...regForm, email: e.target.value });
+                      if (regErrors.email) setRegErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                  />
+                  {regErrors.email && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.email}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Date of Birth</label>
-                  <input type="date" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.date_of_birth} onChange={e => setRegForm({ ...regForm, date_of_birth: e.target.value })} required />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select
+                      className="form-input"
+                      style={{ flex: 1, padding: '8px 4px', fontSize: '0.82rem', borderColor: regErrors.date_of_birth ? '#ef4444' : undefined }}
+                      value={regDobDay}
+                      onChange={(e) => handleRegDobChange('day', e.target.value)}
+                    >
+                      <option value="">Day</option>
+                      {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="form-input"
+                      style={{ flex: 1.5, padding: '8px 4px', fontSize: '0.82rem', borderColor: regErrors.date_of_birth ? '#ef4444' : undefined }}
+                      value={regDobMonth}
+                      onChange={(e) => handleRegDobChange('month', e.target.value)}
+                    >
+                      <option value="">Month</option>
+                      {[
+                        { val: '01', name: 'Jan' },
+                        { val: '02', name: 'Feb' },
+                        { val: '03', name: 'Mar' },
+                        { val: '04', name: 'Apr' },
+                        { val: '05', name: 'May' },
+                        { val: '06', name: 'Jun' },
+                        { val: '07', name: 'Jul' },
+                        { val: '08', name: 'Aug' },
+                        { val: '09', name: 'Sep' },
+                        { val: '10', name: 'Oct' },
+                        { val: '11', name: 'Nov' },
+                        { val: '12', name: 'Dec' }
+                      ].map(m => (
+                        <option key={m.val} value={m.val}>{m.name}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="form-input"
+                      style={{ flex: 1.2, padding: '8px 4px', fontSize: '0.82rem', borderColor: regErrors.date_of_birth ? '#ef4444' : undefined }}
+                      value={regDobYear}
+                      onChange={(e) => handleRegDobChange('year', e.target.value)}
+                    >
+                      <option value="">Year</option>
+                      {Array.from({ length: 70 }, (_, i) => String(new Date().getFullYear() - 14 - i)).map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {regErrors.date_of_birth && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.date_of_birth}</span>
+                  )}
                 </div>
               </div>
 
@@ -521,14 +690,38 @@ export const VhtDashboard: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Pregnancy Start Date</label>
-                  <input type="date" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.pregnancy_start_date} onChange={e => setRegForm({ ...regForm, pregnancy_start_date: e.target.value })} required />
+                  <input
+                    type="date"
+                    className="form-input"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.pregnancy_start_date ? '#ef4444' : undefined }}
+                    value={regForm.pregnancy_start_date}
+                    onChange={e => {
+                      setRegForm({ ...regForm, pregnancy_start_date: e.target.value });
+                      if (regErrors.pregnancy_start_date) setRegErrors(prev => ({ ...prev, pregnancy_start_date: '' }));
+                    }}
+                  />
+                  {regErrors.pregnancy_start_date && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.pregnancy_start_date}</span>
+                  )}
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Village Name</label>
-                  <input type="text" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.village} onChange={e => setRegForm({ ...regForm, village: e.target.value })} required />
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.village ? '#ef4444' : undefined }}
+                    value={regForm.village}
+                    onChange={e => {
+                      setRegForm({ ...regForm, village: e.target.value });
+                      if (regErrors.village) setRegErrors(prev => ({ ...prev, village: '' }));
+                    }}
+                  />
+                  {regErrors.village && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.village}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Sub County</label>
@@ -544,11 +737,36 @@ export const VhtDashboard: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Kin Full Name</label>
-                  <input type="text" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.next_of_kin_name} onChange={e => setRegForm({ ...regForm, next_of_kin_name: e.target.value })} required />
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.next_of_kin_name ? '#ef4444' : undefined }}
+                    value={regForm.next_of_kin_name}
+                    onChange={e => {
+                      setRegForm({ ...regForm, next_of_kin_name: e.target.value });
+                      if (regErrors.next_of_kin_name) setRegErrors(prev => ({ ...prev, next_of_kin_name: '' }));
+                    }}
+                  />
+                  {regErrors.next_of_kin_name && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.next_of_kin_name}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Kin Phone Number</label>
-                  <input type="tel" className="form-input" style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem' }} value={regForm.next_of_kin_phone} onChange={e => setRegForm({ ...regForm, next_of_kin_phone: e.target.value })} required />
+                  <input
+                    type="tel"
+                    className="form-input"
+                    placeholder="e.g. 751000000"
+                    style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderColor: regErrors.next_of_kin_phone ? '#ef4444' : undefined }}
+                    value={regForm.next_of_kin_phone}
+                    onChange={e => {
+                      setRegForm({ ...regForm, next_of_kin_phone: e.target.value });
+                      if (regErrors.next_of_kin_phone) setRegErrors(prev => ({ ...prev, next_of_kin_phone: '' }));
+                    }}
+                  />
+                  {regErrors.next_of_kin_phone && (
+                    <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '4px', display: 'block' }}>{regErrors.next_of_kin_phone}</span>
+                  )}
                 </div>
               </div>
 

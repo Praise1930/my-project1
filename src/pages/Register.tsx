@@ -38,44 +38,143 @@ export const Register: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
+
+  const handleDobChange = (part: 'day' | 'month' | 'year', value: string) => {
+    let d = dobDay;
+    let m = dobMonth;
+    let y = dobYear;
+    if (part === 'day') {
+      setDobDay(value);
+      d = value;
+    } else if (part === 'month') {
+      setDobMonth(value);
+      m = value;
+    } else if (part === 'year') {
+      setDobYear(value);
+      y = value;
+    }
+    
+    const nextDob = (d && m && y) ? `${y}-${m}-${d}` : '';
+    setFormData(prev => ({
+      ...prev,
+      date_of_birth: nextDob
+    }));
+
+    if (nextDob) {
+      setValidationErrors(prev => {
+        const copy = { ...prev };
+        delete copy.date_of_birth;
+        return copy;
+      });
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (formData.password_hash !== confirmPassword) {
-      setError("Passwords do not match.");
-      setIsLoading(false);
-      return;
+    setValidationErrors({});
+    setIsLoading(true);
+
+    const errors: Record<string, string> = {};
+    const phoneRegex = /^(07|7)\d{8}$/;
+
+    if (!formData.full_name.trim()) errors.full_name = "Full name is required.";
+    if (!formData.email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Invalid email format.";
+    }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone number is required.";
+    } else if (!phoneRegex.test(formData.phone)) {
+      errors.phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
     }
 
-    if (formData.password_hash.length < 6) {
-      setError("Password must be at least 6 characters long.");
+    if (!formData.date_of_birth) {
+      errors.date_of_birth = "Date of birth is required.";
+    }
+
+    if (!formData.password_hash) {
+      errors.password_hash = "Password is required.";
+    } else if (formData.password_hash.length < 6) {
+      errors.password_hash = "Password must be at least 6 characters long.";
+    }
+
+    if (formData.password_hash !== confirmPassword) {
+      errors.confirm_password = "Passwords do not match.";
+    }
+
+    if (!formData.pregnancy_start_date) {
+      errors.pregnancy_start_date = "Pregnancy start date is required.";
+    }
+
+    if (!formData.next_of_kin_name.trim()) {
+      errors.next_of_kin_name = "Kin name is required.";
+    }
+
+    if (!formData.next_of_kin_phone.trim()) {
+      errors.next_of_kin_phone = "Kin phone number is required.";
+    } else if (!phoneRegex.test(formData.next_of_kin_phone)) {
+      errors.next_of_kin_phone = "Invalid format. Use local formats like 772000000 or 0772000000.";
+    }
+
+    if (!formData.village.trim()) {
+      errors.village = "Village name is required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError("Please fix the highlighted fields before submitting.");
       setIsLoading(false);
       return;
     }
 
     try {
+      let registeredInFirebase = false;
       // 1. Register with Firebase Authentication if configured
       if (isFirebaseConfigured && auth) {
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password_hash);
-        
-        // 2. Send Email Verification
-        await sendEmailVerification(userCredential.user);
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password_hash);
+          // 2. Send Email Verification
+          await sendEmailVerification(userCredential.user);
+          registeredInFirebase = true;
+        } catch (firebaseErr: any) {
+          console.warn("Firebase Auth registration failed. Attempting local-only registration fallback:", firebaseErr);
+          if (firebaseErr.code === 'auth/email-already-in-use') {
+            setError('This email is already in use by another cloud account.');
+            setIsLoading(false);
+            return;
+          }
+          // Do not fail hard on firebase setup/network errors; fallback to local db
+        }
       }
       
       // 3. Register user in the local simulated database
       const res = AuthService.registerMother(formData);
       
       if (res.success) {
-        if (isFirebaseConfigured && auth) {
-          // Force sign out until email is verified
+        if (isFirebaseConfigured && auth && registeredInFirebase) {
           await signOut(auth);
           alert('Registration successful! Please check your email to verify your account before logging in.');
         } else {
@@ -87,13 +186,7 @@ export const Register: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/email-already-in-use') {
-        setError('This email is already in use by another account.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('The password is too weak. Please use a stronger password.');
-      } else {
-        setError(err.message || 'Failed to register account via Firebase.');
-      }
+      setError(err.message || 'Failed to register account.');
     } finally {
       setIsLoading(false);
     }
@@ -177,6 +270,10 @@ export const Register: React.FC = () => {
             background: ${isDark ? '#0f172a' : '#f9fafb'} !important;
             color: ${isDark ? '#f1f5f9' : '#1f2937'} !important;
           }
+          .health-register-card .form-input.has-error {
+            border: 1px solid #ef4444 !important;
+            background: ${isDark ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.02)'} !important;
+          }
           .health-register-card select.form-input {
             height: auto !important;
           }
@@ -227,7 +324,7 @@ export const Register: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {/* Section 1: User details */}
               <h3 style={{ fontSize: '0.9rem', color: 'var(--rose-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
                 Personal Account Info
@@ -236,33 +333,145 @@ export const Register: React.FC = () => {
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div className="form-group">
                   <label className="form-label"><User size={13} /> Full Name</label>
-                  <input type="text" name="full_name" className="form-input" placeholder="e.g. Nabosa Sarah" value={formData.full_name} onChange={handleChange} required />
+                  <input
+                    type="text"
+                    name="full_name"
+                    className={`form-input ${validationErrors.full_name ? 'has-error' : ''}`}
+                    placeholder="e.g. Nabosa Sarah"
+                    value={formData.full_name}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.full_name && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.full_name}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label"><Phone size={13} /> Phone Number</label>
-                  <input type="tel" name="phone" className="form-input" placeholder="e.g. +256-772-000-000" value={formData.phone} onChange={handleChange} required />
+                  <input
+                    type="tel"
+                    name="phone"
+                    className={`form-input ${validationErrors.phone ? 'has-error' : ''}`}
+                    placeholder="e.g. 772000000"
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.phone && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.phone}</span>
+                  )}
                 </div>
               </div>
 
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label"><Mail size={13} /> Email Address</label>
-                  <input type="email" name="email" className="form-input" placeholder="e.g. sarah@gmail.com" value={formData.email} onChange={handleChange} required />
+                  <input
+                    type="email"
+                    name="email"
+                    className={`form-input ${validationErrors.email ? 'has-error' : ''}`}
+                    placeholder="e.g. sarah@gmail.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.email && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.email}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label"><Calendar size={13} /> Date of Birth</label>
-                  <input type="date" name="date_of_birth" className="form-input" value={formData.date_of_birth} onChange={handleChange} required />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select
+                      name="dob_day"
+                      className={`form-input ${validationErrors.date_of_birth ? 'has-error' : ''}`}
+                      style={{ flex: 1 }}
+                      value={dobDay}
+                      onChange={(e) => handleDobChange('day', e.target.value)}
+                    >
+                      <option value="">Day</option>
+                      {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                    <select
+                      name="dob_month"
+                      className={`form-input ${validationErrors.date_of_birth ? 'has-error' : ''}`}
+                      style={{ flex: 1.5 }}
+                      value={dobMonth}
+                      onChange={(e) => handleDobChange('month', e.target.value)}
+                    >
+                      <option value="">Month</option>
+                      {[
+                        { val: '01', name: 'January' },
+                        { val: '02', name: 'February' },
+                        { val: '03', name: 'March' },
+                        { val: '04', name: 'April' },
+                        { val: '05', name: 'May' },
+                        { val: '06', name: 'June' },
+                        { val: '07', name: 'July' },
+                        { val: '08', name: 'August' },
+                        { val: '09', name: 'September' },
+                        { val: '10', name: 'October' },
+                        { val: '11', name: 'November' },
+                        { val: '12', name: 'December' }
+                      ].map(m => (
+                        <option key={m.val} value={m.val}>{m.name}</option>
+                      ))}
+                    </select>
+                    <select
+                      name="dob_year"
+                      className={`form-input ${validationErrors.date_of_birth ? 'has-error' : ''}`}
+                      style={{ flex: 1.2 }}
+                      value={dobYear}
+                      onChange={(e) => handleDobChange('year', e.target.value)}
+                    >
+                      <option value="">Year</option>
+                      {Array.from({ length: 70 }, (_, i) => String(new Date().getFullYear() - 14 - i)).map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {validationErrors.date_of_birth && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.date_of_birth}</span>
+                  )}
                 </div>
               </div>
 
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label"><Lock size={13} /> Choose Password</label>
-                  <input type="password" name="password_hash" className="form-input" placeholder="Min 6 characters" value={formData.password_hash} onChange={handleChange} minLength={6} required />
+                  <input
+                    type="password"
+                    name="password_hash"
+                    className={`form-input ${validationErrors.password_hash ? 'has-error' : ''}`}
+                    placeholder="Min 6 characters"
+                    value={formData.password_hash}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.password_hash && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.password_hash}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label"><Lock size={13} /> Confirm Password</label>
-                  <input type="password" name="confirm_password" className="form-input" placeholder="Re-enter password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
+                  <input
+                    type="password"
+                    name="confirm_password"
+                    className={`form-input ${validationErrors.confirm_password ? 'has-error' : ''}`}
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (validationErrors.confirm_password) {
+                        setValidationErrors(prev => {
+                          const copy = { ...prev };
+                          delete copy.confirm_password;
+                          return copy;
+                        });
+                      }
+                    }}
+                  />
+                  {validationErrors.confirm_password && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.confirm_password}</span>
+                  )}
                 </div>
               </div>
 
@@ -287,7 +496,16 @@ export const Register: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label"><Calendar size={13} /> Pregnancy Confirm/Start Date</label>
-                  <input type="date" name="pregnancy_start_date" className="form-input" value={formData.pregnancy_start_date} onChange={handleChange} required />
+                  <input
+                    type="date"
+                    name="pregnancy_start_date"
+                    className={`form-input ${validationErrors.pregnancy_start_date ? 'has-error' : ''}`}
+                    value={formData.pregnancy_start_date}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.pregnancy_start_date && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.pregnancy_start_date}</span>
+                  )}
                 </div>
               </div>
 
@@ -299,7 +517,17 @@ export const Register: React.FC = () => {
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div className="form-group">
                   <label className="form-label"><Users size={13} /> Kin Full Name</label>
-                  <input type="text" name="next_of_kin_name" className="form-input" placeholder="e.g. Ssemanda Dan" value={formData.next_of_kin_name} onChange={handleChange} required />
+                  <input
+                    type="text"
+                    name="next_of_kin_name"
+                    className={`form-input ${validationErrors.next_of_kin_name ? 'has-error' : ''}`}
+                    placeholder="e.g. Ssemanda Dan"
+                    value={formData.next_of_kin_name}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.next_of_kin_name && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.next_of_kin_name}</span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label"><Users size={13} /> Relationship</label>
@@ -316,7 +544,17 @@ export const Register: React.FC = () => {
 
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label"><Phone size={13} /> Kin Phone Number</label>
-                <input type="tel" name="next_of_kin_phone" className="form-input" placeholder="e.g. +256-751-000-000" value={formData.next_of_kin_phone} onChange={handleChange} required />
+                <input
+                  type="tel"
+                  name="next_of_kin_phone"
+                  className={`form-input ${validationErrors.next_of_kin_phone ? 'has-error' : ''}`}
+                  placeholder="e.g. 751000000"
+                  value={formData.next_of_kin_phone}
+                  onChange={handleChange}
+                />
+                {validationErrors.next_of_kin_phone && (
+                  <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.next_of_kin_phone}</span>
+                )}
               </div>
 
               {/* Section 4: Location */}
@@ -337,7 +575,17 @@ export const Register: React.FC = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label"><MapPin size={13} /> Village / Ward</label>
-                  <input type="text" name="village" className="form-input" placeholder="e.g. Seeta Ward" value={formData.village} onChange={handleChange} required />
+                  <input
+                    type="text"
+                    name="village"
+                    className={`form-input ${validationErrors.village ? 'has-error' : ''}`}
+                    placeholder="e.g. Seeta Ward"
+                    value={formData.village}
+                    onChange={handleChange}
+                  />
+                  {validationErrors.village && (
+                    <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.village}</span>
+                  )}
                 </div>
               </div>
 
