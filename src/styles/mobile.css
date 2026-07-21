@@ -235,64 +235,16 @@ html, body {
     width: 100% !important;
   }
 
-  /* Sidebar → fixed bottom nav bar */
+  /* Sidebar hidden on mobile — off-canvas drawer is used instead */
   .driver-theme .sidebar {
-    position: fixed !important;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    flex-direction: row !important;
-    border-right: none !important;
-    border-top: 1px solid rgba(245,158,11,0.2) !important;
-    z-index: 2000 !important;
-    overflow: hidden !important;
-  }
-
-  /* Hide logo and user sections in mobile sidebar */
-  .driver-theme .sidebar .sidebar-logo,
-  .driver-theme .sidebar .sidebar-user {
     display: none !important;
-  }
-
-  /* Sidebar nav items go horizontal */
-  .driver-theme .sidebar .sidebar-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    width: 100% !important;
-    padding: 0 !important;
-    justify-content: space-around !important;
-  }
-
-  .driver-theme .sidebar .sidebar-nav .nav-item {
-    flex-direction: column !important;
-    align-items: center !important;
-    padding: 10px 6px !important;
-    gap: 3px !important;
-    font-size: 9px !important;
-    border-left: none !important;
-    border-top: 3px solid transparent !important;
-    flex: 1 !important;
-    text-align: center !important;
-  }
-
-  .driver-theme .sidebar .sidebar-nav .nav-item.active {
-    border-left: none !important;
-    border-top: 3px solid #f59e0b !important;
-  }
-
-  .driver-theme .sidebar .sidebar-nav .nav-item span {
-    font-size: 9px !important;
-    white-space: nowrap !important;
   }
 
   /* Main content: fills full width */
   .driver-theme .main-content {
     margin-left: 0 !important;
     padding: 1rem !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 20px !important;
     width: 100% !important;
     overflow-x: hidden !important;
   }
@@ -421,80 +373,16 @@ html, body {
     overflow-x: hidden !important;
   }
 
-  /* Sidebar → fixed bottom nav */
+  /* Sidebar hidden on mobile — off-canvas drawer is used instead */
   .dasher-dashboard aside.sidebar-admin {
-    position: fixed !important;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    flex-direction: row !important;
-    border-right: none !important;
-    border-top: 1px solid rgba(255,255,255,0.08) !important;
-    z-index: 2000 !important;
-    overflow: hidden !important;
-  }
-
-  /* Hide logo and user strip */
-  .dasher-dashboard aside.sidebar-admin > div:first-child {
-        display: none !important;
-      }
-      /* Keep logout button visible */
-      .dasher-dashboard aside.sidebar-admin > div:last-child {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        padding: 4px 0;
-      }
-      .dasher-dashboard aside.sidebar-admin > div:last-child button[title="Logout"] {
-        display: flex;
-        align-items: center;
-        font-size: 0.75rem;
-        color: #ef4444;
-        background: none;
-        border: none;
-        padding: 4px;
-        cursor: pointer;
-      }
-
-  /* Nav goes horizontal */
-  .dasher-dashboard aside.sidebar-admin nav {
-    display: flex !important;
-    flex-direction: row !important;
-    width: 100% !important;
-    padding: 0 !important;
-    justify-content: space-around !important;
-  }
-
-  .dasher-dashboard .sidebar-nav-item {
-    flex-direction: column !important;
-    padding: 10px 6px !important;
-    gap: 3px !important;
-    font-size: 9px !important;
-    flex: 1 !important;
-    justify-content: center !important;
-    text-align: center !important;
-    border-left: none !important;
-    border-top: 3px solid transparent !important;
-  }
-
-  .dasher-dashboard .sidebar-nav-item.active {
-    border-left: none !important;
-    border-top: 3px solid #3b82f6 !important;
-  }
-
-  .dasher-dashboard .sidebar-nav-item span {
-    font-size: 9px !important;
-    display: block !important;
+    display: none !important;
   }
 
   /* Main content area */
   .dasher-dashboard .main-content-area {
     margin-left: 0 !important;
     padding: 1rem !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 20px !important;
     width: 100% !important;
     overflow-x: hidden !important;
   }
@@ -660,9 +548,9 @@ html, body {
     min-width: 36px !important;
   }
 
-  /* Footer mobile padding to clear bottom nav bar */
+  /* Footer mobile padding */
   .dashboard-footer {
-    padding-bottom: 80px !important;
+    padding-bottom: 20px !important;
   }
 } 
 
