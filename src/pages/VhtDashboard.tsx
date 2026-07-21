@@ -409,6 +409,7 @@ export const VhtDashboard: React.FC = () => {
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button
               onClick={() => { AuthService.logout(); navigate('/'); }}
+              className="d-none d-md-flex"
               style={{
                 background: 'rgba(239,68,68,0.1)',
                 border: '1px solid rgba(239,68,68,0.3)',
@@ -418,7 +419,6 @@ export const VhtDashboard: React.FC = () => {
                 cursor: 'pointer',
                 fontSize: '0.78rem',
                 fontWeight: 700,
-                display: 'flex',
                 alignItems: 'center',
                 gap: '4px'
               }}

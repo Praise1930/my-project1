@@ -1209,50 +1209,6 @@ export const AdminDashboard: React.FC = () => {
       {/* MAIN CONTAINER CONTENT AREA */}
       <main className="main-content-area">
         
-        {/* RESPONSIVE MOBILE TOP BAR */}
-        <div className="mobile-admin-topbar d-flex d-md-none" style={{
-          padding: '12px 16px',
-          background: theme === 'dark' ? '#0f172a' : '#ffffff',
-          borderBottom: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '16px',
-          borderRadius: '8px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.4rem',
-                color: theme === 'dark' ? '#ffffff' : '#0f172a',
-                cursor: 'pointer',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-              title="Open Navigation Menu"
-            >
-              ☰
-            </button>
-            <span style={{ fontSize: '1.2rem' }}>🚑</span>
-            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: theme === 'dark' ? '#ffffff' : '#0f172a' }}>Admin Deck</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ThemeToggle />
-            <ProfilePhotoUpload user={user} onUpdated={setUser} size={32} showLabel={false} />
-            <button
-              onClick={() => { AuthService.logout(); navigate('/'); }}
-              title="Logout"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '6px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-            >
-              <i className="ti ti-logout" style={{ fontSize: '14px' }}></i> Log Out
-            </button>
-          </div>
-        </div>
-
         {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
         {mobileSidebarOpen && (
           <>
@@ -1342,10 +1298,27 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* TOPBAR HEADER */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Command Center Workspace</h4>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>Mukono Regional Ambulance Dispatch Fleet Monitor</span>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.4rem',
+                color: 'inherit',
+                cursor: 'pointer',
+                padding: '4px'
+              }}
+              className="d-block d-md-none"
+              title="Open Navigation Menu"
+            >
+              ☰
+            </button>
+            <div>
+              <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'inherit', margin: 0 }}>Command Center Workspace</h4>
+              <span style={{ fontSize: '12px', color: '#64748b' }}>Mukono Regional Ambulance Dispatch Fleet Monitor</span>
+            </div>
           </div>
 
           {activeTab !== 'reports' && (
@@ -1390,10 +1363,11 @@ export const AdminDashboard: React.FC = () => {
               <RefreshCw size={13} /> Reset Database
             </button>
             <ThemeToggle />
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button 
               onClick={() => { AuthService.logout(); navigate('/'); }}
-              className="admin-logout-btn"
-              style={{ display: 'none', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}
+              className="admin-logout-btn d-none d-md-flex"
+              style={{ alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}
               title="Logout"
             >
               <i className="ti ti-logout" style={{ fontSize: '16px' }}></i>

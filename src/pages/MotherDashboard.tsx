@@ -669,6 +669,7 @@ export const MotherDashboard: React.FC = () => {
 
               <button
                 onClick={() => { AuthService.logout(); navigate('/'); }}
+                className="d-none d-md-flex"
                 style={{
                   background: 'rgba(244,63,94,0.1)',
                   border: '1px solid rgba(244,63,94,0.3)',
@@ -676,7 +677,6 @@ export const MotherDashboard: React.FC = () => {
                   borderRadius: '8px',
                   padding: '6px 12px',
                   cursor: 'pointer',
-                  display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
                   fontSize: '0.78rem',
