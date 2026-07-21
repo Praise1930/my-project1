@@ -19,6 +19,29 @@ html, body {
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
+  /* ── 0. DROPDOWN & POPOVER CENTERING (PREVENT RIGHT-EDGE CLIPPING) ─ */
+  .profile-upload-dropdown {
+    position: fixed !important;
+    top: 70px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 300px !important;
+    z-index: 999999 !important;
+  }
+
+  .notifications-panel {
+    position: fixed !important;
+    top: 70px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 320px !important;
+    z-index: 999999 !important;
+  }
+
   /* ── 1. UNIVERSAL GRID OVERRIDE ─────────────────────────── */
   /* Every element that uses display:grid collapses to 1 column.
      This catches both CSS classes AND inline style= grids       */

@@ -161,25 +161,27 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             style={{ position: 'fixed', inset: 0, zIndex: 999998 }}
             onClick={() => setMenuOpen(false)}
           />
-          <div style={{
-            position: 'absolute',
-            top: size + 8,
-            right: 0,
-            left: 'auto',
-            transform: 'none',
-            zIndex: 999999,
-            background: 'var(--bg-card, #ffffff)',
-            border: '1px solid var(--border-color, #e2e8f0)',
-            borderRadius: 14,
-            boxShadow: '0 12px 35px rgba(0,0,0,0.25)',
-            padding: '12px',
-            width: '230px',
-            maxWidth: 'calc(100vw - 32px)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}>
+          <div 
+            className="profile-upload-dropdown"
+            style={{
+              position: 'absolute',
+              top: size + 8,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 999999,
+              background: 'var(--bg-card, #ffffff)',
+              border: '1px solid var(--border-color, #e2e8f0)',
+              borderRadius: 14,
+              boxShadow: '0 12px 35px rgba(0,0,0,0.25)',
+              padding: '12px',
+              width: '230px',
+              maxWidth: 'calc(100vw - 32px)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}
+          >
             {/* View photo option if avatar exists */}
             {user.avatar && (
               <button
