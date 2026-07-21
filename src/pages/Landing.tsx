@@ -43,15 +43,15 @@ export const Landing: React.FC = () => {
       subtitle: "24/7 Emergency Medical Response & Support",
       title: "Direct Doctor-to-Mother Referral Pathways",
       desc: "Connect expectant mothers directly with duty obstetricians and midwives for real-time symptom consultations and referrals.",
-      buttonText: "Clinical Portal",
-      link: "/login?role=doctor",
+      buttonText: "Access Portals",
+      link: "#portals",
     },
     {
       subtitle: "Transmitting Live Coordinates to Responder Networks",
       title: "GPS-Driven Ambulance Dispatch Navigation",
       desc: "Ambulance teams receive live coordinates of maternal distress calls with optimized routing to minimize travel delays.",
-      buttonText: "Driver Portal",
-      link: "/login?role=driver",
+      buttonText: "Access Portals",
+      link: "#portals",
     }
   ];
 
@@ -470,25 +470,25 @@ export const Landing: React.FC = () => {
 
 
       {/* TESTIMONIAL STARUPS START */}
-      <section className="all-starups-area testimonial-area fix" style={{ display: 'flex', alignItems: 'center', background: '#0b162b', color: '#ffffff', minHeight: '480px' }}>
-        <div className="starups" style={{ width: '50%', padding: '60px 40px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="single-testimonial text-center" style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
+      <section className="all-starups-area testimonial-area fix" style={{ display: 'flex', alignItems: 'center', background: isDark ? '#0b162b' : '#f8fafc', color: isDark ? '#ffffff' : '#0f172a', minHeight: '400px', flexWrap: 'wrap', transition: 'background-color 0.3s ease' }}>
+        <div className="starups" style={{ flex: '1 1 320px', padding: '40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+          <div className="single-testimonial text-center" style={{ maxWidth: '540px', margin: '0 auto', textAlign: 'center' }}>
             <div className="testimonial-caption">
-              <div className="testimonial-top-cap" style={{ marginBottom: '24px' }}>
-                <p style={{ fontSize: '1.25rem', fontWeight: 300, lineHeight: 1.6, color: '#ffffff', fontStyle: 'italic' }}>
+              <div className="testimonial-top-cap" style={{ marginBottom: '20px' }}>
+                <p style={{ fontSize: '1.15rem', fontWeight: 400, lineHeight: 1.6, color: isDark ? '#ffffff' : '#0f172a', fontStyle: 'italic' }}>
                   "The GPS tracking console ensured our ambulance driver Moses located my home in Seeta ward within 15 minutes of my contractions starting. I delivered safely at Mukono Hospital."
                 </p>
               </div>
               <div className="testimonial-founder" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
                 <div className="founder-text">
                   <span style={{ display: 'block', fontSize: '16px', fontWeight: 700, color: '#0f61ef' }}>Sarah Nabosa</span>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#9fabbe' }}>Registered Expectant Mother</p>
+                  <p style={{ margin: 0, fontSize: '13px', color: isDark ? '#9fabbe' : '#64748b' }}>Registered Expectant Mother</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="starups-img" style={{ width: '50%', height: '480px', backgroundImage: 'url(/assets/img/gallery/startup.png)', backgroundSize: 'cover', backgroundPosition: 'center center' }}></div>
+        <div className="starups-img" style={{ flex: '1 1 320px', minHeight: '320px', backgroundImage: 'url(/assets/img/gallery/startup.png)', backgroundSize: 'cover', backgroundPosition: 'center center', width: '100%' }}></div>
       </section>
 
       {/* NEWS AREA SECTION */}

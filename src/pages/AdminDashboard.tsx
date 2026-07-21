@@ -65,6 +65,9 @@ export const AdminDashboard: React.FC = () => {
 
   // --- ADMIN ACTIONS STATE ---
   
+  // Mobile Off-Canvas Sidebar State
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   // Password Reset Modals
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
@@ -1217,7 +1220,23 @@ export const AdminDashboard: React.FC = () => {
           marginBottom: '16px',
           borderRadius: '8px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '1.4rem',
+                color: theme === 'dark' ? '#ffffff' : '#0f172a',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Open Navigation Menu"
+            >
+              ☰
+            </button>
             <span style={{ fontSize: '1.2rem' }}>🚑</span>
             <span style={{ fontWeight: 800, fontSize: '0.95rem', color: theme === 'dark' ? '#ffffff' : '#0f172a' }}>Admin Deck</span>
           </div>
@@ -1233,6 +1252,94 @@ export const AdminDashboard: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
+        {mobileSidebarOpen && (
+          <>
+            <div
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 99998 }}
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '280px',
+              height: '100vh',
+              zIndex: 99999,
+              background: theme === 'light' ? '#ffffff' : '#0f172a',
+              color: theme === 'light' ? '#0f172a' : '#ffffff',
+              boxShadow: '10px 0 30px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px',
+              overflowY: 'auto'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ background: '#3b82f6', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>M</div>
+                  <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
+                </div>
+                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              {/* Profile Card */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '20px' }}>
+                <ProfilePhotoUpload user={user} onUpdated={setUser} size={42} showLabel={false} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user.full_name}</div>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>System Admin</span>
+                </div>
+              </div>
+
+              {/* Nav Menu */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                {[
+                  { id: 'overview', icon: 'ti-layout-dashboard', label: 'Dashboard' },
+                  { id: 'dispatch', icon: 'ti-map-pin', label: 'GPS Dispatch' },
+                  { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
+                  { id: 'facilities', icon: 'ti-building-hospital', label: 'Health Facilities' },
+                  { id: 'drivers', icon: 'ti-ambulance', label: 'Ambulance Drivers' },
+                  { id: 'doctors', icon: 'ti-stethoscope', label: 'Doctors & Midwives' },
+                  { id: 'vhts', icon: 'ti-users', label: 'Village Health Teams' },
+                  { id: 'reports', icon: 'ti-chart-bar', label: 'Reports & Audits' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id as any); setMobileSidebarOpen(false); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: activeTab === item.id ? '#3b82f6' : 'transparent',
+                      color: activeTab === item.id ? '#ffffff' : (theme === 'light' ? '#334155' : '#cbd5e1'),
+                      fontWeight: activeTab === item.id ? 700 : 500,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <i className={`ti ${item.icon}`} style={{ fontSize: '1.1rem' }}></i>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <ThemeToggle />
+                <button
+                  onClick={() => { AuthService.logout(); navigate('/'); }}
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <i className="ti ti-logout"></i> Logout
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* TOPBAR HEADER */}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>

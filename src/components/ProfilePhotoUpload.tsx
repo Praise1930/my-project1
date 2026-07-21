@@ -1,4 +1,4 @@
-// MamaTrack GPS — Reusable Profile Photo Upload Component
+// MamaTrack GPS — Reusable Profile Photo Upload & View Component
 
 import React, { useRef, useState } from 'react';
 import { UserService, User } from '../services/db';
@@ -20,6 +20,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const cameraRef  = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   const processFile = (file: File) => {
     if (!file) return;
@@ -84,7 +85,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       {/* Avatar Circle — click to open menu */}
       <button
         onClick={() => setMenuOpen(o => !o)}
-        title="Change profile photo"
+        title="Manage profile photo"
         style={{
           width: size,
           height: size,
@@ -148,7 +149,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       {showLabel && (
         <span style={{ fontSize: '0.7rem', color: '#64748b', cursor: 'pointer', userSelect: 'none' }}
           onClick={() => setMenuOpen(o => !o)}>
-          Change Photo
+          Manage Photo
         </span>
       )}
 
@@ -166,58 +167,172 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 9999,
-            background: 'var(--bg-card, #fff)',
+            background: 'var(--bg-card, #ffffff)',
             border: '1px solid var(--border-color, #e2e8f0)',
-            borderRadius: 12,
-            boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
-            padding: '6px 0',
-            minWidth: 180,
+            borderRadius: 14,
+            boxShadow: '0 10px 35px rgba(0,0,0,0.18)',
+            padding: '10px',
+            minWidth: 260,
             overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
           }}>
-            <PhotoMenuItem icon="🖼️" label="Choose from Gallery" onClick={() => galleryRef.current?.click()} />
-            <PhotoMenuItem icon="📸" label="Take a Photo" onClick={() => cameraRef.current?.click()} />
+            {/* View photo option if avatar exists */}
             {user.avatar && (
-              <>
-                <div style={{ height: 1, background: 'var(--border-color,#e2e8f0)', margin: '4px 0' }} />
-                <PhotoMenuItem icon="🗑️" label="Remove Photo" onClick={handleRemove} danger />
-              </>
+              <button
+                onClick={() => { setShowViewModal(true); setMenuOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '9px 12px',
+                  background: 'rgba(99,102,241,0.08)',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: '#4f46e5',
+                  justifyContent: 'center',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <span>👁️</span> View Profile Picture
+              </button>
+            )}
+
+            {/* Same-line flex row for Choose from Gallery and Take a Photo */}
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+              <button
+                onClick={() => galleryRef.current?.click()}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  padding: '8px 10px',
+                  background: 'none',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary, #0f172a)',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <span>🖼️</span> Gallery
+              </button>
+              <button
+                onClick={() => cameraRef.current?.click()}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  padding: '8px 10px',
+                  background: 'none',
+                  border: '1px solid var(--border-color, #cbd5e1)',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary, #0f172a)',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <span>📸</span> Camera
+              </button>
+            </div>
+
+            {user.avatar && (
+              <button
+                onClick={handleRemove}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: 'rgba(239,68,68,0.06)',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: '#ef4444',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <span>🗑️</span> Remove Photo
+              </button>
             )}
           </div>
         </>
       )}
+
+      {/* Full Size Profile Picture Lightbox View Modal */}
+      {showViewModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowViewModal(false)}
+        >
+          <div
+            style={{
+              position: 'relative',
+              background: '#0f172a',
+              borderRadius: '16px',
+              padding: '20px',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '14px' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffffff' }}>
+                {user.full_name}'s Profile Photo
+              </span>
+              <button
+                onClick={() => setShowViewModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.full_name}
+                style={{ maxWidth: '340px', maxHeight: '340px', borderRadius: '12px', objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={{ width: '180px', height: '180px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '3rem', fontWeight: 800 }}>
+                {initials}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-interface PhotoMenuItemProps {
-  icon: string;
-  label: string;
-  onClick: () => void;
-  danger?: boolean;
-}
-const PhotoMenuItem: React.FC<PhotoMenuItemProps> = ({ icon, label, onClick, danger }) => (
-  <button
-    onClick={onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-      width: '100%',
-      padding: '10px 16px',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      fontSize: '0.85rem',
-      fontWeight: 600,
-      color: danger ? '#ef4444' : 'var(--text-primary, #0f172a)',
-      textAlign: 'left',
-      transition: 'background 0.15s',
-      fontFamily: 'inherit',
-    }}
-    onMouseEnter={e => (e.currentTarget.style.background = danger ? 'rgba(239,68,68,0.08)' : 'rgba(99,102,241,0.06)')}
-    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-  >
-    <span style={{ fontSize: '1rem' }}>{icon}</span>
-    {label}
-  </button>
-);

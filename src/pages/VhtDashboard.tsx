@@ -21,6 +21,7 @@ export const VhtDashboard: React.FC = () => {
   const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Home Visit Form State
   const [selectedMother, setSelectedMother] = useState<any | null>(null);
@@ -349,47 +350,13 @@ export const VhtDashboard: React.FC = () => {
       {/* SCOPED MOBILE OVERRIDES */}
       <style>{`
         @media (max-width: 768px) {
-          .vht-theme {
-            flex-direction: column !important;
-          }
           .vht-theme aside {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            flex-direction: row !important;
-            border-right: none !important;
-            border-top: 1px solid rgba(14,165,233,0.2) !important;
-            z-index: 2000 !important;
-            padding: 0 !important;
-          }
-          .vht-theme aside > div:first-child,
-          .vht-theme aside > div:last-child {
             display: none !important;
-          }
-          .vht-theme aside nav {
-            flex-direction: row !important;
-            width: 100% !important;
-            justify-content: space-around !important;
-            gap: 0 !important;
-          }
-          .vht-theme aside nav button {
-            flex-direction: column !important;
-            padding: 8px 4px !important;
-            gap: 2px !important;
-            font-size: 9px !important;
-            border-radius: 0 !important;
-            justify-content: center !important;
-            flex: 1 !important;
-            text-align: center !important;
           }
           .vht-theme main {
             margin-left: 0 !important;
             padding: 16px !important;
-            padding-bottom: 80px !important;
+            padding-bottom: 20px !important;
           }
         }
       `}</style>
@@ -399,9 +366,18 @@ export const VhtDashboard: React.FC = () => {
         
         {/* Top Header Strip */}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, textTransform: 'capitalize' }}>{activeTab} Workspace</h1>
-            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Mukono District Maternal Health Network</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: 'inherit', cursor: 'pointer', padding: '4px' }}
+              title="Open Navigation Menu"
+            >
+              ☰
+            </button>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, textTransform: 'capitalize' }}>{activeTab} Workspace</h1>
+              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Mukono District Maternal Health Network</span>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
             <ThemeToggle />
@@ -452,6 +428,90 @@ export const VhtDashboard: React.FC = () => {
             </button>
           </div>
         </header>
+
+        {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
+        {mobileSidebarOpen && (
+          <>
+            <div
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 99998 }}
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '280px',
+              height: '100vh',
+              zIndex: 99999,
+              background: isDark ? '#1e293b' : '#ffffff',
+              color: isDark ? '#ffffff' : '#0f172a',
+              boxShadow: '10px 0 30px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px',
+              overflowY: 'auto'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ background: '#0ea5e9', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>📳</div>
+                  <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
+                </div>
+                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              {/* Profile Card */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc', borderRadius: '10px', marginBottom: '20px' }}>
+                <ProfilePhotoUpload user={user} onUpdated={setUser} size={42} showLabel={false} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user.full_name}</div>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>VHT Field Worker</span>
+                </div>
+              </div>
+
+              {/* Navigation Menu */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                {[
+                  { id: 'home', icon: '🏠', label: 'Dashboard' },
+                  { id: 'mothers', icon: '🤰', label: 'Assigned Mothers' },
+                  { id: 'visits', icon: '📋', label: 'Visit Logs' },
+                  { id: 'register', icon: '➕', label: 'Register Mother' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id as any); setMobileSidebarOpen(false); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: activeTab === item.id ? '#0ea5e9' : 'transparent',
+                      color: activeTab === item.id ? '#ffffff' : (isDark ? '#cbd5e1' : '#334155'),
+                      fontWeight: activeTab === item.id ? 700 : 500,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <ThemeToggle />
+                <button
+                  onClick={() => { AuthService.logout(); navigate('/'); }}
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <LogOut size={14} /> Exit
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* TAB: DASHBOARD HOME */}
         {activeTab === 'home' && (

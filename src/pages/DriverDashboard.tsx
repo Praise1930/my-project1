@@ -36,6 +36,7 @@ export const DriverDashboard: React.FC = () => {
   });
 
   const [hasInspectedToday, setHasInspectedToday] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Toggle body class when driver theme is active
   useEffect(() => {
@@ -378,9 +379,18 @@ export const DriverDashboard: React.FC = () => {
         {/* Main Panel Workspace */}
         <main className="main-content" style={{ padding: '2rem' }}>
           <header className="top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div>
-              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>Ambulance Navigation Panel</h1>
-              <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '4px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: theme === 'light' ? '#0f172a' : '#f8fafc', cursor: 'pointer', padding: '4px' }}
+                title="Open Navigation Menu"
+              >
+                ☰
+              </button>
+              <div>
+                <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>Ambulance Navigation Panel</h1>
+                <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '4px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -403,6 +413,83 @@ export const DriverDashboard: React.FC = () => {
               </button>
             </div>
           </header>
+
+          {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
+          {mobileSidebarOpen && (
+            <>
+              <div
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 99998 }}
+                onClick={() => setMobileSidebarOpen(false)}
+              />
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '280px',
+                height: '100vh',
+                zIndex: 99999,
+                background: theme === 'light' ? '#ffffff' : '#0f172a',
+                color: theme === 'light' ? '#0f172a' : '#ffffff',
+                boxShadow: '10px 0 30px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '20px',
+                overflowY: 'auto'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: '#f59e0b', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>🚑</div>
+                    <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
+                  </div>
+                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                </div>
+
+                {/* Profile Card */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '16px' }}>
+                  <ProfilePhotoUpload user={user} onUpdated={setUser} size={42} showLabel={false} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user.full_name}</div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Ambulance Driver</span>
+                  </div>
+                </div>
+
+                {/* Duty Toggle Button */}
+                <button
+                  onClick={handleToggleDuty}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: driver.is_on_duty ? '1px solid #f59e0b' : '1px solid rgba(255,255,255,0.2)',
+                    background: driver.is_on_duty ? 'rgba(245,158,11,0.15)' : 'transparent',
+                    color: driver.is_on_duty ? '#f59e0b' : 'inherit',
+                    fontWeight: 700,
+                    marginBottom: '20px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {driver.is_on_duty ? '🟢 ACTIVE ON-DUTY' : '🔴 STANDBY MODE'}
+                </button>
+
+                {/* Navigation Menu */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                  <div style={{ padding: '10px 14px', borderRadius: '8px', background: theme === 'light' ? '#f1f5f9' : 'rgba(255,255,255,0.08)', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🚑</span> Active Mission
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <ThemeToggle />
+                  <button
+                    onClick={() => { AuthService.logout(); navigate('/'); }}
+                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <LogOut size={14} /> Exit
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* DRIVER REFERENCE BANNER */}
           <div style={{

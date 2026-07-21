@@ -38,6 +38,7 @@ export const DoctorDashboard: React.FC = () => {
   // Toggles
   const [showBloodModal, setShowBloodModal] = useState(false);
   const [showTriageModal, setShowTriageModal] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Dynamic Stylesheet Loading for isolating theme CSS
   useEffect(() => {
@@ -321,42 +322,11 @@ export const DoctorDashboard: React.FC = () => {
             flex-direction: column !important;
           }
           .medilab-dashboard aside.sidebar-medilab {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            flex-direction: row !important;
-            border-right: none !important;
-            border-top: 1px solid rgba(255,255,255,0.08) !important;
-            z-index: 2000 !important;
-            overflow: hidden !important;
-          }
-          .medilab-dashboard aside.sidebar-medilab > div:first-child,
-          .medilab-dashboard aside.sidebar-medilab .sidebar-profile,
-          .medilab-dashboard aside.sidebar-medilab .btn-danger,
-          .medilab-dashboard aside.sidebar-medilab div[style*="background:"] {
             display: none !important;
-          }
-          .medilab-dashboard aside.sidebar-medilab nav {
-            display: flex !important;
-            flex-direction: row !important;
-            width: 100% !important;
-            padding: 0 !important;
-            justify-content: space-around !important;
-            margin-top: 0 !important;
-          }
-          .medilab-dashboard aside.sidebar-medilab nav > div {
-            flex: 1 !important;
-            justify-content: center !important;
-            padding: 10px !important;
-            margin: 0 !important;
           }
           .medilab-dashboard .main-content-area {
             margin-left: 0 !important;
-            padding-bottom: 80px !important;
+            padding-bottom: 20px !important;
           }
         }
       `}</style>
@@ -502,9 +472,18 @@ export const DoctorDashboard: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div>
-            <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0 }}>Clinical Portal Console</h4>
-            <span style={{ fontSize: '12px', color: '#777777' }}>🏥 Facility: <strong>{hospital.name}</strong></span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: theme === 'light' ? '#2c4964' : '#ffffff', cursor: 'pointer', padding: '4px' }}
+              title="Open Navigation Menu"
+            >
+              ☰
+            </button>
+            <div>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0 }}>Clinical Portal Console</h4>
+              <span style={{ fontSize: '12px', color: '#777777' }}>🏥 Facility: <strong>{hospital.name}</strong></span>
+            </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -531,6 +510,65 @@ export const DoctorDashboard: React.FC = () => {
             </button>
           </div>
         </header>
+
+        {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
+        {mobileSidebarOpen && (
+          <>
+            <div
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 99998 }}
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '280px',
+              height: '100vh',
+              zIndex: 99999,
+              background: theme === 'light' ? '#ffffff' : '#111827',
+              color: theme === 'light' ? '#2c4964' : '#ffffff',
+              boxShadow: '10px 0 30px rgba(0,0,0,0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px',
+              overflowY: 'auto'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ background: '#1977cc', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>🩺</div>
+                  <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
+                </div>
+                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+              </div>
+
+              {/* Profile Card */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '20px' }}>
+                <ProfilePhotoUpload user={user} onUpdated={setUser} size={42} showLabel={false} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user.full_name}</div>
+                  <span style={{ fontSize: '0.75rem', color: '#777777' }}>Obstetrics Specialist</span>
+                </div>
+              </div>
+
+              {/* Navigation Menu */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                <div style={{ padding: '10px 14px', borderRadius: '8px', background: theme === 'light' ? '#eef2f7' : 'rgba(255,255,255,0.08)', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🩺</span> Overview Console
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <ThemeToggle />
+                <button
+                  onClick={() => { AuthService.logout(); navigate('/'); }}
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* METRIC COUNTERS BAR */}
         <div style={{ padding: '30px 40px 10px' }}>

@@ -2,8 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { db, SmsService } from '../services/db';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const SMSSimulator: React.FC = () => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const [isOpen, setIsOpen] = useState(false);
   const [smsLogs, setSmsLogs] = useState(db.smsLogs);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -113,14 +117,14 @@ export const SMSSimulator: React.FC = () => {
         flex: 1,
         minHeight: '260px',
         overflowY: 'auto',
-        background: 'rgba(0,0,0,0.25)',
+        background: isDark ? 'rgba(0,0,0,0.25)' : '#f8fafc',
         borderRadius: '12px',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #cbd5e1',
         padding: '14px',
         marginBottom: '12px'
       }}>
         {smsLogs.length === 0 ? (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.8rem', textAlign: 'center', gap: '8px' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: isDark ? '#64748b' : '#94a3b8', fontSize: '0.8rem', textAlign: 'center', gap: '8px' }}>
             <span style={{ fontSize: '1.8rem' }}>💬</span>
             <span>No SMS alerts logged yet.<br />Trigger an emergency or schedule checkups to test alerts.</span>
           </div>
@@ -128,20 +132,21 @@ export const SMSSimulator: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {smsLogs.map((log) => (
               <div key={log.id} style={{
-                background: 'rgba(255,255,255,0.03)',
+                background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
                 borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #e2e8f0',
+                boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
                 padding: '10px 12px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#f1f5f9' }}>
+                  <span style={{ fontSize: '0.76rem', fontWeight: 700, color: isDark ? '#f1f5f9' : '#0f172a' }}>
                     To: {log.to_name} ({log.to_number})
                   </span>
-                  <span style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                  <span style={{ fontSize: '0.65rem', color: isDark ? '#64748b' : '#94a3b8' }}>
                     {new Date(log.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: '0.76rem', color: isDark ? '#cbd5e1' : '#334155', lineHeight: 1.45 }}>
                   {log.message}
                 </p>
               </div>
@@ -153,7 +158,7 @@ export const SMSSimulator: React.FC = () => {
 
       {/* Footer Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
-        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Logs saved locally in localStorage</span>
+        <span style={{ fontSize: '0.7rem', color: isDark ? '#64748b' : '#94a3b8' }}>Logs saved locally in localStorage</span>
         {smsLogs.length > 0 && (
           <button
             onClick={clearLogs}
@@ -178,6 +183,9 @@ export const SMSSimulator: React.FC = () => {
             top: ${yPos === null ? '90px' : `${yPos}px`} !important;
             bottom: auto !important;
             right: 16px !important;
+            padding: 8px 14px !important;
+            font-size: 0.78rem !important;
+            border-radius: 24px !important;
           }
           .sms-simulator-drawer {
             width: calc(100% - 32px) !important;
@@ -202,12 +210,12 @@ export const SMSSimulator: React.FC = () => {
           top: yPos === null ? undefined : `${yPos}px`,
           right: '24px',
           zIndex: 99999,
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-          color: '#ffffff',
-          border: '1px solid rgba(251, 113, 133, 0.4)',
+          background: isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : '#ffffff',
+          color: isDark ? '#ffffff' : '#0f172a',
+          border: isDark ? '1px solid rgba(251, 113, 133, 0.4)' : '1px solid #f43f5e',
           borderRadius: '30px',
-          padding: '12px 22px',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
+          padding: '10px 18px',
+          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 8px 25px rgba(244,63,94,0.18)',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -222,7 +230,7 @@ export const SMSSimulator: React.FC = () => {
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <span style={{ fontSize: '1.1rem' }}>✉️</span>
+        <span style={{ fontSize: '1rem' }}>✉️</span>
         <span>SMS Console</span>
         {smsLogs.length > 0 && (
           <span style={{
@@ -254,11 +262,11 @@ export const SMSSimulator: React.FC = () => {
             zIndex: 99999,
             width: isMaximized && isDesktop ? '680px' : '420px',
             height: isMaximized && isDesktop ? '560px' : '480px',
-            background: 'rgba(15, 23, 42, 0.96)',
+            background: isDark ? 'rgba(15, 23, 42, 0.96)' : '#ffffff',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
             borderRadius: '20px',
-            boxShadow: '0 15px 45px rgba(0,0,0,0.5)',
+            boxShadow: isDark ? '0 15px 45px rgba(0,0,0,0.5)' : '0 15px 45px rgba(0,0,0,0.15)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -269,30 +277,30 @@ export const SMSSimulator: React.FC = () => {
 
           {/* Header */}
           <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            background: isDark ? 'rgba(30, 41, 59, 0.5)' : '#f8fafc',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0',
             padding: '16px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 ✉️ SMS Gateway Console
               </h4>
-              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Africa's Talking SMS Telephony Service</span>
+              <span style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>Africa's Talking SMS Telephony Service</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <button
                 onClick={() => setIsMaximized(!isMaximized)}
                 title={isMaximized ? "Restore size" : "Maximize view"}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
                 {isMaximized ? '🗗' : '🗖'}
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
                 ✕
               </button>

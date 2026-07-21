@@ -54,6 +54,7 @@ export const MotherDashboard: React.FC = () => {
   // Onboarding Guide states
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [guideStep, setGuideStep] = useState(0);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const guideSteps = [
     {
@@ -618,7 +619,14 @@ export const MotherDashboard: React.FC = () => {
         <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           {/* Top Navbar */}
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: theme === 'light' ? '#1f2937' : '#ffffff', cursor: 'pointer', padding: '4px' }}
+                title="Open Navigation Menu"
+              >
+                ☰
+              </button>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
                 {activeTab === 'anc-timeline' ? 'WHO ANC Timeline' : activeTab === 'profile' ? 'Profile & Doctors' : activeTab === 'ledger' ? 'Health Ledger & Vitals' : activeTab} Panel
               </h3>
@@ -680,6 +688,92 @@ export const MotherDashboard: React.FC = () => {
               </button>
             </div>
           </header>
+
+          {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
+          {mobileSidebarOpen && (
+            <>
+              <div
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 99998 }}
+                onClick={() => setMobileSidebarOpen(false)}
+              />
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '280px',
+                height: '100vh',
+                zIndex: 99999,
+                background: theme === 'light' ? '#ffffff' : '#0f172a',
+                color: theme === 'light' ? '#0f172a' : '#ffffff',
+                boxShadow: '10px 0 30px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '20px',
+                overflowY: 'auto'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: '#f43f5e', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>🤱</div>
+                    <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
+                  </div>
+                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                </div>
+
+                {/* Profile Card */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '20px' }}>
+                  <ProfilePhotoUpload user={user} onUpdated={setUser} size={42} showLabel={false} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user.full_name}</div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Expectant Mother</span>
+                  </div>
+                </div>
+
+                {/* Navigation Menu */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                  {[
+                    { id: 'dashboard', icon: '🏠', label: 'Overview' },
+                    { id: 'emergency', icon: '🚨', label: 'Rescue Beacon' },
+                    { id: 'anc-timeline', icon: '👶', label: 'WHO ANC Checklist' },
+                    { id: 'ledger', icon: '📊', label: 'Vitals Ledger' },
+                    { id: 'consultation', icon: '🩺', label: 'Doctor Consult' },
+                    { id: 'profile', icon: '👤', label: 'Profile & Contacts' }
+                  ].map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => { setActiveTab(item.id as any); setMobileSidebarOpen(false); }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: activeTab === item.id ? '#f43f5e' : 'transparent',
+                        color: activeTab === item.id ? '#ffffff' : (theme === 'light' ? '#334155' : '#cbd5e1'),
+                        fontWeight: activeTab === item.id ? 700 : 500,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <ThemeToggle />
+                  <button
+                    onClick={() => { AuthService.logout(); navigate('/'); }}
+                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <LogOut size={14} /> Exit
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
         <main className="main-content" style={{ flex: 1, padding: '2rem var(--space-xl)', display: 'flex', flexDirection: 'column' }}>
           
