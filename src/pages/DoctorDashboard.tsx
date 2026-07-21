@@ -472,16 +472,32 @@ export const DoctorDashboard: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: theme === 'light' ? '#2c4964' : '#ffffff', cursor: 'pointer', padding: '4px' }}
+              style={{
+                width: '40px',
+                height: '40px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                border: theme === 'light' ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+                background: theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)',
+                color: theme === 'light' ? '#2c4964' : '#ffffff',
+                fontSize: '1.75rem',
+                lineHeight: 1,
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}
+              className="d-inline-flex d-md-none"
               title="Open Navigation Menu"
             >
               ☰
             </button>
-            <div>
-              <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0 }}>Clinical Portal Console</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0, lineHeight: 1.25 }}>Clinical Portal Console</h4>
               <span style={{ fontSize: '12px', color: '#777777' }}>🏥 Facility: <strong>{hospital.name}</strong></span>
             </div>
           </div>

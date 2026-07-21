@@ -11,6 +11,16 @@ html, body, #root {
   max-width: 100vw !important;
 }
 
+/* Responsive display utilities */
+@media (min-width: 769px) {
+  .d-md-none { display: none !important; }
+  .d-md-flex { display: flex !important; }
+  .d-md-inline-flex { display: inline-flex !important; }
+}
+@media (max-width: 768px) {
+  .d-none { display: none !important; }
+}
+
 /* Custom Leaflet Map styling and positioning overrides */
 .map-container {
     width: 100%;

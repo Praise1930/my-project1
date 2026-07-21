@@ -1255,24 +1255,32 @@ export const AdminDashboard: React.FC = () => {
 
         {/* TOPBAR HEADER */}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <button
               onClick={() => setMobileSidebarOpen(true)}
               style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '1.4rem',
+                width: '40px',
+                height: '40px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                border: theme === 'dark' ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.12)',
+                background: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
                 color: 'inherit',
+                fontSize: '1.75rem',
+                lineHeight: 1,
                 cursor: 'pointer',
-                padding: '4px'
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
               }}
-              className="d-block d-md-none"
+              className="d-inline-flex d-md-none"
               title="Open Navigation Menu"
             >
               ☰
             </button>
-            <div>
-              <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'inherit', margin: 0 }}>Command Center Workspace</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'inherit', margin: 0, lineHeight: 1.25 }}>Command Center Workspace</h4>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Mukono Regional Ambulance Dispatch Fleet Monitor</span>
             </div>
           </div>

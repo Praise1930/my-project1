@@ -581,15 +581,31 @@ export const MotherDashboard: React.FC = () => {
         <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           {/* Top Navbar */}
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <button
                 onClick={() => setMobileSidebarOpen(true)}
-                style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: theme === 'light' ? '#1f2937' : '#ffffff', cursor: 'pointer', padding: '4px' }}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '10px',
+                  border: theme === 'light' ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+                  background: theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)',
+                  color: theme === 'light' ? '#1f2937' : '#ffffff',
+                  fontSize: '1.75rem',
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease'
+                }}
+                className="d-inline-flex d-md-none"
                 title="Open Navigation Menu"
               >
                 ☰
               </button>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', color: theme === 'light' ? '#1f2937' : '#ffffff', lineHeight: 1.25 }}>
                 {activeTab === 'anc-timeline' ? 'WHO ANC Timeline' : activeTab === 'profile' ? 'Profile & Doctors' : activeTab === 'ledger' ? 'Health Ledger & Vitals' : activeTab} Panel
               </h3>
             </div>

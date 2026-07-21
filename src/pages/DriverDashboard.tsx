@@ -389,17 +389,33 @@ export const DriverDashboard: React.FC = () => {
         {/* Main Panel Workspace */}
         <main className="main-content" style={{ padding: '2rem' }}>
           <header className="top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <button
                 onClick={() => setMobileSidebarOpen(true)}
-                style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: theme === 'light' ? '#0f172a' : '#f8fafc', cursor: 'pointer', padding: '4px' }}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '10px',
+                  border: theme === 'light' ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.15)',
+                  background: theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)',
+                  color: theme === 'light' ? '#0f172a' : '#f8fafc',
+                  fontSize: '1.75rem',
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease'
+                }}
+                className="d-inline-flex d-md-none"
                 title="Open Navigation Menu"
               >
                 ☰
               </button>
-              <div>
-                <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>Ambulance Navigation Panel</h1>
-                <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '4px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc', lineHeight: 1.25 }}>Ambulance Navigation Panel</h1>
+                <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
               </div>
             </div>
 

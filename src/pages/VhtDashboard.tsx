@@ -366,16 +366,32 @@ export const VhtDashboard: React.FC = () => {
         
         {/* Top Header Strip */}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              style={{ background: 'none', border: 'none', fontSize: '1.4rem', color: 'inherit', cursor: 'pointer', padding: '4px' }}
+              style={{
+                width: '40px',
+                height: '40px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '10px',
+                border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.12)',
+                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                color: 'inherit',
+                fontSize: '1.75rem',
+                lineHeight: 1,
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}
+              className="d-inline-flex d-md-none"
               title="Open Navigation Menu"
             >
               ☰
             </button>
-            <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, textTransform: 'capitalize' }}>{activeTab} Workspace</h1>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', lineHeight: 1.25 }}>{activeTab} Workspace</h1>
               <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Mukono District Maternal Health Network</span>
             </div>
           </div>
