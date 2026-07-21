@@ -197,53 +197,57 @@ export const SMSSimulator: React.FC = () => {
         }
       `}</style>
 
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button (Icon Only) */}
       <button
         ref={buttonRef}
         onClick={handleButtonClick}
         onMouseDown={handleStart}
         onTouchStart={handleStart}
         className="sms-simulator-float-btn"
+        title="Open SMS Console"
         style={{
           position: 'fixed',
           bottom: yPos === null ? '24px' : 'auto',
           top: yPos === null ? undefined : `${yPos}px`,
           right: '24px',
           zIndex: 99999,
+          width: '46px',
+          height: '46px',
+          borderRadius: '50%',
           background: isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : '#ffffff',
           color: isDark ? '#ffffff' : '#0f172a',
           border: isDark ? '1px solid rgba(251, 113, 133, 0.4)' : '1px solid #f43f5e',
-          borderRadius: '30px',
-          padding: '10px 18px',
           boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 8px 25px rgba(244,63,94,0.18)',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          fontSize: '0.85rem',
-          fontWeight: 700,
+          justifyContent: 'center',
+          padding: 0,
           cursor: isDragging.current ? 'grabbing' : 'grab',
           fontFamily: 'inherit',
           transition: isDragging.current ? 'transform 0.2s ease' : 'transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, right 0.3s ease',
           userSelect: 'none',
           touchAction: 'none'
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <span style={{ fontSize: '1rem' }}>✉️</span>
-        <span>SMS Console</span>
+        <span style={{ fontSize: '1.25rem' }}>✉️</span>
         {smsLogs.length > 0 && (
           <span style={{
+            position: 'absolute',
+            top: '-2px',
+            right: '-2px',
             background: '#e11d48',
             color: '#fff',
             borderRadius: '50%',
             width: '18px',
             height: '18px',
-            fontSize: '0.7rem',
+            fontSize: '0.68rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 800
+            fontWeight: 800,
+            border: '2px solid #fff'
           }}>
             {smsLogs.length}
           </span>

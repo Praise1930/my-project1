@@ -178,7 +178,7 @@ export const Landing: React.FC = () => {
       </header>
 
       {/* HERO SLIDER SECTION */}
-      <section id="home" className="slider-area" style={{ position: 'relative', height: '620px', overflow: 'hidden', background: `${isDark ? '#0f172a' : '#ffffff'} url(/assets/img/hero/h1_hero.png) no-repeat center center / cover` }}>
+      <section id="home" className="slider-area" style={{ position: 'relative', height: '620px', overflow: 'hidden', background: `linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.7)), url(/assets/img/hero/h1_hero.png) no-repeat center center / cover` }}>
         <div className="hero-blur-overlay"></div>
         {slides.map((slide, idx) => (
           <div
@@ -201,52 +201,60 @@ export const Landing: React.FC = () => {
               <div className="row">
                 <div className="col-xl-8 col-lg-10 col-md-10">
                   <div className="hero__caption" style={{ 
-                    padding: '40px 0', 
+                    padding: '20px 0', 
                     maxWidth: '750px',
                     margin: '30px 0',
-                    background: 'transparent'
+                    background: 'transparent',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}>
-                    <span style={{ 
-                      color: isDark ? '#60a5fa' : '#0f61ef', 
-                      fontSize: '1.2rem', 
-                      fontWeight: 800, 
-                      textTransform: 'uppercase', 
-                      letterSpacing: '0.04em', 
-                      display: 'block', 
-                      marginBottom: '14px',
-                      textShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.9)' : '0 1px 2px rgba(255, 255, 255, 0.9)'
-                    }}>
-                      {slide.subtitle}
-                    </span>
-                    <h1 style={{ 
-                      color: isDark ? '#ffffff' : '#030431', 
-                      fontSize: '3.6rem', 
-                      fontWeight: 900, 
-                      lineHeight: 1.15, 
-                      marginBottom: '20px',
-                      textShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 0, 0, 0.6)' : '0 2px 6px rgba(255, 255, 255, 0.9), 0 0 15px rgba(255, 255, 255, 0.9)'
-                    }}>
-                      {slide.title}
-                    </h1>
-                    <p style={{ 
-                      color: isDark ? '#ffffff' : '#111827', 
-                      fontSize: '1.15rem', 
-                      fontWeight: 500,
-                      marginBottom: '35px', 
-                      lineHeight: 1.6,
-                      textShadow: isDark ? '0 1px 4px rgba(0, 0, 0, 0.9)' : '0 1px 3px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 255, 255, 0.9)'
-                    }}>
-                      {slide.desc}
-                    </p>
-                    {slide.link.startsWith('#') ? (
-                      <a href={slide.link} className="btn hero-btn" style={{ padding: '14px 28px', color: '#ffffff', textDecoration: 'none', borderRadius: '6px' }}>
-                        {slide.buttonText} <i className="ti-arrow-right" style={{ marginLeft: '8px' }}></i>
-                      </a>
-                    ) : (
-                      <Link to={slide.link} className="btn hero-btn" style={{ padding: '14px 28px', color: '#ffffff', textDecoration: 'none', borderRadius: '6px' }}>
-                        {slide.buttonText} <i className="ti-arrow-right" style={{ marginLeft: '8px' }}></i>
-                      </Link>
-                    )}
+                    {/* Fixed height container for text so button position never jumps */}
+                    <div style={{ minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <span style={{ 
+                        color: '#60a5fa', 
+                        fontSize: '1.2rem', 
+                        fontWeight: 800, 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.04em', 
+                        display: 'block', 
+                        marginBottom: '10px',
+                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)'
+                      }}>
+                        {slide.subtitle}
+                      </span>
+                      <h1 style={{ 
+                        color: '#ffffff', 
+                        fontSize: '3.4rem', 
+                        fontWeight: 900, 
+                        lineHeight: 1.15, 
+                        marginBottom: '16px',
+                        textShadow: '0 2px 10px rgba(0, 0, 0, 0.9)'
+                      }}>
+                        {slide.title}
+                      </h1>
+                      <p style={{ 
+                        color: '#f1f5f9', 
+                        fontSize: '1.15rem', 
+                        fontWeight: 500,
+                        margin: 0, 
+                        lineHeight: 1.55,
+                        textShadow: '0 1px 6px rgba(0, 0, 0, 0.8)'
+                      }}>
+                        {slide.desc}
+                      </p>
+                    </div>
+
+                    <div style={{ marginTop: '24px' }}>
+                      {slide.link.startsWith('#') ? (
+                        <a href={slide.link} className="btn hero-btn" style={{ padding: '14px 28px', color: '#ffffff', textDecoration: 'none', borderRadius: '6px' }}>
+                          {slide.buttonText} <i className="ti-arrow-right" style={{ marginLeft: '8px' }}></i>
+                        </a>
+                      ) : (
+                        <Link to={slide.link} className="btn hero-btn" style={{ padding: '14px 28px', color: '#ffffff', textDecoration: 'none', borderRadius: '6px' }}>
+                          {slide.buttonText} <i className="ti-arrow-right" style={{ marginLeft: '8px' }}></i>
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -470,25 +478,25 @@ export const Landing: React.FC = () => {
 
 
       {/* TESTIMONIAL STARUPS START */}
-      <section className="all-starups-area testimonial-area fix" style={{ display: 'flex', alignItems: 'center', background: isDark ? '#0b162b' : '#f8fafc', color: isDark ? '#ffffff' : '#0f172a', minHeight: '400px', flexWrap: 'wrap', transition: 'background-color 0.3s ease' }}>
-        <div className="starups" style={{ flex: '1 1 320px', padding: '40px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+      <section className="all-starups-area testimonial-area fix" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'stretch', background: isDark ? '#0b162b' : '#ffffff', color: isDark ? '#ffffff' : '#0f172a', borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', transition: 'background-color 0.3s ease' }}>
+        <div className="starups" style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
           <div className="single-testimonial text-center" style={{ maxWidth: '540px', margin: '0 auto', textAlign: 'center' }}>
             <div className="testimonial-caption">
-              <div className="testimonial-top-cap" style={{ marginBottom: '20px' }}>
-                <p style={{ fontSize: '1.15rem', fontWeight: 400, lineHeight: 1.6, color: isDark ? '#ffffff' : '#0f172a', fontStyle: 'italic' }}>
+              <div className="testimonial-top-cap" style={{ marginBottom: '24px' }}>
+                <p style={{ fontSize: '1.2rem', fontWeight: 400, lineHeight: 1.65, color: isDark ? '#ffffff' : '#0f172a', fontStyle: 'italic' }}>
                   "The GPS tracking console ensured our ambulance driver Moses located my home in Seeta ward within 15 minutes of my contractions starting. I delivered safely at Mukono Hospital."
                 </p>
               </div>
               <div className="testimonial-founder" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
                 <div className="founder-text">
-                  <span style={{ display: 'block', fontSize: '16px', fontWeight: 700, color: '#0f61ef' }}>Sarah Nabosa</span>
-                  <p style={{ margin: 0, fontSize: '13px', color: isDark ? '#9fabbe' : '#64748b' }}>Registered Expectant Mother</p>
+                  <span style={{ display: 'block', fontSize: '17px', fontWeight: 800, color: '#0f61ef' }}>Sarah Nabosa</span>
+                  <p style={{ margin: 0, fontSize: '13px', color: isDark ? '#9fabbe' : '#475569' }}>Registered Expectant Mother — Seeta Ward, Mukono</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="starups-img" style={{ flex: '1 1 320px', minHeight: '320px', backgroundImage: 'url(/assets/img/gallery/startup.png)', backgroundSize: 'cover', backgroundPosition: 'center center', width: '100%' }}></div>
+        <div className="starups-img" style={{ minHeight: '380px', backgroundImage: 'url(/assets/img/gallery/startup.png)', backgroundSize: 'cover', backgroundPosition: 'center center' }}></div>
       </section>
 
       {/* NEWS AREA SECTION */}

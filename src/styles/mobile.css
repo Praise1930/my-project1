@@ -1131,5 +1131,31 @@ html[data-theme="dark"] .card h1, html[data-theme="dark"] .card h2, html[data-th
   color: #f8fafc !important;
 }
 
+/* Compact Theme Toggle Button on Mobile Phones */
+@media (max-width: 768px) {
+  .theme-toggle-btn {
+    padding: 4px 8px !important;
+    font-size: 0.68rem !important;
+    gap: 4px !important;
+    border-radius: 12px !important;
+  }
+  .theme-toggle-btn span:first-child {
+    font-size: 0.8rem !important;
+  }
+  /* Remove old fixed bottom sidebars so only off-canvas drawer is active */
+  aside.sidebar,
+  aside.sidebar-admin,
+  aside.sidebar-medilab,
+  aside.sidebar-mother {
+    display: none !important;
+  }
+  .main-content-area,
+  .main-content,
+  .momentra-root main {
+    margin-left: 0 !important;
+    padding-bottom: 20px !important;
+  }
+}
+
 
 

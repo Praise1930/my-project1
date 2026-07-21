@@ -203,49 +203,49 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
               </button>
             )}
 
-            {/* Same-line flex row for Choose from Gallery and Take a Photo */}
-            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+            {/* Vertical flex column for Choose from Gallery and Take a Photo */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
               <button
                 onClick={() => galleryRef.current?.click()}
                 style={{
-                  flex: 1,
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 6,
-                  padding: '8px 10px',
+                  padding: '9px 12px',
                   background: 'none',
                   border: '1px solid var(--border-color, #cbd5e1)',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  fontSize: '0.78rem',
+                  fontSize: '0.82rem',
                   fontWeight: 600,
                   color: 'var(--text-primary, #0f172a)',
                   fontFamily: 'inherit'
                 }}
               >
-                <span>🖼️</span> Gallery
+                <span>🖼️</span> Choose from Gallery
               </button>
               <button
                 onClick={() => cameraRef.current?.click()}
                 style={{
-                  flex: 1,
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 6,
-                  padding: '8px 10px',
+                  padding: '9px 12px',
                   background: 'none',
                   border: '1px solid var(--border-color, #cbd5e1)',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  fontSize: '0.78rem',
+                  fontSize: '0.82rem',
                   fontWeight: 600,
                   color: 'var(--text-primary, #0f172a)',
                   fontFamily: 'inherit'
                 }}
               >
-                <span>📸</span> Camera
+                <span>📸</span> Take a Photo
               </button>
             </div>
 

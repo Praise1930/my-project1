@@ -1,4 +1,4 @@
-// MamaTrack GPS — Leaflet Map Component
+// MamaTrack GPS — Leaflet Map Component (High Performance & Reliable Tile Load)
 
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import L from 'leaflet';
@@ -103,7 +103,12 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     mapRef.current = map;
     markersGroupRef.current = L.layerGroup().addTo(map);
 
-    // Use ResizeObserver to ensure map size is always correct
+    // Multiple staggered size invalidation timers to ensure complete tile rendering on all viewports
+    const t1 = setTimeout(() => map.invalidateSize(), 50);
+    const t2 = setTimeout(() => map.invalidateSize(), 200);
+    const t3 = setTimeout(() => map.invalidateSize(), 600);
+
+    // ResizeObserver for container changes
     const resizeObserver = new ResizeObserver(() => {
       if (mapRef.current) {
         mapRef.current.invalidateSize();
@@ -112,6 +117,9 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     resizeObserver.observe(mapContainerRef.current);
 
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -125,7 +133,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Remove existing tile layer if it exists
     if (tileLayerRef.current) {
       tileLayerRef.current.remove();
     }
@@ -135,15 +142,23 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
     if (viewMode === 'satellite') {
       tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+      attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP';
+    } else if (theme === 'dark') {
+      tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
     }
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution: attribution,
-      maxZoom: 19
+      maxZoom: 19,
+      maxNativeZoom: 18,
+      subdomains: ['a', 'b', 'c', 'd']
     }).addTo(mapRef.current);
 
     tileLayerRef.current = tileLayer;
+
+    // Immediately trigger size invalidation after tile swap
+    mapRef.current.invalidateSize();
   }, [theme, viewMode]);
 
   // 2. Update Map view on center coordinates change
@@ -159,7 +174,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapRef.current || !markersGroupRef.current) return;
 
-    // Clear existing markers
     markersGroupRef.current.clearLayers();
 
     markers.forEach(m => {
@@ -179,13 +193,21 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Remove existing route
     if (routeLineRef.current) {
       routeLineRef.current.remove();
       routeLineRef.current = null;
     }
 
     if (routePoints.length > 1) {
+      // Immediately render straight line polyline for instant responsiveness
+      const fallbackPolyline = L.polyline(routePoints, {
+        color: '#f43f5e',
+        weight: 5,
+        opacity: 0.85,
+        lineJoin: 'round'
+      }).addTo(mapRef.current);
+      routeLineRef.current = fallbackPolyline;
+
       let active = true;
 
       const fetchRoadRoute = async () => {
@@ -197,40 +219,28 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           if (!res.ok) throw new Error('OSRM routing request failed');
           const data = await res.json();
 
-          if (active && data.routes && data.routes.length > 0) {
+          if (active && data.routes && data.routes.length > 0 && mapRef.current) {
             const osrmCoords = data.routes[0].geometry.coordinates;
             const roadPoints: [number, number][] = osrmCoords.map((c: any) => [c[1], c[0]]);
 
-            if (mapRef.current) {
-              const polyline = L.polyline(roadPoints, {
-                color: '#f43f5e',
-                weight: 5,
-                opacity: 0.85,
-                lineJoin: 'round'
-              }).addTo(mapRef.current);
-
-              routeLineRef.current = polyline;
-
-              // Fit map bounds to show route path
-              const bounds = L.latLngBounds(roadPoints);
-              mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+            if (routeLineRef.current) {
+              routeLineRef.current.remove();
             }
-          }
-        } catch (e) {
-          console.warn('MapComponent: OSRM routing failed, falling back to straight-line polyline.', e);
-          if (active && mapRef.current) {
-            const polyline = L.polyline(routePoints, {
+
+            const polyline = L.polyline(roadPoints, {
               color: '#f43f5e',
-              weight: 4,
-              opacity: 0.8,
-              dashArray: '8, 8',
+              weight: 5,
+              opacity: 0.9,
               lineJoin: 'round'
             }).addTo(mapRef.current);
 
             routeLineRef.current = polyline;
-            const bounds = L.latLngBounds(routePoints);
-            mapRef.current.fitBounds(bounds, { padding: [40, 40] });
+
+            const bounds = L.latLngBounds(roadPoints);
+            mapRef.current.fitBounds(bounds, { padding: [30, 30] });
           }
+        } catch (e) {
+          console.warn('MapComponent: OSRM routing fallback active.', e);
         }
       };
 
@@ -246,7 +256,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Remove existing circle
     if (circleRef.current) {
       circleRef.current.remove();
       circleRef.current = null;
@@ -273,7 +282,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       if (mapRef.current) {
         mapRef.current.invalidateSize();
       }
-    }, 250);
+    }, 150);
     return () => clearTimeout(timer);
   }, [markersKey, routeKey]);
 

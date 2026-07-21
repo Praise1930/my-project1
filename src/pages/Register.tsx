@@ -231,7 +231,7 @@ export const Register: React.FC = () => {
       </header>
 
       {/* CENTERED REGISTRATION FORM SECTION */}
-      <section className="register-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: `url('/assets/img/hero/hero2.png') no-repeat center center / cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+      <section className="register-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
         
         {/* Scoped card styling overrides */}
         <style>{`
