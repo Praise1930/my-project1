@@ -294,16 +294,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         style={{ width: '100%', height: '100%' }} 
       />
       {/* Floating Toggle Controls */}
-      <div style={{
+      <div className="map-controls-group" style={{
         position: 'absolute',
         top: '12px',
         right: '12px',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'row',
-        gap: '6px',
+        gap: '4px',
         background: theme === 'dark' ? '#1e293b' : '#ffffff',
-        padding: '4px',
+        padding: '3px',
         borderRadius: '8px',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
         border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',

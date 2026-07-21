@@ -286,6 +286,16 @@ export const DriverDashboard: React.FC = () => {
           color: #fbbf24 !important;
           background: rgba(245,158,11,0.15) !important;
         }
+
+        @media (max-width: 768px) {
+          .dashboard-layout aside.sidebar {
+            display: none !important;
+          }
+          .dashboard-layout .main-content {
+            margin-left: 0 !important;
+            padding-bottom: 20px !important;
+          }
+        }
       `}</style>
 
       <div className="dashboard-layout">

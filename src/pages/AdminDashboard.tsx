@@ -997,62 +997,18 @@ export const AdminDashboard: React.FC = () => {
       <style>{`
         /* ── Admin Dashboard Responsive Mobile Rules ── */
 
-        /* On mobile: sidebar becomes a fixed bottom navigation bar */
+        /* On mobile: sidebar is hidden so off-canvas drawer is active */
         @media (max-width: 768px) {
           .dasher-dashboard {
             flex-direction: column !important;
           }
           .dasher-dashboard aside.sidebar-admin {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            flex-direction: row !important;
-            border-right: none !important;
-            border-top: 1px solid rgba(255,255,255,0.08) !important;
-            z-index: 200 !important;
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-          }
-          /* Hide the logo and user profile in mobile sidebar */
-          .dasher-dashboard aside.sidebar-admin > div:first-child,
-          .dasher-dashboard aside.sidebar-admin > div:last-child {
             display: none !important;
-          }
-          .dasher-dashboard aside.sidebar-admin nav {
-            display: flex !important;
-            flex-direction: row !important;
-            width: 100% !important;
-            padding: 0 !important;
-            justify-content: space-around !important;
-          }
-          .dasher-dashboard .sidebar-nav-item {
-            flex-direction: column !important;
-            padding: 10px 8px !important;
-            gap: 4px !important;
-            font-size: 10px !important;
-            flex: 1 !important;
-            justify-content: center !important;
-            text-align: center !important;
-            border-left: none !important;
-            border-top: 3px solid transparent !important;
-          }
-          .dasher-dashboard .sidebar-nav-item.active {
-            border-left: none !important;
-            border-top: 3px solid #3b82f6 !important;
-          }
-          .dasher-dashboard .sidebar-nav-item span {
-            display: block !important;
-            font-size: 9px !important;
-            line-height: 1.2 !important;
           }
           .dasher-dashboard .main-content-area {
             margin-left: 0 !important;
             padding: 1rem !important;
-            padding-bottom: 80px !important; /* space for bottom nav */
+            padding-bottom: 20px !important;
             width: 100% !important;
             max-width: 100% !important;
             box-sizing: border-box !important;
@@ -1357,8 +1313,22 @@ export const AdminDashboard: React.FC = () => {
 
             <button 
               onClick={handleResetDatabase} 
-              className="btn btn-outline-secondary" 
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#334155' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                fontWeight: 700,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: theme === 'light' ? '1px solid #1e293b' : '1px solid rgba(255,255,255,0.2)',
+                background: theme === 'light' ? '#0f172a' : '#1e293b',
+                color: '#ffffff',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Reset Database to initial seed state"
             >
               <RefreshCw size={13} /> Reset Database
             </button>

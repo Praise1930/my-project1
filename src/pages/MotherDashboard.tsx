@@ -382,50 +382,12 @@ export const MotherDashboard: React.FC = () => {
           z-index: 100 !important;
         }
         @media (max-width: 768px) {
-          .momentra-root .dashboard-layout {
-            flex-direction: column !important;
-          }
           .momentra-root aside.sidebar-mother {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            flex-direction: row !important;
-            border-right: none !important;
-            border-top: 1px solid rgba(255,255,255,0.08) !important;
-            z-index: 2000 !important;
-            overflow: hidden !important;
-          }
-          .momentra-root aside.sidebar-mother > div:first-child,
-          .momentra-root aside.sidebar-mother .sidebar-profile {
-            display: none !important;
-          }
-          .momentra-root aside.sidebar-mother nav {
-            display: flex !important;
-            flex-direction: row !important;
-            width: 100% !important;
-            padding: 0 !important;
-            justify-content: space-around !important;
-            margin-top: 0 !important;
-          }
-          .momentra-root aside.sidebar-mother nav > div {
-            flex: 1 !important;
-            justify-content: center !important;
-            padding: 10px !important;
-            margin: 0 !important;
-          }
-          .momentra-root aside.sidebar-mother nav > div span:first-child {
-            font-size: 1.2rem !important;
-          }
-          .momentra-root aside.sidebar-mother nav > div span:last-child {
             display: none !important;
           }
           .momentra-root .main-content-area {
             margin-left: 0 !important;
-            padding-bottom: 80px !important;
+            padding-bottom: 20px !important;
           }
         }
       `}</style>
