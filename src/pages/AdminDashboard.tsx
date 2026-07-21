@@ -1329,16 +1329,16 @@ export const AdminDashboard: React.FC = () => {
                 fontWeight: 700,
                 padding: '8px 16px',
                 borderRadius: '6px',
-                border: theme === 'light' ? '1px solid #1e293b' : '1px solid rgba(255,255,255,0.2)',
-                background: theme === 'light' ? '#0f172a' : '#1e293b',
-                color: '#ffffff',
+                border: theme === 'light' ? '1.5px solid #0f172a' : '1px solid rgba(255,255,255,0.2)',
+                background: theme === 'light' ? '#ffffff' : 'rgba(255,255,255,0.08)',
+                color: theme === 'light' ? '#0f172a' : '#ffffff',
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                boxShadow: theme === 'light' ? '0 2px 10px rgba(15,23,42,0.12)' : '0 2px 8px rgba(0,0,0,0.3)',
                 transition: 'all 0.2s ease'
               }}
               title="Reset Database to initial seed state"
             >
-              <RefreshCw size={13} /> Reset Database
+              <RefreshCw size={13} style={{ color: theme === 'light' ? '#0f61ef' : '#ffffff' }} /> Reset Database
             </button>
             <ThemeToggle />
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
