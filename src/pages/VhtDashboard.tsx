@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import { WelcomeToast } from '../components/WelcomeToast';
 import { Bell, LogOut, Search } from 'lucide-react';
 
 export const VhtDashboard: React.FC = () => {
@@ -444,6 +445,11 @@ export const VhtDashboard: React.FC = () => {
             </button>
           </div>
         </header>
+
+        {/* FLOATING WELCOME TOAST NOTIFICATION */}
+        {user && (
+          <WelcomeToast userName={user.full_name} roleName="Village Health Team" subtitle="Mukono District maternal field network active & synced." icon="🩺" />
+        )}
 
         {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
         {mobileSidebarOpen && (

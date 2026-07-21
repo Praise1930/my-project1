@@ -7,6 +7,7 @@ import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import { WelcomeToast } from '../components/WelcomeToast';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -666,6 +667,11 @@ export const MotherDashboard: React.FC = () => {
               </button>
             </div>
           </header>
+
+          {/* FLOATING WELCOME TOAST NOTIFICATION */}
+          {user && (
+            <WelcomeToast userName={user.full_name} roleName="Maternal Deck" subtitle="Welcome to your safe maternity console. Emergency SOS & ANC timeline active." icon="🤱" />
+          )}
 
           {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
           {mobileSidebarOpen && (

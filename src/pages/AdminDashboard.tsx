@@ -7,6 +7,7 @@ import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import { WelcomeToast } from '../components/WelcomeToast';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -1354,35 +1355,46 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </header>
 
-        {/* GREETING BANNER WIDGET */}
-        <div className="bg-gradient-mixed rounded-3" style={{
-          borderRadius: '12px',
-          marginBottom: '24px',
-          background: theme === 'light' ? '#ffffff' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-          border: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
-          boxShadow: theme === 'light' ? '0 4px 20px rgba(0, 0, 0, 0.02)' : 'none',
-          display: 'flex',
-          overflow: 'hidden',
-          flexWrap: 'wrap'
-        }}>
-          <div style={{ flex: '1.3', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
-            <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>System Command Console</span>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 8px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>
-              👋 Hello, {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '')}!
-            </h2>
-            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: theme === 'light' ? '#475569' : '#cbd5e1' }}>
-              Welcome to the regional command console. Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District. Use the navigation panel on the left to review maps, drivers, and hospitals.
-            </p>
-          </div>
-          <div style={{
-            flex: '0.7',
-            backgroundImage: 'url(/assets/img/gallery/about1.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center center',
-            minHeight: '150px',
-            minWidth: '220px'
-          }} />
+      {/* FLOATING WELCOME TOAST NOTIFICATION (Disappears after 7 seconds) */}
+      <WelcomeToast userName={user.full_name} roleName="Admin Command" subtitle="Welcome to Mukono Regional Dispatch. Fleet active & synchronized." icon="👋" />
+
+      {/* GREETING BANNER WIDGET */}
+      <div className="bg-gradient-mixed rounded-3" style={{
+        borderRadius: '12px',
+        marginBottom: '24px',
+        background: theme === 'light' ? '#ffffff' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+        border: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: theme === 'light' ? '0 4px 20px rgba(0, 0, 0, 0.02)' : 'none',
+        display: 'flex',
+        overflow: 'hidden',
+        alignItems: 'stretch',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ flex: '1.3', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
+          <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>System Command Console</span>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 8px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>
+            Mukono District Command Fleet
+          </h2>
+          <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: theme === 'light' ? '#475569' : '#cbd5e1' }}>
+            Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District. Use the navigation panel on the left to review maps, drivers, and hospitals.
+          </p>
         </div>
+        <div style={{
+          flex: '0.7',
+          minWidth: '220px',
+          maxHeight: '180px',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <img
+            src="/assets/img/gallery/about1.png"
+            alt="Mukono Regional General Hospital"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        </div>
+      </div>
 
         {/* STATS COUNT METRICS ROW */}
         <div className="row mb-6 g-4" style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>

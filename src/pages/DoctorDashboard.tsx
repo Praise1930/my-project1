@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import { WelcomeToast } from '../components/WelcomeToast';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -608,18 +609,24 @@ export const DoctorDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* CLINICAL REFERENCE HUB */}
-      <div style={{ padding: '0 40px 10px' }}>
+      {/* FLOATING WELCOME TOAST NOTIFICATION */}
+      {user && (
+        <WelcomeToast userName={user.full_name} roleName="Clinical Specialist" subtitle={`Connected to ${hospital?.name || 'Mukono District Hospital'}. Patient triage active.`} icon="🩺" />
+      )}
+
+      {/* DOCTOR CLINICAL REFERENCE BANNER */}
+      <div style={{ padding: '30px 40px 0' }}>
         <div style={{
           background: theme === 'light' ? '#ffffff' : '#1e293b',
           borderRadius: '12px',
           overflow: 'hidden',
           border: theme === 'light' ? '1px solid #eef2f7' : '1px solid rgba(255,255,255,0.08)',
           display: 'flex',
+          alignItems: 'stretch',
           boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
           flexWrap: 'wrap'
         }}>
-          <div style={{ flex: '1.2', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+          <div style={{ flex: '1.2', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
             <span style={{ fontSize: '11px', color: '#1977cc', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Clinical Reference Hub</span>
             <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 10px', color: theme === 'light' ? '#2c4964' : '#ffffff' }}>Obstetric Emergency Triage Guidelines</h3>
             <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#777777', margin: '0 0 16px', maxWidth: '600px' }}>
@@ -633,12 +640,19 @@ export const DoctorDashboard: React.FC = () => {
           </div>
           <div style={{
             flex: '0.8',
-            backgroundImage: 'url(/assets/img/gallery/blog2.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center center',
-            minHeight: '180px',
-            minWidth: '240px'
-          }} />
+            minWidth: '220px',
+            maxHeight: '190px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <img
+              src="/assets/img/gallery/blog2.png"
+              alt="Obstetric Emergency Triage"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
         </div>
       </div>
 

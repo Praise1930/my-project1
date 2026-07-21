@@ -7,6 +7,7 @@ import { MapComponent, MapMarker } from '../components/MapComponent';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { WelcomeToast } from '../components/WelcomeToast';
 import '../styles/driver/theme.css';
 
 export const DriverDashboard: React.FC = () => {
@@ -517,6 +518,11 @@ export const DriverDashboard: React.FC = () => {
             </>
           )}
 
+          {/* FLOATING WELCOME TOAST NOTIFICATION */}
+          {user && (
+            <WelcomeToast userName={user.full_name} roleName="Ambulance Pilot" subtitle={`Assigned to vehicle ${vehicle?.plate_number || 'Rescue Fleet'}. Real-time GPS dispatch connected.`} icon="🚑" />
+          )}
+
           {/* DRIVER REFERENCE BANNER */}
           <div style={{
             background: theme === 'light' ? '#ffffff' : '#1e293b',
@@ -524,12 +530,13 @@ export const DriverDashboard: React.FC = () => {
             overflow: 'hidden',
             border: theme === 'light' ? '1px solid #e2e8f0' : '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
+            alignItems: 'stretch',
             boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
             marginBottom: '1.5rem',
             flexWrap: 'wrap',
             color: theme === 'light' ? '#334155' : '#cbd5e1'
           }}>
-            <div style={{ flex: '1.2', padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
+            <div style={{ flex: '1.2', padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
               <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Ambulance Response Deck</span>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 6px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>Emergency Dispatch Response Protocol</h3>
               <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: theme === 'light' ? '#64748b' : '#94a3b8', margin: '0 0 12px' }}>
@@ -542,12 +549,19 @@ export const DriverDashboard: React.FC = () => {
             </div>
             <div style={{
               flex: '0.8',
-              backgroundImage: 'url(/assets/img/gallery/blog1.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center center',
-              minHeight: '140px',
-              minWidth: '240px'
-            }} />
+              minWidth: '220px',
+              maxHeight: '170px',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <img
+                src="/assets/img/gallery/blog1.png"
+                alt="Ambulance Response Team"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </div>
           </div>
 
           {/* ACTIVE DISPATCH ALERT / MAP */}
