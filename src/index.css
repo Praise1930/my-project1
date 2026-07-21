@@ -19,6 +19,7 @@ html, body, #root {
 }
 @media (max-width: 768px) {
   .d-none { display: none !important; }
+  .d-md-none { display: flex !important; }
 }
 
 /* Custom Leaflet Map styling and positioning overrides */

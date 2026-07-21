@@ -25,6 +25,7 @@ export const MotherConsole: React.FC = () => {
   const [checkups, setCheckups] = useState<CheckupSchedule[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Profile Edit form states
   const [profileForm, setProfileForm] = useState({
@@ -301,50 +302,12 @@ export const MotherConsole: React.FC = () => {
           z-index: 100 !important;
         }
         @media (max-width: 768px) {
-          .momentra-root .dashboard-layout {
-            flex-direction: column !important;
-          }
           .momentra-root aside.sidebar-mother {
-            position: fixed !important;
-            top: auto !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            height: auto !important;
-            flex-direction: row !important;
-            border-right: none !important;
-            border-top: 1px solid rgba(255,255,255,0.08) !important;
-            z-index: 2000 !important;
-            overflow: hidden !important;
-          }
-          .momentra-root aside.sidebar-mother > div:first-child,
-          .momentra-root aside.sidebar-mother .sidebar-profile {
-            display: none !important;
-          }
-          .momentra-root aside.sidebar-mother nav {
-            display: flex !important;
-            flex-direction: row !important;
-            width: 100% !important;
-            padding: 0 !important;
-            justify-content: space-around !important;
-            margin-top: 0 !important;
-          }
-          .momentra-root aside.sidebar-mother nav > div {
-            flex: 1 !important;
-            justify-content: center !important;
-            padding: 10px !important;
-            margin: 0 !important;
-          }
-          .momentra-root aside.sidebar-mother nav > div span:first-child {
-            font-size: 1.2rem !important;
-          }
-          .momentra-root aside.sidebar-mother nav > div span:last-child {
             display: none !important;
           }
           .momentra-root .main-content-area {
             margin-left: 0 !important;
-            padding-bottom: 80px !important;
+            padding-bottom: 20px !important;
           }
         }
       `}</style>
@@ -444,8 +407,39 @@ export const MotherConsole: React.FC = () => {
         {/* MAIN VIEWPORT */}
         <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           {/* Top Navbar */}
+          {/* Mobile Sidebar Drawer */}
+          {mobileSidebarOpen && (
+            <>
+              <div onClick={() => setMobileSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998, backdropFilter: 'blur(2px)' }} />
+              <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px', background: theme === 'light' ? '#ffffff' : '#0f172a', zIndex: 9999, display: 'flex', flexDirection: 'column', boxShadow: '4px 0 25px rgba(0,0,0,0.3)', overflowY: 'auto' }}>
+                <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)' }}>
+                  <h4 style={{ margin: 0, fontWeight: 800, color: '#f43f5e', fontSize: '1rem' }}>🤱 Momentra Console</h4>
+                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0' }}>✕</button>
+                </div>
+                <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.08)' }}>
+                  <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: theme === 'light' ? '#1f2937' : '#ffffff' }}>{user?.full_name?.split(' ')[0]}</div>
+                    <div style={{ fontSize: '11px', color: '#f43f5e', fontWeight: 600 }}>Mother</div>
+                  </div>
+                </div>
+                <nav style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div onClick={() => { setMobileSidebarOpen(false); navigate('/mother'); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', cursor: 'pointer', color: theme === 'light' ? '#4b5563' : '#cbd5e1', fontSize: '13px', fontWeight: 500 }}>
+                    <span>⬅️</span><span>Back to Dashboard</span>
+                  </div>
+                </nav>
+                <div style={{ padding: '16px', borderTop: theme === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.08)' }}>
+                  <button onClick={() => { AuthService.logout(); navigate('/'); }} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <LogOut size={16} /> Logout
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button className="d-md-none" onClick={() => setMobileSidebarOpen(true)} style={{ display: 'none', background: 'none', border: 'none', fontSize: '1.75rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0', width: '40px', height: '40px', alignItems: 'center', justifyContent: 'center', padding: 0 }}>☰</button>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
                 Momentra Rescue Console
               </h3>

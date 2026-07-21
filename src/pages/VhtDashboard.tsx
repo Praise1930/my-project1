@@ -406,7 +406,7 @@ export const VhtDashboard: React.FC = () => {
                 )}
               </button>
               {showNotifications && (
-                <div style={{ position: 'absolute', top: '35px', right: 0, width: '280px', background: isDark ? '#1e293b' : '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', zIndex: 100, padding: '10px' }}>
+                <div className="notifications-panel" style={{ position: 'absolute', top: '35px', right: 0, width: '280px', background: isDark ? '#1e293b' : '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', zIndex: 100, padding: '10px' }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.85rem', fontWeight: 800 }}>Notifications</h4>
                   <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {notifications.length === 0 ? (
