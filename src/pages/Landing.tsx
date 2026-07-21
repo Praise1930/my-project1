@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { MapComponent } from '../components/MapComponent';
 
 // Import template stylesheets
 import '../styles/medical-center/bootstrap.min.css';
@@ -555,16 +556,17 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* GOOGLE MAP */}
-      <section id="google-map" style={{ lineHeight: 0, margin: 0, padding: 0 }}>
-        <iframe 
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127670.3664797034!2d32.69747515159784!3d0.354029272365225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x177db59841f3ecfd%3A0xe210214a1cd34df8!2sMukono!5e0!3m2!1sen!2sug!4v1700000000000" 
-          width="100%" 
-          height="380" 
-          frameBorder="0" 
-          style={{ border: 0 }} 
-          allowFullScreen
-          title="Mukono District Map Location"
+      {/* SYSTEM GPS DISPATCH MAP */}
+      <section id="google-map" style={{ height: '400px', width: '100%', margin: 0, padding: 0, position: 'relative' }}>
+        <MapComponent 
+          center={[0.3536, 32.7554]} 
+          zoom={13} 
+          markers={[
+            { id: 'hosp-1', lat: 0.3536, lng: 32.7554, type: 'hospital', label: 'Mukono General Hospital', sublabel: '24/7 CEMONC Surgical Emergency Unit' },
+            { id: 'hosp-2', lat: 0.3689, lng: 32.7481, type: 'hospital', label: 'Goma Health Center IV', sublabel: 'Maternal Referral Facility' },
+            { id: 'hosp-3', lat: 0.3342, lng: 32.7812, type: 'hospital', label: 'Seeta Health Center III', sublabel: 'Antenatal & VHT Hub' },
+          ]} 
+          theme={theme} 
         />
       </section>
 

@@ -1064,4 +1064,72 @@ html[data-theme="light"] .momentra-root .sidebar-profile {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 
+/* ============================================================
+   GLOBAL DARK/LIGHT MODE CARD & CONTAINER COLOR OVERRIDES
+   Ensures ALL cards across all dashboards properly switch between
+   Light Mode (light bg, dark text) and Dark Mode (dark bg, light text).
+   ============================================================ */
+
+/* LIGHT MODE GLOBAL CARD OVERRIDES */
+html[data-theme="light"] .card,
+html[data-theme="light"] .card-glass,
+html[data-theme="light"] .medical-card,
+html[data-theme="light"] .triage-card,
+html[data-theme="light"] .metric-box,
+html[data-theme="light"] .single-team,
+html[data-theme="light"] .news-thumb,
+html[data-theme="light"] .consultation-panel,
+html[data-theme="light"] .notifications-panel,
+html:not([data-theme="dark"]) .card,
+html:not([data-theme="dark"]) .card-glass,
+html:not([data-theme="dark"]) .medical-card,
+html:not([data-theme="dark"]) .triage-card,
+html:not([data-theme="dark"]) .metric-box,
+html:not([data-theme="dark"]) .single-team,
+html:not([data-theme="dark"]) .news-thumb,
+html:not([data-theme="dark"]) .consultation-panel,
+html:not([data-theme="dark"]) .notifications-panel {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .medical-card-header,
+html:not([data-theme="dark"]) .medical-card-header {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .card h1, html[data-theme="light"] .card h2, html[data-theme="light"] .card h3, html[data-theme="light"] .card h4, html[data-theme="light"] .card h5, html[data-theme="light"] .card h6, html[data-theme="light"] .card strong, html[data-theme="light"] .card p, html[data-theme="light"] .card span:not([class*="badge"]),
+html:not([data-theme="dark"]) .card h1, html:not([data-theme="dark"]) .card h2, html:not([data-theme="dark"]) .card h3, html:not([data-theme="dark"]) .card h4, html:not([data-theme="dark"]) .card h5, html:not([data-theme="dark"]) .card h6, html:not([data-theme="dark"]) .card strong, html:not([data-theme="dark"]) .card p, html:not([data-theme="dark"]) .card span:not([class*="badge"]) {
+  color: #0f172a !important;
+}
+
+/* DARK MODE GLOBAL CARD OVERRIDES */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .card-glass,
+html[data-theme="dark"] .medical-card,
+html[data-theme="dark"] .triage-card,
+html[data-theme="dark"] .metric-box,
+html[data-theme="dark"] .single-team,
+html[data-theme="dark"] .news-thumb,
+html[data-theme="dark"] .consultation-panel,
+html[data-theme="dark"] .notifications-panel {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .medical-card-header {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-bottom-color: #334155 !important;
+}
+
+html[data-theme="dark"] .card h1, html[data-theme="dark"] .card h2, html[data-theme="dark"] .card h3, html[data-theme="dark"] .card h4, html[data-theme="dark"] .card h5, html[data-theme="dark"] .card h6, html[data-theme="dark"] .card strong, html[data-theme="dark"] .card p, html[data-theme="dark"] .card span:not([class*="badge"]) {
+  color: #f8fafc !important;
+}
+
+
 

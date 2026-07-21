@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { Bell, LogOut, Search } from 'lucide-react';
 
 export const VhtDashboard: React.FC = () => {
@@ -345,16 +346,64 @@ export const VhtDashboard: React.FC = () => {
         </div>
       </aside>
 
+      {/* SCOPED MOBILE OVERRIDES */}
+      <style>{`
+        @media (max-width: 768px) {
+          .vht-theme {
+            flex-direction: column !important;
+          }
+          .vht-theme aside {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            flex-direction: row !important;
+            border-right: none !important;
+            border-top: 1px solid rgba(14,165,233,0.2) !important;
+            z-index: 2000 !important;
+            padding: 0 !important;
+          }
+          .vht-theme aside > div:first-child,
+          .vht-theme aside > div:last-child {
+            display: none !important;
+          }
+          .vht-theme aside nav {
+            flex-direction: row !important;
+            width: 100% !important;
+            justify-content: space-around !important;
+            gap: 0 !important;
+          }
+          .vht-theme aside nav button {
+            flex-direction: column !important;
+            padding: 8px 4px !important;
+            gap: 2px !important;
+            font-size: 9px !important;
+            border-radius: 0 !important;
+            justify-content: center !important;
+            flex: 1 !important;
+            text-align: center !important;
+          }
+          .vht-theme main {
+            margin-left: 0 !important;
+            padding: 16px !important;
+            padding-bottom: 80px !important;
+          }
+        }
+      `}</style>
+
       {/* MAIN CONTENT AREA */}
       <main style={{ flex: 1, marginLeft: '260px', padding: '32px', boxSizing: 'border-box' }}>
         
         {/* Top Header Strip */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, textTransform: 'capitalize' }}>{activeTab} Workspace</h1>
             <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Mukono District Maternal Health Network</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
             <ThemeToggle />
             <div style={{ position: 'relative' }}>
               <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', position: 'relative' }}>
@@ -364,7 +413,7 @@ export const VhtDashboard: React.FC = () => {
                 )}
               </button>
               {showNotifications && (
-                <div style={{ position: 'absolute', top: '30px', right: 0, width: '280px', background: isDark ? '#1e293b' : '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', zIndex: 100, padding: '10px' }}>
+                <div style={{ position: 'absolute', top: '35px', right: 0, width: '280px', background: isDark ? '#1e293b' : '#ffffff', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.15)', zIndex: 100, padding: '10px' }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.85rem', fontWeight: 800 }}>Notifications</h4>
                   <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {notifications.length === 0 ? (
@@ -381,6 +430,26 @@ export const VhtDashboard: React.FC = () => {
                 </div>
               )}
             </div>
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
+            <button
+              onClick={() => { AuthService.logout(); navigate('/'); }}
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                color: '#ef4444',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="Logout"
+            >
+              <LogOut size={14} /> <span>Log Out</span>
+            </button>
           </div>
         </header>
 

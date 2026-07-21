@@ -656,6 +656,28 @@ export const MotherDashboard: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              <ProfilePhotoUpload user={user} onUpdated={setUser} size={36} showLabel={false} />
+
+              <button
+                onClick={() => { AuthService.logout(); navigate('/'); }}
+                style={{
+                  background: 'rgba(244,63,94,0.1)',
+                  border: '1px solid rgba(244,63,94,0.3)',
+                  color: '#e11d48',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700
+                }}
+                title="Logout"
+              >
+                <LogOut size={14} /> <span>Exit</span>
+              </button>
             </div>
           </header>
 

@@ -1206,6 +1206,34 @@ export const AdminDashboard: React.FC = () => {
       {/* MAIN CONTAINER CONTENT AREA */}
       <main className="main-content-area">
         
+        {/* RESPONSIVE MOBILE TOP BAR */}
+        <div className="mobile-admin-topbar d-flex d-md-none" style={{
+          padding: '12px 16px',
+          background: theme === 'dark' ? '#0f172a' : '#ffffff',
+          borderBottom: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+          borderRadius: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🚑</span>
+            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: theme === 'dark' ? '#ffffff' : '#0f172a' }}>Admin Deck</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeToggle />
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={32} showLabel={false} />
+            <button
+              onClick={() => { AuthService.logout(); navigate('/'); }}
+              title="Logout"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '6px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              <i className="ti ti-logout" style={{ fontSize: '14px' }}></i> Log Out
+            </button>
+          </div>
+        </div>
+
         {/* TOPBAR HEADER */}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <div>

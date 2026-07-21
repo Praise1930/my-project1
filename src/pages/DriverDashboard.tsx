@@ -383,23 +383,23 @@ export const DriverDashboard: React.FC = () => {
               <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '4px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <ThemeToggle style={{ fontSize: '0.75rem' }} />
               <button
                 onClick={handleToggleDuty}
                 className={`btn btn-sm ${driver.is_on_duty ? 'btn-amber' : 'btn-ghost'}`}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.82rem' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '0.82rem' }}
               >
-                <span>{driver.is_on_duty ? '🟢 Active On-Duty' : '🔴 Go Standby'}</span>
+                <span>{driver.is_on_duty ? '🟢 Active On-Duty' : '🔴 Standby'}</span>
               </button>
+              <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
               <button
                 onClick={() => { AuthService.logout(); navigate('/'); }}
                 className="driver-logout-btn"
-                style={{ display: 'none', alignItems: 'center', gap: '5px', padding: '8px 16px', fontSize: '0.82rem', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '8px 14px', fontSize: '0.82rem', border: '1px solid rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
                 title="Logout"
               >
-                <LogOut size={13} />
-                <span>Logout</span>
+                <LogOut size={14} /> <span>Exit</span>
               </button>
             </div>
           </header>

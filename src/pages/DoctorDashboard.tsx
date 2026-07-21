@@ -507,8 +507,28 @@ export const DoctorDashboard: React.FC = () => {
             <span style={{ fontSize: '12px', color: '#777777' }}>🏥 Facility: <strong>{hospital.name}</strong></span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <ThemeToggle />
+            <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
+            <button
+              onClick={() => { AuthService.logout(); navigate('/'); }}
+              title="Logout"
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                color: '#ef4444',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <i className="bi bi-box-arrow-right" style={{ fontSize: '14px' }}></i> Log Out
+            </button>
           </div>
         </header>
 
