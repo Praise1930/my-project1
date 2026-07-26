@@ -242,52 +242,6 @@ export const Login: React.FC = () => {
           {/* Form Content Body */}
           <div style={{ padding: '36px 30px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
-            {searchParams.get('verifyEmail') && (
-              <div style={{
-                background: 'rgba(59, 130, 246, 0.08)',
-                border: '1px solid rgba(59, 130, 246, 0.25)',
-                color: isDark ? '#93c5fd' : '#1d4ed8',
-                padding: '14px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                marginBottom: '1.5rem',
-                textAlign: 'left',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-                  <span>📧</span> Simulated Verification Email Sent
-                </div>
-                <div style={{ fontSize: '0.8rem', lineHeight: 1.45 }}>
-                  A confirmation link has been sent to <strong>{searchParams.get('verifyEmail')}</strong>. In production, this requires clicking the email link.
-                </div>
-                <Link 
-                  to={`/verify-email?email=${encodeURIComponent(searchParams.get('verifyEmail') || '')}`}
-                  style={{
-                    color: '#ffffff',
-                    background: '#0f61ef',
-                    textDecoration: 'none',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    marginTop: '4px',
-                    display: 'inline-block',
-                    alignSelf: 'stretch',
-                    boxShadow: '0 4px 10px rgba(15, 97, 239, 0.15)',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#0a4fb7'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#0f61ef'}
-                >
-                  Verify Email (Simulator Link)
-                </Link>
-              </div>
-            )}
-
             {error && (
               <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>⚠️</span> {error}

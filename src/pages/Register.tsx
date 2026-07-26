@@ -197,11 +197,10 @@ export const Register: React.FC = () => {
       if (res.success) {
         if (isFirebaseConfigured && auth && registeredInFirebase) {
           await signOut(auth);
-          alert('Registration successful! Please check your email to verify your account before logging in.');
+          alert('Registration successful! A verification link has been sent to your email. Please click the link in your inbox to verify your account before logging in.');
           navigate('/login?role=mother');
         } else {
-          // Fallback redirect with mock simulator link only if firebase did not send real email
-          navigate(`/login?role=mother&verifyEmail=${encodeURIComponent(submissionData.email)}`);
+          setError('Could not complete registration. Firebase Authentication services are offline or not configured correctly to send actual verification emails.');
         }
       } else {
         setError(res.error || 'Failed to create local account profile');
