@@ -65,7 +65,7 @@ export const Login: React.FC = () => {
         if (res.success) {
           navigate(`/${role}`);
         } else {
-          setError('Invalid credentials.');
+          setError('⚠️ Invalid email or password. Please check your credentials and try again.');
         }
         return;
       }
@@ -76,7 +76,7 @@ export const Login: React.FC = () => {
         
         // 2. Enforce Email Verification for Firebase Users
         if (!userCredential.user.emailVerified) {
-          setError('Please verify your email address. Check your inbox for the verification link.');
+          setError('📧 Your email address has not been verified yet. Please check your inbox for the verification link sent to ' + email + ' and click it before logging in.');
           await signOut(auth);
           setIsLoading(false);
           return;
@@ -87,21 +87,30 @@ export const Login: React.FC = () => {
         if (res.success) {
           navigate(`/${role}`);
         } else {
-          setError('Local mock profile not found. Please contact an administrator.');
+          setError('⚠️ Account not found for this role. Please ensure you are logging in with the correct portal.');
         }
 
       } catch (firebaseErr: any) {
-        // If Firebase login fails (e.g. user not found), it might be a legacy mock user
-        if (firebaseErr.code === 'auth/user-not-found' || firebaseErr.code === 'auth/invalid-credential' || firebaseErr.code === 'auth/invalid-login-credentials') {
+        if (
+          firebaseErr.code === 'auth/user-not-found' ||
+          firebaseErr.code === 'auth/invalid-credential' ||
+          firebaseErr.code === 'auth/invalid-login-credentials'
+        ) {
           // Fallback to local mock DB login
           const res = AuthService.login(email, password, role);
           if (res.success) {
             navigate(`/${role}`);
           } else {
-             setError('Invalid credentials.');
+            setError('⚠️ Invalid email or password. Please check your credentials and try again.');
           }
+        } else if (firebaseErr.code === 'auth/wrong-password') {
+          setError('⚠️ Incorrect password. Please try again or use Forgot Password.');
+        } else if (firebaseErr.code === 'auth/user-disabled') {
+          setError('⛔ This account has been disabled. Please contact mamatrack6@gmail.com for assistance.');
+        } else if (firebaseErr.code === 'auth/too-many-requests') {
+          setError('⛔ Too many failed login attempts. Please wait a few minutes and try again.');
         } else {
-          setError(firebaseErr.message || 'Authentication failed');
+          setError('⚠️ Login failed. Please check your credentials or try again later.');
         }
       }
     } finally {

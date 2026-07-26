@@ -181,13 +181,23 @@ export const Register: React.FC = () => {
           await sendEmailVerification(userCredential.user);
           registeredInFirebase = true;
         } catch (firebaseErr: any) {
-          console.warn("Firebase Auth registration failed. Attempting local-only registration fallback:", firebaseErr);
+          console.warn("Firebase Auth registration failed:", firebaseErr);
           if (firebaseErr.code === 'auth/email-already-in-use') {
-            setError('This email is already in use by another cloud account.');
+            setError('⚠️ This email address is already registered. Please log in or use a different email.');
             setIsLoading(false);
             return;
           }
-          // Do not fail hard on firebase setup/network errors; fallback to local db
+          if (firebaseErr.code === 'auth/invalid-email') {
+            setError('⚠️ The email address provided is invalid. Please check and try again.');
+            setIsLoading(false);
+            return;
+          }
+          if (firebaseErr.code === 'auth/weak-password') {
+            setError('⚠️ Password is too weak. Please use at least 8 characters with a mix of letters and numbers.');
+            setIsLoading(false);
+            return;
+          }
+          // Firebase offline/config error — fall through to local registration only
         }
       }
       
@@ -195,44 +205,43 @@ export const Register: React.FC = () => {
       const res = AuthService.registerMother(submissionData);
       
       if (res.success) {
+        // Determine the mail client inbox URL based on email address
+        const emailInput = submissionData.email.toLowerCase().trim();
+        const domain = emailInput.split('@')[1];
+        let mailUrl = 'https://mail.google.com';
+        let providerName = 'Email Inbox';
+
+        if (domain.includes('gmail')) {
+          mailUrl = 'https://mail.google.com';
+          providerName = 'Gmail Inbox';
+        } else if (domain.includes('yahoo')) {
+          mailUrl = 'https://mail.yahoo.com';
+          providerName = 'Yahoo Mail';
+        } else if (domain.includes('outlook') || domain.includes('hotmail') || domain.includes('live') || domain.includes('msn')) {
+          mailUrl = 'https://outlook.live.com';
+          providerName = 'Outlook / Hotmail';
+        } else if (domain.includes('icloud')) {
+          mailUrl = 'https://www.icloud.com/mail';
+          providerName = 'iCloud Mail';
+        } else if (domain.includes('yandex')) {
+          mailUrl = 'https://mail.yandex.com';
+          providerName = 'Yandex Mail';
+        } else if (domain.includes('zoho')) {
+          mailUrl = 'https://mail.zoho.com';
+          providerName = 'Zoho Mail';
+        } else if (domain.includes('proton')) {
+          mailUrl = 'https://mail.proton.me';
+          providerName = 'ProtonMail';
+        }
+
         if (isFirebaseConfigured && auth && registeredInFirebase) {
           await signOut(auth);
-          
-          // Determine the mail client inbox URL based on email address
-          const emailInput = submissionData.email.toLowerCase().trim();
-          const domain = emailInput.split('@')[1];
-          let mailUrl = 'https://mail.google.com'; // Default fallback
-          let providerName = 'Email Inbox';
-
-          if (domain.includes('gmail')) {
-            mailUrl = 'https://mail.google.com';
-            providerName = 'Gmail Inbox';
-          } else if (domain.includes('yahoo')) {
-            mailUrl = 'https://mail.yahoo.com';
-            providerName = 'Yahoo Mail';
-          } else if (domain.includes('outlook') || domain.includes('hotmail') || domain.includes('live') || domain.includes('msn')) {
-            mailUrl = 'https://outlook.live.com';
-            providerName = 'Outlook / Hotmail';
-          } else if (domain.includes('icloud')) {
-            mailUrl = 'https://www.icloud.com/mail';
-            providerName = 'iCloud Mail';
-          } else if (domain.includes('yandex')) {
-            mailUrl = 'https://mail.yandex.com';
-            providerName = 'Yandex Mail';
-          } else if (domain.includes('zoho')) {
-            mailUrl = 'https://mail.zoho.com';
-            providerName = 'Zoho Mail';
-          } else if (domain.includes('proton')) {
-            mailUrl = 'https://mail.proton.me';
-            providerName = 'ProtonMail';
-          }
-
-          alert(`Registration successful! A verification email has been sent. Click OK to open your ${providerName} and verify your account.`);
+          alert(`Registration successful! A verification email has been sent to ${submissionData.email}. Click OK to open your ${providerName} and verify your account.`);
           window.open(mailUrl, '_blank');
-          navigate('/login?role=mother');
         } else {
-          setError('Could not complete registration. Firebase Authentication services are offline or not configured correctly to send actual verification emails.');
+          alert(`Account created! However, a verification email could not be sent at this time. Please contact support at mamatrack6@gmail.com if you have issues logging in.`);
         }
+        navigate('/login?role=mother');
       } else {
         setError(res.error || 'Failed to create local account profile');
       }
