@@ -197,7 +197,38 @@ export const Register: React.FC = () => {
       if (res.success) {
         if (isFirebaseConfigured && auth && registeredInFirebase) {
           await signOut(auth);
-          alert('Registration successful! A verification link has been sent to your email. Please click the link in your inbox to verify your account before logging in.');
+          
+          // Determine the mail client inbox URL based on email address
+          const emailInput = submissionData.email.toLowerCase().trim();
+          const domain = emailInput.split('@')[1];
+          let mailUrl = 'https://mail.google.com'; // Default fallback
+          let providerName = 'Email Inbox';
+
+          if (domain.includes('gmail')) {
+            mailUrl = 'https://mail.google.com';
+            providerName = 'Gmail Inbox';
+          } else if (domain.includes('yahoo')) {
+            mailUrl = 'https://mail.yahoo.com';
+            providerName = 'Yahoo Mail';
+          } else if (domain.includes('outlook') || domain.includes('hotmail') || domain.includes('live') || domain.includes('msn')) {
+            mailUrl = 'https://outlook.live.com';
+            providerName = 'Outlook / Hotmail';
+          } else if (domain.includes('icloud')) {
+            mailUrl = 'https://www.icloud.com/mail';
+            providerName = 'iCloud Mail';
+          } else if (domain.includes('yandex')) {
+            mailUrl = 'https://mail.yandex.com';
+            providerName = 'Yandex Mail';
+          } else if (domain.includes('zoho')) {
+            mailUrl = 'https://mail.zoho.com';
+            providerName = 'Zoho Mail';
+          } else if (domain.includes('proton')) {
+            mailUrl = 'https://mail.proton.me';
+            providerName = 'ProtonMail';
+          }
+
+          alert(`Registration successful! A verification email has been sent. Click OK to open your ${providerName} and verify your account.`);
+          window.open(mailUrl, '_blank');
           navigate('/login?role=mother');
         } else {
           setError('Could not complete registration. Firebase Authentication services are offline or not configured correctly to send actual verification emails.');
