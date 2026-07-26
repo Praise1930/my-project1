@@ -164,7 +164,14 @@ export const Register: React.FC = () => {
       next_of_kin_phone: `+256${formData.next_of_kin_phone}`
     };
 
-    try {
+      // Check if email already exists locally first
+      const existsLocally = AuthService.users.some(u => u.email.toLowerCase() === submissionData.email.toLowerCase());
+      if (existsLocally) {
+        setError('This email is already registered.');
+        setIsLoading(false);
+        return;
+      }
+
       let registeredInFirebase = false;
       // 1. Register with Firebase Authentication if configured
       if (isFirebaseConfigured && auth) {
@@ -191,8 +198,11 @@ export const Register: React.FC = () => {
         if (isFirebaseConfigured && auth && registeredInFirebase) {
           await signOut(auth);
           alert('Registration successful! Please check your email to verify your account before logging in.');
+          navigate('/login?role=mother');
+        } else {
+          // Fallback redirect with mock simulator link only if firebase did not send real email
+          navigate(`/login?role=mother&verifyEmail=${encodeURIComponent(submissionData.email)}`);
         }
-        navigate(`/login?role=mother&verifyEmail=${encodeURIComponent(submissionData.email)}`);
       } else {
         setError(res.error || 'Failed to create local account profile');
       }
