@@ -708,3 +708,131 @@ body.mother-theme-active::after {
         width: 190px !important;
     }
 }
+
+/* ===========================
+   DARK MODE OVERRIDES
+   =========================== */
+
+.dark .momentra-dashboard {
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+.dark .sidebar {
+    background: rgba(15, 23, 42, 0.95);
+    border-right-color: rgba(255,255,255,0.06);
+}
+
+.dark .card-glass {
+    background: rgba(30, 41, 59, 0.92);
+    border-color: rgba(255,255,255,0.07);
+    color: #f1f5f9;
+}
+
+.dark .feature-card {
+    background: rgba(30, 41, 59, 0.88);
+    border-color: rgba(255,255,255,0.07);
+    color: #f1f5f9;
+}
+
+.dark .feature-card h3,
+.dark .feature-card .feature-title {
+    color: #f8fafc;
+}
+
+.dark .feature-card p,
+.dark .feature-card .feature-desc {
+    color: #94a3b8;
+}
+
+.dark .floating-widget {
+    background: rgba(30, 41, 59, 0.97) !important;
+    border-color: rgba(255,255,255,0.07) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35) !important;
+}
+
+.dark .main-content {
+    background: transparent;
+}
+
+.dark .form-input,
+.dark .momentra-input {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+.dark .form-input:focus,
+.dark .momentra-input:focus {
+    border-color: #f43f5e !important;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12) !important;
+}
+
+.dark .modal {
+    background: #1e293b;
+    color: #f1f5f9;
+    border-color: rgba(255,255,255,0.08);
+}
+
+.dark .modal-header {
+    border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+
+.dark .modal-footer {
+    border-top-color: rgba(255,255,255,0.08) !important;
+}
+
+.dark .momentra-section-title,
+.dark .section-title {
+    color: #f8fafc;
+}
+
+.dark .vital-entry,
+.dark .checklist-item {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255,255,255,0.06);
+}
+
+.dark .progress-bar-bg {
+    background: #334155;
+}
+
+.dark .sidebar-link,
+.dark .nav-link {
+    color: #94a3b8;
+}
+
+.dark .sidebar-link:hover,
+.dark .nav-link:hover,
+.dark .sidebar-link.active,
+.dark .nav-link.active {
+    background: rgba(244, 63, 94, 0.12);
+    color: #f43f5e;
+}
+
+.dark .page-header {
+    color: #f8fafc;
+}
+
+.dark .subtitle {
+    color: #94a3b8;
+}
+
+/* Font-size upscale for dashboard body text */
+.momentra-dashboard .card-glass,
+.momentra-dashboard .feature-card,
+.momentra-dashboard .sidebar-link,
+.momentra-dashboard .floating-widget {
+    font-size: 0.93rem;
+}
+
+.momentra-dashboard .modal-body,
+.momentra-dashboard .form-label {
+    font-size: 0.86rem;
+}
+
+.momentra-dashboard .page-header h1,
+.momentra-dashboard .page-header .greeting-title {
+    font-size: 1.65rem;
+}

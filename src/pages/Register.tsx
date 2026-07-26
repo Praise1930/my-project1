@@ -96,7 +96,7 @@ export const Register: React.FC = () => {
     setIsLoading(true);
 
     const errors: Record<string, string> = {};
-    const phoneRegex = /^7\d{7}$/;
+    const phoneRegex = /^\d{9}$/;
 
     if (!formData.full_name.trim()) errors.full_name = "Full name is required.";
     if (!formData.email.trim()) {
@@ -108,7 +108,7 @@ export const Register: React.FC = () => {
     if (!formData.phone.trim()) {
       errors.phone = "Phone number is required.";
     } else if (!phoneRegex.test(formData.phone)) {
-      errors.phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
+      errors.phone = "Invalid format. Must be exactly 9 digits (e.g. 783920181).";
     }
 
     if (!formData.date_of_birth) {
@@ -117,8 +117,17 @@ export const Register: React.FC = () => {
 
     if (!formData.password_hash) {
       errors.password_hash = "Password is required.";
-    } else if (formData.password_hash.length < 6) {
-      errors.password_hash = "Password must be at least 6 characters long.";
+    } else if (formData.password_hash.length < 8) {
+      errors.password_hash = "Password must be at least 8 characters long.";
+    } else {
+      const password = formData.password_hash;
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasNumber = /\d/.test(password);
+      const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+      const typesCount = [hasLetter, hasNumber, hasSymbol].filter(Boolean).length;
+      if (typesCount < 2) {
+        errors.password_hash = "Password must contain a mix of at least two categories: letters, numbers, and symbols.";
+      }
     }
 
     if (formData.password_hash !== confirmPassword) {
@@ -136,7 +145,7 @@ export const Register: React.FC = () => {
     if (!formData.next_of_kin_phone.trim()) {
       errors.next_of_kin_phone = "Kin phone number is required.";
     } else if (!phoneRegex.test(formData.next_of_kin_phone)) {
-      errors.next_of_kin_phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
+      errors.next_of_kin_phone = "Invalid format. Must be exactly 9 digits (e.g. 783920181).";
     }
 
     if (!formData.village.trim()) {
@@ -145,15 +154,14 @@ export const Register: React.FC = () => {
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
-      setError("Please fix the highlighted fields before submitting.");
       setIsLoading(false);
       return;
     }
 
     const submissionData = {
       ...formData,
-      phone: `+267${formData.phone}`,
-      next_of_kin_phone: `+267${formData.next_of_kin_phone}`
+      phone: `+256${formData.phone}`,
+      next_of_kin_phone: `+256${formData.next_of_kin_phone}`
     };
 
     try {
@@ -183,10 +191,8 @@ export const Register: React.FC = () => {
         if (isFirebaseConfigured && auth && registeredInFirebase) {
           await signOut(auth);
           alert('Registration successful! Please check your email to verify your account before logging in.');
-        } else {
-          alert('Registration successful! (Running in mock database mode)');
         }
-        navigate('/login?role=mother');
+        navigate(`/login?role=mother&verifyEmail=${encodeURIComponent(submissionData.email)}`);
       } else {
         setError(res.error || 'Failed to create local account profile');
       }
@@ -376,7 +382,7 @@ export const Register: React.FC = () => {
                 <div className="form-group">
                   <label className="form-label"><Phone size={13} /> Phone Number</label>
                   <div className="phone-input-group">
-                    <span className="phone-prefix">+267</span>
+                    <span className="phone-prefix">+256</span>
                     <input
                       type="tel"
                       name="phone"
@@ -576,7 +582,7 @@ export const Register: React.FC = () => {
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label"><Phone size={13} /> Kin Phone Number</label>
                 <div className="phone-input-group">
-                  <span className="phone-prefix">+267</span>
+                  <span className="phone-prefix">+256</span>
                   <input
                     type="tel"
                     name="next_of_kin_phone"

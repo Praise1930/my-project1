@@ -127,9 +127,8 @@ export const VhtDashboard: React.FC = () => {
   const handleRegisterMother = (e: React.FormEvent) => {
     e.preventDefault();
     setRegErrors({});
-
     const errors: Record<string, string> = {};
-    const phoneRegex = /^7\d{7}$/;
+    const phoneRegex = /^\d{9}$/;
 
     if (!regForm.full_name.trim()) errors.full_name = "Full name is required.";
     if (!regForm.email.trim()) {
@@ -141,7 +140,7 @@ export const VhtDashboard: React.FC = () => {
     if (!regForm.phone.trim()) {
       errors.phone = "Phone number is required.";
     } else if (!phoneRegex.test(regForm.phone)) {
-      errors.phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
+      errors.phone = "Invalid format. Must be exactly 9 digits (e.g. 783920181).";
     }
 
     if (!regForm.date_of_birth) {
@@ -163,7 +162,7 @@ export const VhtDashboard: React.FC = () => {
     if (!regForm.next_of_kin_phone.trim()) {
       errors.next_of_kin_phone = "Kin phone is required.";
     } else if (!phoneRegex.test(regForm.next_of_kin_phone)) {
-      errors.next_of_kin_phone = "Invalid format. Must start with 7 and have exactly 8 digits (e.g. 71234567).";
+      errors.next_of_kin_phone = "Invalid format. Must be exactly 9 digits (e.g. 783920181).";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -173,8 +172,8 @@ export const VhtDashboard: React.FC = () => {
 
     const submissionData = {
       ...regForm,
-      phone: `+267${regForm.phone}`,
-      next_of_kin_phone: `+267${regForm.next_of_kin_phone}`
+      phone: `+256${regForm.phone}`,
+      next_of_kin_phone: `+256${regForm.next_of_kin_phone}`
     };
     
     const res = AuthService.registerMother(submissionData);
@@ -759,12 +758,12 @@ export const VhtDashboard: React.FC = () => {
                       fontSize: '0.85rem',
                       userSelect: 'none'
                     }}>
-                      +267
+                      +256
                     </span>
                     <input
                       type="tel"
                       className="form-input"
-                      placeholder="e.g. 71234567"
+                      placeholder="e.g. 783920181"
                       style={{
                         flex: 1,
                         padding: '8px 12px',
@@ -948,12 +947,12 @@ export const VhtDashboard: React.FC = () => {
                       fontSize: '0.85rem',
                       userSelect: 'none'
                     }}>
-                      +267
+                      +256
                     </span>
                     <input
                       type="tel"
                       className="form-input"
-                      placeholder="e.g. 71234567"
+                      placeholder="e.g. 783920181"
                       style={{
                         flex: 1,
                         padding: '8px 12px',

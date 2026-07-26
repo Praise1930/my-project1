@@ -1,7 +1,8 @@
 // MamaTrack GPS — Reusable Profile Photo Upload & View Component
-
 import React, { useRef, useState } from 'react';
 import { UserService, User } from '../services/db';
+import { useTheme } from '../contexts/ThemeContext';
+import { Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 interface ProfilePhotoUploadProps {
   user: User;
@@ -20,7 +21,9 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const cameraRef  = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading]   = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
+
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const processFile = (file: File) => {
     if (!file) return;
@@ -90,17 +93,17 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
           width: size,
           height: size,
           borderRadius: '50%',
-          border: '3px solid rgba(99, 102, 241, 0.4)',
+          border: '3px solid rgba(244, 63, 94, 0.4)',
           overflow: 'hidden',
           cursor: 'pointer',
-          background: user.avatar ? 'transparent' : 'linear-gradient(135deg,#4f46e5,#7c3aed)',
+          background: user.avatar ? 'transparent' : 'linear-gradient(135deg,#fb7185,#f43f5e)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: 0,
           position: 'relative',
           transition: 'border-color 0.2s',
-          boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
+          boxShadow: '0 4px 14px rgba(244, 63, 94, 0.15)',
           flexShrink: 0,
         }}
       >
@@ -123,7 +126,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
           right: 0,
           width: size * 0.32,
           height: size * 0.32,
-          background: '#6366f1',
+          background: '#f43f5e',
           borderRadius: '50%',
           border: '2px solid #fff',
           display: 'flex',
@@ -147,13 +150,13 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       </button>
 
       {showLabel && (
-        <span style={{ fontSize: '0.7rem', color: '#64748b', cursor: 'pointer', userSelect: 'none' }}
+        <span style={{ fontSize: '0.7rem', color: isDark ? '#cbd5e1' : '#64748b', cursor: 'pointer', userSelect: 'none', fontWeight: 600 }}
           onClick={() => setMenuOpen(o => !o)}>
           Manage Photo
         </span>
       )}
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu Popup */}
       {menuOpen && (
         <>
           {/* Click-away backdrop */}
@@ -169,45 +172,62 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 999999,
-              background: 'var(--bg-card, #ffffff)',
-              border: '1px solid var(--border-color, #e2e8f0)',
-              borderRadius: 14,
-              boxShadow: '0 12px 35px rgba(0,0,0,0.25)',
-              padding: '12px',
-              width: '230px',
+              background: isDark ? '#1e293b' : '#ffffff',
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e2e8f0',
+              borderRadius: 16,
+              boxShadow: isDark ? '0 12px 35px rgba(0,0,0,0.45)' : '0 12px 35px rgba(0,0,0,0.18)',
+              padding: '16px',
+              width: '240px',
               maxWidth: 'calc(100vw - 32px)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '12px'
             }}
           >
-            {/* View photo option if avatar exists */}
-            {user.avatar && (
-              <button
-                onClick={() => { setShowViewModal(true); setMenuOpen(false); }}
-                style={{
+            {/* View Profile Image at the top of the menu itself */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              paddingBottom: '12px',
+              borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9',
+              gap: '8px'
+            }}>
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.full_name}
+                  style={{
+                    width: '90px',
+                    height: '90px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '3px solid rgba(244, 63, 94, 0.25)'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg,#fb7185,#f43f5e)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '9px 12px',
-                  background: 'rgba(99,102,241,0.08)',
-                  border: '1px solid rgba(99,102,241,0.2)',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  color: '#4f46e5',
                   justifyContent: 'center',
-                  fontFamily: 'inherit'
-                }}
-              >
-                <span>👁️</span> View Profile Picture
-              </button>
-            )}
+                  color: '#fff',
+                  fontSize: '2rem',
+                  fontWeight: 800
+                }}>
+                  {initials}
+                </div>
+              )}
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#ffffff' : '#1f2937' }}>
+                Your Profile Photo
+              </span>
+            </div>
 
-            {/* Vertical flex column for Choose from Gallery and Take a Photo */}
+            {/* Change options below the profile picture */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
               <button
                 onClick={() => galleryRef.current?.click()}
@@ -219,16 +239,16 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   gap: 6,
                   padding: '9px 12px',
                   background: 'none',
-                  border: '1px solid var(--border-color, #cbd5e1)',
+                  border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: 'var(--text-primary, #0f172a)',
+                  color: isDark ? '#cbd5e1' : '#334155',
                   fontFamily: 'inherit'
                 }}
               >
-                <span>🖼️</span> Choose from Gallery
+                <ImageIcon size={14} /> Choose from Gallery
               </button>
               <button
                 onClick={() => cameraRef.current?.click()}
@@ -240,19 +260,20 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   gap: 6,
                   padding: '9px 12px',
                   background: 'none',
-                  border: '1px solid var(--border-color, #cbd5e1)',
+                  border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
                   borderRadius: 8,
                   cursor: 'pointer',
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
-                  color: 'var(--text-primary, #0f172a)',
+                  color: isDark ? '#cbd5e1' : '#334155',
                   fontFamily: 'inherit'
                 }}
               >
-                <span>📸</span> Take a Photo
+                <Camera size={14} /> Take a Photo
               </button>
             </div>
 
+            {/* Remove Profile Photo option at the very bottom */}
             {user.avatar && (
               <button
                 onClick={handleRemove}
@@ -260,7 +281,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
+                  gap: 6,
                   width: '100%',
                   padding: '8px 12px',
                   background: 'rgba(239,68,68,0.06)',
@@ -273,69 +294,11 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   fontFamily: 'inherit'
                 }}
               >
-                <span>🗑️</span> Remove Photo
+                <Trash2 size={13} /> Remove Photo
               </button>
             )}
           </div>
         </>
-      )}
-
-      {/* Full Size Profile Picture Lightbox View Modal */}
-      {showViewModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 99999,
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}
-          onClick={() => setShowViewModal(false)}
-        >
-          <div
-            style={{
-              position: 'relative',
-              background: '#0f172a',
-              borderRadius: '16px',
-              padding: '20px',
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '14px' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#ffffff' }}>
-                {user.full_name}'s Profile Photo
-              </span>
-              <button
-                onClick={() => setShowViewModal(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.full_name}
-                style={{ maxWidth: '340px', maxHeight: '340px', borderRadius: '12px', objectFit: 'cover' }}
-              />
-            ) : (
-              <div style={{ width: '180px', height: '180px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '3rem', fontWeight: 800 }}>
-                {initials}
-              </div>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );

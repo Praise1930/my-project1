@@ -1,17 +1,53 @@
-// MamaTrack GPS — SMS Gateway Simulator Console
-
+// MamaTrack GPS — AI Chatbot & SMS Gateway Console
 import React, { useState, useEffect, useRef } from 'react';
 import { db, SmsService } from '../services/db';
 import { useTheme } from '../contexts/ThemeContext';
+import { Send, MessageSquare, List, Trash2, Bot, X, ShieldAlert } from 'lucide-react';
+
+interface ChatMessage {
+  id: number;
+  sender: 'user' | 'ai';
+  text: string;
+  timestamp: string;
+}
 
 export const SMSSimulator: React.FC = () => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+  let isDark = false;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { theme } = useTheme();
+    isDark = theme === 'dark';
+  } catch {
+    // context not available, default to light
+  }
 
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ai' | 'sms'>('ai');
   const [smsLogs, setSmsLogs] = useState(db.smsLogs);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 640);
+  
+  // Chatbot State
+  const [chatLogs, setChatLogs] = useState<ChatMessage[]>(() => {
+    const saved = localStorage.getItem('mamatrack_ai_chat');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { }
+    }
+    return [
+      {
+        id: 1,
+        sender: 'ai',
+        text: 'Hello! I am your virtual MamaTrack AI Health Assistant. Ask me any questions about pregnancy wellness, baby\'s heart rate, maternal danger signs, or how to interact with the system.',
+        timestamp: new Date().toISOString()
+      }
+    ];
+  });
+  const [chatInput, setChatInput] = useState('');
+  const [isAITyping, setIsAITyping] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('mamatrack_ai_chat', JSON.stringify(chatLogs));
+  }, [chatLogs]);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 640);
@@ -20,6 +56,7 @@ export const SMSSimulator: React.FC = () => {
   }, []);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Dragging state along the side (vertical)
   const [yPos, setYPos] = useState<number | null>(null);
@@ -40,7 +77,6 @@ export const SMSSimulator: React.FC = () => {
       }
       
       let newTop = startTop.current + diffY;
-      // Clamp bounds: stay within top 10px and bottom 60px
       newTop = Math.max(10, Math.min(window.innerHeight - 60, newTop));
       setYPos(newTop);
     };
@@ -98,17 +134,196 @@ export const SMSSimulator: React.FC = () => {
     return () => clearInterval(timer);
   }, [smsLogs]);
 
-  // Auto-scroll SMS logs
+  // Auto-scroll scrollable areas
   useEffect(() => {
-    if (logsEndRef.current) {
+    if (activeTab === 'sms' && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [smsLogs, isOpen]);
+  }, [smsLogs, isOpen, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'ai' && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatLogs, isOpen, activeTab, isAITyping]);
 
   const clearLogs = () => {
     SmsService.clearLogs();
     setSmsLogs([]);
   };
+
+  const clearChat = () => {
+    if (window.confirm('Are you sure you want to clear your AI chat history?')) {
+      setChatLogs([
+        {
+          id: 1,
+          sender: 'ai',
+          text: 'Hello! I am your virtual MamaTrack AI Health Assistant. Ask me any questions about pregnancy wellness, baby\'s heart rate, maternal danger signs, or how to interact with the system.',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    }
+  };
+
+  // Chat message submission
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now(),
+      sender: 'user',
+      text: chatInput,
+      timestamp: new Date().toISOString()
+    };
+
+    setChatLogs(prev => [...prev, userMessage]);
+    const query = chatInput.toLowerCase();
+    setChatInput('');
+    setIsAITyping(true);
+
+    // AI simulation delay
+    setTimeout(() => {
+      let responseText = '';
+
+      if (query.includes('heart rate') || query.includes('heartbeat') || query.includes('bpm')) {
+        responseText = `👶 **Measuring Baby's Heart Rate:**\n\nA baby's fetal heart rate (normally **110 to 160 beats per minute**) is monitored in maternal clinics using these key diagnostic methods:\n\n1. 🩺 **Handheld Fetal Doppler**: An ultrasound device used by midwives to listen to and project the fetal heart rate starting around week 12.\n2. 📈 **Cardiotocography (CTG)**: A double-belt device secured to the mother's abdomen to track both the baby's heart patterns and uterine contraction forces concurrently.\n3. 🎺 **Pinard Horn (Fetoscope)**: A hollow wood/metal tube held against the mother's abdomen. The clinician listens directly to locate the heartbeat anatomically.`;
+      } 
+      else if (query.includes('danger sign') || query.includes('emergency') || query.includes('critical') || query.includes('warning') || query.includes('bleeding')) {
+        responseText = `⚠️ **Critical Maternal Danger Signs:**\n\nPlease immediately consult your midwife or press the red **Trigger SOS** button on your home dashboard if you experience any of the following symptoms:\n\n* **Vaginal bleeding** or sudden leakage of amniotic fluid.\n* **Severe, constant abdominal pain** or uterine contractions before week 37.\n* **Sudden swelling** of the face, fingers, hands, or ankles.\n* **Severe, persistent headaches** or blurred vision.\n* **High fever**, chills, or convulsions.\n* **Reduced or absent baby kicks** (fewer than 10 movements in 2 hours).`;
+      }
+      else if (query.includes('get started') || query.includes('steps') || query.includes('interact') || query.includes('how to use')) {
+        responseText = `🤱 **How to Interact with the MamaTrack System:**\n\n1. **Trigger SOS**: Click the 🚨 button on the Overview tab or side panel to broadcast your exact location and dispatch an ambulance.\n2. **Vitals Ledger**: Input your Blood Pressure, Glucose levels, and Kick counts under **Health Ledger & Vitals** to monitor health score trends.\n3. **Check WHO Milestones**: Navigate to the **WHO ANC Checklist** to complete the 8 recommended antenatal checks.\n4. **Doctor Consult**: Under **Profile & Doctors**, select an on-duty specialist to engage in clinical chat.`;
+      }
+      else if (query.includes('vitals') || query.includes('bp') || query.includes('blood pressure') || query.includes('glucose') || query.includes('sugar')) {
+        responseText = `🩺 **Monitoring Maternal Vitals:**\n\n* **Blood Pressure (BP)**: Normal is around **120/80 mmHg**. If your BP exceeds **140/90 mmHg**, it may indicate pre-eclampsia. Alert your doctor immediately.\n* **Blood Glucose**: Normal fasting levels are **<95 mg/dL**. Elevated readings can signal gestational diabetes.\n* Log these vitals under the **Health Ledger & Vitals** tab to update your health score automatically.`;
+      }
+      else if (query.includes('doctor') || query.includes('consult') || query.includes('chat') || query.includes('midwife')) {
+        responseText = `💬 **Consulting with Doctors:**\n\n* You can connect directly with on-duty obstetricians and midwives under the **Profile & Doctors** tab.\n* Select a matched doctor from the directory, type your specific concerns, and attach notes to receive clinical feedback.`;
+      }
+      else if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('help')) {
+        responseText = `👋 Hello! I am your virtual MamaTrack AI Health Assistant. I am here to answer pregnancy wellness questions and help you navigate the system. Ask me about **baby's heart rate**, **maternal danger signs**, or **how to use** the dashboard!`;
+      }
+      else {
+        responseText = `📖 **Pregnancy Wellness Advice:**\n\nThank you for your question. As an expectant mother, please ensure you:\n\n* Take daily prenatal vitamins containing **iron and folic acid**.\n* Stay well hydrated and maintain a balanced diet of proteins, fruits, and leafy greens.\n* Keep up with your scheduled clinical antenatal (ANC) appointments.\n\n*For diagnostic concerns, consult your assigned VHT midwife or write to an on-duty doctor on the Doctor Consult panel.*`;
+      }
+
+      const aiMessage: ChatMessage = {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: responseText,
+        timestamp: new Date().toISOString()
+      };
+
+      setChatLogs(prev => [...prev, aiMessage]);
+      setIsAITyping(false);
+    }, 1200);
+  };
+
+  const renderAiChat = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Messages list */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        background: isDark ? 'rgba(0,0,0,0.2)' : '#f8fafc',
+        borderRadius: '12px',
+        border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0',
+        padding: '12px',
+        marginBottom: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        minHeight: '260px'
+      }}>
+        {chatLogs.map((msg) => (
+          <div key={msg.id} style={{
+            alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+            maxWidth: '85%',
+            background: msg.sender === 'user'
+              ? (isDark ? 'linear-gradient(135deg, #fb7185, #f43f5e)' : 'linear-gradient(135deg, #fb7185, #f43f5e)')
+              : (isDark ? '#334155' : '#ffffff'),
+            color: msg.sender === 'user' ? '#ffffff' : (isDark ? '#f8fafc' : '#334155'),
+            borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+            border: msg.sender === 'user' ? 'none' : (isDark ? '1px solid #475569' : '1px solid #e2e8f0'),
+            padding: '10px 14px',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
+            whiteSpace: 'pre-wrap',
+            fontSize: '0.78rem',
+            lineHeight: 1.5
+          }}>
+            {msg.text}
+          </div>
+        ))}
+        {isAITyping && (
+          <div style={{
+            alignSelf: 'flex-start',
+            background: isDark ? '#334155' : '#ffffff',
+            borderRadius: '14px 14px 14px 2px',
+            border: isDark ? '1px solid #475569' : '1px solid #e2e8f0',
+            padding: '10px 14px',
+            fontSize: '0.75rem',
+            color: isDark ? '#94a3b8' : '#64748b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%', animation: 'typingBounce 1.2s infinite' }} />
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%', animation: 'typingBounce 1.2s infinite 0.2s' }} />
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%', animation: 'typingBounce 1.2s infinite 0.4s' }} />
+            <style>{`
+              @keyframes typingBounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-4px); }
+              }
+            `}</style>
+          </div>
+        )}
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Input bar */}
+      <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px' }}>
+        <input
+          type="text"
+          value={chatInput}
+          onChange={e => setChatInput(e.target.value)}
+          placeholder="Ask a health question (e.g. baby heart rate)..."
+          disabled={isAITyping}
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            borderRadius: '10px',
+            border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #cbd5e1',
+            background: isDark ? '#1e293b' : '#ffffff',
+            color: isDark ? '#ffffff' : '#1e293b',
+            fontSize: '0.78rem',
+            fontFamily: 'inherit',
+            outline: 'none'
+          }}
+        />
+        <button
+          type="submit"
+          disabled={isAITyping}
+          style={{
+            background: 'linear-gradient(135deg, #fb7185, #f43f5e)',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '10px',
+            width: '38px',
+            height: '38px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(244,63,94,0.15)'
+          }}
+        >
+          <Send size={15} />
+        </button>
+      </form>
+    </div>
+  );
 
   const renderSmsLogs = () => (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -117,7 +332,7 @@ export const SMSSimulator: React.FC = () => {
         flex: 1,
         minHeight: '260px',
         overflowY: 'auto',
-        background: isDark ? 'rgba(0,0,0,0.25)' : '#f8fafc',
+        background: isDark ? 'rgba(0,0,0,0.2)' : '#f8fafc',
         borderRadius: '12px',
         border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #cbd5e1',
         padding: '14px',
@@ -125,7 +340,7 @@ export const SMSSimulator: React.FC = () => {
       }}>
         {smsLogs.length === 0 ? (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: isDark ? '#64748b' : '#94a3b8', fontSize: '0.8rem', textAlign: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.8rem' }}>💬</span>
+            <ShieldAlert size={36} />
             <span>No SMS alerts logged yet.<br />Trigger an emergency or schedule checkups to test alerts.</span>
           </div>
         ) : (
@@ -204,20 +419,20 @@ export const SMSSimulator: React.FC = () => {
         onMouseDown={handleStart}
         onTouchStart={handleStart}
         className="sms-simulator-float-btn"
-        title="Open SMS Console"
+        title="Open AI Chatbot Console"
         style={{
           position: 'fixed',
           bottom: yPos === null ? '24px' : 'auto',
           top: yPos === null ? undefined : `${yPos}px`,
           right: '24px',
           zIndex: 99999,
-          width: '46px',
-          height: '46px',
+          width: '50px',
+          height: '50px',
           borderRadius: '50%',
-          background: isDark ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' : '#ffffff',
-          color: isDark ? '#ffffff' : '#0f172a',
-          border: isDark ? '1px solid rgba(251, 113, 133, 0.4)' : '1px solid #f43f5e',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.35)' : '0 8px 25px rgba(244,63,94,0.18)',
+          background: 'linear-gradient(135deg, #fb7185, #f43f5e)',
+          color: '#ffffff',
+          border: '2px solid #ffffff',
+          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.5)' : '0 8px 25px rgba(244,63,94,0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -231,13 +446,13 @@ export const SMSSimulator: React.FC = () => {
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <span style={{ fontSize: '1.25rem' }}>✉️</span>
+        <Bot size={24} />
         {smsLogs.length > 0 && (
           <span style={{
             position: 'absolute',
             top: '-2px',
             right: '-2px',
-            background: '#e11d48',
+            background: '#0f61ef',
             color: '#fff',
             borderRadius: '50%',
             width: '18px',
@@ -265,8 +480,8 @@ export const SMSSimulator: React.FC = () => {
             right: '24px',
             zIndex: 99999,
             width: isMaximized && isDesktop ? '680px' : '420px',
-            height: isMaximized && isDesktop ? '560px' : '480px',
-            background: isDark ? 'rgba(15, 23, 42, 0.96)' : '#ffffff',
+            height: isMaximized && isDesktop ? '560px' : '500px',
+            background: isDark ? 'rgba(15, 23, 42, 0.98)' : '#ffffff',
             backdropFilter: 'blur(20px)',
             border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
             borderRadius: '20px',
@@ -281,18 +496,18 @@ export const SMSSimulator: React.FC = () => {
 
           {/* Header */}
           <div style={{
-            background: isDark ? 'rgba(30, 41, 59, 0.5)' : '#f8fafc',
+            background: isDark ? 'rgba(30, 41, 59, 0.6)' : '#f8fafc',
             borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0',
-            padding: '16px 20px',
+            padding: '14px 20px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ✉️ SMS Gateway Console
+              <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bot size={18} style={{ color: '#f43f5e' }} /> MamaTrack AI Assistant
               </h4>
-              <span style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>Africa's Talking SMS Telephony Service</span>
+              <span style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>Simulated pregnancy health & support chat</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <button
@@ -306,14 +521,86 @@ export const SMSSimulator: React.FC = () => {
                 onClick={() => setIsOpen(false)}
                 style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
           </div>
 
+          {/* Tab Navigation */}
+          <div style={{
+            display: 'flex',
+            background: isDark ? 'rgba(30, 41, 59, 0.3)' : '#f1f5f9',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #e2e8f0',
+            padding: '6px 12px',
+            gap: '8px'
+          }}>
+            <button
+              onClick={() => setActiveTab('ai')}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                border: 'none',
+                borderRadius: '8px',
+                background: activeTab === 'ai' ? (isDark ? '#475569' : '#ffffff') : 'transparent',
+                color: activeTab === 'ai' ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b'),
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: activeTab === 'ai' && !isDark ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+              }}
+            >
+              <MessageSquare size={13} /> AI Health Chat
+            </button>
+            <button
+              onClick={() => setActiveTab('sms')}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                border: 'none',
+                borderRadius: '8px',
+                background: activeTab === 'sms' ? (isDark ? '#475569' : '#ffffff') : 'transparent',
+                color: activeTab === 'sms' ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b'),
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: activeTab === 'sms' && !isDark ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
+              }}
+            >
+              <List size={13} /> SMS Gateway Logs ({smsLogs.length})
+            </button>
+            
+            {activeTab === 'ai' ? (
+              <button
+                onClick={clearChat}
+                title="Clear Chat History"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px'
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            ) : null}
+          </div>
+
           {/* Content Area */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column' }}>
-            {renderSmsLogs()}
+            {activeTab === 'ai' ? renderAiChat() : renderSmsLogs()}
           </div>
         </div>
       )}

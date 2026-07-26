@@ -17,11 +17,25 @@ export const Landing: React.FC = () => {
   const isDark = theme === 'dark';
   const [activeSlide, setActiveSlide] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
   // Clear any dashboard theme classes from body to avoid background leak
   useEffect(() => {
     document.body.classList.remove('mother-theme-active', 'driver-theme-active');
   }, []);
+
+  // Show 'New here?' popup after 4 seconds if not dismissed before
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem('mamatrack_welcome_dismissed');
+    if (dismissed) return;
+    const t = setTimeout(() => setShowWelcomePopup(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const dismissWelcomePopup = () => {
+    sessionStorage.setItem('mamatrack_welcome_dismissed', '1');
+    setShowWelcomePopup(false);
+  };
 
   // Auto-cycle slides every 6 seconds
   useEffect(() => {
@@ -642,6 +656,126 @@ export const Landing: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* ====== NEW-USER WELCOME POPUP ====== */}
+      {showWelcomePopup && (
+        <div
+          onClick={dismissWelcomePopup}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 999999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            animation: 'fadeInOverlay 0.4s ease'
+          }}
+        >
+          <style>{`
+            @keyframes fadeInOverlay { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes popupSlideIn { from { transform: translateY(24px) scale(0.95); opacity: 0; } to { transform: none; opacity: 1; } }
+          `}</style>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: isDark ? '#1e293b' : '#ffffff',
+              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+              borderRadius: '24px',
+              boxShadow: isDark ? '0 24px 55px rgba(0,0,0,0.55)' : '0 24px 55px rgba(0,0,0,0.12)',
+              padding: '40px 36px',
+              maxWidth: '440px',
+              width: '100%',
+              textAlign: 'center',
+              animation: 'popupSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+              position: 'relative'
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={dismissWelcomePopup}
+              aria-label="Dismiss"
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.4rem',
+                lineHeight: 1,
+                cursor: 'pointer',
+                color: isDark ? '#94a3b8' : '#94a3b8'
+              }}
+            >×</button>
+
+            {/* Icon */}
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg,#fb7185,#f43f5e)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2rem',
+              margin: '0 auto 20px'
+            }}>🤰</div>
+
+            <h3 style={{
+              fontSize: '1.35rem',
+              fontWeight: 800,
+              margin: '0 0 10px',
+              color: isDark ? '#f8fafc' : '#0f172a'
+            }}>New here? Welcome!</h3>
+
+            <p style={{
+              fontSize: '0.875rem',
+              color: isDark ? '#94a3b8' : '#64748b',
+              lineHeight: 1.6,
+              margin: '0 0 28px'
+            }}>
+              MamaTrack GPS provides expectant mothers in Mukono with real-time emergency dispatch, antenatal care tracking, and direct access to medical professionals.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <Link
+                to="/register"
+                onClick={dismissWelcomePopup}
+                style={{
+                  display: 'block',
+                  background: 'linear-gradient(135deg,#fb7185,#f43f5e)',
+                  color: '#ffffff',
+                  textDecoration: 'none',
+                  padding: '13px',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  boxShadow: '0 8px 22px rgba(244,63,94,0.25)',
+                  transition: 'transform 0.2s'
+                }}
+              >
+                Create a Free Account
+              </Link>
+              <Link
+                to="/login"
+                onClick={dismissWelcomePopup}
+                style={{
+                  display: 'block',
+                  color: isDark ? '#94a3b8' : '#64748b',
+                  textDecoration: 'none',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  padding: '8px'
+                }}
+              >
+                Already have an account? Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

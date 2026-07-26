@@ -56,6 +56,7 @@ export const MotherDashboard: React.FC = () => {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [guideStep, setGuideStep] = useState(0);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showHeartRateModal, setShowHeartRateModal] = useState(false);
 
   const guideSteps = [
     {
@@ -67,6 +68,11 @@ export const MotherDashboard: React.FC = () => {
       title: "🚨 Real-Time Rescue Beacon",
       icon: "🆘",
       desc: "Tap the glowing red SOS button during any pregnancy distress. This instantly logs your GPS coordinates, dispatches the nearest ambulance, and alerts Obstetricians at Mukono General Hospital.",
+    },
+    {
+      title: "🤖 MamaTrack AI Assistant",
+      icon: "💬",
+      desc: "Click the floating pink robot bubble in the bottom right corner at any time to chat with our virtual AI pregnancy health helper for quick guidance.",
     },
     {
       title: "👶 Antenatal Milestones Checklist",
@@ -88,6 +94,15 @@ export const MotherDashboard: React.FC = () => {
   // Toggle background body class for whole dashboard image transparency
   useEffect(() => {
     document.body.classList.add('mother-theme-active');
+    
+    // Auto-trigger guide if first time
+    const guideShown = localStorage.getItem('mamatrack_guide_shown');
+    if (!guideShown) {
+      setShowGuideModal(true);
+      setGuideStep(0);
+      localStorage.setItem('mamatrack_guide_shown', 'true');
+    }
+
     return () => {
       document.body.classList.remove('mother-theme-active');
     };
@@ -759,7 +774,7 @@ export const MotherDashboard: React.FC = () => {
             </>
           )}
 
-        <main className="main-content" style={{ flex: 1, padding: '2rem var(--space-xl)', display: 'flex', flexDirection: 'column' }}>
+        <main className="main-content" style={{ flex: 1, padding: '2rem var(--space-xl)', display: 'flex', flexDirection: 'column', marginLeft: 0 }}>
           
           {/* TAB 0: MOMENTRA HOME DASHBOARD */}
           {activeTab === 'home' && (
@@ -838,11 +853,13 @@ export const MotherDashboard: React.FC = () => {
                     </div>
 
                     {/* Floating Baby Heart Rate Card */}
-                    <div className="floating-widget widget-heart">
+                    <div className="floating-widget widget-heart" style={{ cursor: 'pointer' }} onClick={() => setShowHeartRateModal(true)} title="Click to see how baby's heart rate is measured">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                         <span style={{ color: '#ef4444', animation: 'active-emergency-pulse 1s infinite alternate', fontSize: '1.25rem' }}>❤️</span>
                         <div>
-                          <div style={{ fontSize: '0.62rem', color: '#8b96a5', fontWeight: 700, textTransform: 'uppercase' }}>Baby's Heart Rate</div>
+                          <div style={{ fontSize: '0.62rem', color: '#8b96a5', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            Baby's Heart Rate <span style={{ background: 'rgba(244,63,94,0.12)', color: '#f43f5e', borderRadius: '50%', width: '12px', height: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 'bold' }}>i</span>
+                          </div>
                           <div style={{ fontSize: '1.15rem', fontWeight: 800 }}>142 <span style={{ fontSize: '0.65rem', fontWeight: 500, color: '#4b5563' }}>bpm</span></div>
                         </div>
                       </div>
@@ -1010,7 +1027,7 @@ export const MotherDashboard: React.FC = () => {
                           </div>
                           <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1f2937' }}>
-                              {activeEmergency.driver_id ? db.users.find(u => u.id === activeEmergency.driver_id)?.full_name.split(' ')[0] : 'Searching'}
+                              {activeEmergency.driver_id ? (db.users.find(u => u.id === activeEmergency.driver_id)?.full_name || 'Driver').split(' ')[0] : 'Searching'}
                             </div>
                             <div style={{ fontSize: '0.65rem', color: '#6b7280' }}>Assigned Driver</div>
                           </div>
@@ -1713,6 +1730,45 @@ export const MotherDashboard: React.FC = () => {
             <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px', marginTop: '14px' }}>
               <button className="btn-momentra-outline" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={() => setShowConfirmModal(false)}>Cancel</button>
               <button className="btn-momentra-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={handleConfirmSOS}>Trigger Dispatch SOS</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BABY HEART RATE MEASUREMENT MODAL */}
+      {showHeartRateModal && (
+        <div className="modal-overlay active">
+          <div className="modal card-glass" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem', background: theme === 'light' ? '#ffffff' : '#1e293b', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                ❤️ Measuring Baby's Heart Rate
+              </h3>
+              <button onClick={() => setShowHeartRateModal(false)} style={{ background: 'none', border: 'none', color: '#4b5563', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', fontSize: '0.82rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1', lineHeight: 1.5 }}>
+              <p style={{ margin: 0 }}>
+                A baby's fetal heart rate normally ranges between <strong>110 and 160 beats per minute (bpm)</strong> and is monitored during prenatal clinic checkups using these clinical methods:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+                <div>
+                  <strong style={{ color: theme === 'light' ? '#0f172a' : '#ffffff' }}>1. Handheld Fetal Doppler:</strong>
+                  <br />
+                  A pocket-sized ultrasound transducer device that the midwife or obstetrician glides over your abdomen to bounce sound waves off the fetal heart, magnifying the heartbeat audio.
+                </div>
+                <div>
+                  <strong style={{ color: theme === 'light' ? '#0f172a' : '#ffffff' }}>2. Cardiotocography (CTG) Monitor:</strong>
+                  <br />
+                  A continuous machine with abdominal belts used during late pregnancy or active labor. One belt monitors the fetal heart rate pattern, while the other records uterine contraction timing.
+                </div>
+                <div>
+                  <strong style={{ color: theme === 'light' ? '#0f172a' : '#ffffff' }}>3. Pinard Horn / Fetoscope:</strong>
+                  <br />
+                  A classic hollow wooden or metal tube held against your abdomen to directly conduct fetal heart sounds to the clinician's ear without power or screens.
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px', marginTop: '14px' }}>
+              <button className="btn-momentra-primary" style={{ padding: '0.5rem 1.5rem', fontSize: '0.8rem' }} onClick={() => setShowHeartRateModal(false)}>Close Guide</button>
             </div>
           </div>
         </div>

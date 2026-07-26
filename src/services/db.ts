@@ -13,6 +13,7 @@ export interface User {
   role: 'mother' | 'admin' | 'doctor' | 'driver' | 'vht';
   avatar: string | null; // base64 / dataUrl or placeholder emoji
   is_active: boolean;
+  email_verified?: boolean;
   last_login?: string;
   created_at: string;
 }
@@ -566,6 +567,9 @@ export const AuthService = {
     if (!user.is_active) {
       return { success: false, error: 'Account is deactivated' };
     }
+    if (!bypassPasswordCheck && user.email_verified === false) {
+      return { success: false, error: 'Email address has not been verified yet. Please check your inbox for the verification link.' };
+    }
     
     // update last login
     user.last_login = new Date().toISOString();
@@ -604,6 +608,7 @@ export const AuthService = {
       role: 'mother',
       avatar: null,
       is_active: true,
+      email_verified: false,
       created_at: new Date().toISOString()
     };
 
@@ -640,7 +645,6 @@ export const AuthService = {
 
     db.users = [...users, newUser];
     db.mothers = [...mothers, newMother];
-    db.setSessionUser(newUser);
 
     // Add initial notifications
     NotificationService.createNotification(

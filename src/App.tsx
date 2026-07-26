@@ -22,6 +22,7 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { SMSSimulator } from './components/SMSSimulator';
 import { SyncService } from './services/syncService';
 
@@ -75,6 +76,7 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Private Dashboard Portals (lazy-loaded) */}
             <Route path="/mother" element={<MotherDashboard />} />

@@ -1895,7 +1895,7 @@ export const AdminDashboard: React.FC = () => {
                         <div key={f.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <div style={{ fontWeight: 600, color: '#334155' }}>Plate: {veh?.plate_number}</div>
-                            <div style={{ color: '#64748b', fontSize: '12px' }}>Station: {f.station} · {f.liters} Liters (Drv: {drv?.full_name.split(' ')[0]})</div>
+                            <div style={{ color: '#64748b', fontSize: '12px' }}>Station: {f.station} · {f.liters} Liters (Drv: {(drv?.full_name || 'Driver').split(' ')[0]})</div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <strong style={{ color: '#10b981' }}>{f.cost.toLocaleString()} UGX</strong>
