@@ -611,7 +611,7 @@ export const Landing: React.FC = () => {
                 </p>
                 <div className="contact-info">
                   <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-phone" style={{ marginRight: '5px' }}></i> 0800-MAMATRACK</p>
-                  <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> mamatrack@gmail.com</p>
+                  <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> mamatrack6@gmail.com</p>
                 </div>
               </div>
             </div>
