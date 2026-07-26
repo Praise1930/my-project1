@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthService } from '../services/db';
+import { AuthService, db } from '../services/db';
 import { User, Phone, Mail, Calendar, MapPin, Heart, Users, Lock } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
@@ -163,9 +163,9 @@ export const Register: React.FC = () => {
       phone: `+256${formData.phone}`,
       next_of_kin_phone: `+256${formData.next_of_kin_phone}`
     };
-
+    try {
       // Check if email already exists locally first
-      const existsLocally = AuthService.users.some(u => u.email.toLowerCase() === submissionData.email.toLowerCase());
+      const existsLocally = db.users.some((u: any) => u.email.toLowerCase() === submissionData.email.toLowerCase());
       if (existsLocally) {
         setError('This email is already registered.');
         setIsLoading(false);
