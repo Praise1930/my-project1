@@ -185,10 +185,12 @@ export const MotherConsole: React.FC = () => {
 
   const handleConfirmSOS = () => {
     setShowConfirmModal(false);
+    const lat = profile?.home_latitude || 0.3536;
+    const lng = profile?.home_longitude || 32.7554;
     const newEmg = EmergencyService.triggerEmergency(
       user.id,
-      motherLat,
-      motherLng,
+      lat,
+      lng,
       emergencyNotes,
       requireCemonc
     );
