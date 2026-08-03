@@ -22,12 +22,14 @@ html, body {
   /* ── 0. DROPDOWN & POPOVER CENTERING (PREVENT RIGHT-EDGE CLIPPING) ─ */
   .profile-upload-dropdown {
     position: fixed !important;
-    top: 70px !important;
+    top: 50% !important;
     left: 50% !important;
     right: auto !important;
-    transform: translateX(-50%) !important;
-    width: calc(100vw - 32px) !important;
-    max-width: 300px !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: min(280px, calc(100vw - 32px)) !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
     z-index: 999999 !important;
   }
 
