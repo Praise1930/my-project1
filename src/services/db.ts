@@ -700,6 +700,41 @@ export const EmergencyService = {
     return db.emergencies.find(e => e.mother_id === userId && !['completed', 'cancelled'].includes(e.status)) || null;
   },
 
+  findBestHospital(lat: number, lng: number, requireCemonc: boolean = false): Hospital {
+    const hospitals = db.hospitals;
+    if (hospitals.length === 0) throw new Error('No hospitals available in database');
+
+    let bestHospital = hospitals[0];
+    let bestScore = Infinity;
+
+    hospitals.forEach(h => {
+      // If CEMONC is strictly required and facility lacks surgical care, skip unless no options
+      if (requireCemonc && !h.has_cemonc && hospitals.some(opt => opt.has_cemonc)) return;
+
+      const dist = haversine(lat, lng, h.latitude, h.longitude);
+
+      // Resource Readiness Penalty / Bonus System:
+      // Lower score = higher priority
+      // 1 km distance = +1.0 score penalty
+      // Available beds > 0 = -3.0 score bonus
+      // Blood bank ready = -1.5 score bonus
+      // Surgical C-section ready = -1.5 score bonus
+      // Available ambulance = -1.0 score bonus
+      let score = dist;
+      if (h.available_beds > 0) score -= 3.0;
+      if (h.has_blood_bank) score -= 1.5;
+      if (h.has_cemonc) score -= 1.5;
+      if (h.has_ambulance) score -= 1.0;
+
+      if (score < bestScore) {
+        bestScore = score;
+        bestHospital = h;
+      }
+    });
+
+    return bestHospital;
+  },
+
   triggerEmergency(motherUserId: number, lat: number, lng: number, notes: string, requireCemonc: boolean): Emergency {
     const emergencies = db.emergencies;
     const active = this.getActiveEmergencyForMother(motherUserId);
@@ -708,19 +743,9 @@ export const EmergencyService = {
     const nextId = Math.max(...emergencies.map(e => e.id), 0) + 1;
     const code = `EMG-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
     
-    // Match hospital (nearest or default cemonc if required)
-    const hospitals = db.hospitals;
-    let assignedHospitalId = 1; // Mukono General default
-    let minDistance = Infinity;
-
-    hospitals.forEach(h => {
-      if (requireCemonc && !h.has_cemonc) return;
-      const d = haversine(lat, lng, h.latitude, h.longitude);
-      if (d < minDistance) {
-        minDistance = d;
-        assignedHospitalId = h.id;
-      }
-    });
+    // Match hospital with readily available resources
+    const matchedHospital = this.findBestHospital(lat, lng, requireCemonc);
+    const assignedHospitalId = matchedHospital.id;
 
     const newEmergency: Emergency = {
       id: nextId,
