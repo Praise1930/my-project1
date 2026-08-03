@@ -1057,16 +1057,64 @@ html[data-theme="dark"] .card h1, html[data-theme="dark"] .card h2, html[data-th
   aside.sidebar,
   aside.sidebar-admin,
   aside.sidebar-medilab,
-  aside.sidebar-mother {
+  aside.sidebar-mother,
+  .vht-theme aside {
     display: none !important;
   }
   .main-content-area,
   .main-content,
-  .momentra-root main {
+  .momentra-root main,
+  .vht-theme main {
     margin-left: 0 !important;
+    width: 100% !important;
     padding-bottom: 20px !important;
+  }
+  .console-grid-3 {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
   }
 }
 
+/* Universal Table Responsive Container */
+.table-responsive {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  margin-bottom: 1rem;
+}
 
+.table-responsive > table {
+  width: 100% !important;
+  min-width: 540px !important;
+  border-collapse: collapse;
+}
 
+/* Universal Form Inputs Dark/Light Mode Colors */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] input option,
+html[data-theme="dark"] select option {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="light"] input,
+html[data-theme="light"] select,
+html[data-theme="light"] textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] input option,
+html[data-theme="light"] select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}

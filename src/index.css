@@ -194,13 +194,19 @@ html, body, #root {
     background: rgba(15, 23, 42, 0.35);
 }
 
-/* Accessibility and contrast fix for button links globally */
-a.btn, button.btn, .btn, .hero-btn, .header-btn,
-a.btn:hover, button.btn:hover, .btn:hover, .hero-btn:hover, .header-btn:hover,
-html[data-theme='light'] a.btn, html[data-theme='light'] a.hero-btn, html[data-theme='light'] a.header-btn,
-html[data-theme='dark'] a.btn, html[data-theme='dark'] a.hero-btn, html[data-theme='dark'] a.header-btn,
-html[data-theme='light'] .sticky-bar a.btn, html[data-theme='light'] .sticky-bar a.header-btn,
-html[data-theme='dark'] .sticky-bar a.btn, html[data-theme='dark'] .sticky-bar a.header-btn {
+/* Accessibility and contrast fix for solid primary buttons globally */
+a.btn-primary, button.btn-primary, .btn-primary, .hero-btn,
+.btn-momentra-primary, .btn-momentra-danger, .emergency-btn-home,
+a.btn-danger, button.btn-danger, .btn-danger {
   color: #ffffff !important;
 }
+
+/* Light & Dark mode text rules for outline and ghost buttons */
+[data-theme="light"] .btn-ghost, [data-theme="light"] .btn-momentra-outline, [data-theme="light"] .btn-outline {
+  color: #374151 !important;
+}
+[data-theme="dark"] .btn-ghost, [data-theme="dark"] .btn-momentra-outline, [data-theme="dark"] .btn-outline {
+  color: #f1f5f9 !important;
+}
+
 

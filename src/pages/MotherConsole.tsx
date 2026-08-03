@@ -439,7 +439,7 @@ export const MotherConsole: React.FC = () => {
 
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button className="d-md-none" onClick={() => setMobileSidebarOpen(true)} style={{ display: 'none', background: 'none', border: 'none', fontSize: '1.75rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0', width: '40px', height: '40px', alignItems: 'center', justifyContent: 'center', padding: 0 }}>☰</button>
+              <button className="d-inline-flex d-md-none" onClick={() => setMobileSidebarOpen(true)} style={{ background: 'none', border: 'none', fontSize: '1.75rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0', width: '40px', height: '40px', alignItems: 'center', justifyContent: 'center', padding: 0 }}>☰</button>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
                 Momentra Rescue Console
               </h3>

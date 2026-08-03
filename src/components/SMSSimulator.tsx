@@ -12,14 +12,8 @@ interface ChatMessage {
 }
 
 export const SMSSimulator: React.FC = () => {
-  let isDark = false;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { theme } = useTheme();
-    isDark = theme === 'dark';
-  } catch {
-    // context not available, default to light
-  }
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'ai' | 'sms'>('ai');

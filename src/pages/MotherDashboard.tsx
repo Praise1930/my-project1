@@ -730,11 +730,11 @@ export const MotherDashboard: React.FC = () => {
                 {/* Navigation Menu */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
                   {[
-                    { id: 'dashboard', icon: '🏠', label: 'Overview' },
+                    { id: 'home', icon: '🏠', label: 'Overview' },
                     { id: 'emergency', icon: '🚨', label: 'Rescue Beacon' },
+                    { id: 'checkups', icon: '🩺', label: 'Appointments & Consult' },
                     { id: 'anc-timeline', icon: '👶', label: 'WHO ANC Checklist' },
                     { id: 'ledger', icon: '📊', label: 'Vitals Ledger' },
-                    { id: 'consultation', icon: '🩺', label: 'Doctor Consult' },
                     { id: 'profile', icon: '👤', label: 'Profile & Contacts' }
                   ].map(item => (
                     <button

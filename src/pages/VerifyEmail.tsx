@@ -232,8 +232,8 @@ export const VerifyEmail: React.FC = () => {
                   boxShadow: '0 8px 25px rgba(244, 63, 94, 0.25)',
                   transition: 'transform 0.2s'
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => e.currentTarget.style.transform = 'none'}
               >
                 Proceed to Login <ArrowRight size={16} />
               </Link>

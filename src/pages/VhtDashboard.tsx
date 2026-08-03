@@ -682,7 +682,7 @@ export const VhtDashboard: React.FC = () => {
         {activeTab === 'visits' && (
           <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '16px' }}>📋 Monitored Visit Registry</h3>
-            <div style={{ overflowX: 'auto' }}>
+            <div className="table-responsive">
               <table style={{ width: '100%', fontSize: '0.8rem', textAlign: 'left', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', fontWeight: 800 }}>
