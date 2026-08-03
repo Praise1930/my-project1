@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
+import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, Child } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -13,7 +13,7 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'reports'>('dispatch');
+  const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'sons' | 'reports'>('dispatch');
 
   // Database states
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
@@ -22,6 +22,7 @@ export const AdminDashboard: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [mothers, setMothers] = useState<Mother[]>([]);
+  const [children, setChildren] = useState<Child[]>([]);
 
   // Dispatch control states
   const [selectedEmergency, setSelectedEmergency] = useState<Emergency | null>(null);
@@ -42,7 +43,8 @@ export const AdminDashboard: React.FC = () => {
       hospitals: db.hospitals,
       doctors: db.doctors,
       drivers: db.drivers,
-      mothers: db.mothers
+      mothers: db.mothers,
+      children: db.children
     });
     setUndoStack(prev => [...prev, snapshot]);
   };
@@ -58,6 +60,7 @@ export const AdminDashboard: React.FC = () => {
       db.doctors = state.doctors;
       db.drivers = state.drivers;
       db.mothers = state.mothers;
+      db.children = state.children || [];
       setUndoStack(nextStack);
       loadData();
       alert('↩️ Database restored back to previous backup snapshot.');
@@ -127,6 +130,21 @@ export const AdminDashboard: React.FC = () => {
     years_experience: 3
   });
 
+  // Sons / Children Modals
+  const [showChildModal, setShowChildModal] = useState(false);
+  const [editChild, setEditChild] = useState<Child | null>(null);
+  const [childForm, setChildForm] = useState({
+    mother_id: 8,
+    name: '',
+    gender: 'Son' as 'Son' | 'Daughter',
+    date_of_birth: '',
+    birth_weight: '3.2 kg',
+    delivery_type: 'Spontaneous Normal' as Child['delivery_type'],
+    health_status: 'Healthy' as Child['health_status'],
+    hospital_id: 1,
+    immunization_status: 'Fully Immunized' as Child['immunization_status']
+  });
+
   // Dynamic Stylesheet Loading for isolating theme CSS
   useEffect(() => {
     // Add Dasher CSS
@@ -179,6 +197,7 @@ export const AdminDashboard: React.FC = () => {
     setDoctors(db.doctors);
     setVehicles(db.vehicles);
     setMothers(db.mothers);
+    setChildren(db.children);
   };
 
   // Simple state poller to keep dispatch screen live
@@ -271,6 +290,20 @@ export const AdminDashboard: React.FC = () => {
       u?.full_name.toLowerCase().includes(q) ||
       drv.driver_role.toLowerCase().includes(q) ||
       drv.license_number.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredChildren = children.filter(c => {
+    const m = mothers.find(moth => moth.user_id === c.mother_id);
+    const u = m ? db.users.find(usr => usr.id === m.user_id) : null;
+    const q = searchQuery.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.gender.toLowerCase().includes(q) ||
+      c.health_status.toLowerCase().includes(q) ||
+      c.delivery_type.toLowerCase().includes(q) ||
+      c.immunization_status.toLowerCase().includes(q) ||
+      (u && u.full_name.toLowerCase().includes(q))
     );
   });
 
@@ -700,6 +733,87 @@ export const AdminDashboard: React.FC = () => {
     loadData();
   };
 
+  // --- SONS / CHILDREN CRUD ACTIONS ---
+
+  const handleOpenAddChild = () => {
+    setEditChild(null);
+    setChildForm({
+      mother_id: mothers[0]?.user_id || 8,
+      name: '',
+      gender: 'Son',
+      date_of_birth: new Date().toISOString().split('T')[0],
+      birth_weight: '3.2 kg',
+      delivery_type: 'Spontaneous Normal',
+      health_status: 'Healthy',
+      hospital_id: db.hospitals[0]?.id || 1,
+      immunization_status: 'Fully Immunized'
+    });
+    setShowChildModal(true);
+  };
+
+  const handleOpenEditChild = (c: Child) => {
+    setEditChild(c);
+    setChildForm({
+      mother_id: c.mother_id,
+      name: c.name,
+      gender: c.gender,
+      date_of_birth: c.date_of_birth,
+      birth_weight: c.birth_weight,
+      delivery_type: c.delivery_type,
+      health_status: c.health_status,
+      hospital_id: c.hospital_id,
+      immunization_status: c.immunization_status
+    });
+    setShowChildModal(true);
+  };
+
+  const handleDeleteChild = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this child/son record?')) {
+      saveBackupState();
+      db.children = db.children.filter(c => c.id !== id);
+      loadData();
+      alert('Child/Son record deleted from database.');
+    }
+  };
+
+  const handleChildSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveBackupState();
+    if (editChild) {
+      db.children = db.children.map(c => c.id === editChild.id ? {
+        ...c,
+        mother_id: Number(childForm.mother_id),
+        name: childForm.name,
+        gender: childForm.gender,
+        date_of_birth: childForm.date_of_birth,
+        birth_weight: childForm.birth_weight,
+        delivery_type: childForm.delivery_type,
+        health_status: childForm.health_status,
+        hospital_id: Number(childForm.hospital_id),
+        immunization_status: childForm.immunization_status
+      } : c);
+      alert('Child/Son details updated successfully.');
+    } else {
+      const nextId = Math.max(...db.children.map(c => c.id), 0) + 1;
+      const newChild: Child = {
+        id: nextId,
+        mother_id: Number(childForm.mother_id),
+        name: childForm.name,
+        gender: childForm.gender,
+        date_of_birth: childForm.date_of_birth,
+        birth_weight: childForm.birth_weight,
+        delivery_type: childForm.delivery_type,
+        health_status: childForm.health_status,
+        hospital_id: Number(childForm.hospital_id),
+        immunization_status: childForm.immunization_status
+      };
+      db.children = [...db.children, newChild];
+      alert('New child/son record registered successfully.');
+    }
+    setShowChildModal(false);
+    loadData();
+  };
+
   return (
     <div className="dasher-dashboard" style={{ background: '#f8fafd', minHeight: '100vh', fontFamily: "'Public Sans', sans-serif", display: 'flex' }}>
       
@@ -992,6 +1106,63 @@ export const AdminDashboard: React.FC = () => {
           background: #f8fafc;
           width: 100%;
         }
+
+        /* Admin Table Component Styling */
+        .dasher-dashboard .admin-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          font-size: 13px;
+        }
+        .dasher-dashboard .admin-table th {
+          background: #f1f5f9;
+          color: #475569;
+          font-weight: 700;
+          padding: 12px 14px;
+          border-bottom: 2px solid #cbd5e1;
+          text-align: left;
+          white-space: nowrap;
+        }
+        .dasher-dashboard .admin-table td {
+          padding: 12px 14px;
+          border-bottom: 1px solid #e2e8f0;
+          color: #1e293b;
+          vertical-align: middle;
+        }
+        .dasher-dashboard .admin-table tbody tr:hover {
+          background: #f8fafc;
+        }
+        html[data-theme="dark"] .dasher-dashboard .admin-table th,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-table th {
+          background: #161b22 !important;
+          color: #8b949e !important;
+          border-bottom: 2px solid #30363d !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .admin-table td,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-table td {
+          border-bottom: 1px solid #30363d !important;
+          color: #e6edf3 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .admin-table tbody tr:hover,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-table tbody tr:hover {
+          background: rgba(255,255,255,0.03) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .admin-modal-container,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-modal-container {
+          background: #161b22 !important;
+          border-color: #30363d !important;
+          color: #e6edf3 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .form-label-admin,
+        [data-bs-theme="dark"] .dasher-dashboard .form-label-admin {
+          color: #8b949e !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .form-control-admin,
+        [data-bs-theme="dark"] .dasher-dashboard .form-control-admin {
+          background: #0d1117 !important;
+          border-color: #30363d !important;
+          color: #e6edf3 !important;
+        }
       `}</style>
 
       {/* MOBILE RESPONSIVE + DARK MODE OVERRIDES */}
@@ -1156,6 +1327,10 @@ export const AdminDashboard: React.FC = () => {
             <i className="ti ti-user-heart" style={{ fontSize: '18px' }}></i>
             <span>Expectant Mothers</span>
           </div>
+          <div className={`sidebar-nav-item ${activeTab === 'sons' ? 'active' : ''}`} onClick={() => setActiveTab('sons')}>
+            <i className="ti ti-baby-carriage" style={{ fontSize: '18px' }}></i>
+            <span>Sons & Children</span>
+          </div>
           <div className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
             <i className="ti ti-file-analytics" style={{ fontSize: '18px' }}></i>
             <span>Audit & Fuel Logs</span>
@@ -1208,13 +1383,11 @@ export const AdminDashboard: React.FC = () => {
               {/* Nav Menu */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
                 {[
-                  { id: 'overview', icon: 'ti-layout-dashboard', label: 'Dashboard' },
                   { id: 'dispatch', icon: 'ti-map-pin', label: 'GPS Dispatch' },
-                  { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
                   { id: 'facilities', icon: 'ti-building-hospital', label: 'Health Facilities' },
-                  { id: 'drivers', icon: 'ti-ambulance', label: 'Ambulance Drivers' },
-                  { id: 'doctors', icon: 'ti-stethoscope', label: 'Doctors & Midwives' },
-                  { id: 'vhts', icon: 'ti-users', label: 'Village Health Teams' },
+                  { id: 'personnel', icon: 'ti-users', label: 'Duty Personnel' },
+                  { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
+                  { id: 'sons', icon: 'ti-baby-carriage', label: 'Sons & Children' },
                   { id: 'reports', icon: 'ti-chart-bar', label: 'Reports & Audits' }
                 ].map(item => (
                   <button
@@ -1568,174 +1741,261 @@ export const AdminDashboard: React.FC = () => {
         {activeTab === 'facilities' && (
           <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Hospital Referral Network Directory</h4>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Hospital Referral Network Directory</h4>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Mukono Regional Health Facilities ({filteredHospitals.length})</span>
+              </div>
               <button 
                 onClick={handleOpenAddFacility}
                 className="btn btn-primary" 
-                style={{ fontSize: '13px', fontWeight: 700, padding: '6px 16px', border: 'none', background: '#3b82f6', borderRadius: '4px' }}
+                style={{ fontSize: '13px', fontWeight: 700, padding: '6px 16px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
               >
                 ➕ Add Health Facility
               </button>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {filteredHospitals.map(h => (
-                <div key={h.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>{h.name}</strong>
-                      <span className="badge-alert-success">{h.type.toUpperCase()}</span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>📍 {h.address}</div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', color: '#334155', borderTop: '1px dashed #e2e8f0', paddingTop: '10px', marginBottom: '14px' }}>
-                      <div>Ward Beds: <strong>{h.available_beds} / {h.total_beds}</strong></div>
-                      <div>Clinic Hotline: <strong>{h.phone}</strong></div>
-                      <div>Surgical Capacity: <strong>{h.has_surgical_capacity ? '✅ Available' : '❌ None'}</strong></div>
-                      <div>CEmONC capability: <strong>{h.has_cemonc ? '✅ Yes' : '❌ No'}</strong></div>
-                    </div>
-                  </div>
-
-                  {/* Actions bar */}
-                  <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '12px', justifyContent: 'flex-end' }}>
-                    <button 
-                      onClick={() => handleOpenEditFacility(h)}
-                      className="btn btn-sm btn-outline-secondary" 
-                      style={{ fontSize: '12px', padding: '4px 10px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteFacility(h.id)}
-                      className="btn btn-sm btn-outline-danger" 
-                      style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Facility Name</th>
+                    <th>Type</th>
+                    <th>Sub-County / Address</th>
+                    <th>Ward Beds</th>
+                    <th>Hotline</th>
+                    <th>CEmONC</th>
+                    <th>Surgical</th>
+                    <th>Ambulance</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHospitals.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No health facilities found.</td>
+                    </tr>
+                  ) : (
+                    filteredHospitals.map(h => (
+                      <tr key={h.id}>
+                        <td>
+                          <strong style={{ fontSize: '14px' }}>{h.name}</strong>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{h.facility_type}</div>
+                        </td>
+                        <td>
+                          <span className="badge-alert-success">{h.type.toUpperCase()}</span>
+                        </td>
+                        <td>
+                          <div>📍 {h.sub_county}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{h.address}</div>
+                        </td>
+                        <td>
+                          <strong style={{ color: h.available_beds > 5 ? '#16a34a' : '#ef4444' }}>{h.available_beds}</strong> / {h.total_beds}
+                        </td>
+                        <td>{h.phone}</td>
+                        <td>{h.has_cemonc ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✅ Available</span> : <span style={{ color: '#94a3b8' }}>❌ No</span>}</td>
+                        <td>{h.has_surgical_capacity ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✅ Ready</span> : <span style={{ color: '#94a3b8' }}>❌ None</span>}</td>
+                        <td>{h.has_ambulance ? <span style={{ color: '#16a34a', fontWeight: 700 }}>🚑 Active</span> : <span style={{ color: '#94a3b8' }}>❌ None</span>}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button 
+                              onClick={() => handleOpenEditFacility(h)}
+                              style={{ fontSize: '12px', padding: '4px 8px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteFacility(h.id)}
+                              style={{ fontSize: '12px', padding: '4px 8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
 
         {/* TAB 3: PERSONNEL STATUS */}
         {activeTab === 'personnel' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            {/* Doctors roster */}
+            {/* Doctors Roster Table */}
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Specialists Roster</h5>
+                <div>
+                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Obstetricians & Medical Specialists Roster</h5>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>Registered Doctors & Midwives ({filteredDoctors.length})</span>
+                </div>
                 <button 
                   onClick={() => handleOpenAddPersonnel('doctor')}
                   className="btn btn-sm btn-primary"
-                  style={{ fontSize: '12px', fontWeight: 700, padding: '4px 12px', border: 'none', background: '#3b82f6' }}
+                  style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
                 >
-                  ➕ Add Doctor
+                  ➕ Add Doctor / Specialist
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {filteredDoctors.map(d => {
-                  const u = db.users.find(usr => usr.id === d.user_id);
-                  const h = hospitals.find(hosp => hosp.id === d.hospital_id);
-                  return (
-                    <div key={d.id} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '12px', background: '#f8fafc' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div>
-                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
-                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{d.specialization} · {h?.name}</div>
-                        </div>
-                        <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                          {d.is_on_duty ? 'ON SHIFT' : 'STANDBY'}
-                        </span>
-                      </div>
-
-                      {/* Doctor actions row */}
-                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        {u && (
-                          <button 
-                            onClick={() => handleOpenPasswordReset(u)}
-                            style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                          >
-                            🔑 Reset Pass
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => handleOpenEditPersonnel('doctor', d)}
-                          style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
-                          style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          🗑️ Delete
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="table-responsive">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Doctor Name</th>
+                      <th>Specialization</th>
+                      <th>License No.</th>
+                      <th>Assigned Hospital</th>
+                      <th>Duty Shift</th>
+                      <th>Experience</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDoctors.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No medical specialists registered.</td>
+                      </tr>
+                    ) : (
+                      filteredDoctors.map(d => {
+                        const u = db.users.find(usr => usr.id === d.user_id);
+                        const h = hospitals.find(hosp => hosp.id === d.hospital_id);
+                        return (
+                          <tr key={d.id}>
+                            <td>
+                              <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
+                              <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.email}</div>
+                            </td>
+                            <td>{d.specialization}</td>
+                            <td><code style={{ fontSize: '12px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{d.license_number}</code></td>
+                            <td>{h?.name || 'Unassigned'}</td>
+                            <td>
+                              <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
+                              </span>
+                              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{d.shift_start} - {d.shift_end}</div>
+                            </td>
+                            <td>{d.years_experience} Years</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                {u && (
+                                  <button 
+                                    onClick={() => handleOpenPasswordReset(u)}
+                                    style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                  >
+                                    🔑 Pass
+                                  </button>
+                                )}
+                                <button 
+                                  onClick={() => handleOpenEditPersonnel('doctor', d)}
+                                  style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button 
+                                  onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
+                                  style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            {/* Drivers roster */}
+            {/* Ambulance Drivers Roster Table */}
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Ambulance Drivers</h5>
+                <div>
+                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Ambulance Drivers Roster</h5>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>Emergency Transport Personnel ({filteredDrivers.length})</span>
+                </div>
                 <button 
                   onClick={() => handleOpenAddPersonnel('driver')}
                   className="btn btn-sm btn-primary"
-                  style={{ fontSize: '12px', fontWeight: 700, padding: '4px 12px', border: 'none', background: '#3b82f6' }}
+                  style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
                 >
                   ➕ Add Driver
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {filteredDrivers.map(d => {
-                  const u = db.users.find(usr => usr.id === d.user_id);
-                  const v = vehicles.find(veh => veh.id === d.vehicle_id);
-                  return (
-                    <div key={d.id} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '12px', background: '#f8fafc' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div>
-                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
-                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Plate: {v?.plate_number || 'No vehicle'} ({v?.vehicle_type})</div>
-                        </div>
-                        <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                          {d.is_on_duty ? 'ACTIVE SHIFT' : 'OFF SHIFT'}
-                        </span>
-                      </div>
-
-                      {/* Driver actions row */}
-                      <div style={{ display: 'flex', gap: '8px', borderTop: '1px dashed #e2e8f0', paddingTop: '8px', marginTop: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        {u && (
-                          <button 
-                            onClick={() => handleOpenPasswordReset(u)}
-                            style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                          >
-                            🔑 Reset Pass
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => handleOpenEditPersonnel('driver', d)}
-                          style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
-                          style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          🗑️ Delete
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="table-responsive">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Driver Name</th>
+                      <th>Assigned Ambulance</th>
+                      <th>License No.</th>
+                      <th>Hospital Facility</th>
+                      <th>Shift Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredDrivers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No ambulance drivers registered.</td>
+                      </tr>
+                    ) : (
+                      filteredDrivers.map(d => {
+                        const u = db.users.find(usr => usr.id === d.user_id);
+                        const v = vehicles.find(veh => veh.id === d.vehicle_id);
+                        const h = hospitals.find(hosp => hosp.id === d.hospital_id);
+                        return (
+                          <tr key={d.id}>
+                            <td>
+                              <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
+                              <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.phone}</div>
+                            </td>
+                            <td>
+                              <strong>{v?.plate_number || 'No Vehicle'}</strong>
+                              <div style={{ fontSize: '11px', color: '#64748b' }}>{v?.vehicle_type || 'Unassigned'}</div>
+                            </td>
+                            <td><code style={{ fontSize: '12px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{d.license_number}</code></td>
+                            <td>{h?.name || 'Unassigned'}</td>
+                            <td>
+                              <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                {u && (
+                                  <button 
+                                    onClick={() => handleOpenPasswordReset(u)}
+                                    style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                  >
+                                    🔑 Pass
+                                  </button>
+                                )}
+                                <button 
+                                  onClick={() => handleOpenEditPersonnel('driver', d)}
+                                  style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button 
+                                  onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
+                                  style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -1745,64 +2005,192 @@ export const AdminDashboard: React.FC = () => {
         {/* TAB 4: EXPECTANT MOTHERS */}
         {activeTab === 'mothers' && (
           <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px' }}>Registered Expectant Mothers Profiles</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Registered Expectant Mothers Directory</h4>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Maternal Health Register ({filteredMothers.length})</span>
+              </div>
+            </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              {filteredMothers.map(m => {
-                const u = db.users.find(usr => usr.id === m.user_id);
-                return (
-                  <div key={m.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <strong style={{ fontSize: '15px', color: '#0f172a' }}>{u?.full_name}</strong>
-                        <span className="badge-alert-pending" style={{ background: '#fff0f6', color: '#d0145a', borderColor: 'rgba(208,20,90,0.2)' }}>
-                          BLOOD: {m.blood_type}
-                        </span>
-                      </div>
-                      
-                      <div style={{ fontSize: '13px', color: '#334155', marginBottom: '12px' }}>
-                        <div>📧 Email: <strong>{u?.email}</strong></div>
-                        <div>📞 Phone: <strong>{u?.phone}</strong></div>
-                        <div>📍 Location: <strong>{m.village}, {m.sub_county} Sub-county</strong></div>
-                      </div>
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', color: '#475569', borderTop: '1px dashed #e2e8f0', paddingTop: '10px', marginBottom: '14px' }}>
-                        <div>Pregnancy Start: <strong>{m.pregnancy_start_date}</strong></div>
-                        <div>Kin: <strong>{m.next_of_kin_name} ({m.next_of_kin_relationship})</strong></div>
-                        <div>Kin Phone: <strong>{m.next_of_kin_phone}</strong></div>
-                        <div>VHT Assigned: <strong>{m.vht_name} ({m.vht_phone})</strong></div>
-                      </div>
-                    </div>
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Mother Name & National ID</th>
+                    <th>Blood Group</th>
+                    <th>Contact Details</th>
+                    <th>Village & Sub-County</th>
+                    <th>Pregnancy Start</th>
+                    <th>Expected Due Date</th>
+                    <th>Next of Kin</th>
+                    <th>VHT Assigned</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMothers.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No expectant mothers registered.</td>
+                    </tr>
+                  ) : (
+                    filteredMothers.map(m => {
+                      const u = db.users.find(usr => usr.id === m.user_id);
+                      return (
+                        <tr key={m.id}>
+                          <td>
+                            <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>ID: {m.national_id}</div>
+                          </td>
+                          <td>
+                            <span className="badge-alert-pending" style={{ background: '#fff0f6', color: '#d0145a', borderColor: 'rgba(208,20,90,0.2)', fontWeight: 800 }}>
+                              {m.blood_type}
+                            </span>
+                          </td>
+                          <td>
+                            <div>📞 {u?.phone}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.email}</div>
+                          </td>
+                          <td>
+                            <div>{m.village}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{m.sub_county} Sub-county</div>
+                          </td>
+                          <td>{m.pregnancy_start_date}</td>
+                          <td><strong style={{ color: '#2563eb' }}>{m.expected_due_date}</strong></td>
+                          <td>
+                            <div>{m.next_of_kin_name} ({m.next_of_kin_relationship})</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{m.next_of_kin_phone}</div>
+                          </td>
+                          <td>
+                            <div>{m.vht_name}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{m.vht_phone}</div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              {u && (
+                                <button 
+                                  onClick={() => handleOpenPasswordReset(u)}
+                                  style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                >
+                                  🔑 Pass
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => handleOpenEditMother(m)}
+                                style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteMother(m.id, m.user_id)}
+                                style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-                    {/* Actions row */}
-                    <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {u && (
-                        <button 
-                          onClick={() => handleOpenPasswordReset(u)}
-                          className="btn btn-sm btn-outline-secondary" 
-                          style={{ fontSize: '12px', padding: '4px 10px', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569' }}
-                        >
-                          🔑 Reset Pass
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => handleOpenEditMother(m)}
-                        className="btn btn-sm btn-outline-secondary" 
-                        style={{ fontSize: '12px', padding: '4px 10px', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
-                      >
-                        ✏️ Edit Profile
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteMother(m.id, m.user_id)}
-                        className="btn btn-sm btn-outline-danger" 
-                        style={{ fontSize: '12px', padding: '4px 10px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+        {/* TAB 5: SONS & CHILDREN */}
+        {activeTab === 'sons' && (
+          <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div>
+                <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Sons & Children Health Registry</h4>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Infant & Child Clinical Profiles ({filteredChildren.length})</span>
+              </div>
+              <button 
+                onClick={handleOpenAddChild}
+                className="btn btn-primary" 
+                style={{ fontSize: '13px', fontWeight: 700, padding: '6px 16px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
+              >
+                ➕ Register Son/Child
+              </button>
+            </div>
+            
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Son / Child Name</th>
+                    <th>Gender</th>
+                    <th>Mother's Name</th>
+                    <th>Date of Birth</th>
+                    <th>Birth Weight</th>
+                    <th>Delivery Type</th>
+                    <th>Birth Hospital</th>
+                    <th>Health Status</th>
+                    <th>Immunization</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredChildren.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No children or sons registered in system database.</td>
+                    </tr>
+                  ) : (
+                    filteredChildren.map(c => {
+                      const m = mothers.find(moth => moth.user_id === c.mother_id);
+                      const u = m ? db.users.find(usr => usr.id === m.user_id) : null;
+                      const h = hospitals.find(hosp => hosp.id === c.hospital_id);
+                      return (
+                        <tr key={c.id}>
+                          <td>
+                            <strong style={{ fontSize: '14px', color: '#0f172a' }}>👶 {c.name}</strong>
+                          </td>
+                          <td>
+                            <span className={c.gender === 'Son' ? 'badge-alert-dispatch' : 'badge-alert-success'}>
+                              {c.gender}
+                            </span>
+                          </td>
+                          <td>
+                            <div>{u?.full_name || 'Mother'}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.phone}</div>
+                          </td>
+                          <td>{c.date_of_birth}</td>
+                          <td><strong>{c.birth_weight}</strong></td>
+                          <td>{c.delivery_type}</td>
+                          <td>{h?.name || 'Mukono Regional'}</td>
+                          <td>
+                            <span className={c.health_status === 'Healthy' ? 'badge-alert-success' : 'badge-alert-pending'}>
+                              {c.health_status}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: c.immunization_status.includes('Fully') ? '#16a34a' : '#d97706' }}>
+                              💉 {c.immunization_status}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button 
+                                onClick={() => handleOpenEditChild(c)}
+                                style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteChild(c.id)}
+                                style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -2406,6 +2794,146 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
                 <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => setShowPersonnelModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#3b82f6', border: 'none' }}>Save Personnel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- ADD/EDIT SON / CHILD MODAL --- */}
+      {showChildModal && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-container">
+            <div style={{ background: '#3b82f6', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
+                {editChild ? '✏️ Edit Son / Child Record' : '👶 Register New Son / Child'}
+              </h5>
+              <button onClick={() => setShowChildModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <form onSubmit={handleChildSubmit} style={{ padding: '20px', maxHeight: '480px', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label className="form-label-admin">Child / Son Full Name</label>
+                <input 
+                  type="text" 
+                  className="form-control-admin" 
+                  value={childForm.name} 
+                  onChange={e => setChildForm({ ...childForm, name: e.target.value })} 
+                  placeholder="e.g. Ssemanda Joel (Son)" 
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Gender</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={childForm.gender} 
+                    onChange={e => setChildForm({ ...childForm, gender: e.target.value as 'Son' | 'Daughter' })}
+                  >
+                    <option value="Son">Son (Male)</option>
+                    <option value="Daughter">Daughter (Female)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Mother</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={childForm.mother_id} 
+                    onChange={e => setChildForm({ ...childForm, mother_id: Number(e.target.value) })}
+                  >
+                    {mothers.map(m => {
+                      const u = db.users.find(usr => usr.id === m.user_id);
+                      return <option key={m.id} value={m.user_id}>{u?.full_name || 'Mother'}</option>;
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Date of Birth</label>
+                  <input 
+                    type="date" 
+                    className="form-control-admin" 
+                    value={childForm.date_of_birth} 
+                    onChange={e => setChildForm({ ...childForm, date_of_birth: e.target.value })} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="form-label-admin">Birth Weight</label>
+                  <input 
+                    type="text" 
+                    className="form-control-admin" 
+                    value={childForm.birth_weight} 
+                    onChange={e => setChildForm({ ...childForm, birth_weight: e.target.value })} 
+                    placeholder="e.g. 3.5 kg"
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label className="form-label-admin">Delivery Mode</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={childForm.delivery_type} 
+                    onChange={e => setChildForm({ ...childForm, delivery_type: e.target.value as Child['delivery_type'] })}
+                  >
+                    <option value="Spontaneous Normal">Spontaneous Normal</option>
+                    <option value="Caesarean Section">Caesarean Section</option>
+                    <option value="Assisted Delivery">Assisted Delivery</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Birth Hospital Facility</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={childForm.hospital_id} 
+                    onChange={e => setChildForm({ ...childForm, hospital_id: Number(e.target.value) })}
+                  >
+                    {hospitals.map(h => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                <div>
+                  <label className="form-label-admin">Health Status</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={childForm.health_status} 
+                    onChange={e => setChildForm({ ...childForm, health_status: e.target.value as Child['health_status'] })}
+                  >
+                    <option value="Healthy">Healthy</option>
+                    <option value="Under Monitoring">Under Monitoring</option>
+                    <option value="Routine Checkup Required">Routine Checkup Required</option>
+                    <option value="Vaccination Due">Vaccination Due</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label-admin">Immunization Record</label>
+                  <select 
+                    className="form-control-admin" 
+                    value={childForm.immunization_status} 
+                    onChange={e => setChildForm({ ...childForm, immunization_status: e.target.value as Child['immunization_status'] })}
+                  >
+                    <option value="Fully Immunized">Fully Immunized</option>
+                    <option value="Up-to-Date">Up-to-Date</option>
+                    <option value="Pending BCG & Polio">Pending BCG & Polio</option>
+                    <option value="Pending DPT Booster">Pending DPT Booster</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+                <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => setShowChildModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#3b82f6', border: 'none' }}>Save Child Record</button>
               </div>
             </form>
           </div>

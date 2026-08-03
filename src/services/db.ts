@@ -110,6 +110,19 @@ export interface Mother {
   preferred_hospital_id: number | null;
 }
 
+export interface Child {
+  id: number;
+  mother_id: number; // references Mother user_id
+  name: string;
+  gender: 'Son' | 'Daughter';
+  date_of_birth: string;
+  birth_weight: string;
+  delivery_type: 'Spontaneous Normal' | 'Caesarean Section' | 'Assisted Delivery';
+  health_status: 'Healthy' | 'Under Monitoring' | 'Routine Checkup Required' | 'Vaccination Due';
+  hospital_id: number;
+  immunization_status: 'Fully Immunized' | 'Up-to-Date' | 'Pending BCG & Polio' | 'Pending DPT Booster';
+}
+
 export interface Doctor {
   id: number;
   user_id: number;
@@ -302,6 +315,13 @@ const SEED_MOTHERS: Mother[] = [
   { id: 5, user_id: 12, date_of_birth: '1997-09-14', national_id: 'CM970914D', blood_type: 'AB+', pregnancy_start_date: '2026-01-25', expected_due_date: '2026-11-01', gravida: 2, parity: 1, medical_history: 'No complications. Previous C-section.', current_complications: 'Prior Caesarian Section', next_of_kin_name: 'Ssekandi Paul', next_of_kin_phone: '+256-751-500-005', next_of_kin_relationship: 'Husband', village: 'Mukono Town', sub_county: 'Mukono Municipality', district: 'Mukono', vht_name: 'Kawuma Isaac', vht_phone: '+256-772-600-005', home_latitude: 0.3530, home_longitude: 32.7540, preferred_hospital_id: 1 }
 ];
 
+const SEED_CHILDREN: Child[] = [
+  { id: 1, mother_id: 8, name: 'Ssemanda Joel (Son)', gender: 'Son', date_of_birth: '2024-04-12', birth_weight: '3.5 kg', delivery_type: 'Spontaneous Normal', health_status: 'Healthy', hospital_id: 1, immunization_status: 'Fully Immunized' },
+  { id: 2, mother_id: 10, name: 'Babirye Ethan (Son)', gender: 'Son', date_of_birth: '2022-11-05', birth_weight: '3.1 kg', delivery_type: 'Caesarean Section', health_status: 'Routine Checkup Required', hospital_id: 1, immunization_status: 'Up-to-Date' },
+  { id: 3, mother_id: 10, name: 'Babirye Lucas (Son)', gender: 'Son', date_of_birth: '2020-08-18', birth_weight: '3.3 kg', delivery_type: 'Spontaneous Normal', health_status: 'Healthy', hospital_id: 1, immunization_status: 'Fully Immunized' },
+  { id: 4, mother_id: 12, name: 'Ssekandi Caleb (Son)', gender: 'Son', date_of_birth: '2023-09-30', birth_weight: '3.6 kg', delivery_type: 'Caesarean Section', health_status: 'Healthy', hospital_id: 2, immunization_status: 'Up-to-Date' }
+];
+
 const SEED_CHECKUPS: CheckupSchedule[] = [
   { id: 1, mother_id: 8, hospital_id: 1, checkup_type: 'Antenatal Visit 4', scheduled_date: '2026-06-25', scheduled_time: '09:00', notes: 'Routine checkup - 24 weeks', status: 'completed' },
   { id: 2, mother_id: 8, hospital_id: 1, checkup_type: 'Ultrasound Scan', scheduled_date: '2026-07-10', scheduled_time: '10:30', notes: 'Anomaly scan', status: 'upcoming' },
@@ -403,6 +423,9 @@ class LocalDatabase {
   get mothers(): Mother[] { return this.getStore('mothers', SEED_MOTHERS); }
   set mothers(val: Mother[]) { this.setStore('mothers', val); }
 
+  get children(): Child[] { return this.getStore('children', SEED_CHILDREN); }
+  set children(val: Child[]) { this.setStore('children', val); }
+
   get doctors(): Doctor[] { return this.getStore('doctors', SEED_DOCTORS); }
   set doctors(val: Doctor[]) { this.setStore('doctors', val); }
 
@@ -455,6 +478,7 @@ class LocalDatabase {
     localStorage.removeItem('mamatrack_hospitals');
     localStorage.removeItem('mamatrack_vehicles');
     localStorage.removeItem('mamatrack_mothers');
+    localStorage.removeItem('mamatrack_children');
     localStorage.removeItem('mamatrack_doctors');
     localStorage.removeItem('mamatrack_drivers');
     localStorage.removeItem('mamatrack_emergencies');
@@ -783,7 +807,7 @@ export const EmergencyService = {
       NotificationService.createNotification(
         admin.id,
         '🆘 Critical SOS Triggered',
-        `Patient ${motherName} has triggered an emergency beacon. Hospital matched: ${hospitals.find(h => h.id === assignedHospitalId)?.name}`,
+        `Patient ${motherName} has triggered an emergency beacon. Hospital matched: ${db.hospitals.find((h: Hospital) => h.id === assignedHospitalId)?.name}`,
         'emergency',
         nextId
       );
