@@ -15,6 +15,58 @@ html, body {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   STRICT MOBILE VIEWPORT (NO PAGE VERTICAL SCROLL)
+   Only maps, tables, and internal logs scroll vertically.
+───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  html, body, #root {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: hidden !important;
+    position: fixed;
+    width: 100vw !important;
+  }
+
+  .mother-theme, .driver-theme, .vht-theme, .dasher-dashboard, .medilab-dashboard, .momentra-root {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .main-content-area, .main-content, .momentra-root main, .vht-theme main {
+    height: calc(100vh - 65px) !important;
+    max-height: calc(100vh - 65px) !important;
+    overflow-y: hidden !important;
+    flex: 1 !important;
+  }
+
+  .tab-content-container, .dashboard-layout {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: hidden !important;
+  }
+
+  /* ALLOWED SCROLLABLE CONTAINERS: MAPS, TABLES, AND LOGS ONLY */
+  .table-responsive {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    max-height: calc(100vh - 160px) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .leaflet-container, .map-container {
+    touch-action: pan-x pan-y !important;
+  }
+
+  .chat-log, .notifications-panel {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    BREAKPOINT: ≤ 768px  (phones and small tablets)
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
