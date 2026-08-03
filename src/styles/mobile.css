@@ -1120,3 +1120,27 @@ html[data-theme="light"] select option {
   background-color: #ffffff !important;
   color: #0f172a !important;
 }
+
+/* Dynamic Device Category & Orientation Visibility Rules */
+html[data-device-type="mobile"] {
+  font-size: 15px;
+}
+
+html[data-device-type="mobile"] .map-container {
+  min-height: 250px !important;
+  max-height: 50vh !important;
+}
+
+html[data-device-type="tablet"] .map-container {
+  min-height: 320px !important;
+}
+
+html[data-device-type="mobile"][data-orientation="landscape"] {
+  font-size: 14px;
+}
+
+html[data-device-type="mobile"][data-orientation="landscape"] .map-container {
+  min-height: 200px !important;
+  max-height: 40vh !important;
+}
+

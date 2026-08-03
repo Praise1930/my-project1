@@ -12,14 +12,9 @@ interface ChatMessage {
 }
 
 export const SMSSimulator: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, screenSize } = useTheme();
   const isDark = theme === 'dark';
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ai' | 'sms'>('ai');
-  const [smsLogs, setSmsLogs] = useState(db.smsLogs);
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 640);
+  const isDesktop = screenSize.isDesktop;
   
   // Chatbot State
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>(() => {
