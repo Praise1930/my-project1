@@ -1101,6 +1101,41 @@ export const AdminDashboard: React.FC = () => {
           padding: 3px 8px;
           border-radius: 4px;
         }
+
+        /* Facility Type Custom Badges */
+        .dasher-dashboard .facility-subtext {
+          font-size: 11px;
+          color: #64748b;
+          font-weight: 600;
+          margin-top: 2px;
+        }
+        .dasher-dashboard .badge-facility-gov {
+          background: #eff6ff;
+          color: #1d4ed8;
+          border: 1px solid rgba(29, 78, 216, 0.2);
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
+        .dasher-dashboard .badge-facility-private {
+          background: #fdf4ff;
+          color: #a21caf;
+          border: 1px solid rgba(162, 28, 175, 0.2);
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
+        .dasher-dashboard .badge-facility-ngo {
+          background: #f0fdf4;
+          color: #15803d;
+          border: 1px solid rgba(21, 128, 61, 0.2);
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
         .dasher-dashboard .admin-modal-overlay {
           position: fixed;
           top: 0;
@@ -1195,7 +1230,48 @@ export const AdminDashboard: React.FC = () => {
           border-color: #30363d !important;
           color: #e6edf3 !important;
         }
+        html[data-theme="dark"] .dasher-dashboard .facility-subtext,
+        [data-bs-theme="dark"] .dasher-dashboard .facility-subtext {
+          color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .badge-facility-gov,
+        [data-bs-theme="dark"] .dasher-dashboard .badge-facility-gov {
+          background: rgba(37, 99, 235, 0.25) !important;
+          color: #93c5fd !important;
+          border: 1px solid rgba(147, 197, 253, 0.4) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .badge-facility-private,
+        [data-bs-theme="dark"] .dasher-dashboard .badge-facility-private {
+          background: rgba(192, 38, 211, 0.25) !important;
+          color: #f0abfc !important;
+          border: 1px solid rgba(240, 171, 252, 0.4) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .badge-facility-ngo,
+        [data-bs-theme="dark"] .dasher-dashboard .badge-facility-ngo {
+          background: rgba(34, 197, 94, 0.25) !important;
+          color: #86efac !important;
+          border: 1px solid rgba(134, 239, 172, 0.4) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .badge-alert-success,
+        [data-bs-theme="dark"] .dasher-dashboard .badge-alert-success {
+          background: rgba(34, 197, 94, 0.25) !important;
+          color: #86efac !important;
+          border: 1px solid rgba(134, 239, 172, 0.4) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .badge-alert-dispatch,
+        [data-bs-theme="dark"] .dasher-dashboard .badge-alert-dispatch {
+          background: rgba(245, 158, 11, 0.25) !important;
+          color: #fde047 !important;
+          border: 1px solid rgba(253, 224, 71, 0.4) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .badge-alert-pending,
+        [data-bs-theme="dark"] .dasher-dashboard .badge-alert-pending {
+          background: rgba(239, 68, 68, 0.25) !important;
+          color: #fca5a5 !important;
+          border: 1px solid rgba(252, 165, 165, 0.4) !important;
+        }
       `}</style>
+
 
       {/* MOBILE RESPONSIVE + DARK MODE OVERRIDES */}
       <style>{`
@@ -1913,14 +1989,16 @@ export const AdminDashboard: React.FC = () => {
                       <tr key={h.id}>
                         <td>
                           <strong style={{ fontSize: '14px' }}>{h.name}</strong>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>{h.facility_type}</div>
+                          <div className="facility-subtext">{h.facility_type}</div>
                         </td>
                         <td>
-                          <span className="badge-alert-success">{h.type.toUpperCase()}</span>
+                          <span className={`badge-facility-${h.type === 'private' ? 'private' : h.type === 'ngo' ? 'ngo' : 'gov'}`}>
+                            {h.type.toUpperCase()}
+                          </span>
                         </td>
                         <td>
                           <div>📍 {h.sub_county}</div>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>{h.address}</div>
+                          <div className="facility-subtext">{h.address}</div>
                         </td>
                         <td>
                           <strong style={{ color: h.available_beds > 5 ? '#16a34a' : '#ef4444' }}>{h.available_beds}</strong> / {h.total_beds}
