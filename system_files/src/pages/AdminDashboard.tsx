@@ -2452,16 +2452,16 @@ export const AdminDashboard: React.FC = () => {
                       return (
                         <tr key={c.id}>
                           <td>
-                            <strong style={{ fontSize: '14px', color: '#0f172a' }}>👶 {c.name}</strong>
+                            <strong style={{ fontSize: '14px' }}>👶 {c.name}</strong>
                           </td>
                           <td>
-                            <span className={c.gender === 'Son' ? 'badge-alert-dispatch' : 'badge-alert-success'}>
-                              {c.gender}
+                            <span className={c.gender === 'Son' ? 'badge-facility-gov' : 'badge-facility-private'}>
+                              {c.gender.toUpperCase()}
                             </span>
                           </td>
                           <td>
                             <div>{u?.full_name || 'Mother'}</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.phone}</div>
+                            <div className="facility-subtext">📞 {u?.phone}</div>
                           </td>
                           <td>{c.date_of_birth}</td>
                           <td><strong>{c.birth_weight}</strong></td>
@@ -2473,10 +2473,9 @@ export const AdminDashboard: React.FC = () => {
                             </span>
                           </td>
                           <td>
-                            <span style={{ fontSize: '12px', fontWeight: 600, color: c.immunization_status.includes('Fully') ? '#16a34a' : '#d97706' }}>
-                              💉 {c.immunization_status}
-                            </span>
+                            <span className="license-badge">💉 {c.immunization_status}</span>
                           </td>
+
                           <td>
                             <div style={{ display: 'flex', gap: '6px' }}>
                               <button 
