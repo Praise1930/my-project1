@@ -21,6 +21,7 @@ interface MapComponentProps {
   emergencyCircle?: { lat: number; lng: number; radius: number } | null;
   interactive?: boolean;
   theme?: 'light' | 'dark';
+  onMapClick?: (lat: number, lng: number) => void;
 }
 
 // Marker icon generator using Emojis and styled HTML divs for maximum reliability
@@ -77,9 +78,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   routePoints = [],
   emergencyCircle = null,
   interactive = true,
-  theme = 'light'
+  theme = 'light',
+  onMapClick
 }) => {
-  const [viewMode, setViewMode] = useState<'street' | 'satellite'>('street');
+  const [viewMode, setViewMode] = useState<'google' | 'satellite' | 'terrain'>('google');
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
@@ -129,6 +131,26 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Handle map click events for interactive location picking
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    const handleClick = (e: L.LeafletMouseEvent) => {
+      if (onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    };
+
+    if (onMapClick) {
+      map.on('click', handleClick);
+    }
+
+    return () => {
+      map.off('click', handleClick);
+    };
+  }, [onMapClick]);
+
   // Update Tile Layer dynamically when theme or viewMode changes
   useEffect(() => {
     if (!mapRef.current) return;
@@ -137,21 +159,25 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       tileLayerRef.current.remove();
     }
 
-    let tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    let attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    let tileUrl = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    let attribution = '&copy; Google Maps &mdash; Map data &copy; Google';
 
     if (viewMode === 'satellite') {
-      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP';
+      tileUrl = 'https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}';
+      attribution = '&copy; Google Maps Satellite &mdash; Imagery &copy; Google';
+    } else if (viewMode === 'terrain') {
+      tileUrl = 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
+      attribution = '&copy; Google Maps Terrain &mdash; Map data &copy; Google';
     } else if (theme === 'dark') {
-      tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-      attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+      // Sleek Google Dark Mode Night Tiles
+      tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+      attribution = '&copy; Google Dark Maps &mdash; Map data &copy; OpenStreetMap & CARTO';
     }
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution: attribution,
-      maxZoom: 19,
-      maxNativeZoom: 18,
+      maxZoom: 20,
+      maxNativeZoom: 19,
       subdomains: ['a', 'b', 'c', 'd']
     }).addTo(mapRef.current);
 
@@ -160,6 +186,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     // Immediately trigger size invalidation after tile swap
     mapRef.current.invalidateSize();
   }, [theme, viewMode]);
+
 
   // 2. Update Map view on center coordinates change
   const centerLat = center[0];
@@ -309,7 +336,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
       }}>
         <button
-          onClick={() => setViewMode('street')}
+          onClick={() => setViewMode('google')}
           style={{
             padding: '6px 12px',
             fontSize: '0.75rem',
@@ -318,11 +345,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
             border: 'none',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            background: viewMode === 'street' ? '#0f61ef' : 'transparent',
-            color: viewMode === 'street' ? '#ffffff' : (theme === 'dark' ? '#94a3b8' : '#64748b'),
+            background: viewMode === 'google' ? '#0f61ef' : 'transparent',
+            color: viewMode === 'google' ? '#ffffff' : (theme === 'dark' ? '#94a3b8' : '#64748b'),
           }}
         >
-          🗺️ Street
+          🗺️ Google Maps
         </button>
         <button
           onClick={() => setViewMode('satellite')}
@@ -340,6 +367,23 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         >
           🛰️ Satellite
         </button>
+        <button
+          onClick={() => setViewMode('terrain')}
+          style={{
+            padding: '6px 12px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            background: viewMode === 'terrain' ? '#0f61ef' : 'transparent',
+            color: viewMode === 'terrain' ? '#ffffff' : (theme === 'dark' ? '#94a3b8' : '#64748b'),
+          }}
+        >
+          ⛰️ Terrain
+        </button>
+
       </div>
     </div>
   );

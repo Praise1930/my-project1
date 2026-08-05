@@ -95,6 +95,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Facilities Modals
   const [showFacilityModal, setShowFacilityModal] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(true);
   const [editFacility, setEditFacility] = useState<Hospital | null>(null);
   const [facilityForm, setFacilityForm] = useState({
     name: '',
@@ -2756,9 +2757,59 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* INTERACTIVE GOOGLE MAP LOCATION PICKER */}
+              <div style={{
+                marginBottom: '14px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '12px',
+                background: theme === 'dark' ? '#0d1117' : '#f8fafc'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label className="form-label-admin" style={{ margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    🗺️ Google Map Location Picker (Click Pin Dropper)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowMapPicker(!showMapPicker)}
+                    style={{ fontSize: '11px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    {showMapPicker ? 'Hide Map' : 'Show Map Picker'}
+                  </button>
+                </div>
+
+                {showMapPicker && (
+                  <div>
+                    <div style={{ height: '220px', borderRadius: '6px', overflow: 'hidden', marginBottom: '8px', border: '1px solid #cbd5e1' }}>
+                      <MapComponent
+                        center={[facilityForm.latitude || 0.3536, facilityForm.longitude || 32.7554]}
+                        zoom={14}
+                        theme={theme}
+                        markers={[{
+                          id: 'hospital-picker-pin',
+                          lat: facilityForm.latitude,
+                          lng: facilityForm.longitude,
+                          type: 'hospital',
+                          label: facilityForm.name || 'Selected Facility Pin',
+                          sublabel: `Lat: ${facilityForm.latitude}, Lng: ${facilityForm.longitude}`
+                        }]}
+                        onMapClick={(lat, lng) => {
+                          const roundedLat = Math.round(lat * 1000000) / 1000000;
+                          const roundedLng = Math.round(lng * 1000000) / 1000000;
+                          setFacilityForm(prev => ({ ...prev, latitude: roundedLat, longitude: roundedLng }));
+                        }}
+                      />
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      📍 Click anywhere on the Google Maps view to drop exact hospital pin! Selected: <strong>(Lat: {facilityForm.latitude}, Lng: {facilityForm.longitude})</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
                 <div>
-                  <label className="form-label-admin">Latitude</label>
+                  <label className="form-label-admin">Latitude (Manual/Auto)</label>
                   <input 
                     type="number" 
                     step="0.000001" 
@@ -2769,7 +2820,7 @@ export const AdminDashboard: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="form-label-admin">Longitude</label>
+                  <label className="form-label-admin">Longitude (Manual/Auto)</label>
                   <input 
                     type="number" 
                     step="0.000001" 
@@ -2780,6 +2831,7 @@ export const AdminDashboard: React.FC = () => {
                   />
                 </div>
               </div>
+
 
               <div style={{ marginBottom: '12px' }}>
                 <label className="form-label-admin">Physical Address</label>
