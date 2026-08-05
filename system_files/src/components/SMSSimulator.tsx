@@ -12,10 +12,14 @@ interface ChatMessage {
 }
 
 export const SMSSimulator: React.FC = () => {
-  const { theme, screenSize } = useTheme();
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const isDesktop = screenSize.isDesktop;
-  
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth > 640);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ai' | 'sms'>('ai');
+  const [smsLogs, setSmsLogs] = useState<any[]>(() => db.smsLogs);
+
   // Chatbot State
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>(() => {
     const saved = localStorage.getItem('mamatrack_ai_chat');

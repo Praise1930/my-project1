@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
+export type Theme = 'dark' | 'light';
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type Orientation = 'portrait' | 'landscape';
 
@@ -90,7 +91,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev: Theme) => (prev === 'light' ? 'dark' : 'light'));
   }, []);
 
   return (
