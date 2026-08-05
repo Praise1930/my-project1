@@ -1244,6 +1244,26 @@ export const AdminDashboard: React.FC = () => {
         .dasher-dashboard .admin-table tbody tr:hover {
           background: #f8fafc;
         }
+
+        /* Sticky First Column for easy identification on horizontal scroll */
+        .dasher-dashboard .admin-table th:first-child,
+        .dasher-dashboard .admin-table td:first-child {
+          position: sticky;
+          left: 0;
+          z-index: 5;
+          background: #ffffff;
+          box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .dasher-dashboard .admin-table th:first-child {
+          background: #f1f5f9;
+          z-index: 6;
+        }
+
+        .dasher-dashboard .admin-table tbody tr:hover td:first-child {
+          background: #f8fafc;
+        }
+
         html[data-theme="dark"] .dasher-dashboard .admin-table th,
         [data-bs-theme="dark"] .dasher-dashboard .admin-table th {
           background: #161b22 !important;
@@ -1259,6 +1279,25 @@ export const AdminDashboard: React.FC = () => {
         [data-bs-theme="dark"] .dasher-dashboard .admin-table tbody tr:hover {
           background: rgba(255,255,255,0.03) !important;
         }
+
+        /* Dark Mode Sticky Column Overrides */
+        html[data-theme="dark"] .dasher-dashboard .admin-table td:first-child,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-table td:first-child {
+          background: #1c2128 !important;
+          box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        html[data-theme="dark"] .dasher-dashboard .admin-table th:first-child,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-table th:first-child {
+          background: #161b22 !important;
+          box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        html[data-theme="dark"] .dasher-dashboard .admin-table tbody tr:hover td:first-child,
+        [data-bs-theme="dark"] .dasher-dashboard .admin-table tbody tr:hover td:first-child {
+          background: #22272e !important;
+        }
+
         html[data-theme="dark"] .dasher-dashboard .admin-modal-container,
         [data-bs-theme="dark"] .dasher-dashboard .admin-modal-container {
           background: #161b22 !important;
