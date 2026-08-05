@@ -366,6 +366,38 @@ export const AdminDashboard: React.FC = () => {
     return [];
   };
 
+  // --- NEAREST QUALIFIED HOSPITAL RECOMMENDATION ENGINE ---
+  const getNearestQualifiedHospital = (emg: Emergency) => {
+    const mother = db.mothers.find(m => m.user_id === emg.mother_id);
+    const motherBlood = mother?.blood_type;
+
+    const evaluated = hospitals.map(h => {
+      const R = 6371; // earth radius in km
+      const dLat = (h.latitude - emg.latitude) * (Math.PI / 180);
+      const dLon = (h.longitude - emg.longitude) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(emg.latitude * (Math.PI / 180)) * Math.cos(h.latitude * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distanceKm = Math.round((R * c) * 10) / 10;
+
+      const hasBeds = h.available_beds > 0;
+      const bloodMatch = motherBlood ? h.blood_types_available.includes(motherBlood) : true;
+
+      return {
+        hospital: h,
+        distanceKm,
+        hasBeds,
+        bloodMatch,
+        score: (hasBeds ? 200 : 0) + (bloodMatch ? 50 : 0) + (h.has_cemonc ? 40 : 0) - (distanceKm * 5)
+      };
+    });
+
+    evaluated.sort((a, b) => b.score - a.score);
+    return evaluated[0] || null;
+  };
+
   // Dispatch Action
   const handleAssignDispatch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1631,7 +1663,13 @@ export const AdminDashboard: React.FC = () => {
                           className={`triage-card ${selectedEmergency?.id === e.id ? 'selected' : ''}`}
                           onClick={() => {
                             setSelectedEmergency(e);
-                            setDispatchHospital(e.hospital_id || 1);
+                            const rec = getNearestQualifiedHospital(e);
+                            if (rec) {
+                              setDispatchHospital(rec.hospital.id);
+                              setDispatchEta(Math.max(10, Math.round(rec.distanceKm * 3)));
+                            } else {
+                              setDispatchHospital(e.hospital_id || 1);
+                            }
                             setDispatchDoctor(0); // Reset previously selected receiving doctor
                             const availableDrv = drivers.find(d => d.is_on_duty && d.vehicle_id);
                             if (availableDrv) setDispatchDriver(availableDrv.user_id);
@@ -1654,68 +1692,164 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               {/* Dispatch Action Panel */}
-              {selectedEmergency && selectedEmergency.status === 'pending' && (
-                <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff' }}>
-                  <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                    <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#ef4444', margin: 0 }}>
-                      Dispatch Rescue to {db.users.find(u => u.id === selectedEmergency.mother_id)?.full_name}
-                    </h5>
-                  </div>
-                  
-                  <div style={{ padding: '20px' }}>
-                    <form onSubmit={handleAssignDispatch}>
-                      <div style={{ marginBottom: '14px' }}>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Target Hospital Facility</label>
-                        <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchHospital} onChange={e => setDispatchHospital(Number(e.target.value))}>
-                          {hospitals.map(h => (
-                            <option key={h.id} value={h.id}>{h.name} (Beds: {h.available_beds})</option>
-                          ))}
-                        </select>
-                      </div>
+              {selectedEmergency && selectedEmergency.status === 'pending' && (() => {
+                const rec = getNearestQualifiedHospital(selectedEmergency);
+                const recDrv = drivers.find(d => d.is_on_duty && d.vehicle_id);
+                const drvUser = recDrv ? db.users.find(u => u.id === recDrv.user_id) : null;
+                const drvVehicle = recDrv ? vehicles.find(v => v.id === recDrv.vehicle_id) : null;
+                const motherUser = db.users.find(u => u.id === selectedEmergency.mother_id);
 
-                      <div style={{ marginBottom: '14px' }}>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Ambulance Driver (On-Duty)</label>
-                        <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchDriver} onChange={e => setDispatchDriver(Number(e.target.value))}>
-                          <option value="0">-- Select Available Driver --</option>
-                          {drivers.filter(d => d.is_on_duty).map(d => {
-                            const u = db.users.find(usr => usr.id === d.user_id);
-                            const v = vehicles.find(veh => veh.id === d.vehicle_id);
-                            return (
-                              <option key={d.id} value={d.user_id}>
-                                {u?.full_name} - {v?.plate_number || 'No vehicle'}
+                return (
+                  <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff' }}>
+                    <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                      <h5 style={{ fontSize: '14px', fontWeight: 700, color: '#ef4444', margin: 0 }}>
+                        Dispatch Rescue to {motherUser?.full_name || 'Patient'}
+                      </h5>
+                    </div>
+                    
+                    <div style={{ padding: '20px' }}>
+
+                      {/* SMART NEAREST HOSPITAL RECOMMENDATION BOX */}
+                      {rec && (
+                        <div style={{
+                          backgroundColor: '#ecfdf5',
+                          border: '1.5px solid #10b981',
+                          borderRadius: '10px',
+                          padding: '14px',
+                          marginBottom: '18px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              🌟 Recommended Nearest Facility with Resources
+                            </span>
+                            <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669', background: '#d1fae5', padding: '2px 8px', borderRadius: '12px' }}>
+                              {rec.distanceKm} km away
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: '#065f46' }}>
+                            🏥 {rec.hospital.name}
+                          </div>
+
+                          <div style={{ fontSize: '12px', color: '#047857', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                            <span>🛏️ <strong>{rec.hospital.available_beds}</strong> Beds Available</span>
+                            {rec.hospital.has_cemonc && <span>✅ <strong>CEmONC</strong> Certified</span>}
+                            {rec.hospital.has_blood_bank && <span>🩸 <strong>Blood Bank</strong> Active</span>}
+                          </div>
+
+                          {recDrv && (
+                            <div style={{ fontSize: '12px', color: '#065f46', marginTop: '8px', borderTop: '1px dashed #a7f3d0', paddingTop: '8px' }}>
+                              🚑 <strong>Available Driver:</strong> {drvUser?.full_name} ({drvVehicle?.plate_number || 'Ambulance'})
+                            </div>
+                          )}
+
+                          {/* ONE-CLICK APPROVE & DISPATCH BUTTON */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!recDrv) {
+                                alert('No driver currently available on duty.');
+                                return;
+                              }
+                              try {
+                                saveBackupState();
+                                EmergencyService.assignDispatch(
+                                  selectedEmergency.id,
+                                  recDrv.user_id,
+                                  dispatchDoctor || null,
+                                  rec.hospital.id,
+                                  user.id,
+                                  Math.max(10, Math.round(rec.distanceKm * 3))
+                                );
+                                setSelectedEmergency(null);
+                                setDispatchDriver(0);
+                                setDispatchDoctor(0);
+                                setDispatchHospital(0);
+                                loadData();
+                                alert(`✅ Approved! Driver ${drvUser?.full_name} has been dispatched to pick up ${motherUser?.full_name} and transport to ${rec.hospital.name}!`);
+                              } catch (err: any) {
+                                alert(err?.message || 'Dispatch failed');
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              marginTop: '12px',
+                              padding: '10px 14px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              color: '#ffffff',
+                              backgroundColor: '#059669',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
+                            }}
+                          >
+                            ⚡ One-Click Approve Driver & Dispatch to {rec.hospital.name} ({rec.distanceKm} km)
+                          </button>
+                        </div>
+                      )}
+
+                      <form onSubmit={handleAssignDispatch}>
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Target Hospital Facility</label>
+                          <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchHospital} onChange={e => setDispatchHospital(Number(e.target.value))}>
+                            {hospitals.map(h => (
+                              <option key={h.id} value={h.id}>
+                                {h.name} (Beds: {h.available_beds}{h.id === rec?.hospital.id ? ' - ⭐ Recommended' : ''})
                               </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                            ))}
+                          </select>
+                        </div>
 
-                      <div style={{ marginBottom: '14px' }}>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Receiving Medical Specialist (Optional)</label>
-                        <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchDoctor} onChange={e => setDispatchDoctor(Number(e.target.value))}>
-                          <option value="0">-- Standby Triage Doctor --</option>
-                          {doctors.filter(doc => doc.is_on_duty && doc.hospital_id === dispatchHospital).map(doc => {
-                            const u = db.users.find(usr => usr.id === doc.user_id);
-                            return (
-                              <option key={doc.id} value={doc.user_id}>
-                                {u?.full_name} ({doc.specialization})
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Ambulance Driver (On-Duty)</label>
+                          <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchDriver} onChange={e => setDispatchDriver(Number(e.target.value))}>
+                            <option value="0">-- Select Available Driver --</option>
+                            {drivers.filter(d => d.is_on_duty).map(d => {
+                              const u = db.users.find(usr => usr.id === d.user_id);
+                              const v = vehicles.find(veh => veh.id === d.vehicle_id);
+                              return (
+                                <option key={d.id} value={d.user_id}>
+                                  {u?.full_name} - {v?.plate_number || 'No vehicle'}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
 
-                      <div style={{ marginBottom: '20px' }}>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Estimated Rescue Arrival (ETA - Mins)</label>
-                        <input type="number" className="form-control" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchEta} onChange={e => setDispatchEta(Number(e.target.value))} min={5} max={120} required />
-                      </div>
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Receiving Medical Specialist (Optional)</label>
+                          <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchDoctor} onChange={e => setDispatchDoctor(Number(e.target.value))}>
+                            <option value="0">-- Standby Triage Doctor --</option>
+                            {doctors.filter(doc => doc.is_on_duty && doc.hospital_id === dispatchHospital).map(doc => {
+                              const u = db.users.find(usr => usr.id === doc.user_id);
+                              return (
+                                <option key={doc.id} value={doc.user_id}>
+                                  {u?.full_name} ({doc.specialization})
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
 
-                      <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '10px', fontWeight: 700, fontSize: '14px', background: '#3b82f6', border: 'none' }}>
-                        Dispatch Rescue Mission →
-                      </button>
-                    </form>
+                        <div style={{ marginBottom: '20px' }}>
+                          <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '6px' }}>Estimated Rescue Arrival (ETA - Mins)</label>
+                          <input type="number" className="form-control" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchEta} onChange={e => setDispatchEta(Number(e.target.value))} min={5} max={120} required />
+                        </div>
+
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '10px', fontWeight: 700, fontSize: '14px', background: '#3b82f6', border: 'none' }}>
+                          Custom Dispatch Mission →
+                        </button>
+                      </form>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Map Fleet Monitor column */}
