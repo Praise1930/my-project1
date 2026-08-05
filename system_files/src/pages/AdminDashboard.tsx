@@ -907,10 +907,24 @@ export const AdminDashboard: React.FC = () => {
         }
         .dasher-dashboard .main-content-area {
           flex: 1;
+          min-width: 0 !important;
+          max-width: calc(100vw - 260px);
           margin-left: 260px;
           padding: 2rem;
           background: #f8fafc;
+          box-sizing: border-box;
+          overflow-x: hidden;
         }
+        .dasher-dashboard .table-responsive {
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch;
+          margin-bottom: 0;
+          border-radius: 6px;
+          scrollbar-width: thin;
+        }
+
         .dasher-dashboard .bg-gradient-mixed {
           background: #ffffff !important;
           border: 1px solid #cbd5e1 !important;
@@ -1206,10 +1220,12 @@ export const AdminDashboard: React.FC = () => {
         /* Admin Table Component Styling */
         .dasher-dashboard .admin-table {
           width: 100%;
+          min-width: 950px;
           border-collapse: separate;
           border-spacing: 0;
           font-size: 13px;
         }
+
         .dasher-dashboard .admin-table th {
           background: #f1f5f9;
           color: #475569;
@@ -1697,13 +1713,15 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
         <div style={{
-          flex: '0.7',
-          minWidth: '220px',
+          flex: '0.5',
+          maxWidth: '200px',
+          minWidth: '150px',
           maxHeight: '180px',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          borderRadius: '0 12px 12px 0'
         }}>
           <img
             src="/assets/img/gallery/about1.png"
@@ -1711,6 +1729,7 @@ export const AdminDashboard: React.FC = () => {
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
         </div>
+
       </div>
 
         {/* STATS COUNT METRICS ROW */}
