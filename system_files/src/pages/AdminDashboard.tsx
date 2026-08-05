@@ -1083,6 +1083,8 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 700;
           padding: 3px 8px;
           border-radius: 4px;
+          white-space: nowrap !important;
+          display: inline-block !important;
         }
         .dasher-dashboard .badge-alert-dispatch {
           background: #fffbeb;
@@ -1092,6 +1094,8 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 700;
           padding: 3px 8px;
           border-radius: 4px;
+          white-space: nowrap !important;
+          display: inline-block !important;
         }
         .dasher-dashboard .badge-alert-success {
           background: #f0fdf4;
@@ -1101,6 +1105,23 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 700;
           padding: 3px 8px;
           border-radius: 4px;
+          white-space: nowrap !important;
+          display: inline-block !important;
+        }
+
+        /* License Badge Styling */
+        .dasher-dashboard .license-badge {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 4px;
+          background: #f1f5f9;
+          color: #334155;
+          border: 1px solid #cbd5e1;
+          white-space: nowrap !important;
+          display: inline-block !important;
+          letter-spacing: 0.03em;
         }
 
         /* Facility Type Custom Badges */
@@ -1118,6 +1139,8 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 700;
           padding: 3px 8px;
           border-radius: 4px;
+          white-space: nowrap !important;
+          display: inline-block !important;
         }
         .dasher-dashboard .badge-facility-private {
           background: #fdf4ff;
@@ -1127,6 +1150,8 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 700;
           padding: 3px 8px;
           border-radius: 4px;
+          white-space: nowrap !important;
+          display: inline-block !important;
         }
         .dasher-dashboard .badge-facility-ngo {
           background: #f0fdf4;
@@ -1136,7 +1161,10 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 700;
           padding: 3px 8px;
           border-radius: 4px;
+          white-space: nowrap !important;
+          display: inline-block !important;
         }
+
         .dasher-dashboard .admin-modal-overlay {
           position: fixed;
           top: 0;
@@ -1235,6 +1263,13 @@ export const AdminDashboard: React.FC = () => {
         [data-bs-theme="dark"] .dasher-dashboard .facility-subtext {
           color: #cbd5e1 !important;
         }
+        html[data-theme="dark"] .dasher-dashboard .license-badge,
+        [data-bs-theme="dark"] .dasher-dashboard .license-badge {
+          background: rgba(255, 255, 255, 0.08) !important;
+          color: #e2e8f0 !important;
+          border-color: #475569 !important;
+        }
+
         html[data-theme="dark"] .dasher-dashboard .badge-facility-gov,
         [data-bs-theme="dark"] .dasher-dashboard .badge-facility-gov {
           background: rgba(37, 99, 235, 0.25) !important;
@@ -2082,14 +2117,15 @@ export const AdminDashboard: React.FC = () => {
                               <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.email}</div>
                             </td>
                             <td>{d.specialization}</td>
-                            <td><code style={{ fontSize: '12px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{d.license_number}</code></td>
+                            <td><span className="license-badge">{d.license_number}</span></td>
                             <td>{h?.name || 'Unassigned'}</td>
                             <td>
                               <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
                                 {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
                               </span>
-                              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{d.shift_start} - {d.shift_end}</div>
+                              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', fontWeight: 600 }}>{d.shift_start} - {d.shift_end}</div>
                             </td>
+
                             <td>{d.years_experience} Years</td>
                             <td>
                               <div style={{ display: 'flex', gap: '6px' }}>
@@ -2172,13 +2208,14 @@ export const AdminDashboard: React.FC = () => {
                               <strong>{v?.plate_number || 'No Vehicle'}</strong>
                               <div style={{ fontSize: '11px', color: '#64748b' }}>{v?.vehicle_type || 'Unassigned'}</div>
                             </td>
-                            <td><code style={{ fontSize: '12px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{d.license_number}</code></td>
+                            <td><span className="license-badge">{d.license_number}</span></td>
                             <td>{h?.name || 'Unassigned'}</td>
                             <td>
                               <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
                                 {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
                               </span>
                             </td>
+
                             <td>
                               <div style={{ display: 'flex', gap: '6px' }}>
                                 {u && (
