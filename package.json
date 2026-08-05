@@ -1,0 +1,10 @@
+{
+  "name": "mamatrack-root",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd system_files && npm install --include=dev && npm run build",
+    "dev": "cd system_files && npm run dev",
+    "preview": "cd system_files && npm run preview"
+  }
+}
