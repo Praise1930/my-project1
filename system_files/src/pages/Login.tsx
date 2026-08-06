@@ -137,11 +137,11 @@ export const Login: React.FC = () => {
   };
 
   const roleLabels = {
-    mother: { title: 'Expectant Mother Portal', icon: '🤰', color: 'var(--rose-500)' },
-    admin: { title: 'Command Control Center', icon: '📡', color: 'var(--primary-500)' },
-    doctor: { title: 'Clinical Care Console', icon: '🩺', color: 'var(--success-500)' },
-    driver: { title: 'Ambulance Navigation Panel', icon: '🚑', color: 'var(--warning-500)' },
-    vht: { title: 'Village Health Team Portal', icon: '📳', color: 'var(--info-500)' }
+    mother: { title: 'Expectant Mother Portal', icon: '🤰', color: '#f43f5e' },
+    admin: { title: 'Command Control Center', icon: '📡', color: '#0f172a' },
+    doctor: { title: 'Clinical Care Console', icon: '🩺', color: '#10b981' },
+    driver: { title: 'Ambulance Navigation Panel', icon: '🚑', color: '#d97706' },
+    vht: { title: 'Village Health Team Portal', icon: '📳', color: '#0284c7' }
   };
 
   const themeSettings = {
