@@ -144,8 +144,8 @@ export const Landing: React.FC = () => {
                     
                     <div className="header-right-btn f-right d-none d-lg-block ml-30" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <ThemeToggle />
-                      <Link to="/register" className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
-                        Register Profile
+                      <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <span>➕</span> Register Mother
                       </Link>
                     </div>
 
@@ -182,8 +182,8 @@ export const Landing: React.FC = () => {
                 <a href="#portals" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>System Portals</a>
                 <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>About</a>
                 <a href="#news" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>News</a>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn header-btn" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none', textAlign: 'center', marginTop: '8px' }}>
-                  Register Profile
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none', textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <span>➕</span> Register Mother
                 </Link>
               </div>
             )}

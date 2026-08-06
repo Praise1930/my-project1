@@ -328,7 +328,7 @@ export const VhtDashboard: React.FC = () => {
           <button onClick={() => setActiveTab('visits')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'visits' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'visits' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'visits' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
             <span>📋</span> Visit Logs History
           </button>
-          <button onClick={() => setActiveTab('register')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'register' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'register' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'register' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+          <button onClick={() => setActiveTab('register')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: activeTab === 'register' ? 'none' : '1px solid rgba(2,132,199,0.3)', background: activeTab === 'register' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : (isDark ? 'rgba(14,165,233,0.1)' : 'rgba(2,132,199,0.06)'), color: activeTab === 'register' ? '#ffffff' : '#0284c7', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%', boxShadow: activeTab === 'register' ? '0 4px 12px rgba(2,132,199,0.3)' : 'none', transition: 'all 0.2s ease' }}>
             <span>➕</span> Register Mother
           </button>
         </nav>

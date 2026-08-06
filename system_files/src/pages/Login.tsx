@@ -215,8 +215,8 @@ export const Login: React.FC = () => {
                     <i className="fa fa-home"></i>
                   </Link>
                   {role === 'mother' && (
-                    <Link to="/register" className="btn header-btn d-none d-md-inline-block" style={{ padding: '12px 24px', fontSize: '14px', borderRadius: '6px', color: '#ffffff', textDecoration: 'none' }}>
-                      Register Mother
+                    <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span>➕</span> Register Mother
                     </Link>
                   )}
                 </div>
@@ -355,15 +355,18 @@ export const Login: React.FC = () => {
               </button>
             </form>
 
-            <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.85rem', color: isDark ? '#94a3b8' : '#6b7280', display: 'flex', gap: '12px' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', width: '100%' }}>
+              {role === 'mother' && (
+                <div style={{ width: '100%', padding: '14px', background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2', borderRadius: '8px', border: isDark ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.82rem', color: isDark ? '#fda4af' : '#9f1239', display: 'block', marginBottom: '8px', fontWeight: 600 }}>New Expectant Mother?</span>
+                  <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #e11d48, #be123c)', color: '#ffffff', fontWeight: 700, borderRadius: '6px', fontSize: '0.85rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(225, 29, 72, 0.3)' }}>
+                    <span>➕</span> Register Mother Account
+                  </Link>
+                </div>
+              )}
+              
+              <div style={{ fontSize: '0.85rem', color: isDark ? '#94a3b8' : '#6b7280', display: 'flex', gap: '12px', marginTop: '4px' }}>
                 <Link to="/" style={{ color: isDark ? '#cbd5e1' : '#4b5563', textDecoration: 'underline' }}>← Change Role</Link>
-                {role === 'mother' && (
-                  <>
-                    <span>•</span>
-                    <Link to="/register" style={{ color: 'var(--rose-500)', fontWeight: 700, textDecoration: 'underline' }}>Create Account</Link>
-                  </>
-                )}
               </div>
             </div>
           </div>
