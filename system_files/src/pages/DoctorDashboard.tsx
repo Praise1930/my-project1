@@ -101,7 +101,7 @@ export const DoctorDashboard: React.FC = () => {
   }, [user, doctor]);
 
   if (!user || !doctor || !hospital) {
-    return <div style={{ padding: '2rem', textAlign: 'center', color: '#102039' }}>Loading Clinical Profile...</div>;
+    return <SkeletonDashboardLoader />;
   }
 
   // Metric aggregates

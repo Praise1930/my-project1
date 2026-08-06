@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { Bell, LogOut, Search } from 'lucide-react';
