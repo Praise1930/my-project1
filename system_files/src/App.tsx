@@ -23,8 +23,10 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { VerifyEmail } from './pages/VerifyEmail';
+import { LoadingShowcase } from './pages/LoadingShowcase';
 import { SMSSimulator } from './components/SMSSimulator';
 import { SyncService } from './services/syncService';
+import { HeartbeatLoader } from './components/LoadingStates';
 
 // Dashboard portals — lazily loaded (heavy, role-specific)
 const MotherDashboard = lazy(() => import('./pages/MotherDashboard').then(m => ({ default: m.MotherDashboard })));
@@ -42,19 +44,9 @@ const PageLoader: React.FC = () => (
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    background: '#f9fafb',
-    gap: '16px',
+    background: '#0f172a',
   }}>
-    <div style={{
-      width: '44px',
-      height: '44px',
-      border: '4px solid #e5e7eb',
-      borderTop: '4px solid #f43f5e',
-      borderRadius: '50%',
-      animation: 'spin 0.8s linear infinite',
-    }} />
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    <p style={{ color: '#6b7280', fontSize: '0.9rem', margin: 0 }}>Loading portal…</p>
+    <HeartbeatLoader message="Loading MamaTrack System..." subtitle="Connecting Mukono District emergency health network" />
   </div>
 );
 
@@ -77,6 +69,7 @@ const App: React.FC = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/loading-showcase" element={<LoadingShowcase />} />
 
             {/* Private Dashboard Portals (lazy-loaded) */}
             <Route path="/mother" element={<MotherDashboard />} />
