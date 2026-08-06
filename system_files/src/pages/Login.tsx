@@ -459,6 +459,8 @@ export const Login: React.FC = () => {
             </p>
           </div>
         </div>
+      </footer>
+
       {/* INTERACTIVE PORTAL DASHBOARD SELECTION MODAL */}
       {showRoleModal && (
         <div style={{
