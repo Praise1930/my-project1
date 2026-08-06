@@ -33,6 +33,15 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+
+  const rolesList = [
+    { id: 'mother', title: 'Expectant Mother Portal', icon: '🤰', desc: 'Emergency beacons, ANC schedule & doctor chat', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },
+    { id: 'doctor', title: 'Clinical Doctor Console', icon: '🩺', desc: 'Patient diagnostics, bed capacity & triage', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+    { id: 'driver', title: 'Ambulance Navigation Panel', icon: '🚑', desc: 'GPS dispatches & vehicle safety checklists', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+    { id: 'vht', title: 'Village Health Team (VHT)', icon: '📳', desc: 'Community maternal tracking & SOS alerts', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.1)' },
+    { id: 'admin', title: 'Command Control Center', icon: '📡', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
+  ];
 
   // Clear error when role changes
   React.useEffect(() => {
@@ -251,8 +260,43 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
+          {/* Quick Role-Switcher Bar */}
+          <div style={{ display: 'flex', gap: '6px', padding: '10px 14px', background: isDark ? '#0f172a' : '#f8fafc', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { id: 'mother', label: 'Mother', icon: '🤰' },
+              { id: 'doctor', label: 'Doctor', icon: '🩺' },
+              { id: 'driver', label: 'Driver', icon: '🚑' },
+              { id: 'vht', label: 'VHT', icon: '📳' },
+              { id: 'admin', label: 'Admin', icon: '📡' },
+            ].map(item => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => navigate(`/login?role=${item.id}`)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  border: role === item.id ? `1px solid ${roleLabels[item.id as keyof typeof roleLabels].color}` : '1px solid transparent',
+                  background: role === item.id ? (item.id === 'admin' ? '#0f172a' : roleLabels[item.id as keyof typeof roleLabels].color) : (isDark ? 'rgba(255,255,255,0.05)' : '#ffffff'),
+                  color: role === item.id ? '#ffffff' : (isDark ? '#cbd5e1' : '#4b5563'),
+                  fontWeight: role === item.id ? 700 : 500,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: role === item.id ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>{item.icon}</span> {item.label}
+              </button>
+            ))}
+          </div>
+
           {/* Form Content Body */}
-          <div style={{ padding: '36px 30px', background: isDark ? '#1e293b' : '#ffffff' }}>
+          <div style={{ padding: '30px 30px 36px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
             {error && (
               <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -369,8 +413,18 @@ export const Login: React.FC = () => {
                 </div>
               )}
               
-              <div style={{ fontSize: '0.85rem', color: isDark ? '#94a3b8' : '#6b7280', display: 'flex', gap: '12px', marginTop: '4px' }}>
-                <Link to="/" style={{ color: isDark ? '#cbd5e1' : '#4b5563', textDecoration: 'underline' }}>← Change Role</Link>
+              <div style={{ fontSize: '0.85rem', color: isDark ? '#94a3b8' : '#6b7280', display: 'flex', gap: '14px', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowRoleModal(true)}
+                  style={{ background: 'none', border: 'none', color: isDark ? '#60a5fa' : '#2563eb', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'underline', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span>🔄</span> Change Portal Role
+                </button>
+                <span style={{ opacity: 0.5 }}>•</span>
+                <Link to="/" style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: '0.85rem', textDecoration: 'underline' }}>
+                  ← Main Home Page
+                </Link>
               </div>
             </div>
           </div>
@@ -405,7 +459,111 @@ export const Login: React.FC = () => {
             </p>
           </div>
         </div>
-      </footer>
+      {/* INTERACTIVE PORTAL DASHBOARD SELECTION MODAL */}
+      {showRoleModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '500px',
+            background: isDark ? '#1e293b' : '#ffffff',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
+            overflow: 'hidden'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: isDark ? '#0f172a' : '#f8fafc'
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🔄</span> Select Portal Dashboard
+                </h3>
+                <span style={{ fontSize: '0.8rem', color: isDark ? '#94a3b8' : '#64748b' }}>Select a portal to switch login authentication</span>
+              </div>
+              <button
+                onClick={() => setShowRoleModal(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: isDark ? '#cbd5e1' : '#64748b', padding: '0 4px', lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Role Options List */}
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '65vh', overflowY: 'auto' }}>
+              {rolesList.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => {
+                    navigate(`/login?role=${r.id}`);
+                    setShowRoleModal(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    border: role === r.id ? `2px solid ${r.color}` : (isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0'),
+                    background: role === r.id ? r.bg : (isDark ? '#0f172a' : '#ffffff'),
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                    width: '100%'
+                  }}
+                >
+                  <div style={{ fontSize: '1.6rem', width: '42px', height: '42px', borderRadius: '10px', background: r.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {r.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {r.title}
+                      {role === r.id && (
+                        <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '12px', background: r.color, color: '#fff', fontWeight: 700 }}>Active</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: isDark ? '#94a3b8' : '#64748b', marginTop: '2px' }}>
+                      {r.desc}
+                    </div>
+                  </div>
+                  <span style={{ color: r.color, fontWeight: 700, fontSize: '1.1rem' }}>→</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '14px 24px', background: isDark ? '#0f172a' : '#f8fafc', borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Link to="/" onClick={() => setShowRoleModal(false)} style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '0.82rem', textDecoration: 'underline' }}>
+                ← Main Home Page
+              </Link>
+              <button
+                onClick={() => setShowRoleModal(false)}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: isDark ? '#334155' : '#ffffff', color: isDark ? '#ffffff' : '#374151', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
