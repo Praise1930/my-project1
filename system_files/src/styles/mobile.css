@@ -657,7 +657,7 @@ html, body {
     border-color: #333 !important;
   }
   /* Links */
-  html:not([data-theme="light"]) a {
+  html:not([data-theme="light"]) a:not(.btn):not(.header-btn):not([class*="btn"]) {
     color: #90caf9 !important;
   }
   /* Ensure root components have dark backgrounds */
@@ -709,7 +709,7 @@ html[data-theme="dark"] td {
   color: #e0e0e0 !important;
   border-color: #333 !important;
 }
-html[data-theme="dark"] a {
+html[data-theme="dark"] a:not(.btn):not(.header-btn):not([class*="btn"]) {
   color: #90caf9 !important;
 }
 html[data-theme="dark"] .medical-register-root,
@@ -762,7 +762,7 @@ html[data-theme="dark"] .medical-landing-root {
     color: #111111 !important;
     border-color: #e2e8f0 !important;
   }
-  html:not([data-theme="dark"]) a {
+  html:not([data-theme="dark"]) a:not(.btn):not(.header-btn):not([class*="btn"]) {
     color: #2563eb !important;
   }
 }
@@ -807,7 +807,7 @@ html[data-theme="light"] td {
   color: #111111 !important;
   border-color: #e2e8f0 !important;
 }
-html[data-theme="light"] a {
+html[data-theme="light"] a:not(.btn):not(.header-btn):not([class*="btn"]) {
   color: #2563eb !important;
 }
 
@@ -1187,12 +1187,61 @@ html[data-device-type="tablet"] .map-container {
   min-height: 320px !important;
 }
 
-html[data-device-type="mobile"][data-orientation="landscape"] {
-  font-size: 14px;
+
+/* ============================================================
+   GLOBAL HIGH CONTRAST BUTTON & LINK OVERRIDES
+   ============================================================ */
+.btn,
+.header-btn,
+.btn-rose,
+.btn-primary,
+a.btn,
+a.header-btn,
+a.btn-rose,
+a.btn-primary,
+a.btn span,
+a.header-btn span,
+.btn span,
+.header-btn span,
+html[data-theme="light"] .btn,
+html[data-theme="light"] .header-btn,
+html[data-theme="light"] .btn-rose,
+html[data-theme="light"] a.btn,
+html[data-theme="light"] a.header-btn,
+html[data-theme="light"] a.btn-rose,
+html[data-theme="light"] a.btn span,
+html[data-theme="light"] a.header-btn span,
+html:not([data-theme="dark"]) .btn,
+html:not([data-theme="dark"]) .header-btn,
+html:not([data-theme="dark"]) a.btn,
+html:not([data-theme="dark"]) a.header-btn,
+html:not([data-theme="dark"]) a.btn span,
+html:not([data-theme="dark"]) a.header-btn span {
+  color: #ffffff !important;
 }
 
-html[data-device-type="mobile"][data-orientation="landscape"] .map-container {
-  min-height: 200px !important;
-  max-height: 40vh !important;
+.header-btn,
+a.header-btn {
+  background: linear-gradient(135deg, #0f61ef 0%, #0046c7 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 10px 22px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 14px rgba(15, 97, 239, 0.4) !important;
+  border: none !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
 }
+
+.header-btn:hover,
+a.header-btn:hover {
+  background: linear-gradient(135deg, #0046c7 0%, #003296 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(15, 97, 239, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
 

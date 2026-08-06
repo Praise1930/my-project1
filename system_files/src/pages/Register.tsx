@@ -275,8 +275,8 @@ export const Register: React.FC = () => {
                   <Link to="/" className="d-inline-block d-sm-none" style={{ color: isDark ? '#f1f5f9' : '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
                     <i className="fa fa-home"></i>
                   </Link>
-                  <Link to="/login?role=mother" className="btn header-btn d-none d-md-inline-block" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none' }}>
-                    Login Mother
+                  <Link to="/login?role=mother" className="btn header-btn d-none d-md-inline-block" style={{ padding: '10px 22px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none' }}>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>Login Mother</span>
                   </Link>
                 </div>
               </div>

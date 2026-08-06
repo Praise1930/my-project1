@@ -536,11 +536,18 @@ body {
 }
 
 /* ─── Global Header Button Styling (Light & Dark Mode Visibility) ─── */
-.header-btn {
-    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+.header-btn,
+a.header-btn,
+.header-btn span,
+a.header-btn span,
+html[data-theme="light"] .header-btn,
+html[data-theme="light"] a.header-btn,
+html[data-theme="light"] .header-btn span,
+html[data-theme="light"] a.header-btn span {
+    background: linear-gradient(135deg, #0f61ef 0%, #0046c7 100%) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35) !important;
+    box-shadow: 0 4px 14px rgba(15, 97, 239, 0.4) !important;
     border: none !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -548,11 +555,12 @@ body {
     gap: 8px !important;
     transition: all 0.25s ease !important;
 }
-.header-btn:hover {
-    background: linear-gradient(135deg, #be123c 0%, #9f1239 100%) !important;
+.header-btn:hover,
+a.header-btn:hover {
+    background: linear-gradient(135deg, #0046c7 0%, #003296 100%) !important;
     color: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(15, 97, 239, 0.5) !important;
 }
 
 /* ─── Premium Landing page & Login/Register overrides ─── */

@@ -144,8 +144,9 @@ export const Landing: React.FC = () => {
                     
                     <div className="header-right-btn f-right d-none d-lg-block ml-30" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <ThemeToggle />
-                      <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <span>➕</span> Register Mother
+                      <Link to="/register" className="btn header-btn" style={{ padding: '10px 22px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
+                        <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother</span>
                       </Link>
                     </div>
 
@@ -182,8 +183,9 @@ export const Landing: React.FC = () => {
                 <a href="#portals" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>System Portals</a>
                 <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>About</a>
                 <a href="#news" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>News</a>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none', textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                  <span>➕</span> Register Mother
+                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn header-btn" style={{ padding: '10px 22px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
+                  <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother</span>
                 </Link>
               </div>
             )}

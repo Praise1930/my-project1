@@ -215,8 +215,9 @@ export const Login: React.FC = () => {
                     <i className="fa fa-home"></i>
                   </Link>
                   {role === 'mother' && (
-                    <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #e11d48, #be123c)', boxShadow: '0 4px 14px rgba(225,29,72,0.35)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <span>➕</span> Register Mother
+                    <Link to="/register" className="btn header-btn" style={{ padding: '10px 22px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
+                      <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother</span>
                     </Link>
                   )}
                 </div>
@@ -359,8 +360,9 @@ export const Login: React.FC = () => {
               {role === 'mother' && (
                 <div style={{ width: '100%', padding: '14px', background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2', borderRadius: '8px', border: isDark ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.82rem', color: isDark ? '#fda4af' : '#9f1239', display: 'block', marginBottom: '8px', fontWeight: 600 }}>New Expectant Mother?</span>
-                  <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #e11d48, #be123c)', color: '#ffffff', fontWeight: 700, borderRadius: '6px', fontSize: '0.85rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(225, 29, 72, 0.3)' }}>
-                    <span>➕</span> Register Mother Account
+                  <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', color: '#ffffff', fontWeight: 700, borderRadius: '6px', fontSize: '0.85rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(15, 97, 239, 0.35)' }}>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother Account</span>
                   </Link>
                 </div>
               )}
