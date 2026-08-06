@@ -377,7 +377,7 @@ export const MotherConsole: React.FC = () => {
               </div>
             </div>
             <button 
-              onClick={() => { AuthService.logout(); navigate('/'); }}
+              onClick={() => { AuthService.logout(); navigate('/login?role=mother'); }}
               style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title="Logout"
             >
@@ -431,7 +431,7 @@ export const MotherConsole: React.FC = () => {
                   </div>
                 </nav>
                 <div style={{ padding: '16px', borderTop: theme === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.08)' }}>
-                  <button onClick={() => { AuthService.logout(); navigate('/'); }} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <button onClick={() => { AuthService.logout(); navigate('/login?role=mother'); }} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     <LogOut size={16} /> Logout
                   </button>
                 </div>

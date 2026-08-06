@@ -1501,7 +1501,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
           <button 
-            onClick={() => { AuthService.logout(); navigate('/'); }}
+            onClick={() => { AuthService.logout(); navigate('/login?role=admin'); }}
             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Logout"
           >
@@ -1616,7 +1616,7 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <ThemeToggle />
                 <button
-                  onClick={() => { AuthService.logout(); navigate('/'); }}
+                  onClick={() => { AuthService.logout(); navigate('/login?role=admin'); }}
                   style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <i className="ti ti-logout"></i> Logout
@@ -1716,7 +1716,7 @@ export const AdminDashboard: React.FC = () => {
             <ThemeToggle />
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button 
-              onClick={() => { AuthService.logout(); navigate('/'); }}
+              onClick={() => { AuthService.logout(); navigate('/login?role=admin'); }}
               className="admin-logout-btn d-none d-md-flex"
               style={{ alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}
               title="Logout"

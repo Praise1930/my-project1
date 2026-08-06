@@ -329,7 +329,7 @@ export const DriverDashboard: React.FC = () => {
               <div className="user-role" style={{ fontSize: '0.7rem', color: '#f59e0b' }}>Ambulance Driver</div>
             </div>
             <button
-              onClick={() => { AuthService.logout(); navigate('/'); }}
+              onClick={() => { AuthService.logout(); navigate('/login?role=driver'); }}
               title="Logout"
               style={{
                 display: 'inline-flex',
@@ -431,7 +431,7 @@ export const DriverDashboard: React.FC = () => {
               </button>
               <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
               <button
-                onClick={() => { AuthService.logout(); navigate('/'); }}
+                onClick={() => { AuthService.logout(); navigate('/login?role=driver'); }}
                 className="driver-logout-btn d-none d-md-inline-flex"
                 style={{ alignItems: 'center', gap: '5px', padding: '8px 14px', fontSize: '0.82rem', border: '1px solid rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}
                 title="Logout"
@@ -508,7 +508,7 @@ export const DriverDashboard: React.FC = () => {
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <ThemeToggle />
                   <button
-                    onClick={() => { AuthService.logout(); navigate('/'); }}
+                    onClick={() => { AuthService.logout(); navigate('/login?role=driver'); }}
                     style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     <LogOut size={14} /> Exit

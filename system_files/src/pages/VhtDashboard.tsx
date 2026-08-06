@@ -341,7 +341,7 @@ export const VhtDashboard: React.FC = () => {
               <div style={{ fontSize: '0.68rem', color: '#64748b' }}>Mukono VHT Officer</div>
             </div>
           </div>
-          <button onClick={() => { AuthService.logout(); navigate('/'); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { AuthService.logout(); navigate('/login?role=vht'); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}>
             <LogOut size={14} /> Log Out
           </button>
         </div>
@@ -424,7 +424,7 @@ export const VhtDashboard: React.FC = () => {
             </div>
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button
-              onClick={() => { AuthService.logout(); navigate('/'); }}
+              onClick={() => { AuthService.logout(); navigate('/login?role=vht'); }}
               className="d-none d-md-flex"
               style={{
                 background: 'rgba(239,68,68,0.1)',
@@ -524,7 +524,7 @@ export const VhtDashboard: React.FC = () => {
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <ThemeToggle />
                 <button
-                  onClick={() => { AuthService.logout(); navigate('/'); }}
+                  onClick={() => { AuthService.logout(); navigate('/login?role=vht'); }}
                   style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <LogOut size={14} /> Exit

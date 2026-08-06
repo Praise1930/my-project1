@@ -392,7 +392,7 @@ export const DoctorDashboard: React.FC = () => {
             </div>
           </div>
           <button 
-            onClick={() => { AuthService.logout(); navigate('/'); }}
+            onClick={() => { AuthService.logout(); navigate('/login?role=doctor'); }}
             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Logout"
           >
@@ -507,7 +507,7 @@ export const DoctorDashboard: React.FC = () => {
             <ThemeToggle />
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button
-              onClick={() => { AuthService.logout(); navigate('/'); }}
+              onClick={() => { AuthService.logout(); navigate('/login?role=doctor'); }}
               title="Logout"
               className="d-none d-md-flex"
               style={{
@@ -577,7 +577,7 @@ export const DoctorDashboard: React.FC = () => {
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <ThemeToggle />
                 <button
-                  onClick={() => { AuthService.logout(); navigate('/'); }}
+                  onClick={() => { AuthService.logout(); navigate('/login?role=doctor'); }}
                   style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   Log Out
