@@ -6,6 +6,7 @@ import { db, AuthService, DriverService, EmergencyService, SimulationEngine, Use
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
+import { OrbitalLoader } from '../components/LoadingStates';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { WelcomeToast } from '../components/WelcomeToast';
 import '../styles/driver/theme.css';
@@ -563,6 +564,13 @@ export const DriverDashboard: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* GPS ROUTE SATELLITE LOADER */}
+          {isSimulating && (
+            <div className="card card-glass" style={{ padding: '10px 20px', marginBottom: '1.25rem', borderColor: 'rgba(14, 165, 233, 0.3)' }}>
+              <OrbitalLoader message="Calculating Live GPS Navigation..." subtitle="Tracking ambulance transit telemetry to hospital facility" />
+            </div>
+          )}
 
           {/* ACTIVE DISPATCH ALERT / MAP */}
           {activeEmergency ? (

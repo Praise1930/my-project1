@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor, VitalsService, SmsService, VitalsRecord } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
+import { HeartbeatLoader } from '../components/LoadingStates';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
@@ -999,6 +1000,8 @@ export const MotherDashboard: React.FC = () => {
                           {activeEmergency.status.toUpperCase()}
                         </span>
                       </div>
+
+                      <HeartbeatLoader message="Broadcasting Emergency SOS Beacon..." subtitle="GPS satellite beacon active — Mukono Dispatch is tracking your position" />
 
                       <div className="status-tracker">
                         <div className="status-steps">

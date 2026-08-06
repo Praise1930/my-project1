@@ -16,6 +16,7 @@ import { auth, isFirebaseConfigured } from '../services/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 import { Plus } from 'lucide-react';
+import { GlassmorphicOverlayLoader } from '../components/LoadingStates';
 
 export const Login: React.FC = () => {
   const { theme } = useTheme();
@@ -563,6 +564,12 @@ export const Login: React.FC = () => {
             </div>
           </div>
         </div>
+      {/* GLASSMORPHIC AUTHENTICATION OVERLAY LOADER */}
+      {isLoading && (
+        <GlassmorphicOverlayLoader
+          message={`Authenticating ${roleLabels[role].title}...`}
+          subtitle="Establishing secure Mukono District emergency session token"
+        />
       )}
 
     </div>

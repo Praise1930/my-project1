@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { WelcomeToast } from '../components/WelcomeToast';
 
 export const DoctorDashboard: React.FC = () => {

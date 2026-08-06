@@ -8,6 +8,7 @@ import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { SkeletonDashboardLoader } from '../components/LoadingStates';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -248,7 +249,7 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [emergencies, prevEmergencyCount]);
 
-  if (!user) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading Admin Workspace...</div>;
+  if (!user) return <SkeletonDashboardLoader />;
 
   // Contextual search filters
   const filteredMothers = mothers.filter(m => {

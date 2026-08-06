@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
-import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { Bell, LogOut, Search } from 'lucide-react';
 
 export const VhtDashboard: React.FC = () => {
@@ -122,7 +122,7 @@ export const VhtDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [navigate]);
 
-  if (!user) return <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading VHT Console...</div>;
+  if (!user) return <SkeletonDashboardLoader />;
 
   const handleRegisterMother = (e: React.FormEvent) => {
     e.preventDefault();
