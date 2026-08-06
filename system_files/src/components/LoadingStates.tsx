@@ -1,6 +1,6 @@
 import React from 'react';
-import { useTheme } from '../context/ThemeContext';
-import { Activity, ShieldAlert, Heart, Radio, RefreshCw, Zap } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { Activity, Heart, Radio, RefreshCw, Zap } from 'lucide-react';
 
 interface LoadingProps {
   message?: string;

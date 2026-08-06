@@ -9,8 +9,31 @@ import {
   TopProgressBarLoader,
   GlassmorphicOverlayLoader
 } from '../components/LoadingStates';
-import { ThemeToggle } from './Landing';
 import { Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
+
+const LocalThemeToggle: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      style={{
+        padding: '6px 14px',
+        borderRadius: '20px',
+        border: theme === 'dark' ? '1px solid rgba(255,255,255,0.15)' : '1px solid #d1d5db',
+        background: theme === 'dark' ? '#1e293b' : '#ffffff',
+        color: theme === 'dark' ? '#f8fafc' : '#1e293b',
+        fontSize: '0.82rem',
+        fontWeight: 600,
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px'
+      }}
+    >
+      {theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+    </button>
+  );
+};
 
 export const LoadingShowcase: React.FC = () => {
   const { theme } = useTheme();
@@ -41,7 +64,7 @@ export const LoadingShowcase: React.FC = () => {
           <ArrowLeft size={18} /> Back to Home
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <ThemeToggle />
+          <LocalThemeToggle />
         </div>
       </div>
 
