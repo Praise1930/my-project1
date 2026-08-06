@@ -57,12 +57,14 @@ export const Login: React.FC = () => {
     setIsLoading(true);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
       setEmailError("Email is required.");
-      setError("Please check your input fields.");
+      setError("Please enter your email address.");
       setIsLoading(false);
       return;
-    } else if (!emailRegex.test(email)) {
+    } else if (!emailRegex.test(cleanEmail)) {
       setEmailError("Invalid email format.");
       setError("Invalid email format (e.g. user@example.com).");
       setIsLoading(false);
@@ -70,60 +72,53 @@ export const Login: React.FC = () => {
     }
 
     try {
-      // If Firebase is not configured, directly fall back to local mock DB login
-      if (!isFirebaseConfigured || !auth) {
-        const res = AuthService.login(email, password, role);
-        if (res.success) {
-          navigate(`/${role}`);
-        } else {
-          setError('⚠️ Invalid email or password. Please check your credentials and try again.');
-        }
-        return;
-      }
+      // 1. Try Firebase Authentication First (if configured)
+      if (isFirebaseConfigured && auth) {
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+          
+          // Enforce email verification for Firebase authenticated users
+          if (!userCredential.user.emailVerified) {
+            setError('Your email address has not been verified yet. Please check your inbox for the verification link sent to ' + cleanEmail + ' and click it before logging in.');
+            await signOut(auth);
+            setIsLoading(false);
+            return;
+          }
 
-      // 1. Try Firebase Authentication First
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        // 2. Enforce Email Verification for Firebase Users
-        if (!userCredential.user.emailVerified) {
-          setError('📧 Your email address has not been verified yet. Please check your inbox for the verification link sent to ' + email + ' and click it before logging in.');
-          await signOut(auth);
-          setIsLoading(false);
-          return;
-        }
-
-        // 3. If Firebase auth succeeds and is verified, sign into local mock DB for session/role
-        const res = AuthService.login(email, password, role, true);
-        if (res.success) {
-          navigate(`/${role}`);
-        } else {
-          setError('⚠️ Account not found for this role. Please ensure you are logging in with the correct portal.');
-        }
-
-      } catch (firebaseErr: any) {
-        if (
-          firebaseErr.code === 'auth/user-not-found' ||
-          firebaseErr.code === 'auth/invalid-credential' ||
-          firebaseErr.code === 'auth/invalid-login-credentials'
-        ) {
-          // Fallback to local mock DB login
-          const res = AuthService.login(email, password, role);
+          // If Firebase succeeds, log into local session
+          const res = AuthService.login(cleanEmail, password, role, true);
           if (res.success) {
             navigate(`/${role}`);
+            return;
           } else {
-            setError('⚠️ Invalid email or password. Please check your credentials and try again.');
+            setError(res.error || 'Account not found for this role portal. Please select the correct role.');
+            setIsLoading(false);
+            return;
           }
-        } else if (firebaseErr.code === 'auth/wrong-password') {
-          setError('⚠️ Incorrect password. Please try again or use Forgot Password.');
-        } else if (firebaseErr.code === 'auth/user-disabled') {
-          setError('⛔ This account has been disabled. Please contact mamatrack6@gmail.com for assistance.');
-        } else if (firebaseErr.code === 'auth/too-many-requests') {
-          setError('⛔ Too many failed login attempts. Please wait a few minutes and try again.');
-        } else {
-          setError('⚠️ Login failed. Please check your credentials or try again later.');
+        } catch (firebaseErr: any) {
+          console.warn("Firebase authentication note:", firebaseErr?.code || firebaseErr);
+          if (firebaseErr.code === 'auth/user-disabled') {
+            setError('This account has been disabled. Please contact mamatrack6@gmail.com for assistance.');
+            setIsLoading(false);
+            return;
+          } else if (firebaseErr.code === 'auth/too-many-requests') {
+            setError('Too many failed login attempts. Please wait a few minutes and try again.');
+            setIsLoading(false);
+            return;
+          }
+          // For all other Firebase errors / demo users, fall back to local mock DB login below
         }
       }
+
+      // 2. Fallback to Local Database (Demo & Seeded Accounts)
+      const res = AuthService.login(cleanEmail, password, role);
+      if (res.success) {
+        navigate(`/${role}`);
+      } else {
+        setError(res.error || 'Invalid email or password for the selected portal role.');
+      }
+    } catch (err: any) {
+      setError('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
