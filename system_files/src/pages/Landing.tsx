@@ -138,7 +138,6 @@ export const Landing: React.FC = () => {
                         <ul id="navigation" style={{ display: 'flex', listStyle: 'none', gap: '28px', margin: 0, padding: 0, flexDirection: 'row' }}>
                           <li><a href="#top" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>Home</a></li>
                           <li><a href="#portals" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>System Portals</a></li>
-                          <li><Link to="/loading-showcase" style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700, fontSize: '15px' }}>⚡ Buffering States</Link></li>
                           <li><a href="#about" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>About</a></li>
                           <li><a href="#news" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>News</a></li>
                         </ul>
