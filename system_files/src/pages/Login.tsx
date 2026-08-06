@@ -225,12 +225,10 @@ export const Login: React.FC = () => {
                   <Link to="/" className="d-inline-block d-sm-none" style={{ color: isDark ? '#f1f5f9' : '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
                     <i className="fa fa-home"></i>
                   </Link>
-                  {role === 'mother' && (
-                    <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      <Plus size={16} color="#ffffff" style={{ background: 'transparent' }} />
-                      <span style={{ color: '#ffffff', fontWeight: 700, background: 'transparent' }}>Register Mother</span>
-                    </Link>
-                  )}
+                  <Link to="/register" className="btn header-btn d-none d-md-inline-flex" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', alignItems: 'center', gap: '6px', marginLeft: '12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    <Plus size={16} color="#ffffff" style={{ background: 'transparent' }} />
+                    <span style={{ color: '#ffffff', fontWeight: 700, background: 'transparent' }}>Register Mother</span>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -239,7 +237,7 @@ export const Login: React.FC = () => {
       </header>
 
       {/* CENTERED LOGIN FORM SECTION */}
-      <section className="login-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+      <section className="login-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', backgroundAttachment: 'fixed', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
         
         {/* Floating Orbs inside the section wrapper */}
         <div className="bg-orbs" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', zIndex: 1, pointerEvents: 'none' }}>
@@ -248,7 +246,7 @@ export const Login: React.FC = () => {
         </div>
 
         {/* Card Component (cloudbau Bootstrap Login Style) */}
-        <div className="card" style={{ width: '100%', maxWidth: '440px', padding: 0, position: 'relative', zIndex: 10, background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.12)', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 8px 30px rgba(0,0,0,0.08)', borderRadius: '6px', overflow: 'hidden' }}>
+        <div className="card" style={{ width: '100%', maxWidth: '440px', minHeight: '560px', padding: 0, position: 'relative', zIndex: 10, background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.12)', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 8px 30px rgba(0,0,0,0.08)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           
           {/* cloudbau themed header block */}
           <div style={{ background: role === 'admin' ? '#0f172a' : roleLabels[role].color, padding: '28px 24px', textAlign: 'center', color: '#ffffff' }}>
@@ -403,13 +401,18 @@ export const Login: React.FC = () => {
             </form>
 
             <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', width: '100%' }}>
-              {role === 'mother' && (
-                <div style={{ width: '100%', padding: '14px', background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2', borderRadius: '8px', border: isDark ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.82rem', color: isDark ? '#fda4af' : '#9f1239', display: 'block', marginBottom: '8px', fontWeight: 600 }}>New Expectant Mother?</span>
-                  <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '10px 16px', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', color: '#ffffff', fontWeight: 700, borderRadius: '6px', fontSize: '0.85rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(15, 97, 239, 0.35)' }}>
+              {role === 'mother' ? (
+                <div style={{ width: '100%', minHeight: '82px', padding: '12px 14px', background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2', borderRadius: '8px', border: isDark ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: isDark ? '#fda4af' : '#9f1239', display: 'block', marginBottom: '6px', fontWeight: 600 }}>New Expectant Mother?</span>
+                  <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '9px 16px', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', color: '#ffffff', fontWeight: 700, borderRadius: '6px', fontSize: '0.84rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(15, 97, 239, 0.35)' }}>
                     <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
                     <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother Account</span>
                   </Link>
+                </div>
+              ) : (
+                <div style={{ width: '100%', minHeight: '82px', padding: '12px 14px', background: isDark ? 'rgba(255, 255, 255, 0.04)' : '#f8fafc', borderRadius: '8px', border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '0.82rem', color: isDark ? '#cbd5e1' : '#4b5563', display: 'block', marginBottom: '4px', fontWeight: 600 }}>Authorized Portal Gateway</span>
+                  <span style={{ fontSize: '0.76rem', color: isDark ? '#94a3b8' : '#64748b' }}>Enter your verified login credentials above to access the {roleLabels[role].title}.</span>
                 </div>
               )}
               
