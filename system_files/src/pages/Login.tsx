@@ -564,6 +564,8 @@ export const Login: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
       {/* GLASSMORPHIC AUTHENTICATION OVERLAY LOADER */}
       {isLoading && (
         <GlassmorphicOverlayLoader
