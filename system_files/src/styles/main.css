@@ -535,15 +535,13 @@ body {
     pointer-events: auto !important;
 }
 
-/* ─── Global Header Button Styling (Light & Dark Mode Visibility) ─── */
+/* ─── Global Header Button Styling (Light & Dark Mode Visibility & Spacing) ─── */
 .header-btn,
 a.header-btn,
-.header-btn span,
-a.header-btn span,
 html[data-theme="light"] .header-btn,
 html[data-theme="light"] a.header-btn,
-html[data-theme="light"] .header-btn span,
-html[data-theme="light"] a.header-btn span {
+html:not([data-theme="dark"]) .header-btn,
+html:not([data-theme="dark"]) a.header-btn {
     background: linear-gradient(135deg, #0f61ef 0%, #0046c7 100%) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
@@ -553,8 +551,22 @@ html[data-theme="light"] a.header-btn span {
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
+    margin-left: 14px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
     transition: all 0.25s ease !important;
 }
+
+.header-btn span,
+a.header-btn span,
+html[data-theme="light"] .header-btn span,
+html[data-theme="light"] a.header-btn span {
+    background: transparent !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
 .header-btn:hover,
 a.header-btn:hover {
     background: linear-gradient(135deg, #0046c7 0%, #003296 100%) !important;

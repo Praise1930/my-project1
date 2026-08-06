@@ -15,6 +15,8 @@ import '../styles/medical-center/style.css';
 import { auth, isFirebaseConfigured } from '../services/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
+import { Plus } from 'lucide-react';
+
 export const Login: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -208,16 +210,16 @@ export const Login: React.FC = () => {
                   </Link>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'nowrap' }}>
                   <ThemeToggle />
-                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
+                  <Link to="/" className="d-none d-sm-inline-block" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', whiteSpace: 'nowrap' }}>← Back to Home</Link>
                   <Link to="/" className="d-inline-block d-sm-none" style={{ color: isDark ? '#f1f5f9' : '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
                     <i className="fa fa-home"></i>
                   </Link>
                   {role === 'mother' && (
-                    <Link to="/register" className="btn header-btn" style={{ padding: '10px 22px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
-                      <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother</span>
+                    <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      <Plus size={16} color="#ffffff" style={{ background: 'transparent' }} />
+                      <span style={{ color: '#ffffff', fontWeight: 700, background: 'transparent' }}>Register Mother</span>
                     </Link>
                   )}
                 </div>

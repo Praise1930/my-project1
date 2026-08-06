@@ -1220,6 +1220,16 @@ html:not([data-theme="dark"]) a.header-btn span {
   color: #ffffff !important;
 }
 
+.header-btn span,
+a.header-btn span,
+html[data-theme="light"] .header-btn span,
+html[data-theme="light"] a.header-btn span {
+  background: transparent !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
 .header-btn,
 a.header-btn {
   background: linear-gradient(135deg, #0f61ef 0%, #0046c7 100%) !important;
@@ -1234,6 +1244,9 @@ a.header-btn {
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
+  margin-left: 14px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .header-btn:hover,
