@@ -58,12 +58,30 @@ export const useScreenSize = () => {
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Restore from localStorage or default to light
+    // Restore from localStorage or default to system OS preference (prefers-color-scheme)
     const saved = localStorage.getItem('mamatrack-theme');
-    return (saved === 'dark' || saved === 'light') ? saved : 'light';
+    if (saved === 'dark' || saved === 'light') return saved;
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
   });
 
   const [screenSize, setScreenSize] = useState<ScreenSizeInfo>(getScreenSizeInfo);
+
+  // Sync with OS system theme changes if user hasn't explicitly set a preference
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      const hasSaved = localStorage.getItem('mamatrack-theme');
+      if (!hasSaved) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    };
+    mediaQuery.addEventListener?.('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener?.('change', handleSystemThemeChange);
+  }, []);
 
   // Apply data-theme, data-bs-theme, data-device-type, and data-orientation attributes to <html> element
   useEffect(() => {

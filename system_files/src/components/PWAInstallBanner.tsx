@@ -1,6 +1,7 @@
 // MamaTrack GPS — PWA Install Banner Component
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -8,6 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const PWAInstallBanner: React.FC = () => {
+  const { isDark } = useTheme();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [installing, setInstalling] = useState(false);
@@ -69,7 +71,7 @@ export const PWAInstallBanner: React.FC = () => {
   };
 
   const handleDismiss = () => {
-    sessionStorage.setItem('pwa-banner-dismissed', '1');
+    sessionStorage.getItem('pwa-banner-dismissed') ? null : sessionStorage.setItem('pwa-banner-dismissed', '1');
     setVisible(false);
   };
 
@@ -100,17 +102,24 @@ export const PWAInstallBanner: React.FC = () => {
       `}</style>
 
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        background: isDark
+          ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
         borderRadius: 20,
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'flex-start',
         gap: 14,
-        boxShadow: '0 -4px 30px rgba(0,0,0,0.4), 0 20px 60px rgba(99,102,241,0.2)',
-        border: '1px solid rgba(99,102,241,0.3)',
+        boxShadow: isDark
+          ? '0 -4px 30px rgba(0,0,0,0.4), 0 20px 60px rgba(99,102,241,0.2)'
+          : '0 10px 30px rgba(15, 23, 42, 0.12), 0 20px 60px rgba(99,102,241,0.15)',
+        border: isDark
+          ? '1px solid rgba(99,102,241,0.35)'
+          : '1px solid rgba(99,102,241,0.25)',
         backdropFilter: 'blur(16px)',
         maxWidth: 500,
         margin: '0 auto',
+        transition: 'all 0.3s ease',
       }}>
         {/* App Icon */}
         <div style={{
@@ -132,29 +141,29 @@ export const PWAInstallBanner: React.FC = () => {
         <div style={{ flex: 1, minWidth: 0 }}>
           {installed ? (
             <>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: '#34d399' }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.95rem', color: isDark ? '#34d399' : '#059669' }}>
                 ✅ MamaTrack Installed!
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: isDark ? '#94a3b8' : '#64748b' }}>
                 Open from your home screen anytime.
               </p>
             </>
           ) : isIosGuide ? (
             <>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: '#f1f5f9' }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: isDark ? '#f1f5f9' : '#0f172a' }}>
                 Add MamaTrack to Home Screen
               </p>
-              <p style={{ margin: '4px 0 8px', fontSize: '0.76rem', color: '#94a3b8', lineHeight: 1.4 }}>
-                Tap <strong style={{ color: '#60a5fa' }}>Share ↑</strong> then{' '}
-                <strong style={{ color: '#60a5fa' }}>Add to Home Screen</strong> for the best experience.
+              <p style={{ margin: '4px 0 8px', fontSize: '0.76rem', color: isDark ? '#94a3b8' : '#475569', lineHeight: 1.4 }}>
+                Tap <strong style={{ color: isDark ? '#60a5fa' : '#2563eb' }}>Share ↑</strong> then{' '}
+                <strong style={{ color: isDark ? '#60a5fa' : '#2563eb' }}>Add to Home Screen</strong> for the best experience.
               </p>
             </>
           ) : (
             <>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: '#f1f5f9' }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: isDark ? '#f1f5f9' : '#0f172a' }}>
                 Install MamaTrack GPS
               </p>
-              <p style={{ margin: '3px 0 10px', fontSize: '0.76rem', color: '#94a3b8', lineHeight: 1.4 }}>
+              <p style={{ margin: '3px 0 10px', fontSize: '0.76rem', color: isDark ? '#94a3b8' : '#475569', lineHeight: 1.4 }}>
                 Add to your home screen for instant access — works offline too.
               </p>
               <button
@@ -173,6 +182,7 @@ export const PWAInstallBanner: React.FC = () => {
                   fontFamily: 'inherit',
                   transition: 'opacity 0.2s',
                   opacity: installing ? 0.7 : 1,
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
                 }}
               >
                 {installing ? 'Installing…' : '⬇ Install App'}
@@ -188,7 +198,7 @@ export const PWAInstallBanner: React.FC = () => {
             title="Dismiss"
             aria-label="Dismiss install banner"
             style={{
-              background: 'rgba(255,255,255,0.08)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.06)',
               border: 'none',
               borderRadius: '50%',
               width: 28,
@@ -196,11 +206,12 @@ export const PWAInstallBanner: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#94a3b8',
+              color: isDark ? '#94a3b8' : '#64748b',
               cursor: 'pointer',
               fontSize: '0.85rem',
               flexShrink: 0,
               fontFamily: 'inherit',
+              transition: 'background 0.2s, color 0.2s',
             }}
           >
             ✕
