@@ -178,6 +178,14 @@ export const AdminDashboard: React.FC = () => {
     }
     setUser(sessionUser);
     loadData();
+
+    // After login, immediately show modal for any existing pending emergencies
+    const existingPending = [...db.emergencies].reverse().filter(e => e.status === 'pending');
+    if (existingPending.length > 0) {
+      const newest = existingPending[0];
+      seenEmergencyIdsRef.current.add(newest.id);
+      setIncomingAlertEmergency(newest);
+    }
   }, [navigate]);
 
   const loadData = () => {
@@ -194,7 +202,7 @@ export const AdminDashboard: React.FC = () => {
     loadData();
     const timer = setInterval(() => {
       loadData();
-      // Check for new pending emergencies to show incoming alert modal
+      // Only check for new pending emergencies when user is authenticated (to avoid marking as seen before modal can render)
       const currentEmgs = [...db.emergencies].reverse();
       const newPending = currentEmgs.filter(e => e.status === 'pending');
       if (newPending.length > 0) {
@@ -205,7 +213,7 @@ export const AdminDashboard: React.FC = () => {
           playAlertSound();
         }
       }
-    }, 1000);
+    }, 2000);
 
     const handleAlert = (e?: any) => {
       loadData();
