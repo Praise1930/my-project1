@@ -114,7 +114,10 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] .sticky {
           background: #1e293b !important;
           background-color: #1e293b !important;
-          transition: background-color 0.3s ease, border-color 0.3s ease !important;
+          border: none !important;
+          border-bottom: none !important;
+          box-shadow: none !important;
+          transition: background-color 0.3s ease !important;
         }
 
         html[data-theme='light'] body,
@@ -129,7 +132,10 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] .sticky {
           background: #ffffff !important;
           background-color: #ffffff !important;
-          transition: background-color 0.3s ease, border-color 0.3s ease !important;
+          border: none !important;
+          border-bottom: none !important;
+          box-shadow: none !important;
+          transition: background-color 0.3s ease !important;
         }
 
         /* 3. Link Text Colors - Pure text color toggle, no background shapes */
@@ -195,11 +201,11 @@ export const Landing: React.FC = () => {
       `}</style>
       
       {/* HEADER START */}
-      <header>
-        <div className="header-area" style={{ background: isDark ? '#1e293b' : '#ffffff', transition: 'background-color 0.3s ease' }}>
-          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'relative', transition: 'background-color 0.3s ease' }}>
-            <div className="container-fluid" style={{ padding: '0 40px' }}>
-              <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
+      <header style={{ border: 'none', borderBottom: 'none', boxShadow: 'none', background: isDark ? '#1e293b' : '#ffffff' }}>
+        <div className="header-area" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none', transition: 'background-color 0.3s ease' }}>
+          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none', position: 'relative', transition: 'background-color 0.3s ease' }}>
+            <div className="container-fluid" style={{ padding: '0 40px', background: 'transparent' }}>
+              <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0', background: 'transparent' }}>
                 {/* Logo */}
                 <div className="col-xl-3 col-lg-3 col-md-3">
                   <div className="logo">
