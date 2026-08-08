@@ -31,6 +31,10 @@ export const AdminDashboard: React.FC = () => {
   const [dispatchHospital, setDispatchHospital] = useState<number>(0);
   const [dispatchEta, setDispatchEta] = useState<number>(20);
 
+  // Incoming SOS Alert Modal state
+  const [incomingAlertEmergency, setIncomingAlertEmergency] = useState<Emergency | null>(null);
+  const seenEmergencyIdsRef = React.useRef<Set<number>>(new Set());
+
   // --- SEARCH QUERY STATE ---
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -190,11 +194,28 @@ export const AdminDashboard: React.FC = () => {
     loadData();
     const timer = setInterval(() => {
       loadData();
+      // Check for new pending emergencies to show incoming alert modal
+      const currentEmgs = [...db.emergencies].reverse();
+      const newPending = currentEmgs.filter(e => e.status === 'pending');
+      if (newPending.length > 0) {
+        const newest = newPending[0];
+        if (!seenEmergencyIdsRef.current.has(newest.id)) {
+          seenEmergencyIdsRef.current.add(newest.id);
+          setIncomingAlertEmergency(newest);
+          playAlertSound();
+        }
+      }
     }, 1000);
 
     const handleAlert = (e?: any) => {
       loadData();
       playAlertSound();
+      // Show incoming alert modal for custom event
+      const emgDetail = e?.detail as Emergency | undefined;
+      if (emgDetail && !seenEmergencyIdsRef.current.has(emgDetail.id)) {
+        seenEmergencyIdsRef.current.add(emgDetail.id);
+        setIncomingAlertEmergency(emgDetail);
+      }
     };
 
     window.addEventListener('storage', handleAlert);
@@ -203,9 +224,16 @@ export const AdminDashboard: React.FC = () => {
     let bc: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== 'undefined') {
       bc = new BroadcastChannel('mamatrack_emergency_channel');
-      bc.onmessage = () => {
+      bc.onmessage = (ev) => {
         loadData();
         playAlertSound();
+        if (ev.data?.type === 'NEW_EMERGENCY_SOS' && ev.data?.emergency) {
+          const emg = ev.data.emergency as Emergency;
+          if (!seenEmergencyIdsRef.current.has(emg.id)) {
+            seenEmergencyIdsRef.current.add(emg.id);
+            setIncomingAlertEmergency(emg);
+          }
+        }
       };
     }
 
@@ -367,7 +395,7 @@ export const AdminDashboard: React.FC = () => {
     const motherBlood = mother?.blood_type;
 
     const evaluated = hospitals.map(h => {
-      const R = 6371; // earth radius in km
+      const R = 6371;
       const dLat = (h.latitude - emg.latitude) * (Math.PI / 180);
       const dLon = (h.longitude - emg.longitude) * (Math.PI / 180);
       const a =
@@ -376,21 +404,83 @@ export const AdminDashboard: React.FC = () => {
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distanceKm = Math.round((R * c) * 10) / 10;
-
       const hasBeds = h.available_beds > 0;
       const bloodMatch = motherBlood ? h.blood_types_available.includes(motherBlood) : true;
-
       return {
         hospital: h,
         distanceKm,
         hasBeds,
         bloodMatch,
-        score: (hasBeds ? 200 : 0) + (bloodMatch ? 50 : 0) + (h.has_cemonc ? 40 : 0) - (distanceKm * 5)
+        score: (hasBeds ? 200 : 0) + (bloodMatch ? 50 : 0) + (h.has_cemonc ? 40 : 0) + (h.has_blood_bank ? 30 : 0) + (h.has_ambulance ? 20 : 0) - (distanceKm * 5)
       };
     });
-
     evaluated.sort((a, b) => b.score - a.score);
     return evaluated[0] || null;
+  };
+
+  // Returns top N hospital recommendations for incoming alert modal
+  const getTopHospitalOptions = (emg: Emergency, n = 3) => {
+    const mother = db.mothers.find(m => m.user_id === emg.mother_id);
+    const motherBlood = mother?.blood_type;
+    const evaluated = hospitals.map(h => {
+      const R = 6371;
+      const dLat = (h.latitude - emg.latitude) * (Math.PI / 180);
+      const dLon = (h.longitude - emg.longitude) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(emg.latitude * (Math.PI / 180)) * Math.cos(h.latitude * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distanceKm = Math.round((R * c) * 10) / 10;
+      const hasBeds = h.available_beds > 0;
+      const bloodMatch = motherBlood ? h.blood_types_available.includes(motherBlood) : true;
+      return {
+        hospital: h,
+        distanceKm,
+        hasBeds,
+        bloodMatch,
+        score: (hasBeds ? 200 : 0) + (bloodMatch ? 50 : 0) + (h.has_cemonc ? 40 : 0) + (h.has_blood_bank ? 30 : 0) + (h.has_ambulance ? 20 : 0) - (distanceKm * 5)
+      };
+    });
+    evaluated.sort((a, b) => b.score - a.score);
+    return evaluated.slice(0, n);
+  };
+
+  // Approve & dispatch from incoming alert modal
+  const handleIncomingAlertDispatch = (hospitalId: number) => {
+    if (!incomingAlertEmergency) return;
+    const emg = db.emergencies.find(e => e.id === incomingAlertEmergency.id);
+    if (!emg) return;
+    const availableDrv = drivers.find(d => d.is_on_duty && d.vehicle_id);
+    if (!availableDrv) {
+      alert('No ambulance driver currently on duty. Please assign one first.');
+      return;
+    }
+    const hosp = hospitals.find(h => h.id === hospitalId);
+    const R = 6371;
+    const dLat = ((hosp?.latitude || 0) - emg.latitude) * (Math.PI / 180);
+    const dLon = ((hosp?.longitude || 0) - emg.longitude) * (Math.PI / 180);
+    const a = Math.sin(dLat/2)**2 + Math.cos(emg.latitude*(Math.PI/180))*Math.cos((hosp?.latitude||0)*(Math.PI/180))*Math.sin(dLon/2)**2;
+    const distKm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10;
+    const eta = Math.max(10, Math.round(distKm * 3));
+    try {
+      saveBackupState();
+      const motherUser = db.users.find(u => u.id === emg.mother_id);
+      const drvUser = db.users.find(u => u.id === availableDrv.user_id);
+      EmergencyService.assignDispatch(
+        emg.id,
+        availableDrv.user_id,
+        null,
+        hospitalId,
+        user!.id,
+        eta
+      );
+      setIncomingAlertEmergency(null);
+      loadData();
+      alert(`✅ DISPATCH APPROVED!\n\nDriver ${drvUser?.full_name} dispatched to ${hosp?.name}.\nETA: ${eta} minutes.\nPatient: ${motherUser?.full_name}`);
+    } catch (err: any) {
+      alert(err?.message || 'Dispatch failed. Please try again.');
+    }
   };
 
   // Dispatch Action
@@ -1745,6 +1835,7 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>Available Ward Beds</div>
             </div>
           </div>
+        </div>
         {/* LIVE EMERGENCY BROADCAST ALERT BANNER */}
         {pendingCount > 0 && (() => {
           const latestPending = emergencies.find(e => e.status === 'pending');
@@ -3060,6 +3151,231 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
+
+      {/* ====== INCOMING SOS ALERT MODAL (auto-shows on new alert) ====== */}
+      {incomingAlertEmergency && (() => {
+        const emg = db.emergencies.find(e => e.id === incomingAlertEmergency.id) || incomingAlertEmergency;
+        const motherUser = db.users.find(u => u.id === emg.mother_id);
+        const motherProfile = db.mothers.find(m => m.user_id === emg.mother_id);
+        const topHospitals = getTopHospitalOptions(emg, 3);
+        const availDrv = drivers.find(d => d.is_on_duty && d.vehicle_id);
+        const availDrvUser = availDrv ? db.users.find(u => u.id === availDrv.user_id) : null;
+        const availVehicle = availDrv ? vehicles.find(v => v.id === availDrv.vehicle_id) : null;
+
+        return (
+          <div style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.3s ease'
+          }}>
+            <style>{`
+              @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+              @keyframes sos-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.6);} 50%{box-shadow:0 0 0 16px rgba(239,68,68,0);} }
+              .sos-badge { animation: sos-pulse 1.2s infinite; }
+            `}</style>
+
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '640px',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
+              border: '3px solid #ef4444'
+            }}>
+              {/* Alert header */}
+              <div style={{
+                background: 'linear-gradient(135deg, #dc2626, #ef4444)',
+                padding: '20px 24px',
+                borderRadius: '13px 13px 0 0',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <span className="sos-badge" style={{
+                    fontSize: '2.4rem',
+                    width: '56px', height: '56px',
+                    background: 'rgba(255,255,255,0.2)',
+                    borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>🚨</span>
+                  <div>
+                    <div style={{ color: '#ffffff', fontWeight: 900, fontSize: '1.15rem', letterSpacing: '0.01em' }}>INCOMING SOS ALERT</div>
+                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', marginTop: '2px' }}>Code: <strong>{emg.code}</strong> • Triggered: {new Date(emg.triggered_at).toLocaleTimeString()}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIncomingAlertEmergency(null)}
+                  style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
+                >&times;</button>
+              </div>
+
+              <div style={{ padding: '24px' }}>
+
+                {/* Patient info */}
+                <div style={{
+                  background: '#fef2f2',
+                  border: '1px solid #fecaca',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '20px',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '10px'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#9f1239', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient</div>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#7f1d1d' }}>{motherUser?.full_name || 'Unknown Patient'}</div>
+                    <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '2px' }}>📞 {motherUser?.phone}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#9f1239', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Medical</div>
+                    <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: 600 }}>Blood: {motherProfile?.blood_type || 'Unknown'}</div>
+                    <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '2px' }}>Severity: <strong>{emg.severity.toUpperCase()}</strong></div>
+                  </div>
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#9f1239', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>Distress Notes</div>
+                    <div style={{ fontSize: '12px', color: '#7f1d1d' }}>{emg.notes}</div>
+                  </div>
+                  {motherProfile?.next_of_kin_name && (
+                    <div style={{ gridColumn: '1/-1', borderTop: '1px solid #fecaca', paddingTop: '8px' }}>
+                      <div style={{ fontSize: '11px', color: '#991b1b' }}>👨‍👩‍👧 Kin: <strong>{motherProfile.next_of_kin_name}</strong> ({motherProfile.next_of_kin_relationship}) • {motherProfile.next_of_kin_phone}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Available driver info */}
+                <div style={{
+                  background: availDrv ? '#f0fdf4' : '#fefce8',
+                  border: `1px solid ${availDrv ? '#bbf7d0' : '#fde68a'}`,
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: availDrv ? '#14532d' : '#78350f'
+                }}>
+                  {availDrv ? (
+                    <span>🚑 Driver Ready: <strong>{availDrvUser?.full_name}</strong> — {availVehicle?.plate_number || 'Ambulance'} ({availVehicle?.vehicle_type})</span>
+                  ) : (
+                    <span>⚠️ No driver currently on duty. Assign a driver before dispatching.</span>
+                  )}
+                </div>
+
+                {/* Hospital options */}
+                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                  🏥 Nearest Available Hospitals (System Ranked by Resources)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {topHospitals.map((rec, idx) => (
+                    <div key={rec.hospital.id} style={{
+                      border: idx === 0 ? '2px solid #10b981' : '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      background: idx === 0 ? '#ecfdf5' : '#f8fafc',
+                      position: 'relative'
+                    }}>
+                      {idx === 0 && (
+                        <span style={{
+                          position: 'absolute', top: '-10px', left: '12px',
+                          background: '#10b981', color: '#fff',
+                          fontSize: '10px', fontWeight: 800,
+                          padding: '2px 10px', borderRadius: '20px',
+                          textTransform: 'uppercase', letterSpacing: '0.05em'
+                        }}>⭐ Best Match</span>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>{rec.hospital.name}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{rec.hospital.facility_type} • {rec.hospital.sub_county}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: idx === 0 ? '#059669' : '#475569' }}>{rec.distanceKm} km</div>
+                          <div style={{ fontSize: '10px', color: '#64748b' }}>~{Math.max(10, Math.round(rec.distanceKm * 3))} min ETA</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: rec.hasBeds ? '#dcfce7' : '#fee2e2', color: rec.hasBeds ? '#15803d' : '#dc2626' }}>
+                          🛏️ {rec.hospital.available_beds} beds
+                        </span>
+                        {rec.hospital.has_cemonc && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#dbeafe', color: '#1d4ed8' }}>✅ CEmONC</span>}
+                        {rec.hospital.has_blood_bank && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fce7f3', color: '#9d174d' }}>🩸 Blood Bank</span>}
+                        {rec.hospital.has_surgical_capacity && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fef9c3', color: '#854d0e' }}>🔪 Surgical</span>}
+                        {rec.hospital.has_ambulance && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#f0fdf4', color: '#166534' }}>🚑 Ambulance</span>}
+                        {rec.bloodMatch && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fdf4ff', color: '#6b21a8' }}>🩺 Blood Match</span>}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleIncomingAlertDispatch(rec.hospital.id)}
+                          disabled={!availDrv}
+                          style={{
+                            flex: 1,
+                            padding: '10px 14px',
+                            background: !availDrv ? '#94a3b8' : (idx === 0 ? '#059669' : '#3b82f6'),
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: 800,
+                            fontSize: '13px',
+                            cursor: availDrv ? 'pointer' : 'not-allowed',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                            boxShadow: availDrv ? (idx === 0 ? '0 4px 12px rgba(5,150,105,0.3)' : '0 4px 12px rgba(59,130,246,0.25)') : 'none'
+                          }}
+                        >
+                          {idx === 0 ? '⚡ Approve & Dispatch Here' : '→ Dispatch to This Hospital'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Footer dismiss */}
+                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button
+                    onClick={() => {
+                      setIncomingAlertEmergency(null);
+                      setActiveTab('dispatch');
+                      setSelectedEmergency(emg);
+                    }}
+                    style={{
+                      padding: '9px 18px',
+                      background: '#f1f5f9',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      color: '#475569'
+                    }}
+                  >
+                    📋 View in Dispatch Board
+                  </button>
+                  <button
+                    onClick={() => setIncomingAlertEmergency(null)}
+                    style={{
+                      padding: '9px 18px',
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      color: '#64748b'
+                    }}
+                  >
+                    Dismiss Alert
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
