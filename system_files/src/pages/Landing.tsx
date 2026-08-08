@@ -74,69 +74,66 @@ export const Landing: React.FC = () => {
   return (
     <div id="top" className="medical-landing-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       <style>{`
-        /* Force uniform #1e293b dark blue background on ALL header wrappers, nav containers, lists, and links in Dark Mode */
+        /* 1. Header Navigation Elements MUST be 100% Transparent to avoid block rectangles during mode toggling */
+        .main-menu,
+        .main-menu nav,
+        .main-menu ul,
+        .main-menu li,
+        .main-menu a,
+        #navigation,
+        #navigation li,
+        #navigation li a,
+        .menu-main,
+        .col-xl-9,
+        .col-lg-9,
+        .col-md-9 {
+          background: transparent !important;
+          background-color: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+
+        /* 2. Header Container Background & Smooth Transition */
         html[data-theme='dark'] header,
         html[data-theme='dark'] .header-area,
         html[data-theme='dark'] .main-header,
         html[data-theme='dark'] .header-bottom,
         html[data-theme='dark'] .header-sticky,
         html[data-theme='dark'] .sticky-bar,
-        html[data-theme='dark'] .sticky,
-        html[data-theme='dark'] .menu-main,
-        html[data-theme='dark'] .main-menu,
-        html[data-theme='dark'] .main-menu nav,
-        html[data-theme='dark'] .main-menu ul,
-        html[data-theme='dark'] .main-menu li,
-        html[data-theme='dark'] #navigation,
-        html[data-theme='dark'] #navigation li,
-        html[data-theme='dark'] #navigation li a,
-        html[data-theme='dark'] .col-xl-9,
-        html[data-theme='dark'] .col-lg-9,
-        html[data-theme='dark'] .col-md-9 {
+        html[data-theme='dark'] .sticky {
           background: #1e293b !important;
           background-color: #1e293b !important;
-          box-shadow: none !important;
+          transition: background-color 0.3s ease, border-color 0.3s ease !important;
         }
 
-        /* Force clean #ffffff background on ALL header elements in Light Mode */
         html[data-theme='light'] header,
         html[data-theme='light'] .header-area,
         html[data-theme='light'] .main-header,
         html[data-theme='light'] .header-bottom,
         html[data-theme='light'] .header-sticky,
         html[data-theme='light'] .sticky-bar,
-        html[data-theme='light'] .sticky,
-        html[data-theme='light'] .menu-main,
-        html[data-theme='light'] .main-menu,
-        html[data-theme='light'] .main-menu nav,
-        html[data-theme='light'] .main-menu ul,
-        html[data-theme='light'] .main-menu li,
-        html[data-theme='light'] #navigation,
-        html[data-theme='light'] #navigation li,
-        html[data-theme='light'] #navigation li a,
-        html[data-theme='light'] .col-xl-9,
-        html[data-theme='light'] .col-lg-9,
-        html[data-theme='light'] .col-md-9 {
+        html[data-theme='light'] .sticky {
           background: #ffffff !important;
           background-color: #ffffff !important;
-          box-shadow: none !important;
+          transition: background-color 0.3s ease, border-color 0.3s ease !important;
         }
 
-        /* Strict text color rules for dark mode menu links */
+        /* 3. Link Text Colors (Transparent background, only text color changes) */
         html[data-theme='dark'] #navigation li a,
         html[data-theme='dark'] .main-menu ul li a,
         html[data-theme='dark'] .slicknav_nav a,
         html[data-theme='dark'] .sticky-bar a,
         html[data-theme='dark'] .mobile-nav-dropdown a {
           color: #ffffff !important;
-          background: #1e293b !important;
-          background-color: #1e293b !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          transition: color 0.2s ease !important;
         }
         html[data-theme='dark'] #navigation li a:hover,
         html[data-theme='dark'] .main-menu ul li a:hover {
           color: #60a5fa !important;
-          background: #1e293b !important;
-          background-color: #1e293b !important;
+          background: transparent !important;
+          background-color: transparent !important;
         }
 
         html[data-theme='light'] #navigation li a,
@@ -145,14 +142,15 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] .sticky-bar a,
         html[data-theme='light'] .mobile-nav-dropdown a {
           color: #102039 !important;
-          background: #ffffff !important;
-          background-color: #ffffff !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          transition: color 0.2s ease !important;
         }
         html[data-theme='light'] #navigation li a:hover,
         html[data-theme='light'] .main-menu ul li a:hover {
           color: #0f61ef !important;
-          background: #ffffff !important;
-          background-color: #ffffff !important;
+          background: transparent !important;
+          background-color: transparent !important;
         }
 
         /* Force button text to always be visible (white) and prevent hover overlays from covering it */
