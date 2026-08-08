@@ -72,9 +72,13 @@ export const Landing: React.FC = () => {
   ];
 
   return (
-    <div id="top" className="medical-landing-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+    <div id="top" className="medical-landing-root" style={{ background: isDark ? '#1e293b' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       <style>{`
-        /* 1. Header Navigation Elements & Pseudo-Classes MUST be 100% Transparent */
+        /* 1. Header Navigation Containers & Links MUST be 100% Transparent — NO BOXES OR BACKGROUND SHAPES */
+        .col-xl-9,
+        .col-lg-9,
+        .col-md-9,
+        .menu-main,
         .main-menu,
         .main-menu nav,
         .main-menu ul,
@@ -95,19 +99,16 @@ export const Landing: React.FC = () => {
         .slicknav_nav,
         .slicknav_nav a,
         .slicknav_btn,
-        .slicknav_row,
-        .menu-main,
-        .col-xl-9,
-        .col-lg-9,
-        .col-md-9 {
+        .slicknav_row {
           background: transparent !important;
           background-color: transparent !important;
           border: none !important;
           box-shadow: none !important;
           outline: none !important;
+          border-radius: 0 !important;
         }
 
-        /* 2. Header & Root Container Background & Smooth Transition */
+        /* 2. Unified Header & Page Root Background (#1e293b in Dark Mode, #ffffff in Light Mode) */
         html[data-theme='dark'] .medical-landing-root,
         html[data-theme='dark'] header,
         html[data-theme='dark'] .header-area,
@@ -116,8 +117,8 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] .header-sticky,
         html[data-theme='dark'] .sticky-bar,
         html[data-theme='dark'] .sticky {
-          background: #0f172a !important;
-          background-color: #0f172a !important;
+          background: #1e293b !important;
+          background-color: #1e293b !important;
           transition: background-color 0.3s ease, border-color 0.3s ease !important;
         }
 
