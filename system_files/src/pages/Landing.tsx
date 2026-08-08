@@ -118,7 +118,13 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] .header-bottom,
         html[data-theme='dark'] .header-sticky,
         html[data-theme='dark'] .sticky-bar,
-        html[data-theme='dark'] .sticky {
+        html[data-theme='dark'] .sticky,
+        html[data-theme='dark'] .landing-nav-container,
+        html[data-theme='dark'] .landing-nav-container nav,
+        html[data-theme='dark'] .landing-nav-container ul,
+        html[data-theme='dark'] .landing-nav-container li,
+        html[data-theme='dark'] .landing-nav-link,
+        html[data-theme='dark'] a.landing-nav-link {
           background: #1e293b !important;
           background-color: #1e293b !important;
           transition: background-color 0.3s ease, border-color 0.3s ease !important;
@@ -133,13 +139,19 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] .header-bottom,
         html[data-theme='light'] .header-sticky,
         html[data-theme='light'] .sticky-bar,
-        html[data-theme='light'] .sticky {
+        html[data-theme='light'] .sticky,
+        html[data-theme='light'] .landing-nav-container,
+        html[data-theme='light'] .landing-nav-container nav,
+        html[data-theme='light'] .landing-nav-container ul,
+        html[data-theme='light'] .landing-nav-container li,
+        html[data-theme='light'] .landing-nav-link,
+        html[data-theme='light'] a.landing-nav-link {
           background: #ffffff !important;
           background-color: #ffffff !important;
           transition: background-color 0.3s ease, border-color 0.3s ease !important;
         }
 
-        /* 3. Link Text Colors (Transparent background, only text color changes) */
+        /* 3. Link Text Colors */
         html[data-theme='dark'] .landing-nav-link,
         html[data-theme='dark'] a.landing-nav-link,
         html[data-theme='dark'] #navigation li a,
@@ -148,8 +160,10 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] .sticky-bar a,
         html[data-theme='dark'] .mobile-nav-dropdown a {
           color: #ffffff !important;
-          background: transparent !important;
-          background-color: transparent !important;
+          font-size: 16px !important;
+          font-weight: 600 !important;
+          background: #1e293b !important;
+          background-color: #1e293b !important;
           transition: color 0.2s ease !important;
         }
         html[data-theme='dark'] .landing-nav-link:hover,
@@ -157,8 +171,8 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] #navigation li a:hover,
         html[data-theme='dark'] .main-menu ul li a:hover {
           color: #60a5fa !important;
-          background: transparent !important;
-          background-color: transparent !important;
+          background: #1e293b !important;
+          background-color: #1e293b !important;
         }
 
         html[data-theme='light'] .landing-nav-link,
@@ -169,8 +183,10 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] .sticky-bar a,
         html[data-theme='light'] .mobile-nav-dropdown a {
           color: #102039 !important;
-          background: transparent !important;
-          background-color: transparent !important;
+          font-size: 16px !important;
+          font-weight: 600 !important;
+          background: #ffffff !important;
+          background-color: #ffffff !important;
           transition: color 0.2s ease !important;
         }
         html[data-theme='light'] .landing-nav-link:hover,
@@ -178,8 +194,8 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] #navigation li a:hover,
         html[data-theme='light'] .main-menu ul li a:hover {
           color: #0f61ef !important;
-          background: transparent !important;
-          background-color: transparent !important;
+          background: #ffffff !important;
+          background-color: #ffffff !important;
         }
 
         /* Force button text to always be visible (white) and prevent hover overlays from covering it */
@@ -214,14 +230,14 @@ export const Landing: React.FC = () => {
                 </div>
                 
                 {/* Navigation Menu */}
-                <div className="col-xl-9 col-lg-9 col-md-9" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: 'transparent' }}>
-                  <div className="landing-nav-container d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '28px', background: 'transparent' }}>
-                    <nav className="d-none d-lg-block" style={{ background: 'transparent' }}>
-                      <ul style={{ display: 'flex', listStyle: 'none', gap: '32px', margin: 0, padding: 0, flexDirection: 'row', alignItems: 'center', background: 'transparent' }}>
-                        <li><a href="#top" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>Home</a></li>
-                        <li><a href="#portals" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>System Portals</a></li>
-                        <li><a href="#about" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>About</a></li>
-                        <li><a href="#news" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>News</a></li>
+                <div className="col-xl-9 col-lg-9 col-md-9" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: isDark ? '#1e293b' : '#ffffff' }}>
+                  <div className="landing-nav-container d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '28px', background: isDark ? '#1e293b' : '#ffffff' }}>
+                    <nav className="d-none d-lg-block" style={{ background: isDark ? '#1e293b' : '#ffffff' }}>
+                      <ul style={{ display: 'flex', listStyle: 'none', gap: '32px', margin: 0, padding: 0, flexDirection: 'row', alignItems: 'center', background: isDark ? '#1e293b' : '#ffffff' }}>
+                        <li><a href="#top" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: isDark ? '#1e293b' : '#ffffff', padding: '10px 16px', display: 'inline-block' }}>Home</a></li>
+                        <li><a href="#portals" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: isDark ? '#1e293b' : '#ffffff', padding: '10px 16px', display: 'inline-block' }}>System Portals</a></li>
+                        <li><a href="#about" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: isDark ? '#1e293b' : '#ffffff', padding: '10px 16px', display: 'inline-block' }}>About</a></li>
+                        <li><a href="#news" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: isDark ? '#1e293b' : '#ffffff', padding: '10px 16px', display: 'inline-block' }}>News</a></li>
                       </ul>
                     </nav>
 
