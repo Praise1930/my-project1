@@ -140,6 +140,8 @@ export const Landing: React.FC = () => {
         }
 
         /* 3. Link Text Colors (Transparent background, only text color changes) */
+        html[data-theme='dark'] .landing-nav-link,
+        html[data-theme='dark'] a.landing-nav-link,
         html[data-theme='dark'] #navigation li a,
         html[data-theme='dark'] .main-menu ul li a,
         html[data-theme='dark'] .slicknav_nav a,
@@ -150,6 +152,8 @@ export const Landing: React.FC = () => {
           background-color: transparent !important;
           transition: color 0.2s ease !important;
         }
+        html[data-theme='dark'] .landing-nav-link:hover,
+        html[data-theme='dark'] a.landing-nav-link:hover,
         html[data-theme='dark'] #navigation li a:hover,
         html[data-theme='dark'] .main-menu ul li a:hover {
           color: #60a5fa !important;
@@ -157,6 +161,8 @@ export const Landing: React.FC = () => {
           background-color: transparent !important;
         }
 
+        html[data-theme='light'] .landing-nav-link,
+        html[data-theme='light'] a.landing-nav-link,
         html[data-theme='light'] #navigation li a,
         html[data-theme='light'] .main-menu ul li a,
         html[data-theme='light'] .slicknav_nav a,
@@ -167,6 +173,8 @@ export const Landing: React.FC = () => {
           background-color: transparent !important;
           transition: color 0.2s ease !important;
         }
+        html[data-theme='light'] .landing-nav-link:hover,
+        html[data-theme='light'] a.landing-nav-link:hover,
         html[data-theme='light'] #navigation li a:hover,
         html[data-theme='light'] .main-menu ul li a:hover {
           color: #0f61ef !important;
@@ -206,19 +214,17 @@ export const Landing: React.FC = () => {
                 </div>
                 
                 {/* Navigation Menu */}
-                <div className="col-xl-9 col-lg-9 col-md-9" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                  <div className="menu-main d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '24px', background: 'transparent' }}>
-                    <div className="main-menu d-none d-lg-block" style={{ background: 'transparent' }}>
-                      <nav style={{ background: 'transparent' }}>
-                        <ul id="navigation" style={{ display: 'flex', listStyle: 'none', gap: '28px', margin: 0, padding: 0, flexDirection: 'row', background: 'transparent' }}>
-                          <li><a href="#top" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>Home</a></li>
-                          <li><a href="#portals" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>System Portals</a></li>
-                          <li><a href="#about" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>About</a></li>
-                          <li><a href="#news" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>News</a></li>
-                        </ul>
-                      </nav>
-                    </div>
-                    
+                <div className="col-xl-9 col-lg-9 col-md-9" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: 'transparent' }}>
+                  <div className="landing-nav-container d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '28px', background: 'transparent' }}>
+                    <nav className="d-none d-lg-block" style={{ background: 'transparent' }}>
+                      <ul style={{ display: 'flex', listStyle: 'none', gap: '32px', margin: 0, padding: 0, flexDirection: 'row', alignItems: 'center', background: 'transparent' }}>
+                        <li><a href="#top" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>Home</a></li>
+                        <li><a href="#portals" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>System Portals</a></li>
+                        <li><a href="#about" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>About</a></li>
+                        <li><a href="#news" className="landing-nav-link" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>News</a></li>
+                      </ul>
+                    </nav>
+
                     <div className="header-right-btn f-right d-none d-lg-block ml-30" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'nowrap' }}>
                       <ThemeToggle />
                       <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
