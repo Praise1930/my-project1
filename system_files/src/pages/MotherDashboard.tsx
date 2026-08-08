@@ -251,14 +251,8 @@ export const MotherDashboard: React.FC = () => {
     return [];
   };
 
-  // SOS Emergency activation
+  // SOS Emergency activation — instant direct trigger without blurring screen
   const handleTriggerSOS = () => {
-    setShowConfirmModal(true);
-  };
-
-  const handleConfirmSOS = () => {
-    setShowConfirmModal(false);
-    
     // Play audio siren alert sound
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -287,15 +281,20 @@ export const MotherDashboard: React.FC = () => {
       user.id,
       lat,
       lng,
-      emergencyNotes,
+      emergencyNotes || 'Emergency maternal distress beacon active.',
       requireCemonc
     );
     setActiveEmergency(newEmg);
     setNotifications(NotificationService.getNotificationsForUser(user.id));
+    setShowConfirmModal(false);
     setEmergencyNotes('');
     setRequireCemonc(false);
-    setActiveTab('emergency'); // Auto switch to track
-    alert('🚨 EMERGENCY SOS BROADCASTED!\n\nYour GPS coordinates have been locked. Mukono District Dispatch, matched Obstetricians, and nearby Ambulance Drivers have been alerted!');
+    setActiveTab('emergency'); // Auto switch to live rescue beacon tab
+    alert('🚨 EMERGENCY SOS BROADCASTED!\n\nYour GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!');
+  };
+
+  const handleConfirmSOS = () => {
+    handleTriggerSOS();
   };
 
   const handleCancelSOS = () => {
