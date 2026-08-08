@@ -768,12 +768,23 @@ export const EmergencyService = {
 
     if (active) {
       // Re-activate / refresh active emergency with latest coordinates and notes
-      active.latitude = lat || active.latitude;
-      active.longitude = lng || active.longitude;
-      active.notes = notes || active.notes;
-      active.severity = requireCemonc ? 'critical' : 'high';
-      active.hospital_id = assignedHospitalId;
-      active.triggered_at = new Date().toISOString();
+      const updatedEmergencies = emergencies.map(e => {
+        if (e.id === active!.id) {
+          return {
+            ...e,
+            latitude: lat || e.latitude,
+            longitude: lng || e.longitude,
+            notes: notes || e.notes,
+            severity: requireCemonc ? ('critical' as const) : ('high' as const),
+            hospital_id: assignedHospitalId,
+            status: 'pending' as const,
+            triggered_at: new Date().toISOString()
+          };
+        }
+        return e;
+      });
+      db.emergencies = updatedEmergencies;
+      active = updatedEmergencies.find(e => e.id === active!.id) || active;
     } else {
       const nextId = Math.max(...emergencies.map(e => e.id), 0) + 1;
       const code = `EMG-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;

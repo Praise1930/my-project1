@@ -185,12 +185,24 @@ export const AdminDashboard: React.FC = () => {
     setMothers(db.mothers);
   };
 
-  // Simple state poller to keep dispatch screen live
+  // Real-time state poller and storage event listener to reflect emergency alerts instantly
   useEffect(() => {
+    loadData();
     const timer = setInterval(() => {
       loadData();
-    }, 4000);
-    return () => clearInterval(timer);
+    }, 1000);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || e.key.startsWith('mamatrack_')) {
+        loadData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   const playAlertSound = () => {
