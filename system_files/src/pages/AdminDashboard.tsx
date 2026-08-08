@@ -839,6 +839,15 @@ export const AdminDashboard: React.FC = () => {
         .dasher-dashboard .bg-gradient-mixed p {
           color: #475569 !important;
         }
+        .dasher-dashboard .btn-reset-db {
+          border: 1.5px solid #0f172a !important;
+          background: #ffffff !important;
+          color: #0f172a !important;
+          box-shadow: 0 2px 10px rgba(15,23,42,0.12) !important;
+        }
+        .dasher-dashboard .btn-reset-db .reset-icon {
+          color: #0f61ef !important;
+        }
         .dasher-dashboard .card-metric {
           background: #ffffff;
           border-radius: 8px;
@@ -951,6 +960,17 @@ export const AdminDashboard: React.FC = () => {
         html[data-theme="dark"] .dasher-dashboard .bg-gradient-mixed p,
         [data-bs-theme="dark"] .dasher-dashboard .bg-gradient-mixed p {
           color: #cbd5e1 !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .btn-reset-db,
+        [data-bs-theme="dark"] .dasher-dashboard .btn-reset-db {
+          border: 1px solid rgba(255,255,255,0.2) !important;
+          background: rgba(255,255,255,0.08) !important;
+          color: #ffffff !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+        html[data-theme="dark"] .dasher-dashboard .btn-reset-db .reset-icon,
+        [data-bs-theme="dark"] .dasher-dashboard .btn-reset-db .reset-icon {
+          color: #ffffff !important;
         }
         html[data-theme="dark"] .dasher-dashboard .card,
         [data-bs-theme="dark"] .dasher-dashboard .card,
@@ -1355,10 +1375,7 @@ export const AdminDashboard: React.FC = () => {
       `}</style>
 
       {/* VERTICAL SIDEBAR */}
-      <aside className="sidebar-admin" style={{
-        background: theme === 'light' ? '#ffffff' : '#0f172a',
-        borderRight: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
-      }}>
+      <aside className="sidebar-admin">
         <div className="sidebar-header" style={{
           padding: '24px 20px 12px',
           display: 'flex',
@@ -1373,8 +1390,7 @@ export const AdminDashboard: React.FC = () => {
               fontSize: '15px',
               fontWeight: 700,
               margin: 0,
-              letterSpacing: '0.04em',
-              color: theme === 'light' ? '#0f172a' : '#ffffff'
+              letterSpacing: '0.04em'
             }}>MamaTrack</h5>
             <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Command Desk</span>
           </div>
@@ -1385,17 +1401,14 @@ export const AdminDashboard: React.FC = () => {
           padding: '16px 20px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
-          background: theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.03)'
+          justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
             <div>
               <div className="sidebar-username" style={{
                 fontSize: '13px',
-                fontWeight: 600,
-                color: theme === 'light' ? '#0f172a' : '#ffffff'
+                fontWeight: 600
               }}>
                 {user.full_name.replace(/^(Dr\.|Mr\.|Mrs\.|Ms\.|Hon\.)\s+/i, '').split(' ')[0]}
               </div>
@@ -1591,6 +1604,7 @@ export const AdminDashboard: React.FC = () => {
 
             <button 
               onClick={handleResetDatabase} 
+              className="btn-reset-db"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1599,16 +1613,11 @@ export const AdminDashboard: React.FC = () => {
                 fontWeight: 700,
                 padding: '8px 16px',
                 borderRadius: '6px',
-                border: theme === 'light' ? '1.5px solid #0f172a' : '1px solid rgba(255,255,255,0.2)',
-                background: theme === 'light' ? '#ffffff' : 'rgba(255,255,255,0.08)',
-                color: theme === 'light' ? '#0f172a' : '#ffffff',
-                cursor: 'pointer',
-                boxShadow: theme === 'light' ? '0 2px 10px rgba(15,23,42,0.12)' : '0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'all 0.2s ease'
+                cursor: 'pointer'
               }}
               title="Reset Database to initial seed state"
             >
-              <RefreshCw size={13} style={{ color: theme === 'light' ? '#0f61ef' : '#ffffff' }} /> Reset Database
+              <RefreshCw size={13} className="reset-icon" /> Reset Database
             </button>
             <ThemeToggle />
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
@@ -1631,9 +1640,6 @@ export const AdminDashboard: React.FC = () => {
       <div className="bg-gradient-mixed rounded-3" style={{
         borderRadius: '12px',
         marginBottom: '24px',
-        background: theme === 'light' ? '#ffffff' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-        border: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)',
-        boxShadow: theme === 'light' ? '0 4px 20px rgba(0, 0, 0, 0.02)' : 'none',
         display: 'flex',
         overflow: 'hidden',
         alignItems: 'stretch',
@@ -1641,10 +1647,10 @@ export const AdminDashboard: React.FC = () => {
       }}>
         <div style={{ flex: '1.3', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
           <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>System Command Console</span>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 8px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 8px' }}>
             Mukono District Command Fleet
           </h2>
-          <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: theme === 'light' ? '#475569' : '#cbd5e1' }}>
+          <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>
             Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District. Use the navigation panel on the left to review maps, drivers, and hospitals.
           </p>
         </div>
