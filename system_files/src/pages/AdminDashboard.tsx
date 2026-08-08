@@ -743,15 +743,14 @@ export const AdminDashboard: React.FC = () => {
       
       {/* SCOPED OVERRIDES */}
       <style>{`
-        /* Synchronized Simultaneous Theme Transition for ALL Admin Dashboard Elements */
+        /* EXPLICIT TRANSITION RESTRICTION: ONLY visual colors transition. Layout dimensions remain 100% static. */
         .dasher-dashboard,
         .dasher-dashboard *,
         .dasher-dashboard *::before,
         .dasher-dashboard *::after {
-          transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                      color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                      border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                      box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          transition-property: background-color, color, border-color, box-shadow !important;
+          transition-duration: 0.25s !important;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
         /* Default (Light) theme rules */
@@ -776,7 +775,7 @@ export const AdminDashboard: React.FC = () => {
           color: #0f172a !important;
         }
         .dasher-dashboard .sidebar-header {
-          border-bottom: none !important;
+          border-bottom: 1px solid #e2e8f0 !important;
           background: #ffffff !important;
         }
         .dasher-dashboard .sidebar-title {
@@ -799,13 +798,13 @@ export const AdminDashboard: React.FC = () => {
           font-weight: 500;
           font-size: 14px;
           cursor: pointer;
-          transition: all 0.25s ease;
+          border-left: 4px solid transparent !important;
         }
         .dasher-dashboard .sidebar-nav-item:hover,
         .dasher-dashboard .sidebar-nav-item.active {
           color: #2563eb;
           background: #eff6ff;
-          border-left: 4px solid #3b82f6;
+          border-left: 4px solid #3b82f6 !important;
         }
         .dasher-dashboard .main-content-area {
           flex: 1;
@@ -840,7 +839,7 @@ export const AdminDashboard: React.FC = () => {
           color: #475569 !important;
         }
         .dasher-dashboard .btn-reset-db {
-          border: 1.5px solid #0f172a !important;
+          border: 1px solid #0f172a !important;
           background: #ffffff !important;
           color: #0f172a !important;
           box-shadow: 0 2px 10px rgba(15,23,42,0.12) !important;
@@ -879,7 +878,6 @@ export const AdminDashboard: React.FC = () => {
         .dasher-dashboard .triage-card {
           padding: 16px;
           margin-bottom: 12px;
-          transition: all 0.2s ease;
         }
         .dasher-dashboard .triage-card:hover {
           border-color: #3b82f6 !important;
@@ -908,12 +906,12 @@ export const AdminDashboard: React.FC = () => {
         [data-bs-theme="dark"] .dasher-dashboard aside.sidebar-admin {
           background: #0f172a !important;
           color: #94a3b8;
-          border-right: 1px solid rgba(255,255,255,0.08);
+          border-right: 1px solid rgba(255,255,255,0.08) !important;
         }
         html[data-theme="dark"] .dasher-dashboard .sidebar-header,
         [data-bs-theme="dark"] .dasher-dashboard .sidebar-header {
           background: #0f172a !important;
-          border-bottom: none !important;
+          border-bottom: 1px solid rgba(255,255,255,0.08) !important;
         }
         html[data-theme="dark"] .dasher-dashboard .sidebar-footer-profile,
         [data-bs-theme="dark"] .dasher-dashboard .sidebar-footer-profile {
@@ -941,7 +939,7 @@ export const AdminDashboard: React.FC = () => {
         [data-bs-theme="dark"] .dasher-dashboard .sidebar-nav-item.active {
           color: #ffffff;
           background: rgba(255,255,255,0.06);
-          border-left: 4px solid #3b82f6;
+          border-left: 4px solid #3b82f6 !important;
         }
         html[data-theme="dark"] .dasher-dashboard .main-content-area,
         [data-bs-theme="dark"] .dasher-dashboard .main-content-area {
@@ -950,7 +948,7 @@ export const AdminDashboard: React.FC = () => {
         html[data-theme="dark"] .dasher-dashboard .bg-gradient-mixed,
         [data-bs-theme="dark"] .dasher-dashboard .bg-gradient-mixed {
           background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-          border: none !important;
+          border: 1px solid rgba(255,255,255,0.08) !important;
           box-shadow: none !important;
         }
         html[data-theme="dark"] .dasher-dashboard .bg-gradient-mixed h2,
