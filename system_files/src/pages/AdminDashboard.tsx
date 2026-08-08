@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, Child } from '../services/db';
+import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -23,7 +23,6 @@ export const AdminDashboard: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [mothers, setMothers] = useState<Mother[]>([]);
-  const [children, setChildren] = useState<Child[]>([]);
 
   // Dispatch control states
   const [selectedEmergency, setSelectedEmergency] = useState<Emergency | null>(null);
@@ -44,8 +43,7 @@ export const AdminDashboard: React.FC = () => {
       hospitals: db.hospitals,
       doctors: db.doctors,
       drivers: db.drivers,
-      mothers: db.mothers,
-      children: db.children
+      mothers: db.mothers
     });
     setUndoStack(prev => [...prev, snapshot]);
   };
@@ -132,20 +130,6 @@ export const AdminDashboard: React.FC = () => {
     years_experience: 3
   });
 
-  // Sons / Children Modals
-  const [showChildModal, setShowChildModal] = useState(false);
-  const [editChild, setEditChild] = useState<Child | null>(null);
-  const [childForm, setChildForm] = useState({
-    mother_id: 8,
-    name: '',
-    gender: 'Son' as 'Son' | 'Daughter',
-    date_of_birth: '',
-    birth_weight: '3.2 kg',
-    delivery_type: 'Spontaneous Normal' as Child['delivery_type'],
-    health_status: 'Healthy' as Child['health_status'],
-    hospital_id: 1,
-    immunization_status: 'Fully Immunized' as Child['immunization_status']
-  });
 
   // Dynamic Stylesheet Loading for isolating theme CSS
   useEffect(() => {
@@ -199,7 +183,6 @@ export const AdminDashboard: React.FC = () => {
     setDoctors(db.doctors);
     setVehicles(db.vehicles);
     setMothers(db.mothers);
-    setChildren(db.children);
   };
 
   // Simple state poller to keep dispatch screen live
@@ -295,19 +278,6 @@ export const AdminDashboard: React.FC = () => {
     );
   });
 
-  const filteredChildren = children.filter(c => {
-    const m = mothers.find(moth => moth.user_id === c.mother_id);
-    const u = m ? db.users.find(usr => usr.id === m.user_id) : null;
-    const q = searchQuery.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.gender.toLowerCase().includes(q) ||
-      c.health_status.toLowerCase().includes(q) ||
-      c.delivery_type.toLowerCase().includes(q) ||
-      c.immunization_status.toLowerCase().includes(q) ||
-      (u && u.full_name.toLowerCase().includes(q))
-    );
-  });
 
   const filteredEmergencies = emergencies.filter(emg => {
     const m = mothers.find(moth => moth.user_id === emg.mother_id);
@@ -767,92 +737,23 @@ export const AdminDashboard: React.FC = () => {
     loadData();
   };
 
-  // --- SONS / CHILDREN CRUD ACTIONS ---
-
-  const handleOpenAddChild = () => {
-    setEditChild(null);
-    setChildForm({
-      mother_id: mothers[0]?.user_id || 8,
-      name: '',
-      gender: 'Son',
-      date_of_birth: new Date().toISOString().split('T')[0],
-      birth_weight: '3.2 kg',
-      delivery_type: 'Spontaneous Normal',
-      health_status: 'Healthy',
-      hospital_id: db.hospitals[0]?.id || 1,
-      immunization_status: 'Fully Immunized'
-    });
-    setShowChildModal(true);
-  };
-
-  const handleOpenEditChild = (c: Child) => {
-    setEditChild(c);
-    setChildForm({
-      mother_id: c.mother_id,
-      name: c.name,
-      gender: c.gender,
-      date_of_birth: c.date_of_birth,
-      birth_weight: c.birth_weight,
-      delivery_type: c.delivery_type,
-      health_status: c.health_status,
-      hospital_id: c.hospital_id,
-      immunization_status: c.immunization_status
-    });
-    setShowChildModal(true);
-  };
-
-  const handleDeleteChild = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this child/son record?')) {
-      saveBackupState();
-      db.children = db.children.filter(c => c.id !== id);
-      loadData();
-      alert('Child/Son record deleted from database.');
-    }
-  };
-
-  const handleChildSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveBackupState();
-    if (editChild) {
-      db.children = db.children.map(c => c.id === editChild.id ? {
-        ...c,
-        mother_id: Number(childForm.mother_id),
-        name: childForm.name,
-        gender: childForm.gender,
-        date_of_birth: childForm.date_of_birth,
-        birth_weight: childForm.birth_weight,
-        delivery_type: childForm.delivery_type,
-        health_status: childForm.health_status,
-        hospital_id: Number(childForm.hospital_id),
-        immunization_status: childForm.immunization_status
-      } : c);
-      alert('Child/Son details updated successfully.');
-    } else {
-      const nextId = Math.max(...db.children.map(c => c.id), 0) + 1;
-      const newChild: Child = {
-        id: nextId,
-        mother_id: Number(childForm.mother_id),
-        name: childForm.name,
-        gender: childForm.gender,
-        date_of_birth: childForm.date_of_birth,
-        birth_weight: childForm.birth_weight,
-        delivery_type: childForm.delivery_type,
-        health_status: childForm.health_status,
-        hospital_id: Number(childForm.hospital_id),
-        immunization_status: childForm.immunization_status
-      };
-      db.children = [...db.children, newChild];
-      alert('New child/son record registered successfully.');
-    }
-    setShowChildModal(false);
-    loadData();
-  };
 
   return (
     <div className="dasher-dashboard" style={{ background: '#f8fafd', minHeight: '100vh', fontFamily: "'Public Sans', sans-serif", display: 'flex' }}>
       
       {/* SCOPED OVERRIDES */}
       <style>{`
+        /* Synchronized Simultaneous Theme Transition for ALL Admin Dashboard Elements */
+        .dasher-dashboard,
+        .dasher-dashboard *,
+        .dasher-dashboard *::before,
+        .dasher-dashboard *::after {
+          transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                      color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                      border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                      box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
         /* Default (Light) theme rules */
         .dasher-dashboard {
           background: #f8fafc !important;
@@ -1527,10 +1428,6 @@ export const AdminDashboard: React.FC = () => {
             <i className="ti ti-user-heart" style={{ fontSize: '18px' }}></i>
             <span>Expectant Mothers</span>
           </div>
-          <div className={`sidebar-nav-item ${activeTab === 'sons' ? 'active' : ''}`} onClick={() => setActiveTab('sons')}>
-            <i className="ti ti-baby-carriage" style={{ fontSize: '18px' }}></i>
-            <span>Sons & Children</span>
-          </div>
           <div className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
             <i className="ti ti-file-analytics" style={{ fontSize: '18px' }}></i>
             <span>Audit & Fuel Logs</span>
@@ -1587,7 +1484,6 @@ export const AdminDashboard: React.FC = () => {
                   { id: 'facilities', icon: 'ti-building-hospital', label: 'Health Facilities' },
                   { id: 'personnel', icon: 'ti-users', label: 'Duty Personnel' },
                   { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
-                  { id: 'sons', icon: 'ti-baby-carriage', label: 'Sons & Children' },
                   { id: 'reports', icon: 'ti-chart-bar', label: 'Reports & Audits' }
                 ].map(item => (
                   <button
@@ -2407,101 +2303,6 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 5: SONS & CHILDREN */}
-        {activeTab === 'sons' && (
-          <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div>
-                <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Sons & Children Health Registry</h4>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Infant & Child Clinical Profiles ({filteredChildren.length})</span>
-              </div>
-              <button 
-                onClick={handleOpenAddChild}
-                className="btn btn-primary" 
-                style={{ fontSize: '13px', fontWeight: 700, padding: '6px 16px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
-              >
-                ➕ Register Son/Child
-              </button>
-            </div>
-            
-            <div className="table-responsive">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Son / Child Name</th>
-                    <th>Gender</th>
-                    <th>Mother's Name</th>
-                    <th>Date of Birth</th>
-                    <th>Birth Weight</th>
-                    <th>Delivery Type</th>
-                    <th>Birth Hospital</th>
-                    <th>Health Status</th>
-                    <th>Immunization</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredChildren.length === 0 ? (
-                    <tr>
-                      <td colSpan={10} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No children or sons registered in system database.</td>
-                    </tr>
-                  ) : (
-                    filteredChildren.map(c => {
-                      const m = mothers.find(moth => moth.user_id === c.mother_id);
-                      const u = m ? db.users.find(usr => usr.id === m.user_id) : null;
-                      const h = hospitals.find(hosp => hosp.id === c.hospital_id);
-                      return (
-                        <tr key={c.id}>
-                          <td>
-                            <strong style={{ fontSize: '14px' }}>👶 {c.name}</strong>
-                          </td>
-                          <td>
-                            <span className={c.gender === 'Son' ? 'badge-facility-gov' : 'badge-facility-private'}>
-                              {c.gender.toUpperCase()}
-                            </span>
-                          </td>
-                          <td>
-                            <div>{u?.full_name || 'Mother'}</div>
-                            <div className="facility-subtext">📞 {u?.phone}</div>
-                          </td>
-                          <td>{c.date_of_birth}</td>
-                          <td><strong>{c.birth_weight}</strong></td>
-                          <td>{c.delivery_type}</td>
-                          <td>{h?.name || 'Mukono Regional'}</td>
-                          <td>
-                            <span className={c.health_status === 'Healthy' ? 'badge-alert-success' : 'badge-alert-pending'}>
-                              {c.health_status}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="license-badge">💉 {c.immunization_status}</span>
-                          </td>
-
-                          <td>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button 
-                                onClick={() => handleOpenEditChild(c)}
-                                style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                              >
-                                ✏️ Edit
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteChild(c.id)}
-                                style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                              >
-                                🗑️ Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
         {/* TAB 5: REPORTS & HISTORICAL LOGS */}
         {activeTab === 'reports' && (
@@ -3159,145 +2960,6 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* --- ADD/EDIT SON / CHILD MODAL --- */}
-      {showChildModal && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal-container">
-            <div style={{ background: '#3b82f6', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
-              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
-                {editChild ? '✏️ Edit Son / Child Record' : '👶 Register New Son / Child'}
-              </h5>
-              <button onClick={() => setShowChildModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
-            </div>
-
-            <form onSubmit={handleChildSubmit} style={{ padding: '20px', maxHeight: '480px', overflowY: 'auto' }}>
-              <div style={{ marginBottom: '12px' }}>
-                <label className="form-label-admin">Child / Son Full Name</label>
-                <input 
-                  type="text" 
-                  className="form-control-admin" 
-                  value={childForm.name} 
-                  onChange={e => setChildForm({ ...childForm, name: e.target.value })} 
-                  placeholder="e.g. Ssemanda Joel (Son)" 
-                  required 
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                <div>
-                  <label className="form-label-admin">Gender</label>
-                  <select 
-                    className="form-control-admin" 
-                    value={childForm.gender} 
-                    onChange={e => setChildForm({ ...childForm, gender: e.target.value as 'Son' | 'Daughter' })}
-                  >
-                    <option value="Son">Son (Male)</option>
-                    <option value="Daughter">Daughter (Female)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label-admin">Mother</label>
-                  <select 
-                    className="form-control-admin" 
-                    value={childForm.mother_id} 
-                    onChange={e => setChildForm({ ...childForm, mother_id: Number(e.target.value) })}
-                  >
-                    {mothers.map(m => {
-                      const u = db.users.find(usr => usr.id === m.user_id);
-                      return <option key={m.id} value={m.user_id}>{u?.full_name || 'Mother'}</option>;
-                    })}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                <div>
-                  <label className="form-label-admin">Date of Birth</label>
-                  <input 
-                    type="date" 
-                    className="form-control-admin" 
-                    value={childForm.date_of_birth} 
-                    onChange={e => setChildForm({ ...childForm, date_of_birth: e.target.value })} 
-                    required 
-                  />
-                </div>
-                <div>
-                  <label className="form-label-admin">Birth Weight</label>
-                  <input 
-                    type="text" 
-                    className="form-control-admin" 
-                    value={childForm.birth_weight} 
-                    onChange={e => setChildForm({ ...childForm, birth_weight: e.target.value })} 
-                    placeholder="e.g. 3.5 kg"
-                    required 
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                <div>
-                  <label className="form-label-admin">Delivery Mode</label>
-                  <select 
-                    className="form-control-admin" 
-                    value={childForm.delivery_type} 
-                    onChange={e => setChildForm({ ...childForm, delivery_type: e.target.value as Child['delivery_type'] })}
-                  >
-                    <option value="Spontaneous Normal">Spontaneous Normal</option>
-                    <option value="Caesarean Section">Caesarean Section</option>
-                    <option value="Assisted Delivery">Assisted Delivery</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label-admin">Birth Hospital Facility</label>
-                  <select 
-                    className="form-control-admin" 
-                    value={childForm.hospital_id} 
-                    onChange={e => setChildForm({ ...childForm, hospital_id: Number(e.target.value) })}
-                  >
-                    {hospitals.map(h => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                <div>
-                  <label className="form-label-admin">Health Status</label>
-                  <select 
-                    className="form-control-admin" 
-                    value={childForm.health_status} 
-                    onChange={e => setChildForm({ ...childForm, health_status: e.target.value as Child['health_status'] })}
-                  >
-                    <option value="Healthy">Healthy</option>
-                    <option value="Under Monitoring">Under Monitoring</option>
-                    <option value="Routine Checkup Required">Routine Checkup Required</option>
-                    <option value="Vaccination Due">Vaccination Due</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label-admin">Immunization Record</label>
-                  <select 
-                    className="form-control-admin" 
-                    value={childForm.immunization_status} 
-                    onChange={e => setChildForm({ ...childForm, immunization_status: e.target.value as Child['immunization_status'] })}
-                  >
-                    <option value="Fully Immunized">Fully Immunized</option>
-                    <option value="Up-to-Date">Up-to-Date</option>
-                    <option value="Pending BCG & Polio">Pending BCG & Polio</option>
-                    <option value="Pending DPT Booster">Pending DPT Booster</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
-                <button type="button" className="btn btn-sm btn-outline-secondary" style={{ padding: '6px 14px' }} onClick={() => setShowChildModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#3b82f6', border: 'none' }}>Save Child Record</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
     </div>
   );
