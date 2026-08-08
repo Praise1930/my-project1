@@ -301,10 +301,14 @@ html[data-theme="dark"] td {
 [data-theme="dark"] .header-area,
 [data-theme="dark"] .site-header,
 [data-theme="dark"] .top-header,
+[data-theme="dark"] .header-bottom,
+[data-theme="dark"] .header-sticky,
+[data-theme="dark"] .sticky-bar,
 [data-theme="dark"] .navbar,
 [data-theme="dark"] .nav-wrapper {
-    background: #161b22 !important;
-    border-bottom: 1px solid #30363d !important;
+    background: #1e293b !important;
+    background-color: #1e293b !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ─── Sidebar ─────────────────────────────────────────────── */

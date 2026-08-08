@@ -78,32 +78,38 @@ export const Landing: React.FC = () => {
         .main-menu,
         .main-menu nav,
         .main-menu ul,
+        .main-menu li,
         #navigation,
         #navigation li,
-        #navigation li a,
         .menu-main,
-        .header-area,
-        .main-header,
-        .header-sticky,
-        .sticky-bar {
+        .col-xl-9,
+        .col-lg-9,
+        .col-md-9 {
           background: transparent !important;
           background-color: transparent !important;
           box-shadow: none !important;
         }
 
-        /* Ensure main-header container background matches dark blue in dark mode and clean white in light mode */
+        /* Ensure all main-header elements match dark blue (#1e293b) in dark mode */
+        html[data-theme='dark'] header,
+        html[data-theme='dark'] .header-area,
         html[data-theme='dark'] .main-header,
+        html[data-theme='dark'] .header-bottom,
         html[data-theme='dark'] .header-sticky,
         html[data-theme='dark'] .sticky-bar,
-        html[data-theme='dark'] .header-area {
+        html[data-theme='dark'] .sticky {
           background: #1e293b !important;
           background-color: #1e293b !important;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
         }
 
+        html[data-theme='light'] header,
+        html[data-theme='light'] .header-area,
         html[data-theme='light'] .main-header,
+        html[data-theme='light'] .header-bottom,
         html[data-theme='light'] .header-sticky,
         html[data-theme='light'] .sticky-bar,
-        html[data-theme='light'] .header-area {
+        html[data-theme='light'] .sticky {
           background: #ffffff !important;
           background-color: #ffffff !important;
         }
