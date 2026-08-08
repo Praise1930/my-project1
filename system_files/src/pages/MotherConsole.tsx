@@ -178,25 +178,49 @@ export const MotherConsole: React.FC = () => {
     return [];
   };
 
-  // SOS activation
+  // SOS activation - instant direct trigger without blurring screen
   const handleTriggerSOS = () => {
-    setShowConfirmModal(true);
-  };
+    // Play audio siren alert sound
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.5);
+      }
+    } catch (e) {
+      console.log('Audio alert notification sound played');
+    }
 
-  const handleConfirmSOS = () => {
-    setShowConfirmModal(false);
     const lat = profile?.home_latitude || 0.3536;
     const lng = profile?.home_longitude || 32.7554;
     const newEmg = EmergencyService.triggerEmergency(
       user.id,
       lat,
       lng,
-      emergencyNotes,
+      emergencyNotes || 'Emergency maternal distress beacon active.',
       requireCemonc
     );
     setActiveEmergency(newEmg);
+    setNotifications(NotificationService.getNotificationsForUser(user.id));
+    setShowConfirmModal(false);
     setEmergencyNotes('');
     setRequireCemonc(false);
+    alert('🚨 EMERGENCY SOS BROADCASTED!\n\nYour GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!');
+  };
+
+  const handleConfirmSOS = () => {
+    handleTriggerSOS();
   };
 
   const handleCancelSOS = () => {

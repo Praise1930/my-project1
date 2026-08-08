@@ -33,7 +33,9 @@ export const AdminDashboard: React.FC = () => {
 
   // Incoming SOS Alert Modal state
   const [incomingAlertEmergency, setIncomingAlertEmergency] = useState<Emergency | null>(null);
-  const seenEmergencyIdsRef = React.useRef<Set<number>>(new Set());
+  const seenEmergencyKeysRef = React.useRef<Set<string>>(new Set());
+
+  const getEmergencyKey = (emg: Emergency) => `${emg.id}_${emg.triggered_at || ''}`;
 
   // --- SEARCH QUERY STATE ---
   const [searchQuery, setSearchQuery] = useState('');
@@ -180,16 +182,23 @@ export const AdminDashboard: React.FC = () => {
     loadData();
 
     // After login, immediately show modal for any existing pending emergencies
-    const existingPending = [...db.emergencies].reverse().filter(e => e.status === 'pending');
+    const existingPending = [...db.emergencies]
+      .sort((a, b) => new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime())
+      .filter(e => e.status === 'pending');
     if (existingPending.length > 0) {
       const newest = existingPending[0];
-      seenEmergencyIdsRef.current.add(newest.id);
+      // Do NOT pre-add to seenKeys — let the modal fire immediately
       setIncomingAlertEmergency(newest);
+      seenEmergencyKeysRef.current.add(getEmergencyKey(newest));
     }
   }, [navigate]);
 
   const loadData = () => {
-    setEmergencies([...db.emergencies].reverse());
+    // Sort newest first by triggered_at timestamp
+    const sorted = [...db.emergencies].sort((a, b) =>
+      new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()
+    );
+    setEmergencies(sorted);
     setHospitals(db.hospitals);
     setDrivers(db.drivers);
     setDoctors(db.doctors);
@@ -198,31 +207,66 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // Real-time state poller, BroadcastChannel, and storage event listeners for instant alerts
+  // playAlertSound defined here so it's available to the useEffect closure below
+  const playAlertSound = () => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.log('Audio play blocked or failed', e);
+    }
+  };
+
   useEffect(() => {
     loadData();
+
+    const checkAndShowAlert = (emg: Emergency) => {
+      const key = getEmergencyKey(emg);
+      if (!seenEmergencyKeysRef.current.has(key)) {
+        seenEmergencyKeysRef.current.add(key);
+        setIncomingAlertEmergency(emg);
+        playAlertSound();
+      }
+    };
+
     const timer = setInterval(() => {
       loadData();
-      // Only check for new pending emergencies when user is authenticated (to avoid marking as seen before modal can render)
-      const currentEmgs = [...db.emergencies].reverse();
-      const newPending = currentEmgs.filter(e => e.status === 'pending');
+      // Pull freshest pending emergency directly from localStorage
+      const allEmgs = [...db.emergencies].sort((a, b) =>
+        new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()
+      );
+      const newPending = allEmgs.filter(e => e.status === 'pending');
       if (newPending.length > 0) {
-        const newest = newPending[0];
-        if (!seenEmergencyIdsRef.current.has(newest.id)) {
-          seenEmergencyIdsRef.current.add(newest.id);
-          setIncomingAlertEmergency(newest);
-          playAlertSound();
-        }
+        checkAndShowAlert(newPending[0]);
       }
-    }, 2000);
+    }, 1500);
 
     const handleAlert = (e?: any) => {
       loadData();
-      playAlertSound();
-      // Show incoming alert modal for custom event
+      // Show incoming alert modal for custom event or storage change
       const emgDetail = e?.detail as Emergency | undefined;
-      if (emgDetail && !seenEmergencyIdsRef.current.has(emgDetail.id)) {
-        seenEmergencyIdsRef.current.add(emgDetail.id);
-        setIncomingAlertEmergency(emgDetail);
+      if (emgDetail) {
+        checkAndShowAlert(emgDetail);
+      } else {
+        // No detail (storage event) — scan fresh data
+        const allEmgs = [...db.emergencies].sort((a, b) =>
+          new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()
+        );
+        const pending = allEmgs.filter(e => e.status === 'pending');
+        if (pending.length > 0) checkAndShowAlert(pending[0]);
       }
     };
 
@@ -234,13 +278,8 @@ export const AdminDashboard: React.FC = () => {
       bc = new BroadcastChannel('mamatrack_emergency_channel');
       bc.onmessage = (ev) => {
         loadData();
-        playAlertSound();
         if (ev.data?.type === 'NEW_EMERGENCY_SOS' && ev.data?.emergency) {
-          const emg = ev.data.emergency as Emergency;
-          if (!seenEmergencyIdsRef.current.has(emg.id)) {
-            seenEmergencyIdsRef.current.add(emg.id);
-            setIncomingAlertEmergency(emg);
-          }
+          checkAndShowAlert(ev.data.emergency as Emergency);
         }
       };
     }
@@ -253,37 +292,12 @@ export const AdminDashboard: React.FC = () => {
     };
   }, []);
 
-  const playAlertSound = () => {
-    try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3); // Drop pitch
-      
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-      
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-      console.log('Audio play blocked or failed', e);
-    }
-  };
-
   const [prevEmergencyCount, setPrevEmergencyCount] = useState(0);
 
   useEffect(() => {
     if (emergencies.length > prevEmergencyCount) {
       if (prevEmergencyCount !== 0) {
-        const newEmergency = emergencies[0]; // reversed in loadData
+        const newEmergency = emergencies[0];
         if (newEmergency && newEmergency.status === 'pending') {
           playAlertSound();
         }

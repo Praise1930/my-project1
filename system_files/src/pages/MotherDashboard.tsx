@@ -1853,7 +1853,6 @@ export const MotherDashboard: React.FC = () => {
                     setGuideStep(guideStep + 1);
                   } else {
                     setShowGuideModal(false);
-                    navigate('/mother-console');
                   }
                 }}
               >
