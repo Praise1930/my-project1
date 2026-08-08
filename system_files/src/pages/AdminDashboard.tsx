@@ -821,17 +821,17 @@ export const AdminDashboard: React.FC = () => {
           .dasher-dashboard {
             min-height: 100vh !important;
             height: auto !important;
-            overflow-y: auto !important;
             display: block !important;
+            overflow-x: clip !important;
           }
           .dasher-dashboard .main-content-area {
             margin-left: 0 !important;
             max-width: 100vw !important;
             width: 100% !important;
             padding: 1rem !important;
-            overflow-y: visible !important;
             height: auto !important;
             min-height: calc(100vh - 60px) !important;
+            overflow-x: clip !important;
           }
         }
         .dasher-dashboard .table-responsive {

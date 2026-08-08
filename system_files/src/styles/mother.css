@@ -19,6 +19,7 @@ body.mother-theme-active::before {
     filter: blur(18px) brightness(0.94);
     transform: scale(1.08); /* Avoid white edges */
     z-index: -10;
+    pointer-events: none !important;
 }
 
 body.mother-theme-active::after {
@@ -30,6 +31,7 @@ body.mother-theme-active::after {
     bottom: 0;
     background: linear-gradient(135deg, rgba(254, 250, 250, 0.88) 0%, rgba(246, 239, 246, 0.93) 100%) !important;
     z-index: -9;
+    pointer-events: none !important;
 }
 
 .mother-theme {

@@ -2235,7 +2235,7 @@ img {
 /* Force body and dashboard wrappers to hide overflow-x to prevent mobile horizontal scroll */
 html, body {
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
 }
 
 .momentra-root,
@@ -2245,7 +2245,7 @@ html, body {
 .driver-dashboard-root,
 .dashboard-layout,
 .dashboard-wrapper {
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     max-width: 100vw !important;
 }
 
