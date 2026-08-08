@@ -177,7 +177,13 @@ export const MotherDashboard: React.FC = () => {
     };
   }, [activeEmgId, activeEmgStatus, user, activeEmergency]);
 
-  if (!user || !profile) return <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading Mother Profile...</div>;
+  if (!user || !profile) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
+        <HeartbeatLoader message="Syncing Maternal Health Record..." subtitle="Connecting to Mukono General Hospital emergency node" />
+      </div>
+    );
+  }
 
   // Calculate Pregnancy Progress
   const calculateWeeks = () => {

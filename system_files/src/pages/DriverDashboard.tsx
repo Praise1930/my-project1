@@ -118,7 +118,11 @@ export const DriverDashboard: React.FC = () => {
   }, [activeEmergency?.id, isSimulating]);
 
   if (!user || !driver || !vehicle) {
-    return <div style={{ padding: '2rem', textAlign: 'center', color: '#fff' }}>Loading Driver Profile...</div>;
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
+        <OrbitalLoader message="Syncing Driver GPS Unit..." subtitle="Connecting Mukono District emergency dispatch server" />
+      </div>
+    );
   }
 
   // Map markers
