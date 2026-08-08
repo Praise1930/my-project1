@@ -109,6 +109,8 @@ export const Landing: React.FC = () => {
         }
 
         /* 2. Unified Header & Page Root Background (#1e293b in Dark Mode, #ffffff in Light Mode) */
+        html[data-theme='dark'] body,
+        html[data-theme='dark'] #root,
         html[data-theme='dark'] .medical-landing-root,
         html[data-theme='dark'] header,
         html[data-theme='dark'] .header-area,
@@ -122,6 +124,8 @@ export const Landing: React.FC = () => {
           transition: background-color 0.3s ease, border-color 0.3s ease !important;
         }
 
+        html[data-theme='light'] body,
+        html[data-theme='light'] #root,
         html[data-theme='light'] .medical-landing-root,
         html[data-theme='light'] header,
         html[data-theme='light'] .header-area,

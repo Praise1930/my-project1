@@ -615,7 +615,7 @@ html, body {
   /* Global background and text */
   html:not([data-theme="light"]),
   html:not([data-theme="light"]) body {
-    background: #121212 !important;
+    background: #1e293b !important;
     color: #e0e0e0 !important;
   }
   /* Dashboard containers */
@@ -672,7 +672,7 @@ html, body {
 /* Explicit data-theme dark overrides */
 html[data-theme="dark"],
 html[data-theme="dark"] body {
-  background: #121212 !important;
+  background: #1e293b !important;
   color: #e0e0e0 !important;
 }
 html[data-theme="dark"] .mother-theme,
