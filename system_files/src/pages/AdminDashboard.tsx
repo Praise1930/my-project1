@@ -185,23 +185,35 @@ export const AdminDashboard: React.FC = () => {
     setMothers(db.mothers);
   };
 
-  // Real-time state poller and storage event listener to reflect emergency alerts instantly
+  // Real-time state poller, BroadcastChannel, and storage event listeners for instant alerts
   useEffect(() => {
     loadData();
     const timer = setInterval(() => {
       loadData();
     }, 1000);
 
-    const handleStorage = (e: StorageEvent) => {
-      if (!e.key || e.key.startsWith('mamatrack_')) {
-        loadData();
-      }
+    const handleAlert = (e?: any) => {
+      loadData();
+      playAlertSound();
     };
 
-    window.addEventListener('storage', handleStorage);
+    window.addEventListener('storage', handleAlert);
+    window.addEventListener('mamatrack_alert_triggered', handleAlert);
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('mamatrack_emergency_channel');
+      bc.onmessage = () => {
+        loadData();
+        playAlertSound();
+      };
+    }
+
     return () => {
       clearInterval(timer);
-      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('storage', handleAlert);
+      window.removeEventListener('mamatrack_alert_triggered', handleAlert);
+      if (bc) bc.close();
     };
   }, []);
 
@@ -292,8 +304,7 @@ export const AdminDashboard: React.FC = () => {
 
 
   const filteredEmergencies = emergencies.filter(emg => {
-    const m = mothers.find(moth => moth.user_id === emg.mother_id);
-    const u = m ? db.users.find(usr => usr.id === m.user_id) : null;
+    const u = db.users.find(usr => usr.id === emg.mother_id);
     const q = searchQuery.toLowerCase();
     return (
       emg.code.toLowerCase().includes(q) ||
@@ -1734,7 +1745,62 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>Available Ward Beds</div>
             </div>
           </div>
-        </div>
+        {/* LIVE EMERGENCY BROADCAST ALERT BANNER */}
+        {pendingCount > 0 && (() => {
+          const latestPending = emergencies.find(e => e.status === 'pending');
+          const motherUser = latestPending ? db.users.find(u => u.id === latestPending.mother_id) : null;
+          const matchedHosp = latestPending ? hospitals.find(h => h.id === latestPending.hospital_id) : null;
+          return (
+            <div style={{
+              background: 'linear-gradient(135deg, #dc2626, #ef4444)',
+              color: '#ffffff',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxShadow: '0 10px 25px rgba(220, 38, 38, 0.35)',
+              animation: 'active-emergency-pulse 1.5s infinite alternate',
+              border: '2px solid #fca5a5'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <span style={{ fontSize: '2rem' }}>🚨</span>
+                <div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, letterSpacing: '0.02em' }}>
+                    CRITICAL SOS EMERGENCY ALERT: {motherUser?.full_name || 'Expectant Mother'}
+                  </div>
+                  <div style={{ fontSize: '0.84rem', opacity: 0.95, marginTop: '2px' }}>
+                    Code: <strong>{latestPending?.code}</strong> • Matched Facility: <strong>{matchedHosp?.name || 'Mukono Regional Referral Hospital'}</strong> • Notes: {latestPending?.notes}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveTab('dispatch');
+                  if (latestPending) {
+                    setSelectedEmergency(latestPending);
+                  }
+                }}
+                style={{
+                  background: '#ffffff',
+                  color: '#dc2626',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  transition: 'transform 0.2s ease'
+                }}
+              >
+                ⚡ View & Dispatch Ambulance
+              </button>
+            </div>
+          );
+        })()}
 
         {/* TAB WORKSPACE CONTENT */}
 

@@ -886,6 +886,20 @@ export const EmergencyService = {
       );
     }
 
+    // 6. Broadcast real-time event across all active windows & tabs
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('mamatrack_alert_triggered', { detail: active }));
+      }
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('mamatrack_emergency_channel');
+        bc.postMessage({ type: 'NEW_EMERGENCY_SOS', emergency: active });
+        bc.close();
+      }
+    } catch (e) {
+      console.log('Broadcast channel event posted');
+    }
+
     return active;
   },
 

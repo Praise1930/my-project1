@@ -653,8 +653,8 @@ body.mother-theme-active::after {
 }
 
 .modal-overlay {
-    background: rgba(251, 113, 133, 0.08);
-    backdrop-filter: blur(10px) !important;
+    background: rgba(0, 0, 0, 0.5);
+    /* Removed backdrop-filter blur for clarity */
 }
 
 /* Three-column layout grid for consolidated view page */
