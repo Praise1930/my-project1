@@ -761,59 +761,102 @@ export const EmergencyService = {
 
   triggerEmergency(motherUserId: number, lat: number, lng: number, notes: string, requireCemonc: boolean): Emergency {
     const emergencies = db.emergencies;
-    const active = this.getActiveEmergencyForMother(motherUserId);
-    if (active) return active;
-
-    const nextId = Math.max(...emergencies.map(e => e.id), 0) + 1;
-    const code = `EMG-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
-    
-    // Match hospital with readily available resources
+    let active = this.getActiveEmergencyForMother(motherUserId);
     const matchedHospital = this.findBestHospital(lat, lng, requireCemonc);
     const assignedHospitalId = matchedHospital.id;
+    const motherName = db.users.find(u => u.id === motherUserId)?.full_name || 'Patient';
 
-    const newEmergency: Emergency = {
-      id: nextId,
-      code,
-      mother_id: motherUserId,
-      latitude: lat,
-      longitude: lng,
-      status: 'pending',
-      severity: requireCemonc ? 'critical' : 'high',
-      notes: notes || (requireCemonc ? 'Emergency: Specialized surgical care needed.' : 'Emergency maternal distress beacon active.'),
-      hospital_id: assignedHospitalId,
-      driver_id: null,
-      doctor_id: null,
-      vehicle_id: null,
-      cancel_reason: null,
-      eta_minutes: null,
-      dispatched_by: null,
-      triggered_at: new Date().toISOString(),
-      dispatched_at: null,
-      picked_up_at: null,
-      arrived_at: null,
-      completed_at: null,
-      cancelled_at: null
-    };
+    if (active) {
+      // Re-activate / refresh active emergency with latest coordinates and notes
+      active.latitude = lat || active.latitude;
+      active.longitude = lng || active.longitude;
+      active.notes = notes || active.notes;
+      active.severity = requireCemonc ? 'critical' : 'high';
+      active.hospital_id = assignedHospitalId;
+      active.triggered_at = new Date().toISOString();
+    } else {
+      const nextId = Math.max(...emergencies.map(e => e.id), 0) + 1;
+      const code = `EMG-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
 
-    db.emergencies = [...emergencies, newEmergency];
+      active = {
+        id: nextId,
+        code,
+        mother_id: motherUserId,
+        latitude: lat,
+        longitude: lng,
+        status: 'pending',
+        severity: requireCemonc ? 'critical' : 'high',
+        notes: notes || (requireCemonc ? 'Emergency: Specialized surgical care needed.' : 'Emergency maternal distress beacon active.'),
+        hospital_id: assignedHospitalId,
+        driver_id: null,
+        doctor_id: null,
+        vehicle_id: null,
+        cancel_reason: null,
+        eta_minutes: null,
+        dispatched_by: null,
+        triggered_at: new Date().toISOString(),
+        dispatched_at: null,
+        picked_up_at: null,
+        arrived_at: null,
+        completed_at: null,
+        cancelled_at: null
+      };
+
+      db.emergencies = [...emergencies, active];
+    }
 
     // Log the transaction
-    this.logTransition(nextId, null, 'pending', motherUserId, 'SOS beacon triggered by patient via GPS');
+    this.logTransition(active.id, null, 'pending', motherUserId, 'SOS beacon triggered by patient via GPS');
 
-    // Notify admins
+    // 1. Notify Admins
     const admins = db.users.filter(u => u.role === 'admin');
-    const motherName = db.users.find(u => u.id === motherUserId)?.full_name || 'Patient';
     admins.forEach(admin => {
       NotificationService.createNotification(
         admin.id,
         '🆘 Critical SOS Triggered',
-        `Patient ${motherName} has triggered an emergency beacon. Hospital matched: ${db.hospitals.find((h: Hospital) => h.id === assignedHospitalId)?.name}`,
+        `Patient ${motherName} has triggered an emergency beacon. Hospital matched: ${matchedHospital.name}`,
         'emergency',
-        nextId
+        active.id
       );
     });
 
-    // Send simulated SMS alerts
+    // 2. Notify Doctors at assigned hospital & on-duty doctors
+    const doctors = db.doctors.filter(d => d.hospital_id === assignedHospitalId || d.is_on_duty);
+    doctors.forEach(doc => {
+      NotificationService.createNotification(
+        doc.user_id,
+        '🚨 Emergency Patient Rescue Incoming',
+        `Expectant mother ${motherName} triggered an emergency SOS. Matched to ${matchedHospital.name}. Notes: ${active.notes}`,
+        'emergency',
+        active.id
+      );
+    });
+
+    // 3. Notify On-Duty Ambulance Drivers
+    const drivers = db.drivers.filter(d => d.is_on_duty);
+    drivers.forEach(driver => {
+      NotificationService.createNotification(
+        driver.user_id,
+        '🚑 Emergency Dispatch Available',
+        `New distress beacon from ${motherName} near ${matchedHospital.name}. Check Command Fleet for dispatch.`,
+        'emergency',
+        active.id
+      );
+    });
+
+    // 4. Notify VHTs
+    const vhts = db.users.filter(u => u.role === 'vht');
+    vhts.forEach(vht => {
+      NotificationService.createNotification(
+        vht.id,
+        '📳 Community SOS Alert',
+        `Maternal emergency triggered by ${motherName} in your operational zone.`,
+        'emergency',
+        active.id
+      );
+    });
+
+    // 5. Send simulated SMS alerts
     const motherUser = db.users.find(u => u.id === motherUserId);
     if (motherUser) {
       SmsService.sendSms(
@@ -823,7 +866,16 @@ export const EmergencyService = {
       );
     }
 
-    return newEmergency;
+    const motherData = db.mothers.find(m => m.user_id === motherUserId);
+    if (motherData && motherData.next_of_kin_phone) {
+      SmsService.sendSms(
+        motherData.next_of_kin_name || 'Next of Kin',
+        motherData.next_of_kin_phone,
+        `MamaTrack ALERT: Your relative ${motherName} has triggered an emergency maternal SOS beacon in Mukono. Responders alerted.`
+      );
+    }
+
+    return active;
   },
 
   assignDispatch(

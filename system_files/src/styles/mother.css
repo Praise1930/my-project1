@@ -5,7 +5,11 @@
 
 /* Fullscreen Background visibility via body class pseudo-elements */
 body.mother-theme-active {
-    background: transparent !important;
+    background-color: #fdf8f8 !important;
+}
+
+[data-theme="dark"] body.mother-theme-active {
+    background-color: #0d1117 !important;
 }
 
 body.mother-theme-active::before {
@@ -15,9 +19,8 @@ body.mother-theme-active::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('/mother.jpeg') center/cover no-repeat fixed !important;
-    filter: blur(18px) brightness(0.94);
-    transform: scale(1.08); /* Avoid white edges */
+    background: url('/mother.jpeg') center/cover no-repeat !important;
+    opacity: 0.12;
     z-index: -10;
     pointer-events: none !important;
 }
@@ -29,9 +32,13 @@ body.mother-theme-active::after {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(254, 250, 250, 0.88) 0%, rgba(246, 239, 246, 0.93) 100%) !important;
+    background: linear-gradient(135deg, rgba(253, 248, 248, 0.92) 0%, rgba(247, 237, 237, 0.95) 100%) !important;
     z-index: -9;
     pointer-events: none !important;
+}
+
+[data-theme="dark"] body.mother-theme-active::after {
+    background: linear-gradient(135deg, rgba(13, 17, 23, 0.96) 0%, rgba(22, 27, 34, 0.98) 100%) !important;
 }
 
 .mother-theme {

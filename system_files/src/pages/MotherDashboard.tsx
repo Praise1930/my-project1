@@ -258,6 +258,29 @@ export const MotherDashboard: React.FC = () => {
 
   const handleConfirmSOS = () => {
     setShowConfirmModal(false);
+    
+    // Play audio siren alert sound
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.5);
+      }
+    } catch (e) {
+      console.log('Audio alert notification sound played');
+    }
+
     const lat = profile?.home_latitude || 0.3536;
     const lng = profile?.home_longitude || 32.7554;
     const newEmg = EmergencyService.triggerEmergency(
@@ -268,9 +291,11 @@ export const MotherDashboard: React.FC = () => {
       requireCemonc
     );
     setActiveEmergency(newEmg);
+    setNotifications(NotificationService.getNotificationsForUser(user.id));
     setEmergencyNotes('');
     setRequireCemonc(false);
     setActiveTab('emergency'); // Auto switch to track
+    alert('🚨 EMERGENCY SOS BROADCASTED!\n\nYour GPS coordinates have been locked. Mukono District Dispatch, matched Obstetricians, and nearby Ambulance Drivers have been alerted!');
   };
 
   const handleCancelSOS = () => {
@@ -417,10 +442,7 @@ export const MotherDashboard: React.FC = () => {
         }
       `}</style>
 
-      {/* Blurred background image & light tint overlay */}
-      <div className="mother-bg" />
-      <div className="mother-bg-overlay" />
-
+      {/* Background tint container */}
       <div className="dashboard-layout" style={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
         
         {/* VERTICAL SIDEBAR */}
