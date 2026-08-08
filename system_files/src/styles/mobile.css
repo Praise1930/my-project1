@@ -664,7 +664,7 @@ html, body {
   html:not([data-theme="light"]) .medical-register-root,
   html:not([data-theme="light"]) .medical-login-root,
   html:not([data-theme="light"]) .medical-landing-root {
-    background: #121212 !important;
+    background: #0f172a !important;
     color: #e0e0e0 !important;
   }
 }
@@ -715,7 +715,7 @@ html[data-theme="dark"] a:not(.btn):not(.header-btn):not([class*="btn"]) {
 html[data-theme="dark"] .medical-register-root,
 html[data-theme="dark"] .medical-login-root,
 html[data-theme="dark"] .medical-landing-root {
-  background: #121212 !important;
+  background: #0f172a !important;
   color: #e0e0e0 !important;
 }
 

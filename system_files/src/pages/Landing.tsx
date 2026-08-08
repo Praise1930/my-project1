@@ -74,7 +74,7 @@ export const Landing: React.FC = () => {
   return (
     <div id="top" className="medical-landing-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       <style>{`
-        /* 1. Header Navigation Elements MUST be 100% Transparent to avoid block rectangles during mode toggling */
+        /* 1. Header Navigation Elements & Pseudo-Classes MUST be 100% Transparent */
         .main-menu,
         .main-menu nav,
         .main-menu ul,
@@ -83,6 +83,19 @@ export const Landing: React.FC = () => {
         #navigation,
         #navigation li,
         #navigation li a,
+        #navigation li a:hover,
+        #navigation li a:focus,
+        #navigation li a:focus-visible,
+        #navigation li a:active,
+        #navigation li a:target,
+        #navigation li a:visited,
+        #navigation li.active,
+        #navigation li.active a,
+        .slicknav_menu,
+        .slicknav_nav,
+        .slicknav_nav a,
+        .slicknav_btn,
+        .slicknav_row,
         .menu-main,
         .col-xl-9,
         .col-lg-9,
@@ -91,9 +104,11 @@ export const Landing: React.FC = () => {
           background-color: transparent !important;
           border: none !important;
           box-shadow: none !important;
+          outline: none !important;
         }
 
-        /* 2. Header Container Background & Smooth Transition */
+        /* 2. Header & Root Container Background & Smooth Transition */
+        html[data-theme='dark'] .medical-landing-root,
         html[data-theme='dark'] header,
         html[data-theme='dark'] .header-area,
         html[data-theme='dark'] .main-header,
@@ -101,11 +116,12 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] .header-sticky,
         html[data-theme='dark'] .sticky-bar,
         html[data-theme='dark'] .sticky {
-          background: #1e293b !important;
-          background-color: #1e293b !important;
+          background: #0f172a !important;
+          background-color: #0f172a !important;
           transition: background-color 0.3s ease, border-color 0.3s ease !important;
         }
 
+        html[data-theme='light'] .medical-landing-root,
         html[data-theme='light'] header,
         html[data-theme='light'] .header-area,
         html[data-theme='light'] .main-header,
