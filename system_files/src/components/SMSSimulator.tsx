@@ -62,6 +62,9 @@ export const SMSSimulator: React.FC = () => {
   useEffect(() => {
     const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!isDragging.current) return;
+      if ('touches' in e && e.cancelable) {
+        e.preventDefault();
+      }
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
       const diffY = clientY - startY.current;
       
@@ -434,7 +437,7 @@ export const SMSSimulator: React.FC = () => {
           fontFamily: 'inherit',
           transition: isDragging.current ? 'transform 0.2s ease' : 'transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, right 0.3s ease',
           userSelect: 'none',
-          touchAction: 'none'
+          touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
