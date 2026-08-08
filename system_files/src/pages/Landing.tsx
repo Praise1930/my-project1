@@ -74,17 +74,53 @@ export const Landing: React.FC = () => {
   return (
     <div id="top" className="medical-landing-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       <style>{`
-        /* Strict CSS Overrides for Header Navigation and Buttons */
+        /* Remove black rectangle background behind menu links in both Dark and Light mode */
+        .main-menu,
+        .main-menu nav,
+        .main-menu ul,
+        #navigation,
+        #navigation li,
+        #navigation li a,
+        .menu-main,
+        .header-area,
+        .main-header,
+        .header-sticky,
+        .sticky-bar {
+          background: transparent !important;
+          background-color: transparent !important;
+          box-shadow: none !important;
+        }
+
+        /* Ensure main-header container background matches dark blue in dark mode and clean white in light mode */
+        html[data-theme='dark'] .main-header,
+        html[data-theme='dark'] .header-sticky,
+        html[data-theme='dark'] .sticky-bar,
+        html[data-theme='dark'] .header-area {
+          background: #1e293b !important;
+          background-color: #1e293b !important;
+        }
+
+        html[data-theme='light'] .main-header,
+        html[data-theme='light'] .header-sticky,
+        html[data-theme='light'] .sticky-bar,
+        html[data-theme='light'] .header-area {
+          background: #ffffff !important;
+          background-color: #ffffff !important;
+        }
+
+        /* Strict text color rules for dark mode menu links */
         html[data-theme='dark'] #navigation li a,
         html[data-theme='dark'] .main-menu ul li a,
         html[data-theme='dark'] .slicknav_nav a,
         html[data-theme='dark'] .sticky-bar a,
         html[data-theme='dark'] .mobile-nav-dropdown a {
           color: #ffffff !important;
+          background: transparent !important;
         }
         html[data-theme='dark'] #navigation li a:hover,
         html[data-theme='dark'] .main-menu ul li a:hover {
           color: #60a5fa !important;
+          background: transparent !important;
         }
 
         html[data-theme='light'] #navigation li a,
@@ -93,10 +129,12 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] .sticky-bar a,
         html[data-theme='light'] .mobile-nav-dropdown a {
           color: #102039 !important;
+          background: transparent !important;
         }
         html[data-theme='light'] #navigation li a:hover,
         html[data-theme='light'] .main-menu ul li a:hover {
           color: #0f61ef !important;
+          background: transparent !important;
         }
 
         /* Force button text to always be visible (white) and prevent hover overlays from covering it */
@@ -116,7 +154,7 @@ export const Landing: React.FC = () => {
       
       {/* HEADER START */}
       <header>
-        <div className="header-area">
+        <div className="header-area" style={{ background: isDark ? '#1e293b' : '#ffffff' }}>
           <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', position: 'relative', transition: 'background-color 0.3s ease' }}>
             <div className="container-fluid" style={{ padding: '0 40px' }}>
               <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
@@ -132,14 +170,14 @@ export const Landing: React.FC = () => {
                 
                 {/* Navigation Menu */}
                 <div className="col-xl-9 col-lg-9 col-md-9" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                  <div className="menu-main d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                    <div className="main-menu d-none d-lg-block">
-                      <nav>
-                        <ul id="navigation" style={{ display: 'flex', listStyle: 'none', gap: '28px', margin: 0, padding: 0, flexDirection: 'row' }}>
-                          <li><a href="#top" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>Home</a></li>
-                          <li><a href="#portals" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>System Portals</a></li>
-                          <li><a href="#about" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>About</a></li>
-                          <li><a href="#news" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>News</a></li>
+                  <div className="menu-main d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '24px', background: 'transparent' }}>
+                    <div className="main-menu d-none d-lg-block" style={{ background: 'transparent' }}>
+                      <nav style={{ background: 'transparent' }}>
+                        <ul id="navigation" style={{ display: 'flex', listStyle: 'none', gap: '28px', margin: 0, padding: 0, flexDirection: 'row', background: 'transparent' }}>
+                          <li><a href="#top" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>Home</a></li>
+                          <li><a href="#portals" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>System Portals</a></li>
+                          <li><a href="#about" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>About</a></li>
+                          <li><a href="#news" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px', background: 'transparent' }}>News</a></li>
                         </ul>
                       </nav>
                     </div>
