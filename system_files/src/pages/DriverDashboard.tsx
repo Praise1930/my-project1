@@ -50,7 +50,7 @@ export const DriverDashboard: React.FC = () => {
 
   // 1. Auth check and initial load
   useEffect(() => {
-    const sessionUser = db.getCurrentSessionUser();
+    const sessionUser = db.getSessionUserForRole('driver');
     if (!sessionUser || sessionUser.role !== 'driver') {
       navigate('/login?role=driver');
       return;

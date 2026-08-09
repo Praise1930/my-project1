@@ -72,7 +72,7 @@ export const DoctorDashboard: React.FC = () => {
 
   // 1. Authentication Check
   useEffect(() => {
-    const sessionUser = db.getCurrentSessionUser();
+    const sessionUser = db.getSessionUserForRole('doctor');
     if (!sessionUser || sessionUser.role !== 'doctor') {
       navigate('/login?role=doctor');
       return;

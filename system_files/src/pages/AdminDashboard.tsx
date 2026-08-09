@@ -175,7 +175,7 @@ export const AdminDashboard: React.FC = () => {
 
   // 1. Auth & Data loading
   useEffect(() => {
-    const sessionUser = db.getCurrentSessionUser();
+    const sessionUser = db.getSessionUserForRole('admin');
     if (!sessionUser || sessionUser.role !== 'admin') {
       navigate('/login?role=admin');
       return;

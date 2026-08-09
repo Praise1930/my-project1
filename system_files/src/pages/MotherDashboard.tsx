@@ -111,7 +111,7 @@ export const MotherDashboard: React.FC = () => {
 
   // 1. Authentication check
   useEffect(() => {
-    const sessionUser = db.getCurrentSessionUser();
+    const sessionUser = db.getSessionUserForRole('mother');
     if (!sessionUser || sessionUser.role !== 'mother') {
       navigate('/login?role=mother');
       return;

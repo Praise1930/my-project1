@@ -87,7 +87,7 @@ export const VhtDashboard: React.FC = () => {
 
   // Load VHT Session & Data
   useEffect(() => {
-    const session = db.getCurrentSessionUser();
+    const session = db.getSessionUserForRole('vht');
     if (!session || session.role !== 'vht') {
       navigate('/login?role=vht');
       return;

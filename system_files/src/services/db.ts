@@ -456,19 +456,61 @@ class LocalDatabase {
   get bloodRequests(): BloodRequest[] { return this.getStore('blood_requests', []); }
   set bloodRequests(val: BloodRequest[]) { this.setStore('blood_requests', val); }
 
-  // ── Session Handling ──
-  getCurrentSessionUser(): User | null {
-    const raw = sessionStorage.getItem('mamatrack_session');
-    if (!raw) return null;
-    const session = JSON.parse(raw);
-    return this.users.find(u => u.id === session.id) || null;
+  // ── Session Handling (per-role, stored in localStorage so same-tab multi-role testing works) ──
+  getCurrentSessionUser(role?: string): User | null {
+    // If role is specified, look up only that role's session.
+    // Otherwise fall back to the old single-session key for backwards compat.
+    const rolesToCheck = role
+      ? [role]
+      : ['admin', 'mother', 'doctor', 'driver', 'vht'];
+
+    for (const r of rolesToCheck) {
+      const raw = localStorage.getItem(`mamatrack_session_${r}`);
+      if (raw) {
+        try {
+          const session = JSON.parse(raw);
+          const user = this.users.find(u => u.id === session.id && u.role === r);
+          if (user) return user;
+        } catch { /* ignore corrupt */ }
+      }
+    }
+    // Legacy fallback: sessionStorage single-key
+    const legacy = sessionStorage.getItem('mamatrack_session');
+    if (legacy) {
+      try {
+        const session = JSON.parse(legacy);
+        return this.users.find(u => u.id === session.id) || null;
+      } catch { /* ignore */ }
+    }
+    return null;
   }
 
-  setSessionUser(user: User | null): void {
-    if (user) {
-      sessionStorage.setItem('mamatrack_session', JSON.stringify({ id: user.id, role: user.role }));
+  getSessionUserForRole(role: 'mother' | 'admin' | 'doctor' | 'driver' | 'vht'): User | null {
+    const raw = localStorage.getItem(`mamatrack_session_${role}`);
+    if (!raw) return null;
+    try {
+      const session = JSON.parse(raw);
+      return this.users.find(u => u.id === session.id && u.role === role) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  setSessionUser(user: User | null, role?: string): void {
+    const targetRole = user?.role || role;
+    if (user && targetRole) {
+      localStorage.setItem(
+        `mamatrack_session_${targetRole}`,
+        JSON.stringify({ id: user.id, role: targetRole })
+      );
+    } else if (targetRole) {
+      localStorage.removeItem(`mamatrack_session_${targetRole}`);
     } else {
-      sessionStorage.removeItem('mamatrack_session');
+      // Clear all role sessions
+      ['admin', 'mother', 'doctor', 'driver', 'vht'].forEach(r =>
+        localStorage.removeItem(`mamatrack_session_${r}`)
+      );
+      sessionStorage.removeItem('mamatrack_session'); // clear legacy too
     }
   }
 
@@ -492,6 +534,10 @@ class LocalDatabase {
     localStorage.removeItem('mamatrack_sms_logs');
     localStorage.removeItem('mamatrack_vitals');
     localStorage.removeItem('mamatrack_vht_visits');
+    // Clear all per-role sessions
+    ['admin', 'mother', 'doctor', 'driver', 'vht'].forEach(r =>
+      localStorage.removeItem(`mamatrack_session_${r}`)
+    );
     sessionStorage.removeItem('mamatrack_session');
   }
 }
