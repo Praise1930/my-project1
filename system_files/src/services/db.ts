@@ -381,6 +381,11 @@ class LocalDatabase {
     const oldDataRaw = localStorage.getItem(`mamatrack_${key}`);
     localStorage.setItem(`mamatrack_${key}`, JSON.stringify(data));
 
+    // Dispatch global window event for same-tab and multi-tab instant UI sync
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('mamatrack_db_update', { detail: { key } }));
+    }
+
     if (['emergencies', 'vitals', 'vht_visits', 'users'].includes(key)) {
       try {
         const oldData: any[] = oldDataRaw ? JSON.parse(oldDataRaw) : [];

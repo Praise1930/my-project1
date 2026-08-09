@@ -276,6 +276,7 @@ export const AdminDashboard: React.FC = () => {
 
     window.addEventListener('storage', handleAlert);
     window.addEventListener('mamatrack_alert_triggered', handleAlert);
+    window.addEventListener('mamatrack_db_update', handleAlert);
 
     let bc: BroadcastChannel | null = null;
     if (typeof BroadcastChannel !== 'undefined') {
@@ -292,6 +293,7 @@ export const AdminDashboard: React.FC = () => {
       clearInterval(timer);
       window.removeEventListener('storage', handleAlert);
       window.removeEventListener('mamatrack_alert_triggered', handleAlert);
+      window.removeEventListener('mamatrack_db_update', handleAlert);
       if (bc) bc.close();
     };
   }, []);
