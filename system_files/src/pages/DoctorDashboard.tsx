@@ -7,6 +7,7 @@ import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { MapComponent, MapMarker } from '../components/MapComponent';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ export const DoctorDashboard: React.FC = () => {
   const [showBloodModal, setShowBloodModal] = useState(false);
   const [showTriageModal, setShowTriageModal] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [incomingPatientEmergency, setIncomingPatientEmergency] = useState<Emergency | null>(null);
+  const [seenEmergencyIds, setSeenEmergencyIds] = useState<number[]>([]);
 
   // Dynamic Stylesheet Loading for isolating theme CSS
   useEffect(() => {
@@ -96,18 +99,93 @@ export const DoctorDashboard: React.FC = () => {
     if (!user || !doctor) return;
     const interval = setInterval(() => {
       loadData(user.id, doctor.hospital_id);
+      
+      // Check for new dispatched emergencies assigned to this doctor
+      const myInbound = db.emergencies.filter(
+        e => e.hospital_id === doctor.hospital_id && 
+             (e.doctor_id === user.id || !e.doctor_id) &&
+             ['dispatched', 'en_route', 'in_transit'].includes(e.status)
+      );
+      
+      // Show alert for newest unseen emergency
+      const unseen = myInbound.find(e => !seenEmergencyIds.includes(e.id));
+      if (unseen && !incomingPatientEmergency) {
+        setIncomingPatientEmergency(unseen);
+        setSeenEmergencyIds(prev => [...prev, unseen.id]);
+      }
     }, 4000);
     return () => clearInterval(interval);
-  }, [user, doctor]);
+  }, [user, doctor, seenEmergencyIds, incomingPatientEmergency]);
 
   if (!user || !doctor || !hospital) {
     return <SkeletonDashboardLoader />;
   }
 
   // Metric aggregates
-  const inboundCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived'].includes(e.status)).length;
+  const inboundCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived', 'in_transit'].includes(e.status)).length;
   const totalTreated = emergencies.filter(e => e.status === 'completed').length;
   const pendingBloodReqs = bloodRequests.filter(r => r.status === 'pending').length;
+
+  // Map helpers for live GPS tracking
+  const getInboundMapMarkers = (): MapMarker[] => {
+    const markers: MapMarker[] = [];
+    // Hospital marker
+    if (hospital) {
+      markers.push({
+        id: `hosp-${hospital.id}`,
+        lat: hospital.latitude,
+        lng: hospital.longitude,
+        label: hospital.name,
+        type: 'hospital'
+      });
+    }
+    // Active ambulances heading to this hospital
+    const activeInbound = emergencies.filter(e => ['dispatched', 'en_route', 'in_transit'].includes(e.status));
+    activeInbound.forEach(e => {
+      if (e.driver_id) {
+        const driverProfile = db.drivers.find(d => d.user_id === e.driver_id);
+        if (driverProfile) {
+          const motherUser = db.users.find(u => u.id === e.mother_id);
+          markers.push({
+            id: `drv-${e.driver_id}`,
+            lat: driverProfile.current_latitude,
+            lng: driverProfile.current_longitude,
+            label: `Ambulance (${motherUser?.full_name || 'Patient'})`,
+            type: 'driver'
+          });
+        }
+      }
+      // Mother location
+      markers.push({
+        id: `emg-${e.id}`,
+        lat: e.latitude,
+        lng: e.longitude,
+        label: `Patient Location`,
+        type: 'emergency'
+      });
+    });
+    return markers;
+  };
+
+  const getInboundRoutePoints = (): [number, number][] => {
+    const activeEmg = emergencies.find(e => ['dispatched', 'en_route', 'in_transit'].includes(e.status) && e.driver_id);
+    if (activeEmg && activeEmg.driver_id) {
+      const driverProfile = db.drivers.find(d => d.user_id === activeEmg.driver_id);
+      if (driverProfile) {
+        if (activeEmg.status === 'in_transit' && hospital) {
+          return [
+            [driverProfile.current_latitude, driverProfile.current_longitude],
+            [hospital.latitude, hospital.longitude]
+          ];
+        }
+        return [
+          [driverProfile.current_latitude, driverProfile.current_longitude],
+          [activeEmg.latitude, activeEmg.longitude]
+        ];
+      }
+    }
+    return [];
+  };
 
   // Toggle Duty Status
   const handleToggleDuty = () => {
@@ -677,17 +755,36 @@ export const DoctorDashboard: React.FC = () => {
               emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
                 const motherData = db.mothers.find(m => m.user_id === e.mother_id);
                 const patientUser = db.users.find(u => u.id === e.mother_id);
+                const weeksPregnant = motherData ? Math.max(1, Math.min(42, Math.floor((new Date().getTime() - new Date(motherData.pregnancy_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))) : 0;
                 return (
                   <div key={e.id} style={{ border: '1px solid #eef2f7', borderRadius: '6px', padding: '16px', marginBottom: '14px', background: '#fdfdfd' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <span style={{ fontSize: '14px', fontWeight: 700, color: '#1977cc' }}>{e.code}</span>
-                      <span className={e.status === 'arrived' ? 'badge-status-arrived' : 'badge-status-enroute'}>
-                        {e.status.toUpperCase()}
+                      <span className={e.status === 'arrived' ? 'badge-status-arrived' : 'badge-status-enroute'} style={{
+                        background: e.status === 'in_transit' ? '#dbeafe' : undefined,
+                        color: e.status === 'in_transit' ? '#1d4ed8' : undefined
+                      }}>
+                        {e.status === 'in_transit' ? 'IN TRANSIT TO HOSPITAL' : e.status.toUpperCase()}
                       </span>
                     </div>
 
                     <div style={{ fontSize: '14px', color: '#2c4964', marginBottom: '6px' }}>
                       Patient Name: <strong>{patientUser?.full_name}</strong> · Blood Type: <span style={{ background: '#fbeee6', color: '#b93e00', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, fontSize: '12px' }}>{motherData?.blood_type || 'O+'}</span>
+                    </div>
+
+                    {/* Enhanced Medical Details */}
+                    <div style={{ fontSize: '12px', color: '#555', marginBottom: '6px', background: '#f0fdf4', padding: '8px 10px', borderRadius: '6px', border: '1px solid #dcfce7' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+                        <span>🤰 Gestational Age: <strong>{weeksPregnant} weeks</strong></span>
+                        <span>📅 Due Date: <strong>{motherData?.expected_due_date || 'N/A'}</strong></span>
+                        <span>📊 Gravida: <strong>{motherData?.gravida || 'N/A'}</strong> | Parity: <strong>{motherData?.parity || 'N/A'}</strong></span>
+                        <span>⚠️ Complications: <strong style={{ color: motherData?.current_complications ? '#dc2626' : '#16a34a' }}>{motherData?.current_complications || 'None'}</strong></span>
+                      </div>
+                      {motherData?.medical_history && (
+                        <div style={{ marginTop: '4px', borderTop: '1px dashed #bbf7d0', paddingTop: '4px' }}>
+                          📝 History: <em>{motherData.medical_history}</em>
+                        </div>
+                      )}
                     </div>
                     
                     <div style={{ fontSize: '13px', color: '#666666', marginBottom: '12px' }}>
@@ -696,7 +793,7 @@ export const DoctorDashboard: React.FC = () => {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #eef2f7', paddingTop: '10px' }}>
                       <span style={{ fontSize: '12px', color: '#888888' }}>
-                        {e.status === 'arrived' ? '🚑 Ambulance Arrived at ER' : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
+                        {e.status === 'arrived' ? '🚑 Ambulance Arrived at ER' : e.status === 'in_transit' ? `🚑 In Transit — ETA: ${e.eta_minutes || '?'} mins` : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
                       </span>
 
                       <button
@@ -714,6 +811,25 @@ export const DoctorDashboard: React.FC = () => {
                 );
               })
             )}
+          </div>
+        </div>
+
+        {/* LIVE GPS TRACKING MAP */}
+        <div className="medical-card" style={{ marginTop: '24px' }}>
+          <div className="medical-card-header d-flex justify-content-between align-items-center">
+            <span>🗺️ Live Ambulance GPS Tracker</span>
+            {inboundCount > 0 && <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700 }}>● TRACKING {inboundCount} INBOUND</span>}
+          </div>
+          <div className="medical-card-body" style={{ padding: '0' }}>
+            <div style={{ height: '350px', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+              <MapComponent
+                center={hospital ? [hospital.latitude, hospital.longitude] : [0.3536, 32.7554]}
+                zoom={13}
+                markers={getInboundMapMarkers()}
+                routePoints={getInboundRoutePoints()}
+                theme={theme}
+              />
+            </div>
           </div>
         </div>
 
@@ -1021,6 +1137,144 @@ export const DoctorDashboard: React.FC = () => {
           </div>
         </div>
       )}
+      {/* INCOMING PATIENT ALERT MODAL */}
+      {incomingPatientEmergency && (() => {
+        const emg = db.emergencies.find(e => e.id === incomingPatientEmergency.id) || incomingPatientEmergency;
+        const motherUser = db.users.find(u => u.id === emg.mother_id);
+        const motherProfile = db.mothers.find(m => m.user_id === emg.mother_id);
+        const driverUser = emg.driver_id ? db.users.find(u => u.id === emg.driver_id) : null;
+        const weeksPregnant = motherProfile ? Math.max(1, Math.min(42, Math.floor((new Date().getTime() - new Date(motherProfile.pregnancy_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))) : 0;
+
+        return (
+          <div style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+            animation: 'fadeIn 0.3s ease'
+          }}>
+            <style>{`
+              @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+              @keyframes alertPulse { 0%,100%{box-shadow:0 0 0 0 rgba(25,119,204,0.6);} 50%{box-shadow:0 0 0 16px rgba(25,119,204,0);} }
+              .doc-alert-badge { animation: alertPulse 1.2s infinite; }
+            `}</style>
+
+            <div style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '580px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
+              border: '3px solid #1977cc'
+            }}>
+              {/* Header */}
+              <div style={{
+                background: 'linear-gradient(135deg, #1565c0, #1977cc)',
+                padding: '20px 24px',
+                borderRadius: '13px 13px 0 0',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <span className="doc-alert-badge" style={{
+                    fontSize: '2rem',
+                    width: '52px', height: '52px',
+                    background: 'rgba(255,255,255,0.2)',
+                    borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>🩺</span>
+                  <div>
+                    <div style={{ color: '#ffffff', fontWeight: 900, fontSize: '1.1rem' }}>INCOMING PATIENT — PREPARE</div>
+                    <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', marginTop: '2px' }}>Code: <strong>{emg.code}</strong> • Severity: <strong>{emg.severity.toUpperCase()}</strong></div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIncomingPatientEmergency(null)}
+                  style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
+                >&times;</button>
+              </div>
+
+              <div style={{ padding: '24px' }}>
+                {/* Patient Identity */}
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient</div>
+                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e3a5f' }}>{motherUser?.full_name || 'Unknown'}</div>
+                      <div style={{ fontSize: '12px', color: '#1e40af', marginTop: '2px' }}>📞 {motherUser?.phone || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transport</div>
+                      <div style={{ fontSize: '12px', color: '#1e3a5f', fontWeight: 600 }}>🚑 Driver: {driverUser?.full_name || 'Assigned'}</div>
+                      <div style={{ fontSize: '12px', color: '#1e40af', marginTop: '2px' }}>⏱️ ETA: ~{emg.eta_minutes || '?'} mins</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Medical Profile */}
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a5f', marginBottom: '8px' }}>🩺 Medical Preparation Details</div>
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', color: '#14532d' }}>
+                    <div>🩸 <strong>Blood Type:</strong> <span style={{ background: '#fef2f2', color: '#dc2626', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, fontSize: '12px' }}>{motherProfile?.blood_type || 'Unknown'}</span></div>
+                    <div>🤰 <strong>Gestational Age:</strong> {weeksPregnant} weeks</div>
+                    <div>📅 <strong>Due Date:</strong> {motherProfile?.expected_due_date || 'N/A'}</div>
+                    <div>📊 <strong>Gravida:</strong> {motherProfile?.gravida || 'N/A'} | <strong>Parity:</strong> {motherProfile?.parity || 'N/A'}</div>
+                  </div>
+
+                  {motherProfile?.current_complications && (
+                    <div style={{ marginTop: '10px', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '12px', color: '#991b1b' }}>
+                      ⚠️ <strong>Current Complications:</strong> {motherProfile.current_complications}
+                    </div>
+                  )}
+
+                  {motherProfile?.medical_history && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#15803d', borderTop: '1px dashed #86efac', paddingTop: '8px' }}>
+                      📋 <strong>Medical History:</strong> {motherProfile.medical_history}
+                    </div>
+                  )}
+                </div>
+
+                {/* Distress Details */}
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '12px 16px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#9f1239', textTransform: 'uppercase', marginBottom: '4px' }}>Distress Notes</div>
+                  <div style={{ fontSize: '13px', color: '#7f1d1d', fontWeight: 600 }}>{emg.notes}</div>
+                </div>
+
+                {/* Next of Kin */}
+                {motherProfile?.next_of_kin_name && (
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 14px', marginBottom: '16px', fontSize: '12px', color: '#475569' }}>
+                    👨‍👩‍👧 <strong>Next of Kin:</strong> {motherProfile.next_of_kin_name} ({motherProfile.next_of_kin_relationship}) — {motherProfile.next_of_kin_phone}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => setIncomingPatientEmergency(null)}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: '#1977cc',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 800,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(25,119,204,0.3)'
+                    }}
+                  >
+                    ✅ Acknowledged — Preparing for Patient
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

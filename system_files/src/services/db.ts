@@ -155,7 +155,7 @@ export interface Emergency {
   mother_id: number; // references user_id of mother
   latitude: number;
   longitude: number;
-  status: 'pending' | 'verified' | 'dispatched' | 'en_route' | 'arrived' | 'completed' | 'cancelled';
+  status: 'pending' | 'verified' | 'dispatched' | 'en_route' | 'arrived' | 'in_transit' | 'completed' | 'cancelled';
   severity: 'critical' | 'high' | 'medium' | 'low';
   notes: string;
   hospital_id: number | null;
@@ -915,11 +915,24 @@ export const EmergencyService = {
     const emg = emergencies.find(e => e.id === emergencyId);
     if (!emg) throw new Error('Emergency record not found');
 
+    // Auto-assign an on-duty doctor at the selected hospital if none specified
+    let assignedDoctorId = doctorUserId;
+    if (!assignedDoctorId) {
+      const hospitalDoctors = db.doctors.filter(d => d.hospital_id === hospitalId && d.is_on_duty);
+      if (hospitalDoctors.length > 0) {
+        assignedDoctorId = hospitalDoctors[0].user_id;
+      } else {
+        // Fallback: any on-duty doctor
+        const anyOnDuty = db.doctors.find(d => d.is_on_duty);
+        if (anyOnDuty) assignedDoctorId = anyOnDuty.user_id;
+      }
+    }
+
     const updatedEmg: Emergency = {
       ...emg,
       status: 'dispatched',
       driver_id: driverUserId,
-      doctor_id: doctorUserId,
+      doctor_id: assignedDoctorId,
       hospital_id: hospitalId,
       dispatched_by: adminUserId,
       eta_minutes: etaMinutes,
@@ -940,8 +953,9 @@ export const EmergencyService = {
 
     this.logTransition(emergencyId, emg.status, 'dispatched', adminUserId, `Ambulance dispatched. ETA: ${etaMinutes} minutes.`);
 
-    // Notifications
+    // Gather context data
     const motherUser = db.users.find(u => u.id === emg.mother_id);
+    const motherProfile = db.mothers.find(m => m.user_id === emg.mother_id);
     const driverUser = db.users.find(u => u.id === driverUserId);
     const hosp = db.hospitals.find(h => h.id === hospitalId);
 
@@ -950,27 +964,52 @@ export const EmergencyService = {
       NotificationService.createNotification(
         motherUser.id,
         '🚑 Ambulance Dispatched!',
-        `Ambulance driver ${driverUser?.full_name || 'Emergency Team'} is en route. Expected ETA: ${etaMinutes} mins.`,
+        `Ambulance driver ${driverUser?.full_name || 'Emergency Team'} is en route to your location. Destination hospital: ${hosp?.name || 'Nearest facility'}. Expected ETA: ${etaMinutes} mins.`,
         'dispatch',
         emergencyId
       );
     }
 
-    // Notify Driver
+    // Notify Driver — include mother's GPS coordinates & location details
+    const motherLocation = motherProfile
+      ? `${motherProfile.village}, ${motherProfile.sub_county}, ${motherProfile.district}`
+      : 'Mukono District';
     NotificationService.createNotification(
       driverUserId,
-      '🚨 New Emergency Dispatch',
-      `Respond to ${motherUser?.full_name || 'Patient'} located at Mukono coords. Hospital: ${hosp?.name}`,
+      '🚨 EMERGENCY DISPATCH — Navigate to Patient',
+      `PICKUP: ${motherUser?.full_name || 'Patient'} at ${motherLocation} (GPS: ${emg.latitude.toFixed(4)}, ${emg.longitude.toFixed(4)}).\nDESTINATION: ${hosp?.name || 'Hospital'} (${hosp?.address || ''}).\nBlood Type: ${motherProfile?.blood_type || 'Unknown'} | Severity: ${emg.severity.toUpperCase()}\nNotes: ${emg.notes}\nETA: ${etaMinutes} mins.`,
       'dispatch',
       emergencyId
     );
 
-    // Notify Doctor
-    if (doctorUserId) {
+    // Notify Doctor — include full medical preparation details
+    if (assignedDoctorId) {
+      const weeksPregnant = motherProfile ? Math.max(1, Math.min(42, Math.floor((new Date().getTime() - new Date(motherProfile.pregnancy_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))) : 0;
+      const medicalBrief = [
+        `🚨 INBOUND MATERNAL EMERGENCY — Prepare for arrival`,
+        ``,
+        `Patient: ${motherUser?.full_name || 'Unknown'}`,
+        `Phone: ${motherUser?.phone || 'N/A'}`,
+        `Blood Type: ${motherProfile?.blood_type || 'Unknown'}`,
+        `Gestational Age: ${weeksPregnant} weeks`,
+        `Expected Due Date: ${motherProfile?.expected_due_date || 'Unknown'}`,
+        `Gravida: ${motherProfile?.gravida || 'N/A'} | Parity: ${motherProfile?.parity || 'N/A'}`,
+        ``,
+        `Medical History: ${motherProfile?.medical_history || 'None declared'}`,
+        `Current Complications: ${motherProfile?.current_complications || 'None'}`,
+        `Distress Notes: ${emg.notes}`,
+        `Severity: ${emg.severity.toUpperCase()}`,
+        ``,
+        `Next of Kin: ${motherProfile?.next_of_kin_name || 'N/A'} (${motherProfile?.next_of_kin_relationship || ''}) — ${motherProfile?.next_of_kin_phone || 'N/A'}`,
+        ``,
+        `Destination: ${hosp?.name || 'Your facility'}`,
+        `ETA: ~${etaMinutes} minutes`,
+      ].join('\n');
+
       NotificationService.createNotification(
-        doctorUserId,
-        '🩺 Inbound Clinical Alert',
-        `Expecting emergency transfer of maternal patient ${motherUser?.full_name || 'Patient'}. Standby for triage.`,
+        assignedDoctorId,
+        '🩺 INCOMING PATIENT — Medical Preparation Required',
+        medicalBrief,
         'dispatch',
         emergencyId
       );
@@ -981,25 +1020,39 @@ export const EmergencyService = {
       SmsService.sendSms(
         motherUser.full_name,
         motherUser.phone,
-        `MamaTrack: Ambulance dispatched! Driver ${driverUser?.full_name || 'Emergency Team'} is on the way. ETA: ${etaMinutes} mins.`
+        `MamaTrack: Ambulance dispatched! Driver ${driverUser?.full_name || 'Emergency Team'} is on the way. Destination: ${hosp?.name || 'Hospital'}. ETA: ${etaMinutes} mins.`
       );
     }
     if (driverUser) {
       SmsService.sendSms(
         driverUser.full_name,
         driverUser.phone,
-        `MamaTrack dispatch: Go to ${motherUser?.full_name || 'Patient'} at Mukono coords. Hospital: ${hosp?.name}. ETA: ${etaMinutes} mins.`
+        `MamaTrack DISPATCH: Navigate to ${motherUser?.full_name || 'Patient'} at ${motherLocation} (GPS: ${emg.latitude.toFixed(4)}, ${emg.longitude.toFixed(4)}). Deliver to ${hosp?.name}. ETA: ${etaMinutes} mins.`
       );
     }
-    if (doctorUserId) {
-      const doctorUser = db.users.find(u => u.id === doctorUserId);
+    if (assignedDoctorId) {
+      const doctorUser = db.users.find(u => u.id === assignedDoctorId);
       if (doctorUser) {
         SmsService.sendSms(
           doctorUser.full_name,
           doctorUser.phone,
-          `MamaTrack alert: Inbound maternal patient ${motherUser?.full_name || 'Patient'} dispatched to ${hosp?.name || 'clinic'}. Standby.`
+          `MamaTrack ALERT: Inbound maternal patient ${motherUser?.full_name || 'Patient'} (Blood: ${motherProfile?.blood_type || '?'}, Complications: ${motherProfile?.current_complications || 'None'}) dispatched to ${hosp?.name || 'your facility'}. Prepare for arrival. ETA: ~${etaMinutes} mins.`
         );
       }
+    }
+
+    // Broadcast dispatch event for real-time updates
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('mamatrack_dispatch', { detail: updatedEmg }));
+      }
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('mamatrack_emergency_channel');
+        bc.postMessage({ type: 'EMERGENCY_DISPATCHED', emergency: updatedEmg });
+        bc.close();
+      }
+    } catch (e) {
+      console.log('Broadcast dispatch event posted');
     }
 
     return updatedEmg;
@@ -1015,10 +1068,13 @@ export const EmergencyService = {
 
     const nowStr = new Date().toISOString();
     if (status === 'en_route') {
-      // equivalent to driver moving
+      // equivalent to driver moving toward mother
     } else if (status === 'arrived') {
       updatedEmg.picked_up_at = nowStr;
       updatedEmg.arrived_at = nowStr;
+    } else if (status === 'in_transit') {
+      // Mother picked up, ambulance heading to hospital
+      updatedEmg.picked_up_at = updatedEmg.picked_up_at || nowStr;
     } else if (status === 'completed') {
       updatedEmg.completed_at = nowStr;
       // Release vehicle
@@ -1037,11 +1093,13 @@ export const EmergencyService = {
     const driverUser = db.users.find(u => u.id === emg.driver_id);
     const doctorUser = db.users.find(u => u.id === emg.doctor_id);
     const adminUser = db.users.find(u => u.role === 'admin');
+    const hosp = emg.hospital_id ? db.hospitals.find(h => h.id === emg.hospital_id) : null;
 
     let msg = `Status updated to ${status}.`;
-    if (status === 'en_route') msg = `Ambulance driver is en route. GPS tracking active.`;
+    if (status === 'en_route') msg = `Ambulance driver is en route to your location. GPS tracking active.`;
     else if (status === 'arrived') msg = `Ambulance has arrived at your location. Please board immediately.`;
-    else if (status === 'completed') msg = `Rescue completed. Hospital clinical handoff finished.`;
+    else if (status === 'in_transit') msg = `You are now in transit to ${hosp?.name || 'the hospital'}. Hold on, help is near.`;
+    else if (status === 'completed') msg = `Rescue completed. You have arrived safely at ${hosp?.name || 'the hospital'}. Clinical handoff finished.`;
 
     if (motherUser) {
       NotificationService.createNotification(motherUser.id, '🚨 Rescue Status: ' + status.toUpperCase(), msg, 'status_update', emergencyId);
@@ -1050,10 +1108,25 @@ export const EmergencyService = {
       NotificationService.createNotification(driverUser.id, '🚨 Emergency Update', `Emergency status changed to ${status}`, 'status_update', emergencyId);
     }
     if (doctorUser && changedByUserId !== doctorUser.id) {
-      NotificationService.createNotification(doctorUser.id, '🩺 Patient Status: ' + status.toUpperCase(), `Emergency status updated to ${status}`, 'status_update', emergencyId);
+      let doctorMsg = `Emergency status updated to ${status}`;
+      if (status === 'in_transit') doctorMsg = `🚑 Patient is now in transit to your facility. Prepare for arrival.`;
+      else if (status === 'arrived' && prevStatus === 'en_route') doctorMsg = `🚑 Ambulance has reached the patient. Pickup complete — transit to hospital beginning soon.`;
+      else if (status === 'completed') doctorMsg = `✅ Patient has arrived at ${hosp?.name || 'your facility'}. Please proceed with clinical handover.`;
+      NotificationService.createNotification(doctorUser.id, '🩺 Patient Status: ' + status.toUpperCase(), doctorMsg, 'status_update', emergencyId);
     }
     if (adminUser && changedByUserId !== adminUser.id) {
       NotificationService.createNotification(adminUser.id, '📡 Fleet Alert: ' + status.toUpperCase(), `Emergency ${emg.code} updated to ${status}`, 'status_update', emergencyId);
+    }
+
+    // Broadcast status update for real-time tracking
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('mamatrack_emergency_channel');
+        bc.postMessage({ type: 'EMERGENCY_STATUS_UPDATE', emergency: updatedEmg });
+        bc.close();
+      }
+    } catch (e) {
+      console.log('Broadcast status update event posted');
     }
 
     return updatedEmg;
@@ -1371,7 +1444,7 @@ export const SimulationEngine = {
         onUpdate(updatedEmg);
       } else {
         // Ambulance arrived at mother
-        const updatedEmg = { ...emg, status: 'arrived' as const, eta_minutes: 0, arrived_at: new Date().toISOString() };
+        const updatedEmg = { ...emg, status: 'arrived' as const, eta_minutes: 0, arrived_at: new Date().toISOString(), picked_up_at: new Date().toISOString() };
         db.emergencies = emergencies.map(e => e.id === emergencyId ? updatedEmg : e);
         
         EmergencyService.logTransition(emergencyId, emg.status, 'arrived', emg.driver_id, 'Ambulance has arrived at the patient location.');
@@ -1385,10 +1458,136 @@ export const SimulationEngine = {
           emergencyId
         );
 
+        // Notify Doctor — patient picked up
+        if (emg.doctor_id) {
+          NotificationService.createNotification(
+            emg.doctor_id,
+            '🚑 Patient Picked Up',
+            `Ambulance has reached the patient. Transit to your facility will begin shortly.`,
+            'status_update',
+            emergencyId
+          );
+        }
+
         onUpdate(updatedEmg);
         this.stopSimulation(emergencyId);
       }
     }, 4000); // simulation tick every 4s
+
+    activeSims[emergencyId] = interval;
+  },
+
+  // Second-leg simulation: Drive from mother's pickup location to the assigned hospital
+  startTransitToHospitalSimulation(emergencyId: number, onUpdate: (emergency: Emergency) => void) {
+    if (activeSims[emergencyId]) return;
+
+    const interval = window.setInterval(() => {
+      const emergencies = db.emergencies;
+      const emg = emergencies.find(e => e.id === emergencyId);
+      if (!emg || emg.status !== 'in_transit') {
+        this.stopSimulation(emergencyId);
+        return;
+      }
+
+      const driverProfile = db.drivers.find(d => d.user_id === emg.driver_id);
+      if (!driverProfile) {
+        this.stopSimulation(emergencyId);
+        return;
+      }
+
+      const hosp = db.hospitals.find(h => h.id === emg.hospital_id);
+      if (!hosp) {
+        this.stopSimulation(emergencyId);
+        return;
+      }
+
+      let currentLat = driverProfile.current_latitude;
+      let currentLng = driverProfile.current_longitude;
+      const targetLat = hosp.latitude;
+      const targetLng = hosp.longitude;
+
+      const dist = haversine(currentLat, currentLng, targetLat, targetLng);
+
+      if (dist > 0.05) {
+        const step = 0.002;
+        const angle = Math.atan2(targetLat - currentLat, targetLng - currentLng);
+        currentLat += step * Math.sin(angle);
+        currentLng += step * Math.cos(angle);
+
+        // Update driver location
+        db.drivers = db.drivers.map(d => d.user_id === emg.driver_id ? { ...d, current_latitude: currentLat, current_longitude: currentLng } : d);
+
+        // Update vehicle coordinates
+        if (emg.vehicle_id) {
+          db.vehicles = db.vehicles.map(v => v.id === emg.vehicle_id ? { ...v, current_latitude: currentLat, current_longitude: currentLng } : v);
+        }
+
+        const newEta = Math.max(1, Math.round(dist * 3));
+        const updatedEmg = { ...emg, eta_minutes: newEta };
+        db.emergencies = emergencies.map(e => e.id === emergencyId ? updatedEmg : e);
+        onUpdate(updatedEmg);
+      } else {
+        // Ambulance arrived at hospital — mission complete
+        const updatedEmg: Emergency = {
+          ...emg,
+          status: 'completed',
+          eta_minutes: 0,
+          completed_at: new Date().toISOString()
+        };
+
+        // Release vehicle
+        if (emg.vehicle_id) {
+          db.vehicles = db.vehicles.map(v => v.id === emg.vehicle_id ? { ...v, status: 'available' } : v);
+        }
+
+        db.emergencies = emergencies.map(e => e.id === emergencyId ? updatedEmg : e);
+
+        EmergencyService.logTransition(emergencyId, 'in_transit', 'completed', emg.driver_id, `Patient delivered to ${hosp.name}. Rescue mission complete.`);
+
+        // Notify all parties
+        NotificationService.createNotification(
+          emg.mother_id,
+          '🏥 Arrived at Hospital',
+          `You have arrived safely at ${hosp.name}. The medical team is ready for you.`,
+          'status_update',
+          emergencyId
+        );
+
+        if (emg.driver_id) {
+          NotificationService.createNotification(
+            emg.driver_id,
+            '✅ Mission Complete',
+            `Patient delivered to ${hosp.name}. You are now available for new dispatches.`,
+            'status_update',
+            emergencyId
+          );
+        }
+
+        if (emg.doctor_id) {
+          NotificationService.createNotification(
+            emg.doctor_id,
+            '🏥 Patient Has Arrived',
+            `Patient has arrived at ${hosp.name}. Please proceed with clinical assessment and triage.`,
+            'status_update',
+            emergencyId
+          );
+        }
+
+        const adminUsers = db.users.filter(u => u.role === 'admin');
+        adminUsers.forEach(admin => {
+          NotificationService.createNotification(
+            admin.id,
+            '✅ Rescue Mission Complete',
+            `Emergency ${emg.code}: Patient delivered to ${hosp.name}. Driver mission complete.`,
+            'status_update',
+            emergencyId
+          );
+        });
+
+        onUpdate(updatedEmg);
+        this.stopSimulation(emergencyId);
+      }
+    }, 4000);
 
     activeSims[emergencyId] = interval;
   },

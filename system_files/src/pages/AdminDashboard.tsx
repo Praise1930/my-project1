@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
+import { db, AuthService, EmergencyService, SimulationEngine, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -402,9 +402,39 @@ export const AdminDashboard: React.FC = () => {
     if (selectedEmergency && selectedEmergency.driver_id) {
       const driver = drivers.find(d => d.user_id === selectedEmergency.driver_id);
       if (driver) {
+        // If in_transit, route from driver to hospital
+        if (selectedEmergency.status === 'in_transit' && selectedEmergency.hospital_id) {
+          const hosp = hospitals.find(h => h.id === selectedEmergency.hospital_id);
+          if (hosp) {
+            return [
+              [driver.current_latitude, driver.current_longitude],
+              [hosp.latitude, hosp.longitude]
+            ];
+          }
+        }
         return [
           [driver.current_latitude, driver.current_longitude],
           [selectedEmergency.latitude, selectedEmergency.longitude]
+        ];
+      }
+    }
+    // Also show route for any active dispatched emergency even without selection
+    const activeEmg = emergencies.find(e => ['dispatched', 'en_route', 'in_transit'].includes(e.status) && e.driver_id);
+    if (activeEmg && activeEmg.driver_id) {
+      const driver = drivers.find(d => d.user_id === activeEmg.driver_id);
+      if (driver) {
+        if (activeEmg.status === 'in_transit' && activeEmg.hospital_id) {
+          const hosp = hospitals.find(h => h.id === activeEmg.hospital_id);
+          if (hosp) {
+            return [
+              [driver.current_latitude, driver.current_longitude],
+              [hosp.latitude, hosp.longitude]
+            ];
+          }
+        }
+        return [
+          [driver.current_latitude, driver.current_longitude],
+          [activeEmg.latitude, activeEmg.longitude]
         ];
       }
     }
@@ -489,17 +519,23 @@ export const AdminDashboard: React.FC = () => {
       saveBackupState();
       const motherUser = db.users.find(u => u.id === emg.mother_id);
       const drvUser = db.users.find(u => u.id === availableDrv.user_id);
-      EmergencyService.assignDispatch(
+      const dispatched = EmergencyService.assignDispatch(
         emg.id,
         availableDrv.user_id,
-        null,
+        null, // auto-assigned by assignDispatch
         hospitalId,
         user!.id,
         eta
       );
+      // Start the simulation engine for live GPS tracking
+      SimulationEngine.startAmbulanceSimulation(dispatched.id, () => {
+        loadData();
+      });
       setIncomingAlertEmergency(null);
       loadData();
-      alert(`✅ DISPATCH APPROVED!\n\nDriver ${drvUser?.full_name} dispatched to ${hosp?.name}.\nETA: ${eta} minutes.\nPatient: ${motherUser?.full_name}`);
+      // Show assigned doctor info
+      const assignedDoc = dispatched.doctor_id ? db.users.find(u => u.id === dispatched.doctor_id) : null;
+      alert(`✅ DISPATCH APPROVED!\n\nDriver: ${drvUser?.full_name} dispatched to ${hosp?.name}.\nDoctor: ${assignedDoc?.full_name || 'Auto-assigned'} notified with medical prep details.\nETA: ${eta} minutes.\nPatient: ${motherUser?.full_name}`);
     } catch (err: any) {
       alert(err?.message || 'Dispatch failed. Please try again.');
     }
@@ -516,7 +552,7 @@ export const AdminDashboard: React.FC = () => {
 
     try {
       saveBackupState(); // Save undo state
-      EmergencyService.assignDispatch(
+      const dispatched = EmergencyService.assignDispatch(
         selectedEmergency.id,
         dispatchDriver,
         dispatchDoctor || null,
@@ -524,12 +560,17 @@ export const AdminDashboard: React.FC = () => {
         user.id,
         dispatchEta
       );
+      // Start simulation engine for live GPS tracking
+      SimulationEngine.startAmbulanceSimulation(dispatched.id, () => {
+        loadData();
+      });
       setSelectedEmergency(null);
       setDispatchDriver(0);
       setDispatchDoctor(0);
       setDispatchHospital(0);
       loadData();
-      alert('Ambulance driver has been dispatched successfully!');
+      const assignedDoc = dispatched.doctor_id ? db.users.find(u => u.id === dispatched.doctor_id) : null;
+      alert(`Ambulance dispatched successfully!${assignedDoc ? `\nDoctor ${assignedDoc.full_name} has been notified with medical preparation details.` : ''}`);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Dispatch failed';
       alert(errMsg);
@@ -2033,7 +2074,7 @@ export const AdminDashboard: React.FC = () => {
                               }
                               try {
                                 saveBackupState();
-                                EmergencyService.assignDispatch(
+                                const dispatched = EmergencyService.assignDispatch(
                                   selectedEmergency.id,
                                   recDrv.user_id,
                                   dispatchDoctor || null,
@@ -2041,6 +2082,9 @@ export const AdminDashboard: React.FC = () => {
                                   user.id,
                                   Math.max(10, Math.round(rec.distanceKm * 3))
                                 );
+                                SimulationEngine.startAmbulanceSimulation(dispatched.id, () => {
+                                  loadData();
+                                });
                                 setSelectedEmergency(null);
                                 setDispatchDriver(0);
                                 setDispatchDoctor(0);

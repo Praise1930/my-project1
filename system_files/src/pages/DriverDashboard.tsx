@@ -88,6 +88,12 @@ export const DriverDashboard: React.FC = () => {
           setIsSimulating(false);
         }
       }
+      
+      // Refresh driver position from DB
+      const freshDriver = db.drivers.find(d => d.user_id === userId);
+      if (freshDriver && (freshDriver.current_latitude !== driver.current_latitude || freshDriver.current_longitude !== driver.current_longitude)) {
+        setDriver(freshDriver);
+      }
     }, 3000);
 
     return () => clearInterval(interval);
@@ -152,6 +158,17 @@ export const DriverDashboard: React.FC = () => {
 
   const getRoutePoints = (): [number, number][] => {
     if (activeEmergency) {
+      // If in_transit, show route to hospital
+      if (activeEmergency.status === 'in_transit' && activeEmergency.hospital_id) {
+        const hosp = db.hospitals.find(h => h.id === activeEmergency.hospital_id);
+        if (hosp) {
+          return [
+            [driver.current_latitude, driver.current_longitude],
+            [hosp.latitude, hosp.longitude]
+          ];
+        }
+      }
+      // Default: route to mother's location
       return [
         [driver.current_latitude, driver.current_longitude],
         [activeEmergency.latitude, activeEmergency.longitude]
@@ -218,6 +235,27 @@ export const DriverDashboard: React.FC = () => {
     }
     const updated = EmergencyService.updateStatus(activeEmergency!.id, 'arrived', user.id, 'Driver verified arrival at patient coordinate.');
     setActiveEmergency(updated);
+  };
+
+  // Start second leg: transit from mother's location to the hospital
+  const handleStartTransit = () => {
+    if (!activeEmergency) return;
+    const updated = EmergencyService.updateStatus(activeEmergency.id, 'in_transit', user.id, 'Patient picked up. Ambulance now heading to hospital.');
+    setActiveEmergency(updated);
+    setIsSimulating(true);
+    SimulationEngine.startTransitToHospitalSimulation(activeEmergency.id, (updatedEmg) => {
+      setActiveEmergency(updatedEmg);
+      if (updatedEmg.status === 'completed') {
+        setIsSimulating(false);
+        setActiveEmergency(null);
+        alert('✅ Patient delivered to hospital successfully! Mission complete. You are now available for new dispatches.');
+      }
+      // Reload driver position
+      if (driver) {
+        const freshDriver = db.drivers.find(d => d.user_id === driver.user_id);
+        if (freshDriver) setDriver(freshDriver);
+      }
+    });
   };
 
   const handleHandoffComplete = () => {
@@ -606,6 +644,16 @@ export const DriverDashboard: React.FC = () => {
                       <span style={{ color: '#94a3b8' }}>Destination Hospital:</span>
                       <strong style={{ color: '#fbbf24' }}>{hospitalMatched?.name}</strong>
                     </div>
+                    {/* Mother's Medical Brief */}
+                    {motherData() && (
+                      <div style={{ marginTop: '6px', background: 'rgba(245, 158, 11, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.15)' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Patient Medical Brief:</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#94a3b8' }}>🩸 Blood Type: <strong style={{ color: '#f8fafc' }}>{motherData()?.blood_type}</strong></span>
+                          <span style={{ color: '#94a3b8' }}>⚠️ Complications: <strong style={{ color: '#ef4444' }}>{motherData()?.current_complications || 'None'}</strong></span>
+                        </div>
+                      </div>
+                    )}
                     <div style={{ marginTop: '6px', background: 'rgba(239, 68, 68, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
                       <div style={{ fontSize: '0.72rem', color: '#f87171', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px' }}>Kin Emergency Contact:</div>
                       <strong style={{ color: '#f8fafc' }}>{motherData()?.next_of_kin_name} ({motherData()?.next_of_kin_phone})</strong>
@@ -631,9 +679,25 @@ export const DriverDashboard: React.FC = () => {
                     )}
 
                     {activeEmergency.status === 'arrived' && (
-                      <button onClick={handleHandoffComplete} className="btn btn-success btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                        <CheckCircle size={18} /> Clinical Handoff Complete
-                      </button>
+                      <>
+                        <div style={{ fontSize: '0.78rem', color: '#10b981', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}>
+                          ✅ Patient picked up! Start transit to hospital.
+                        </div>
+                        <button onClick={handleStartTransit} className="btn btn-amber btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          🏥 Start Transit to {hospitalMatched?.name || 'Hospital'}
+                        </button>
+                      </>
+                    )}
+
+                    {activeEmergency.status === 'in_transit' && (
+                      <>
+                        <div className="telemetry-pulsing" style={{ fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}>
+                          🚑 In transit to {hospitalMatched?.name || 'hospital'}... ETA: {activeEmergency.eta_minutes || '?'} mins
+                        </div>
+                        <button onClick={handleHandoffComplete} className="btn btn-success btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          <CheckCircle size={18} /> Arrived at Hospital — Complete Mission
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
