@@ -33,7 +33,9 @@ export const AdminDashboard: React.FC = () => {
 
   // Incoming SOS Alert Modal state
   const [incomingAlertEmergency, setIncomingAlertEmergency] = useState<Emergency | null>(null);
-  const seenEmergencyKeysRef = React.useRef<Set<string>>(new Set());
+  // Track the key of the last emergency we showed an alert for.
+  // Using a ref so interval closures always read the fresh value.
+  const lastShownAlertKeyRef = React.useRef<string | null>(null);
 
   const getEmergencyKey = (emg: Emergency) => `${emg.id}_${emg.triggered_at || ''}`;
 
@@ -187,9 +189,9 @@ export const AdminDashboard: React.FC = () => {
       .filter(e => e.status === 'pending');
     if (existingPending.length > 0) {
       const newest = existingPending[0];
-      // Do NOT pre-add to seenKeys — let the modal fire immediately
+      const key = getEmergencyKey(newest);
+      lastShownAlertKeyRef.current = key;
       setIncomingAlertEmergency(newest);
-      seenEmergencyKeysRef.current.add(getEmergencyKey(newest));
     }
   }, [navigate]);
 
@@ -233,10 +235,12 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     loadData();
 
+    // Show SOS modal for an emergency only if it is a DIFFERENT key
+    // from the one currently/last shown. Resets whenever modal is dismissed.
     const checkAndShowAlert = (emg: Emergency) => {
       const key = getEmergencyKey(emg);
-      if (!seenEmergencyKeysRef.current.has(key)) {
-        seenEmergencyKeysRef.current.add(key);
+      if (lastShownAlertKeyRef.current !== key) {
+        lastShownAlertKeyRef.current = key;
         setIncomingAlertEmergency(emg);
         playAlertSound();
       }
@@ -531,6 +535,8 @@ export const AdminDashboard: React.FC = () => {
       SimulationEngine.startAmbulanceSimulation(dispatched.id, () => {
         loadData();
       });
+      // Reset ref so that if mother re-triggers SOS, the new key will pop the alert again
+      lastShownAlertKeyRef.current = null;
       setIncomingAlertEmergency(null);
       loadData();
       // Show assigned doctor info
@@ -1617,9 +1623,29 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         <nav style={{ flex: 1, paddingTop: '10px' }}>
-          <div className={`sidebar-nav-item ${activeTab === 'dispatch' ? 'active' : ''}`} onClick={() => setActiveTab('dispatch')}>
+          <div className={`sidebar-nav-item ${activeTab === 'dispatch' ? 'active' : ''}`} onClick={() => setActiveTab('dispatch')} style={{ position: 'relative' }}>
             <i className="ti ti-alert-triangle" style={{ fontSize: '18px' }}></i>
             <span>Active Dispatch</span>
+            {pendingCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '6px',
+                right: '10px',
+                background: '#ef4444',
+                color: '#fff',
+                fontSize: '10px',
+                fontWeight: 900,
+                minWidth: '18px',
+                height: '18px',
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 4px',
+                animation: 'sos-strip-pulse 0.8s infinite alternate',
+                boxShadow: '0 0 0 2px #fff',
+              }}>{pendingCount}</span>
+            )}
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}>
             <i className="ti ti-building-hospital" style={{ fontSize: '18px' }}></i>
@@ -1827,6 +1853,91 @@ export const AdminDashboard: React.FC = () => {
 
       {/* FLOATING WELCOME TOAST NOTIFICATION (Disappears after 7 seconds) */}
       <WelcomeToast userName={user.full_name} roleName="Admin Command" subtitle="Welcome to Mukono Regional Dispatch. Fleet active & synchronized." icon="👋" />
+
+      {/* ===== GLOBAL PERSISTENT SOS ALERT STRIP — always visible on ALL tabs ===== */}
+      {pendingCount > 0 && (() => {
+        const latestPendingGlobal = emergencies.find(e => e.status === 'pending');
+        const patientUser = latestPendingGlobal ? db.users.find(u => u.id === latestPendingGlobal.mother_id) : null;
+        return (
+          <div
+            id="global-sos-strip"
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 8000,
+              background: 'linear-gradient(90deg, #dc2626 0%, #ef4444 60%, #f97316 100%)',
+              color: '#fff',
+              padding: '10px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              boxShadow: '0 4px 20px rgba(220,38,38,0.5)',
+              animation: 'sos-strip-pulse 1.4s infinite alternate',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <style>{`
+              @keyframes sos-strip-pulse {
+                from { box-shadow: 0 4px 20px rgba(220,38,38,0.4); }
+                to   { box-shadow: 0 4px 32px rgba(220,38,38,0.85); }
+              }
+            `}</style>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.6rem', animation: 'sos-strip-pulse 0.8s infinite alternate' }}>🚨</span>
+              <div>
+                <div style={{ fontWeight: 900, fontSize: '0.95rem', letterSpacing: '0.03em' }}>
+                  INCOMING SOS — {patientUser?.full_name || 'Expectant Mother'} needs emergency dispatch!
+                </div>
+                <div style={{ fontSize: '0.78rem', opacity: 0.9, marginTop: '1px' }}>
+                  Code: <strong>{latestPendingGlobal?.code}</strong> &nbsp;•&nbsp; {pendingCount} pending alert{pendingCount > 1 ? 's' : ''} awaiting response
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              <button
+                onClick={() => {
+                  if (latestPendingGlobal) {
+                    lastShownAlertKeyRef.current = null;
+                    setIncomingAlertEmergency(latestPendingGlobal);
+                  }
+                }}
+                style={{
+                  background: '#ffffff',
+                  color: '#dc2626',
+                  border: 'none',
+                  padding: '8px 18px',
+                  borderRadius: '6px',
+                  fontWeight: 800,
+                  fontSize: '0.83rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ⚡ View &amp; Dispatch
+              </button>
+              <button
+                onClick={() => { setActiveTab('dispatch'); }}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  padding: '8px 14px',
+                  borderRadius: '6px',
+                  fontWeight: 700,
+                  fontSize: '0.83rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                📋 Go to Dispatch
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* GREETING BANNER WIDGET */}
       <div className="bg-gradient-mixed rounded-3" style={{
@@ -3274,7 +3385,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setIncomingAlertEmergency(null)}
+                  onClick={() => { lastShownAlertKeyRef.current = null; setIncomingAlertEmergency(null); }}
                   style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
                 >&times;</button>
               </div>
@@ -3404,6 +3515,7 @@ export const AdminDashboard: React.FC = () => {
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                   <button
                     onClick={() => {
+                      lastShownAlertKeyRef.current = null;
                       setIncomingAlertEmergency(null);
                       setActiveTab('dispatch');
                       setSelectedEmergency(emg);
@@ -3422,7 +3534,7 @@ export const AdminDashboard: React.FC = () => {
                     📋 View in Dispatch Board
                   </button>
                   <button
-                    onClick={() => setIncomingAlertEmergency(null)}
+                    onClick={() => { lastShownAlertKeyRef.current = null; setIncomingAlertEmergency(null); }}
                     style={{
                       padding: '9px 18px',
                       background: '#ffffff',
