@@ -235,11 +235,10 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     loadData();
 
-    // Show SOS modal for an emergency only if it is a DIFFERENT key
-    // from the one currently/last shown. Resets whenever modal is dismissed.
+    // Show SOS modal for an emergency if modal is not currently open or if key is newer
     const checkAndShowAlert = (emg: Emergency) => {
       const key = getEmergencyKey(emg);
-      if (lastShownAlertKeyRef.current !== key) {
+      if (!incomingAlertEmergency || lastShownAlertKeyRef.current !== key) {
         lastShownAlertKeyRef.current = key;
         setIncomingAlertEmergency(emg);
         playAlertSound();
