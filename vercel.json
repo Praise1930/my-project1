@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd system_files && npm install && npm run build",
+  "buildCommand": "cd system_files && npm install --include=dev && npm run build",
   "outputDirectory": "system_files/dist",
-  "framework": "vite",
+  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
