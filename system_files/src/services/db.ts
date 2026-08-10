@@ -403,17 +403,26 @@ class LocalDatabase {
         return defaults;
       }
     }
-    if (key === 'doctors' && Array.isArray(data) && data.length < 7) {
-      this.setStore(key, defaults);
-      return defaults;
+    if (key === 'doctors') {
+      const hasCorrectDoctorMapping = Array.isArray(data) && data.some((d: any) => d.user_id === 3);
+      if (!hasCorrectDoctorMapping || data.length < 7) {
+        this.setStore(key, defaults);
+        return defaults;
+      }
     }
-    if (key === 'drivers' && Array.isArray(data) && data.length < 5) {
-      this.setStore(key, defaults);
-      return defaults;
+    if (key === 'drivers') {
+      const hasCorrectDriverMapping = Array.isArray(data) && data.some((d: any) => d.user_id === 10);
+      if (!hasCorrectDriverMapping || data.length < 5) {
+        this.setStore(key, defaults);
+        return defaults;
+      }
     }
-    if (key === 'mothers' && Array.isArray(data) && data.length < 10) {
-      this.setStore(key, defaults);
-      return defaults;
+    if (key === 'mothers') {
+      const hasCorrectMotherMapping = Array.isArray(data) && data.some((m: any) => m.user_id === 15);
+      if (!hasCorrectMotherMapping || data.length < 10) {
+        this.setStore(key, defaults);
+        return defaults;
+      }
     }
     return data;
   }
