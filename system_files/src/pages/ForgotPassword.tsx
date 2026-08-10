@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { auth, isFirebaseConfigured } from '../services/firebase';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 export const ForgotPassword: React.FC = () => {
@@ -18,14 +17,17 @@ export const ForgotPassword: React.FC = () => {
     setStatus('loading');
     setMessage('');
 
-    if (!isFirebaseConfigured || !auth) {
+    if (!isSupabaseConfigured || !supabase) {
       setStatus('error');
-      setMessage('Firebase is not configured. Local mock accounts cannot receive password reset emails.');
+      setMessage('Supabase is not configured. Local mock accounts cannot receive password reset emails.');
       return;
     }
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`
+      });
+      if (error) throw error;
       setStatus('success');
       setMessage('Password reset email sent! Please check your inbox.');
     } catch (err: any) {

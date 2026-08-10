@@ -13,8 +13,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { auth, isFirebaseConfigured } from '../services/firebase';
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 export const Register: React.FC = () => {
   const { theme } = useTheme();
@@ -172,32 +171,36 @@ export const Register: React.FC = () => {
         return;
       }
 
-      let registeredInFirebase = false;
-      // 1. Register with Firebase Authentication if configured
-      if (isFirebaseConfigured && auth) {
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, submissionData.email, submissionData.password_hash);
-          // 2. Send Email Verification
-          await sendEmailVerification(userCredential.user);
-          registeredInFirebase = true;
-        } catch (firebaseErr: any) {
-          console.warn("Firebase Auth registration failed:", firebaseErr);
-          if (firebaseErr.code === 'auth/email-already-in-use') {
+      let registeredInSupabase = false;
+      // 1. Register with Supabase Authentication if configured.
+      //    Supabase sends the confirmation email itself as part of signUp().
+      if (isSupabaseConfigured && supabase) {
+        const { error: signUpErr } = await supabase.auth.signUp({
+          email: submissionData.email,
+          password: submissionData.password_hash
+        });
+
+        if (signUpErr) {
+          console.warn('Supabase Auth registration failed:', signUpErr.message);
+          const msg = signUpErr.message.toLowerCase();
+          if (msg.includes('already registered') || msg.includes('already exists')) {
             setError('⚠️ This email address is already registered. Please log in or use a different email.');
             setIsLoading(false);
             return;
           }
-          if (firebaseErr.code === 'auth/invalid-email') {
+          if (msg.includes('invalid') && msg.includes('email')) {
             setError('⚠️ The email address provided is invalid. Please check and try again.');
             setIsLoading(false);
             return;
           }
-          if (firebaseErr.code === 'auth/weak-password') {
+          if (msg.includes('password')) {
             setError('⚠️ Password is too weak. Please use at least 8 characters with a mix of letters and numbers.');
             setIsLoading(false);
             return;
           }
-          // Firebase offline/config error — fall through to local registration only
+          // Network/config error — fall through to local registration only
+        } else {
+          registeredInSupabase = true;
         }
       }
       
@@ -234,8 +237,8 @@ export const Register: React.FC = () => {
           providerName = 'ProtonMail';
         }
 
-        if (isFirebaseConfigured && auth && registeredInFirebase) {
-          await signOut(auth);
+        if (isSupabaseConfigured && supabase && registeredInSupabase) {
+          await supabase.auth.signOut();
           alert(`Registration successful! A verification email has been sent to ${submissionData.email}. Click OK to open your ${providerName} and verify your account.`);
           window.open(mailUrl, '_blank');
         } else {

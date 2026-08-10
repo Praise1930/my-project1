@@ -100,7 +100,7 @@ export const SupabaseMigrationModal: React.FC<Props> = ({ isOpen, onClose }) => 
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>Supabase Connection & Data Migration</h2>
-              <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Test Supabase database connection & transfer Firebase/Local data</p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Test Supabase database connection & upload local data</p>
             </div>
           </div>
           <button 
@@ -212,10 +212,10 @@ export const SupabaseMigrationModal: React.FC<Props> = ({ isOpen, onClose }) => 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ArrowRight size={18} color="#f43f5e" /> Firebase to Supabase Data Transfer
+                <ArrowRight size={18} color="#f43f5e" /> Local to Supabase Data Transfer
               </h3>
               <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
-                Upsert all local & Firestore collections into Supabase tables with data loss checks.
+                Upsert all local collections into Supabase tables with data loss checks.
               </p>
             </div>
             <button

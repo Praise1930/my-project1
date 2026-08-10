@@ -1,4 +1,4 @@
-// MamaTrack GPS — Firebase to Supabase Data Migration & Verification Service
+// MamaTrack GPS — Supabase Data Migration & Verification Service
 import { supabase, testSupabaseConnection } from './supabase';
 import { db } from './db';
 
@@ -19,8 +19,19 @@ export interface FullMigrationResult {
   verificationMessage: string;
 }
 
+// Schema DDL mirroring the TypeScript interfaces in db.ts exactly. Column names
+// must match the interface field names one-for-one, because SyncService upserts
+// whole records straight from localStorage into these tables.
+//
+// Foreign keys are deliberately omitted: realtime rows arrive in arbitrary order
+// (an emergency can land before the mother row it points at), and FK constraints
+// would reject those out-of-order writes. Referential integrity is maintained by
+// the application layer instead.
 export const SUPABASE_SQL_SCHEMA = `
--- MamaTrack GPS Supabase Database Schema DDL
+-- ============================================================
+-- MamaTrack GPS — Supabase Schema
+-- Run this in the Supabase SQL Editor, then reload the app.
+-- ============================================================
 
 CREATE TABLE IF NOT EXISTS public.users (
   id BIGINT PRIMARY KEY,
@@ -61,7 +72,7 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
   id BIGINT PRIMARY KEY,
   plate_number TEXT NOT NULL,
   vehicle_type TEXT,
-  hospital_id BIGINT REFERENCES public.hospitals(id) ON DELETE SET NULL,
+  hospital_id BIGINT,
   status TEXT,
   current_latitude DOUBLE PRECISION,
   current_longitude DOUBLE PRECISION,
@@ -73,7 +84,7 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
 
 CREATE TABLE IF NOT EXISTS public.mothers (
   id BIGINT PRIMARY KEY,
-  user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id BIGINT,
   date_of_birth DATE,
   national_id TEXT,
   blood_type TEXT,
@@ -85,20 +96,95 @@ CREATE TABLE IF NOT EXISTS public.mothers (
   current_complications TEXT,
   next_of_kin_name TEXT,
   next_of_kin_phone TEXT,
-  assigned_vht_id BIGINT,
-  assigned_hospital_id BIGINT,
-  address TEXT,
-  sub_county TEXT,
+  next_of_kin_relationship TEXT,
   village TEXT,
+  sub_county TEXT,
+  district TEXT,
+  vht_name TEXT,
+  vht_phone TEXT,
+  home_latitude DOUBLE PRECISION,
+  home_longitude DOUBLE PRECISION,
+  preferred_hospital_id BIGINT
+);
+
+CREATE TABLE IF NOT EXISTS public.doctors (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT,
+  hospital_id BIGINT,
+  specialization TEXT,
+  license_number TEXT,
+  is_on_duty BOOLEAN DEFAULT false,
+  shift_start TEXT,
+  shift_end TEXT,
+  years_experience INT,
+  last_duty_toggle TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS public.drivers (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT,
+  hospital_id BIGINT,
+  vehicle_id BIGINT,
+  license_number TEXT,
+  driver_role TEXT,
+  is_on_duty BOOLEAN DEFAULT false,
+  current_latitude DOUBLE PRECISION,
+  current_longitude DOUBLE PRECISION,
+  last_duty_toggle TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS public.emergencies (
+  id BIGINT PRIMARY KEY,
+  code TEXT,
+  mother_id BIGINT,
   latitude DOUBLE PRECISION,
   longitude DOUBLE PRECISION,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT,
+  severity TEXT,
+  notes TEXT,
+  hospital_id BIGINT,
+  driver_id BIGINT,
+  doctor_id BIGINT,
+  vehicle_id BIGINT,
+  cancel_reason TEXT,
+  eta_minutes INT,
+  dispatched_by BIGINT,
+  triggered_at TIMESTAMPTZ,
+  dispatched_at TIMESTAMPTZ,
+  picked_up_at TIMESTAMPTZ,
+  arrived_at TIMESTAMPTZ,
+  delivered_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS public.emergency_logs (
+  id BIGINT PRIMARY KEY,
+  emergency_id BIGINT,
+  previous_status TEXT,
+  new_status TEXT,
+  changed_by BIGINT,
+  notes TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  created_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT,
+  title TEXT,
+  message TEXT,
+  type TEXT,
+  reference_id BIGINT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS public.vitals (
   id BIGINT PRIMARY KEY,
-  mother_id BIGINT REFERENCES public.mothers(id) ON DELETE CASCADE,
-  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  mother_id BIGINT,
+  "timestamp" TIMESTAMPTZ,
   systolic INT,
   diastolic INT,
   glucose DOUBLE PRECISION,
@@ -108,9 +194,9 @@ CREATE TABLE IF NOT EXISTS public.vitals (
 
 CREATE TABLE IF NOT EXISTS public.vht_visits (
   id BIGINT PRIMARY KEY,
-  vht_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
-  mother_id BIGINT REFERENCES public.mothers(id) ON DELETE CASCADE,
-  visit_date TIMESTAMPTZ DEFAULT NOW(),
+  vht_id BIGINT,
+  mother_id BIGINT,
+  visit_date DATE,
   blood_pressure TEXT,
   temperature DOUBLE PRECISION,
   fetal_movement TEXT,
@@ -118,22 +204,45 @@ CREATE TABLE IF NOT EXISTS public.vht_visits (
   complications_observed TEXT
 );
 
-CREATE TABLE IF NOT EXISTS public.emergencies (
-  id BIGINT PRIMARY KEY,
-  mother_id BIGINT REFERENCES public.mothers(id) ON DELETE CASCADE,
-  hospital_id BIGINT REFERENCES public.hospitals(id) ON DELETE SET NULL,
-  vehicle_id BIGINT REFERENCES public.vehicles(id) ON DELETE SET NULL,
-  driver_id BIGINT REFERENCES public.users(id) ON DELETE SET NULL,
-  assigned_doctor_id BIGINT REFERENCES public.users(id) ON DELETE SET NULL,
-  status TEXT,
-  severity TEXT,
-  symptoms TEXT,
-  current_latitude DOUBLE PRECISION,
-  current_longitude DOUBLE PRECISION,
-  eta_minutes INT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  resolved_at TIMESTAMPTZ
-);
+-- ============================================================
+-- Realtime: required for cross-device SOS delivery.
+-- Without this, an alert raised on a phone never reaches the
+-- admin desktop until a manual page reload.
+-- ============================================================
+ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.hospitals;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.vehicles;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.mothers;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.doctors;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.drivers;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.emergencies;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.emergency_logs;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.vitals;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.vht_visits;
+
+-- ============================================================
+-- Row Level Security.
+-- NOTE: these policies allow the public anon key full read/write.
+-- That is acceptable for a demonstration/prototype deployment, but
+-- a production system holding real patient data must replace them
+-- with per-role policies tied to authenticated users.
+-- ============================================================
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'users','hospitals','vehicles','mothers','doctors','drivers',
+    'emergencies','emergency_logs','notifications','vitals','vht_visits'
+  ]
+  LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', t);
+    EXECUTE format('DROP POLICY IF EXISTS "mamatrack_all_access" ON public.%I;', t);
+    EXECUTE format(
+      'CREATE POLICY "mamatrack_all_access" ON public.%I FOR ALL USING (true) WITH CHECK (true);', t
+    );
+  END LOOP;
+END $$;
 `;
 
 export class DataMigrationService {
@@ -156,15 +265,20 @@ export class DataMigrationService {
     const summaries: MigrationSummary[] = [];
     let totalTransferred = 0;
 
-    // Collections to migrate from local DB / Firestore cache
+    // Seed Supabase from the local database. Reference tables go first so the
+    // cloud copy is coherent if a later step fails.
     const collectionsToMigrate = [
       { name: 'users', data: db.users },
       { name: 'hospitals', data: db.hospitals },
       { name: 'vehicles', data: db.vehicles },
       { name: 'mothers', data: db.mothers },
+      { name: 'doctors', data: db.doctors },
+      { name: 'drivers', data: db.drivers },
       { name: 'vitals', data: db.vitals },
       { name: 'vht_visits', data: db.vhtVisits },
-      { name: 'emergencies', data: db.emergencies }
+      { name: 'emergencies', data: db.emergencies },
+      { name: 'emergency_logs', data: db.emergencyLogs },
+      { name: 'notifications', data: db.notifications }
     ];
 
     for (const item of collectionsToMigrate) {

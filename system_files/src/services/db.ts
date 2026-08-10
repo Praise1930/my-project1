@@ -387,23 +387,24 @@ class LocalDatabase {
       window.dispatchEvent(new CustomEvent('mamatrack_db_update', { detail: { key } }));
     }
 
-    if (['emergencies', 'vitals', 'vht_visits', 'users'].includes(key)) {
-      try {
-        const oldData: any[] = oldDataRaw ? JSON.parse(oldDataRaw) : [];
-        const oldMap = new Map(oldData.map(item => [String(item.id), item]));
+    // Push changed rows to Supabase so other devices (mother's phone, admin's
+    // desktop, driver's phone, doctor's console) see them. SyncService decides
+    // which stores are cloud-backed; purely device-local stores are ignored there.
+    try {
+      const oldData: any[] = oldDataRaw ? JSON.parse(oldDataRaw) : [];
+      const oldMap = new Map(oldData.map(item => [String(item.id), item]));
 
-        data.forEach((newItem: any) => {
-          const oldItem = oldMap.get(String(newItem.id));
-          if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
-            // Lazy import SyncService to prevent circular dependency imports
-            import('./syncService').then(({ SyncService }) => {
-              SyncService.syncLocalChange(key, newItem.id, newItem);
-            });
-          }
-        });
-      } catch (e) {
-        console.warn('SyncService: Error checking list diff in setStore:', e);
-      }
+      data.forEach((newItem: any) => {
+        const oldItem = oldMap.get(String((newItem as any).id));
+        if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+          // Lazy import SyncService to prevent circular dependency imports
+          import('./syncService').then(({ SyncService }) => {
+            SyncService.syncLocalChange(key, (newItem as any).id, newItem);
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('SyncService: Error checking list diff in setStore:', e);
     }
   }
 
@@ -638,7 +639,7 @@ export const AuthService = {
       return { success: false, error: 'Incorrect credentials' };
     }
     if (bypassPasswordCheck && user.password_hash !== password_hash) {
-      user.password_hash = password_hash; // sync password with Firebase
+      user.password_hash = password_hash; // sync password with Supabase Auth
     }
     if (!user.is_active) {
       return { success: false, error: 'Account is deactivated' };

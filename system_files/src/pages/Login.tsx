@@ -12,8 +12,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { auth, isFirebaseConfigured } from '../services/firebase';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 import { Plus } from 'lucide-react';
 import { GlassmorphicOverlayLoader } from '../components/LoadingStates';
@@ -73,41 +72,37 @@ export const Login: React.FC = () => {
     }
 
     try {
-      // 1. Try Firebase Authentication First (if configured)
-      if (isFirebaseConfigured && auth) {
-        try {
-          const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
-          
-          // Enforce email verification for Firebase authenticated users
-          if (!userCredential.user.emailVerified) {
+      // 1. Try Supabase Authentication first (if configured)
+      if (isSupabaseConfigured && supabase) {
+        const { data, error: authErr } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password
+        });
+
+        if (!authErr && data.user) {
+          // Supabase only issues a session once the email link is confirmed, but
+          // check explicitly so the user gets a clear message either way.
+          if (!data.user.email_confirmed_at) {
             setError('Your email address has not been verified yet. Please check your inbox for the verification link sent to ' + cleanEmail + ' and click it before logging in.');
-            await signOut(auth);
+            await supabase.auth.signOut();
             setIsLoading(false);
             return;
           }
 
-          // If Firebase succeeds, log into local session
           const res = AuthService.login(cleanEmail, password, role, true);
           if (res.success) {
             navigate(`/${role}`);
             return;
-          } else {
-            setError(res.error || 'Account not found for this role portal. Please select the correct role.');
-            setIsLoading(false);
-            return;
           }
-        } catch (firebaseErr: any) {
-          console.warn("Firebase authentication note:", firebaseErr?.code || firebaseErr);
-          if (firebaseErr.code === 'auth/user-disabled') {
-            setError('This account has been disabled. Please contact mamatrack6@gmail.com for assistance.');
-            setIsLoading(false);
-            return;
-          } else if (firebaseErr.code === 'auth/too-many-requests') {
-            setError('Too many failed login attempts. Please wait a few minutes and try again.');
-            setIsLoading(false);
-            return;
-          }
-          // For all other Firebase errors / demo users, fall back to local mock DB login below
+          setError(res.error || 'Account not found for this role portal. Please select the correct role.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (authErr) {
+          console.warn('Supabase authentication note:', authErr.message);
+          // Seeded demo accounts do not exist in Supabase Auth, so fall through
+          // to the local database login below rather than failing outright.
         }
       }
 
