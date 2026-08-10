@@ -44,8 +44,81 @@ export const AdminDashboard: React.FC = () => {
 
   const getEmergencyKey = (emg: Emergency) => `${emg.id}_${emg.triggered_at || ''}`;
 
-  // --- SEARCH QUERY STATE ---
+  // --- SEARCH QUERY STATE & FILTERED LISTS ---
   const [searchQuery, setSearchQuery] = useState('');
+  const q = searchQuery.toLowerCase().trim();
+
+  const filteredEmergencies = emergencies.filter(e => {
+    if (!q) return true;
+    const motherUser = db.users.find(u => u.id === e.mother_id);
+    const driverUser = e.driver_id ? db.users.find(u => u.id === e.driver_id) : null;
+    const hospital = e.hospital_id ? hospitals.find(h => h.id === e.hospital_id) : null;
+
+    return (
+      e.code.toLowerCase().includes(q) ||
+      e.status.toLowerCase().includes(q) ||
+      (e.notes && e.notes.toLowerCase().includes(q)) ||
+      (motherUser && motherUser.full_name.toLowerCase().includes(q)) ||
+      (motherUser && motherUser.email.toLowerCase().includes(q)) ||
+      (motherUser && motherUser.phone.toLowerCase().includes(q)) ||
+      (driverUser && driverUser.full_name.toLowerCase().includes(q)) ||
+      (hospital && hospital.name.toLowerCase().includes(q))
+    );
+  });
+
+  const filteredHospitals = hospitals.filter(h => {
+    if (!q) return true;
+    return (
+      h.name.toLowerCase().includes(q) ||
+      h.facility_type.toLowerCase().includes(q) ||
+      h.sub_county.toLowerCase().includes(q) ||
+      h.phone.toLowerCase().includes(q) ||
+      h.email.toLowerCase().includes(q) ||
+      h.address.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredDoctors = doctors.filter(doc => {
+    if (!q) return true;
+    const docUser = db.users.find(u => u.id === doc.user_id);
+    const hospital = hospitals.find(h => h.id === doc.hospital_id);
+    return (
+      (docUser && docUser.full_name.toLowerCase().includes(q)) ||
+      (docUser && docUser.email.toLowerCase().includes(q)) ||
+      (docUser && docUser.phone.toLowerCase().includes(q)) ||
+      doc.specialization.toLowerCase().includes(q) ||
+      doc.license_number.toLowerCase().includes(q) ||
+      (hospital && hospital.name.toLowerCase().includes(q))
+    );
+  });
+
+  const filteredDrivers = drivers.filter(drv => {
+    if (!q) return true;
+    const drvUser = db.users.find(u => u.id === drv.user_id);
+    const vehicle = drv.vehicle_id ? vehicles.find(v => v.id === drv.vehicle_id) : null;
+    const hospital = drv.hospital_id ? hospitals.find(h => h.id === drv.hospital_id) : null;
+    return (
+      (drvUser && drvUser.full_name.toLowerCase().includes(q)) ||
+      (drvUser && drvUser.email.toLowerCase().includes(q)) ||
+      (drvUser && drvUser.phone.toLowerCase().includes(q)) ||
+      (vehicle && vehicle.plate_number.toLowerCase().includes(q)) ||
+      (hospital && hospital.name.toLowerCase().includes(q))
+    );
+  });
+
+  const filteredMothers = mothers.filter(m => {
+    if (!q) return true;
+    const motherUser = db.users.find(u => u.id === m.user_id);
+    return (
+      (motherUser && motherUser.full_name.toLowerCase().includes(q)) ||
+      (motherUser && motherUser.email.toLowerCase().includes(q)) ||
+      (motherUser && motherUser.phone.toLowerCase().includes(q)) ||
+      m.national_id.toLowerCase().includes(q) ||
+      m.village.toLowerCase().includes(q) ||
+      m.sub_county.toLowerCase().includes(q) ||
+      m.blood_type.toLowerCase().includes(q)
+    );
+  });
 
   // --- UNDO/BACKUP HISTORY STATE ---
   const [undoStack, setUndoStack] = useState<string[]>([]);
@@ -1834,12 +1907,12 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {activeTab !== 'reports' && (
-            <div style={{ flex: 1, maxWidth: '300px', position: 'relative', margin: '0 16px' }}>
+          {activeTab !== 'performance' && (
+            <div style={{ flex: 1, maxWidth: '340px', position: 'relative', margin: '0 16px' }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '16px' }}></i>
               <input 
                 type="text" 
-                placeholder={`Search ${activeTab}...`} 
+                placeholder={`Search ${activeTab} by name, code, hospital...`} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="admin-search-input"

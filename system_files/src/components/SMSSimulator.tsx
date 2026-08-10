@@ -1,8 +1,7 @@
-// MamaTrack GPS — AI Chatbot & SMS Gateway Console
+// MamaTrack GPS — AI Health Assistant Chatbot Component
 import React, { useState, useEffect, useRef } from 'react';
-import { db, SmsService } from '../services/db';
 import { useTheme } from '../contexts/ThemeContext';
-import { Send, MessageSquare, List, Trash2, Bot, X, ShieldAlert } from 'lucide-react';
+import { Send, Bot, X, Trash2, Sparkles, MessageSquare } from 'lucide-react';
 
 interface ChatMessage {
   id: number;
@@ -14,11 +13,7 @@ interface ChatMessage {
 export const SMSSimulator: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth > 640);
   const [isOpen, setIsOpen] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ai' | 'sms'>('ai');
-  const [smsLogs, setSmsLogs] = useState<any[]>(() => db.smsLogs);
 
   // Chatbot State
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>(() => {
@@ -30,7 +25,7 @@ export const SMSSimulator: React.FC = () => {
       {
         id: 1,
         sender: 'ai',
-        text: 'Hello! I am your virtual MamaTrack AI Health Assistant. Ask me any questions about pregnancy wellness, baby\'s heart rate, maternal danger signs, or how to interact with the system.',
+        text: 'Hello! I am your MamaTrack AI Virtual Health Assistant. Ask me any questions about pregnancy wellness, baby\'s heart rate, maternal danger signs, ANC checkups, or how to use the emergency dispatch system.',
         timestamp: new Date().toISOString()
       }
     ];
@@ -42,13 +37,6 @@ export const SMSSimulator: React.FC = () => {
     localStorage.setItem('mamatrack_ai_chat', JSON.stringify(chatLogs));
   }, [chatLogs]);
 
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth > 640);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const logsEndRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Dragging state along the side (vertical)
@@ -62,16 +50,9 @@ export const SMSSimulator: React.FC = () => {
   useEffect(() => {
     const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!isDragging.current) return;
-      if ('touches' in e && e.cancelable) {
-        e.preventDefault();
-      }
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
       const diffY = clientY - startY.current;
-      
-      if (Math.abs(diffY) > 5) {
-        hasDragged.current = true;
-      }
-      
+      if (Math.abs(diffY) > 5) hasDragged.current = true;
       let newTop = startTop.current + diffY;
       newTop = Math.max(10, Math.min(window.innerHeight - 60, newTop));
       setYPos(newTop);
@@ -104,7 +85,6 @@ export const SMSSimulator: React.FC = () => {
     isDragging.current = true;
     hasDragged.current = false;
     startY.current = clientY;
-    
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       startTop.current = rect.top;
@@ -119,34 +99,11 @@ export const SMSSimulator: React.FC = () => {
     setIsOpen(!isOpen);
   };
 
-  // Poll for SMS logs to ensure real-time reactive display
   useEffect(() => {
-    const timer = setInterval(() => {
-      const currentLogs = db.smsLogs;
-      if (currentLogs.length !== smsLogs.length) {
-        setSmsLogs(currentLogs);
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [smsLogs]);
-
-  // Auto-scroll scrollable areas
-  useEffect(() => {
-    if (activeTab === 'sms' && logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [smsLogs, isOpen, activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'ai' && chatEndRef.current) {
+    if (isOpen && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [chatLogs, isOpen, activeTab, isAITyping]);
-
-  const clearLogs = () => {
-    SmsService.clearLogs();
-    setSmsLogs([]);
-  };
+  }, [chatLogs, isOpen, isAITyping]);
 
   const clearChat = () => {
     if (window.confirm('Are you sure you want to clear your AI chat history?')) {
@@ -154,7 +111,7 @@ export const SMSSimulator: React.FC = () => {
         {
           id: 1,
           sender: 'ai',
-          text: 'Hello! I am your virtual MamaTrack AI Health Assistant. Ask me any questions about pregnancy wellness, baby\'s heart rate, maternal danger signs, or how to interact with the system.',
+          text: 'Hello! I am your MamaTrack AI Virtual Health Assistant. Ask me any questions about pregnancy wellness, baby\'s heart rate, maternal danger signs, ANC checkups, or how to use the emergency dispatch system.',
           timestamp: new Date().toISOString()
         }
       ]);
@@ -162,23 +119,22 @@ export const SMSSimulator: React.FC = () => {
   };
 
   // Chat message submission
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
+  const sendQuery = (rawQuery: string) => {
+    if (!rawQuery.trim()) return;
 
     const userMessage: ChatMessage = {
       id: Date.now(),
       sender: 'user',
-      text: chatInput,
+      text: rawQuery,
       timestamp: new Date().toISOString()
     };
 
     setChatLogs(prev => [...prev, userMessage]);
-    const query = chatInput.toLowerCase();
+    const query = rawQuery.toLowerCase();
     setChatInput('');
     setIsAITyping(true);
 
-    // AI simulation delay
+    // AI response simulation
     setTimeout(() => {
       let responseText = '';
 
@@ -188,8 +144,8 @@ export const SMSSimulator: React.FC = () => {
       else if (query.includes('danger sign') || query.includes('emergency') || query.includes('critical') || query.includes('warning') || query.includes('bleeding')) {
         responseText = `⚠️ **Critical Maternal Danger Signs:**\n\nPlease immediately consult your midwife or press the red **Trigger SOS** button on your home dashboard if you experience any of the following symptoms:\n\n* **Vaginal bleeding** or sudden leakage of amniotic fluid.\n* **Severe, constant abdominal pain** or uterine contractions before week 37.\n* **Sudden swelling** of the face, fingers, hands, or ankles.\n* **Severe, persistent headaches** or blurred vision.\n* **High fever**, chills, or convulsions.\n* **Reduced or absent baby kicks** (fewer than 10 movements in 2 hours).`;
       }
-      else if (query.includes('get started') || query.includes('steps') || query.includes('interact') || query.includes('how to use')) {
-        responseText = `🤱 **How to Interact with the MamaTrack System:**\n\n1. **Trigger SOS**: Click the 🚨 button on the Overview tab or side panel to broadcast your exact location and dispatch an ambulance.\n2. **Vitals Ledger**: Input your Blood Pressure, Glucose levels, and Kick counts under **Health Ledger & Vitals** to monitor health score trends.\n3. **Check WHO Milestones**: Navigate to the **WHO ANC Checklist** to complete the 8 recommended antenatal checks.\n4. **Doctor Consult**: Under **Profile & Doctors**, select an on-duty specialist to engage in clinical chat.`;
+      else if (query.includes('sos') || query.includes('dispatch') || query.includes('ambulance') || query.includes('trigger')) {
+        responseText = `🚨 **How to Trigger an Emergency SOS:**\n\n1. **Trigger SOS**: Click the 🚨 button on the Overview tab or side panel to broadcast your exact location and dispatch an ambulance.\n2. **Automatic Route Calculation**: The system automatically locates the nearest on-duty driver & qualified hospital.\n3. **Cancel SOS**: If triggered by mistake, click the toggle button again to cancel and state your reason.`;
       }
       else if (query.includes('vitals') || query.includes('bp') || query.includes('blood pressure') || query.includes('glucose') || query.includes('sugar')) {
         responseText = `🩺 **Monitoring Maternal Vitals:**\n\n* **Blood Pressure (BP)**: Normal is around **120/80 mmHg**. If your BP exceeds **140/90 mmHg**, it may indicate pre-eclampsia. Alert your doctor immediately.\n* **Blood Glucose**: Normal fasting levels are **<95 mg/dL**. Elevated readings can signal gestational diabetes.\n* Log these vitals under the **Health Ledger & Vitals** tab to update your health score automatically.`;
@@ -198,7 +154,7 @@ export const SMSSimulator: React.FC = () => {
         responseText = `💬 **Consulting with Doctors:**\n\n* You can connect directly with on-duty obstetricians and midwives under the **Profile & Doctors** tab.\n* Select a matched doctor from the directory, type your specific concerns, and attach notes to receive clinical feedback.`;
       }
       else if (query.includes('hello') || query.includes('hi') || query.includes('hey') || query.includes('help')) {
-        responseText = `👋 Hello! I am your virtual MamaTrack AI Health Assistant. I am here to answer pregnancy wellness questions and help you navigate the system. Ask me about **baby's heart rate**, **maternal danger signs**, or **how to use** the dashboard!`;
+        responseText = `👋 Hello! I am your MamaTrack AI Virtual Health Assistant. I am here to answer pregnancy wellness questions and help you navigate the system. Ask me about **baby's heart rate**, **maternal danger signs**, or **how to trigger SOS**!`;
       }
       else {
         responseText = `📖 **Pregnancy Wellness Advice:**\n\nThank you for your question. As an expectant mother, please ensure you:\n\n* Take daily prenatal vitamins containing **iron and folic acid**.\n* Stay well hydrated and maintain a balanced diet of proteins, fruits, and leafy greens.\n* Keep up with your scheduled clinical antenatal (ANC) appointments.\n\n*For diagnostic concerns, consult your assigned VHT midwife or write to an on-duty doctor on the Doctor Consult panel.*`;
@@ -213,391 +169,238 @@ export const SMSSimulator: React.FC = () => {
 
       setChatLogs(prev => [...prev, aiMessage]);
       setIsAITyping(false);
-    }, 1200);
+    }, 1000);
   };
 
-  const renderAiChat = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Messages list */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        background: isDark ? 'rgba(0,0,0,0.2)' : '#f8fafc',
-        borderRadius: '12px',
-        border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0',
-        padding: '12px',
-        marginBottom: '12px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        minHeight: '260px'
-      }}>
-        {chatLogs.map((msg) => (
-          <div key={msg.id} style={{
-            alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-            maxWidth: '85%',
-            background: msg.sender === 'user'
-              ? (isDark ? 'linear-gradient(135deg, #fb7185, #f43f5e)' : 'linear-gradient(135deg, #fb7185, #f43f5e)')
-              : (isDark ? '#334155' : '#ffffff'),
-            color: msg.sender === 'user' ? '#ffffff' : (isDark ? '#f8fafc' : '#334155'),
-            borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-            border: msg.sender === 'user' ? 'none' : (isDark ? '1px solid #475569' : '1px solid #e2e8f0'),
-            padding: '10px 14px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.03)',
-            whiteSpace: 'pre-wrap',
-            fontSize: '0.78rem',
-            lineHeight: 1.5
-          }}>
-            {msg.text}
-          </div>
-        ))}
-        {isAITyping && (
-          <div style={{
-            alignSelf: 'flex-start',
-            background: isDark ? '#334155' : '#ffffff',
-            borderRadius: '14px 14px 14px 2px',
-            border: isDark ? '1px solid #475569' : '1px solid #e2e8f0',
-            padding: '10px 14px',
-            fontSize: '0.75rem',
-            color: isDark ? '#94a3b8' : '#64748b',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%', animation: 'typingBounce 1.2s infinite' }} />
-            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%', animation: 'typingBounce 1.2s infinite 0.2s' }} />
-            <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#f43f5e', borderRadius: '50%', animation: 'typingBounce 1.2s infinite 0.4s' }} />
-            <style>{`
-              @keyframes typingBounce {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-4px); }
-              }
-            `}</style>
-          </div>
-        )}
-        <div ref={chatEndRef} />
-      </div>
-
-      {/* Input bar */}
-      <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px' }}>
-        <input
-          type="text"
-          value={chatInput}
-          onChange={e => setChatInput(e.target.value)}
-          placeholder="Ask a health question (e.g. baby heart rate)..."
-          disabled={isAITyping}
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            borderRadius: '10px',
-            border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #cbd5e1',
-            background: isDark ? '#1e293b' : '#ffffff',
-            color: isDark ? '#ffffff' : '#1e293b',
-            fontSize: '0.78rem',
-            fontFamily: 'inherit',
-            outline: 'none'
-          }}
-        />
-        <button
-          type="submit"
-          disabled={isAITyping}
-          style={{
-            background: 'linear-gradient(135deg, #fb7185, #f43f5e)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '10px',
-            width: '38px',
-            height: '38px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 10px rgba(244,63,94,0.15)'
-          }}
-        >
-          <Send size={15} />
-        </button>
-      </form>
-    </div>
-  );
-
-  const renderSmsLogs = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* SMS Logs List */}
-      <div style={{
-        flex: 1,
-        minHeight: '260px',
-        overflowY: 'auto',
-        background: isDark ? 'rgba(0,0,0,0.2)' : '#f8fafc',
-        borderRadius: '12px',
-        border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #cbd5e1',
-        padding: '14px',
-        marginBottom: '12px'
-      }}>
-        {smsLogs.length === 0 ? (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: isDark ? '#64748b' : '#94a3b8', fontSize: '0.8rem', textAlign: 'center', gap: '8px' }}>
-            <ShieldAlert size={36} />
-            <span>No SMS alerts logged yet.<br />Trigger an emergency or schedule checkups to test alerts.</span>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {smsLogs.map((log) => (
-              <div key={log.id} style={{
-                background: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-                borderRadius: '8px',
-                border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #e2e8f0',
-                boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
-                padding: '10px 12px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '0.76rem', fontWeight: 700, color: isDark ? '#f1f5f9' : '#0f172a' }}>
-                    To: {log.to_name} ({log.to_number})
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: isDark ? '#64748b' : '#94a3b8' }}>
-                    {new Date(log.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: '0.76rem', color: isDark ? '#cbd5e1' : '#334155', lineHeight: 1.45 }}>
-                  {log.message}
-                </p>
-              </div>
-            ))}
-            <div ref={logsEndRef} />
-          </div>
-        )}
-      </div>
-
-      {/* Footer Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
-        <span style={{ fontSize: '0.7rem', color: isDark ? '#64748b' : '#94a3b8' }}>Logs saved locally in localStorage</span>
-        {smsLogs.length > 0 && (
-          <button
-            onClick={clearLogs}
-            style={{ background: 'none', border: 'none', color: '#f43f5e', fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            Clear Logs
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendQuery(chatInput);
+  };
 
   return (
     <>
-      <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(20px) scale(0.95); opacity: 0; }
-          to { transform: translateY(0) scale(1); opacity: 1; }
-        }
-        @media (max-width: 640px) {
-          .sms-simulator-float-btn {
-            top: ${yPos === null ? '90px' : `${yPos}px`} !important;
-            bottom: auto !important;
-            right: 16px !important;
-            padding: 8px 14px !important;
-            font-size: 0.78rem !important;
-            border-radius: 24px !important;
-          }
-          .sms-simulator-drawer {
-            width: calc(100% - 32px) !important;
-            height: ${isMaximized ? 'calc(100vh - 120px)' : '460px'} !important;
-            top: ${yPos === null ? '120px' : `${yPos > window.innerHeight / 2 ? yPos - 470 : yPos + 50}px`} !important;
-            bottom: auto !important;
-            right: 16px !important;
-          }
-        }
-      `}</style>
-
-      {/* Floating Toggle Button (Icon Only) */}
+      {/* Floating AI Launcher Toggle Button */}
       <button
         ref={buttonRef}
         onClick={handleButtonClick}
         onMouseDown={handleStart}
         onTouchStart={handleStart}
-        className="sms-simulator-float-btn"
-        title="Open AI Chatbot Console"
+        title="MamaTrack AI Health Assistant"
+        aria-label="MamaTrack AI Health Assistant"
         style={{
           position: 'fixed',
+          right: '18px',
+          top: yPos !== null ? `${yPos}px` : 'auto',
           bottom: yPos === null ? '24px' : 'auto',
-          top: yPos === null ? undefined : `${yPos}px`,
-          right: '24px',
-          zIndex: 99999,
-          width: '50px',
-          height: '50px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #fb7185, #f43f5e)',
+          zIndex: 999990,
+          background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
           color: '#ffffff',
-          border: '2px solid #ffffff',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.5)' : '0 8px 25px rgba(244,63,94,0.3)',
+          border: 'none',
+          borderRadius: '50px',
+          padding: '10px 18px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          padding: 0,
-          cursor: isDragging.current ? 'grabbing' : 'grab',
-          fontFamily: 'inherit',
-          transition: isDragging.current ? 'transform 0.2s ease' : 'transform 0.2s ease, bottom 0.3s ease, top 0.3s ease, right 0.3s ease',
+          gap: '8px',
+          boxShadow: '0 8px 25px rgba(99, 102, 241, 0.45)',
+          cursor: 'pointer',
           userSelect: 'none',
-          touchAction: 'manipulation'
+          touchAction: 'none',
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          backdropFilter: 'blur(8px)',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
       >
-        <Bot size={24} />
-        {smsLogs.length > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: '-2px',
-            right: '-2px',
-            background: '#0f61ef',
-            color: '#fff',
-            borderRadius: '50%',
-            width: '18px',
-            height: '18px',
-            fontSize: '0.68rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            border: '2px solid #fff'
-          }}>
-            {smsLogs.length}
-          </span>
-        )}
+        <Sparkles size={18} />
+        <span>MamaTrack AI</span>
       </button>
 
-      {/* Simulator Drawer Panel */}
+      {/* AI Assistant Chat Modal Popup Window */}
       {isOpen && (
-        <div 
-          className="sms-simulator-drawer"
+        <div
           style={{
             position: 'fixed',
-            bottom: yPos === null ? '85px' : 'auto',
-            top: yPos === null ? undefined : `${yPos > window.innerHeight / 2 ? (isMaximized && isDesktop ? yPos - 600 : yPos - 520) : yPos + 50}px`,
-            right: '24px',
-            zIndex: 99999,
-            width: isMaximized && isDesktop ? '680px' : '420px',
-            height: isMaximized && isDesktop ? '560px' : '500px',
-            background: isDark ? 'rgba(15, 23, 42, 0.98)' : '#ffffff',
-            backdropFilter: 'blur(20px)',
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+            right: '16px',
+            bottom: '80px',
+            width: 'min(380px, calc(100vw - 32px))',
+            height: '520px',
+            maxHeight: '82vh',
+            zIndex: 999999,
+            background: isDark ? '#0f172a' : '#ffffff',
+            border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e2e8f0',
             borderRadius: '20px',
-            boxShadow: isDark ? '0 15px 45px rgba(0,0,0,0.5)' : '0 15px 45px rgba(0,0,0,0.15)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
-            animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            transition: isDragging.current ? 'width 0.3s ease, height 0.3s ease' : 'bottom 0.3s ease, right 0.3s ease, width 0.3s ease, height 0.3s ease, top 0.3s ease',
           }}
         >
-
           {/* Header */}
-          <div style={{
-            background: isDark ? 'rgba(30, 41, 59, 0.6)' : '#f8fafc',
-            borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e2e8f0',
-            padding: '14px 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Bot size={18} style={{ color: '#f43f5e' }} /> MamaTrack AI Assistant
-              </h4>
-              <span style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>Simulated pregnancy health & support chat</span>
+          <div
+            style={{
+              padding: '14px 18px',
+              background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+              color: '#ffffff',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Bot size={20} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>MamaTrack AI Health Assistant</div>
+                <div style={{ fontSize: '0.7rem', opacity: 0.9 }}>Virtual Maternal Wellness & Support</div>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <button
-                onClick={() => setIsMaximized(!isMaximized)}
-                title={isMaximized ? "Restore size" : "Maximize view"}
-                style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                onClick={clearChat}
+                title="Clear Chat"
+                style={{ background: 'none', border: 'none', color: '#ffffff', opacity: 0.8, cursor: 'pointer', padding: '4px' }}
               >
-                {isMaximized ? '🗗' : '🗖'}
+                <Trash2 size={16} />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                title="Close Window"
+                style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '4px' }}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
           </div>
 
-          {/* Tab Navigation */}
+          {/* Quick Suggestion Chips */}
           <div style={{
             display: 'flex',
-            background: isDark ? 'rgba(30, 41, 59, 0.3)' : '#f1f5f9',
-            borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #e2e8f0',
-            padding: '6px 12px',
-            gap: '8px'
+            gap: '6px',
+            overflowX: 'auto',
+            padding: '8px 12px',
+            background: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+            borderBottom: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #f1f5f9',
+            scrollbarWidth: 'none'
           }}>
-            <button
-              onClick={() => setActiveTab('ai')}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                border: 'none',
-                borderRadius: '8px',
-                background: activeTab === 'ai' ? (isDark ? '#475569' : '#ffffff') : 'transparent',
-                color: activeTab === 'ai' ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b'),
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: activeTab === 'ai' && !isDark ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
-              }}
-            >
-              <MessageSquare size={13} /> AI Health Chat
-            </button>
-            <button
-              onClick={() => setActiveTab('sms')}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                border: 'none',
-                borderRadius: '8px',
-                background: activeTab === 'sms' ? (isDark ? '#475569' : '#ffffff') : 'transparent',
-                color: activeTab === 'sms' ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b'),
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: activeTab === 'sms' && !isDark ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
-              }}
-            >
-              <List size={13} /> SMS Gateway Logs ({smsLogs.length})
-            </button>
-            
-            {activeTab === 'ai' ? (
+            {[
+              { label: '⚠️ Danger Signs', query: 'What are danger signs in pregnancy?' },
+              { label: '👶 Baby Heartbeat', query: 'How to measure baby heart rate?' },
+              { label: '🚨 Trigger SOS', query: 'How to trigger emergency SOS?' },
+              { label: '🩺 Vitals & BP', query: 'What are normal BP vitals?' },
+            ].map((chip, idx) => (
               <button
-                onClick={clearChat}
-                title="Clear Chat History"
+                key={idx}
+                onClick={() => sendQuery(chip.query)}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#64748b',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  padding: '4px 10px',
+                  borderRadius: '14px',
+                  border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #cbd5e1',
+                  background: isDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
+                  color: isDark ? '#cbd5e1' : '#334155',
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '4px'
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
-                <Trash2 size={14} />
+                {chip.label}
               </button>
-            ) : null}
+            ))}
           </div>
 
-          {/* Content Area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column' }}>
-            {activeTab === 'ai' ? renderAiChat() : renderSmsLogs()}
+          {/* Chat Messages Body */}
+          <div
+            style={{
+              flex: 1,
+              padding: '16px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: isDark ? '#0f172a' : '#f8fafc',
+            }}
+          >
+            {chatLogs.map(msg => (
+              <div
+                key={msg.id}
+                style={{
+                  alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                  maxWidth: '84%',
+                  background: msg.sender === 'user'
+                    ? '#3b82f6'
+                    : (isDark ? '#1e293b' : '#ffffff'),
+                  color: msg.sender === 'user'
+                    ? '#ffffff'
+                    : (isDark ? '#f1f5f9' : '#1e293b'),
+                  padding: '10px 14px',
+                  borderRadius: msg.sender === 'user' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                  boxShadow: msg.sender === 'user' ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
+                  fontSize: '0.82rem',
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {msg.text}
+              </div>
+            ))}
+
+            {isAITyping && (
+              <div style={{ alignSelf: 'flex-start', background: isDark ? '#1e293b' : '#ffffff', padding: '8px 14px', borderRadius: '14px', fontSize: '0.8rem', color: '#64748b' }}>
+                MamaTrack AI is thinking...
+              </div>
+            )}
+            <div ref={chatEndRef} />
           </div>
+
+          {/* Chat Input Form */}
+          <form
+            onSubmit={handleSendChat}
+            style={{
+              padding: '10px 14px',
+              background: isDark ? '#1e293b' : '#ffffff',
+              borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Ask MamaTrack AI..."
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: '20px',
+                border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
+                background: isDark ? '#0f172a' : '#f8fafc',
+                color: isDark ? '#ffffff' : '#0f172a',
+                fontSize: '0.82rem',
+                outline: 'none',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!chatInput.trim()}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: chatInput.trim() ? '#3b82f6' : '#cbd5e1',
+                color: '#ffffff',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: chatInput.trim() ? 'pointer' : 'default',
+              }}
+            >
+              <Send size={16} />
+            </button>
+          </form>
         </div>
       )}
     </>

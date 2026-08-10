@@ -24,7 +24,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { VerifyEmail } from './pages/VerifyEmail';
-import { SMSSimulator } from './components/SMSSimulator';
+import { SMSSimulator as AiChatbot } from './components/SMSSimulator';
 import { SyncService } from './services/syncService';
 import { HeartbeatLoader } from './components/LoadingStates';
 
@@ -58,7 +58,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <PWAInstallBanner />
-      <SMSSimulator />
+      <AiChatbot />
       <ToastContainer />
       <Router>
         <ScrollToTop />
