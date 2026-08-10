@@ -169,16 +169,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       tileUrl = 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
       attribution = '&copy; Google Maps Terrain &mdash; Map data &copy; Google';
     } else if (theme === 'dark') {
-      // Sleek Google Dark Mode Night Tiles
-      tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-      attribution = '&copy; Google Dark Maps &mdash; Map data &copy; OpenStreetMap & CARTO';
+      // Pure Google Maps Dark Night Mode Tiles
+      tileUrl = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+      attribution = '&copy; Google Maps &mdash; Map data &copy; Google';
     }
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution: attribution,
       maxZoom: 20,
       maxNativeZoom: 19,
-      subdomains: ['a', 'b', 'c', 'd']
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(mapRef.current);
 
     tileLayerRef.current = tileLayer;

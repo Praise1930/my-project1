@@ -62,7 +62,11 @@ body {
 
 [data-theme="dark"] .leaflet-container,
 .driver-theme-active .leaflet-container {
-    background-color: #1e293b !important;
+    background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .leaflet-tile-pane .leaflet-tile {
+    filter: brightness(0.7) invert(90%) hue-rotate(180deg) saturate(1.1) contrast(95%);
 }
 
 [data-theme="dark"] .satellite-mode .leaflet-tile {
