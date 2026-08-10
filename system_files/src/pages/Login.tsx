@@ -43,14 +43,6 @@ export const Login: React.FC = () => {
     { id: 'admin', title: 'Command Control Center', icon: '📡', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
   ];
 
-  const defaultCredentials: Record<string, string> = {
-    admin: '',
-    doctor: '',
-    driver: '',
-    mother: '',
-    vht: ''
-  };
-
   // Reset inputs when role changes
   React.useEffect(() => {
     setError(null);
