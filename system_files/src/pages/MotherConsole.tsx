@@ -8,6 +8,7 @@ import { Bell, LogOut, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { showToast } from '../components/Toast';
 
 export const MotherConsole: React.FC = () => {
   const navigate = useNavigate();
@@ -216,7 +217,7 @@ export const MotherConsole: React.FC = () => {
     setShowConfirmModal(false);
     setEmergencyNotes('');
     setRequireCemonc(false);
-    alert('🚨 EMERGENCY SOS BROADCASTED!\n\nYour GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!');
+    showToast('Emergency SOS broadcasted! Your GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!', 'success', 8000);
   };
 
   const handleConfirmSOS = () => {
@@ -236,7 +237,7 @@ export const MotherConsole: React.FC = () => {
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     UserService.updateMotherProfile(user.id, profileForm);
-    alert('Profile updated successfully!');
+    showToast('Profile updated successfully!', 'success');
   };
 
   // Seeded doctors
@@ -556,7 +557,7 @@ export const MotherConsole: React.FC = () => {
                 <div className="card-glass" style={{ padding: '1.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '6px', marginBottom: '10px' }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>🚑 Rescue Tracker</span>
-                    <span className="badge" style={{ background: '#ea580c', color: 'white', fontSize: '0.62rem', padding: '1px 6px', borderRadius: '8px' }}>
+                    <span className="badge" style={{ background: ['delivered', 'completed'].includes(activeEmergency.status) ? '#16a34a' : '#ea580c', color: 'white', fontSize: '0.62rem', padding: '1px 6px', borderRadius: '8px' }}>
                       {activeEmergency.status.toUpperCase()}
                     </span>
                   </div>
@@ -566,11 +567,11 @@ export const MotherConsole: React.FC = () => {
                         <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>🆘</div>
                         <div className="step-label" style={{ fontSize: '0.6rem' }}>SOS</div>
                       </div>
-                      <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
+                      <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
                         <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>📡</div>
                         <div className="step-label" style={{ fontSize: '0.6rem' }}>Sent</div>
                       </div>
-                      <div className={`status-step ${['arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
+                      <div className={`status-step ${['arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
                         <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>🚑</div>
                         <div className="step-label" style={{ fontSize: '0.6rem' }}>Route</div>
                       </div>

@@ -9,6 +9,7 @@ import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
 import { OrbitalLoader } from '../components/LoadingStates';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { showToast } from '../components/Toast';
 import '../styles/driver/theme.css';
 
 export const DriverDashboard: React.FC = () => {
@@ -64,7 +65,7 @@ export const DriverDashboard: React.FC = () => {
       
       // Load active emergency dispatch matching driver's user id
       const activeEmg = db.emergencies.find(
-        e => e.driver_id === sessionUser.id && !['completed', 'cancelled'].includes(e.status)
+        e => e.driver_id === sessionUser.id && !['delivered', 'completed', 'cancelled'].includes(e.status)
       );
       setActiveEmergency(activeEmg || null);
     }
@@ -78,7 +79,7 @@ export const DriverDashboard: React.FC = () => {
     // Local loop to poll for incoming dispatch assignments
     const interval = setInterval(() => {
       const activeEmg = db.emergencies.find(
-        e => e.driver_id === userId && !['completed', 'cancelled'].includes(e.status)
+        e => e.driver_id === userId && !['delivered', 'completed', 'cancelled'].includes(e.status)
       );
       
       // Only set if changed
@@ -180,7 +181,7 @@ export const DriverDashboard: React.FC = () => {
   // Toggle Duty
   const handleToggleDuty = () => {
     if (activeEmergency && driver.is_on_duty) {
-      alert('⚠️ Active emergency dispatch in progress! You cannot go off-duty or standby until the current maternal patient rescue is completed.');
+      showToast('Active emergency dispatch in progress! You cannot go off-duty or standby until the current maternal patient rescue is completed.', 'error');
       return;
     }
     const newVal = DriverService.toggleDuty(user.id);
@@ -205,7 +206,7 @@ export const DriverDashboard: React.FC = () => {
       inspectionForm.engine_ok
     );
     setHasInspectedToday(true);
-    alert('Vehicle pre-duty inspection logged. Ready for emergency dispatches.');
+    showToast('Vehicle pre-duty inspection logged. Ready for emergency dispatches.', 'success');
   };
 
   // Fuel Log
@@ -219,7 +220,7 @@ export const DriverDashboard: React.FC = () => {
       fuelForm.station
     );
     setFuelForm({ liters: 15, cost: 80000, station: 'Shell Mukono' });
-    alert('Fuel purchase transaction registered successfully.');
+    showToast('Fuel purchase transaction registered successfully.', 'success');
   };
 
   // Dispatch lifecycle triggers
@@ -245,10 +246,10 @@ export const DriverDashboard: React.FC = () => {
     setIsSimulating(true);
     SimulationEngine.startTransitToHospitalSimulation(activeEmergency.id, (updatedEmg) => {
       setActiveEmergency(updatedEmg);
-      if (updatedEmg.status === 'completed') {
+      if (updatedEmg.status === 'delivered') {
         setIsSimulating(false);
         setActiveEmergency(null);
-        alert('✅ Patient delivered to hospital successfully! Mission complete. You are now available for new dispatches.');
+        showToast('Patient delivered to hospital successfully! Your mission is complete — the clinical team is taking over. You are now available for new dispatches.', 'success', 7000);
       }
       // Reload driver position
       if (driver) {
@@ -259,9 +260,12 @@ export const DriverDashboard: React.FC = () => {
   };
 
   const handleHandoffComplete = () => {
-    EmergencyService.updateStatus(activeEmergency!.id, 'completed', user.id, 'Patient handed over to clinical reception. Rescue mission complete.');
+    if (activeEmergency) {
+      SimulationEngine.stopSimulation(activeEmergency.id);
+    }
+    EmergencyService.updateStatus(activeEmergency!.id, 'delivered', user.id, 'Patient handed over to clinical reception. Driver mission complete.');
     setActiveEmergency(null);
-    alert('Maternal rescue mission logged as complete. Ready for next dispatch.');
+    showToast('Maternal rescue mission logged as complete. Ready for next dispatch.', 'success');
   };
 
   return (

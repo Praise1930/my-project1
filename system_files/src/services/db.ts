@@ -155,7 +155,7 @@ export interface Emergency {
   mother_id: number; // references user_id of mother
   latitude: number;
   longitude: number;
-  status: 'pending' | 'verified' | 'dispatched' | 'en_route' | 'arrived' | 'in_transit' | 'completed' | 'cancelled';
+  status: 'pending' | 'verified' | 'dispatched' | 'en_route' | 'arrived' | 'in_transit' | 'delivered' | 'completed' | 'cancelled';
   severity: 'critical' | 'high' | 'medium' | 'low';
   notes: string;
   hospital_id: number | null;
@@ -169,6 +169,7 @@ export interface Emergency {
   dispatched_at: string | null;
   picked_up_at: string | null;
   arrived_at: string | null;
+  delivered_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
 }
@@ -334,8 +335,8 @@ const SEED_CHECKUPS: CheckupSchedule[] = [
 ];
 
 const SEED_EMERGENCIES: Emergency[] = [
-  { id: 1, code: 'EMG-2026-0001', mother_id: 10, latitude: 0.3200, longitude: 32.8100, status: 'completed', severity: 'critical', notes: 'Severe abdominal pain and bleeding. History of PPH.', hospital_id: 1, driver_id: 5, doctor_id: 2, vehicle_id: 1, cancel_reason: null, eta_minutes: 30, dispatched_by: 1, triggered_at: '2026-06-15T14:30:00Z', dispatched_at: '2026-06-15T14:32:00Z', picked_up_at: '2026-06-15T15:00:00Z', arrived_at: '2026-06-15T15:30:00Z', completed_at: '2026-06-15T16:30:00Z', cancelled_at: null },
-  { id: 2, code: 'EMG-2026-0002', mother_id: 8, latitude: 0.3420, longitude: 32.7680, status: 'completed', severity: 'high', notes: 'Strong contractions, possible early labour.', hospital_id: 1, driver_id: 5, doctor_id: 2, vehicle_id: 1, cancel_reason: null, eta_minutes: 15, dispatched_by: 1, triggered_at: '2026-06-17T22:15:00Z', dispatched_at: '2026-06-17T22:16:30Z', picked_up_at: '2026-06-17T22:30:00Z', arrived_at: '2026-06-17T22:55:00Z', completed_at: '2026-06-18T00:15:00Z', cancelled_at: null }
+  { id: 1, code: 'EMG-2026-0001', mother_id: 10, latitude: 0.3200, longitude: 32.8100, status: 'completed', severity: 'critical', notes: 'Severe abdominal pain and bleeding. History of PPH.', hospital_id: 1, driver_id: 5, doctor_id: 2, vehicle_id: 1, cancel_reason: null, eta_minutes: 30, dispatched_by: 1, triggered_at: '2026-06-15T14:30:00Z', dispatched_at: '2026-06-15T14:32:00Z', picked_up_at: '2026-06-15T15:00:00Z', arrived_at: '2026-06-15T15:30:00Z', delivered_at: '2026-06-15T16:00:00Z', completed_at: '2026-06-15T16:30:00Z', cancelled_at: null },
+  { id: 2, code: 'EMG-2026-0002', mother_id: 8, latitude: 0.3420, longitude: 32.7680, status: 'completed', severity: 'high', notes: 'Strong contractions, possible early labour.', hospital_id: 1, driver_id: 5, doctor_id: 2, vehicle_id: 1, cancel_reason: null, eta_minutes: 15, dispatched_by: 1, triggered_at: '2026-06-17T22:15:00Z', dispatched_at: '2026-06-17T22:16:30Z', picked_up_at: '2026-06-17T22:30:00Z', arrived_at: '2026-06-17T22:55:00Z', delivered_at: '2026-06-17T23:45:00Z', completed_at: '2026-06-18T00:15:00Z', cancelled_at: null }
 ];
 
 const SEED_EMERGENCY_LOGS: EmergencyLog[] = [
@@ -860,6 +861,7 @@ export const EmergencyService = {
         dispatched_at: null,
         picked_up_at: null,
         arrived_at: null,
+        delivered_at: null,
         completed_at: null,
         cancelled_at: null
       };
@@ -1126,9 +1128,18 @@ export const EmergencyService = {
     } else if (status === 'in_transit') {
       // Mother picked up, ambulance heading to hospital
       updatedEmg.picked_up_at = updatedEmg.picked_up_at || nowStr;
+    } else if (status === 'delivered') {
+      // Ambulance reached the hospital. The driver's job ends here — release the
+      // vehicle for the next dispatch — but the case stays open until the doctor
+      // completes clinical triage (see DoctorService.recordAssessment).
+      updatedEmg.delivered_at = nowStr;
+      if (emg.vehicle_id) {
+        const vehicles = db.vehicles;
+        db.vehicles = vehicles.map(v => v.id === emg.vehicle_id ? { ...v, status: 'available' } : v);
+      }
     } else if (status === 'completed') {
       updatedEmg.completed_at = nowStr;
-      // Release vehicle
+      // Release vehicle (in case the case was closed without going through 'delivered')
       if (emg.vehicle_id) {
         const vehicles = db.vehicles;
         db.vehicles = vehicles.map(v => v.id === emg.vehicle_id ? { ...v, status: 'available' } : v);
@@ -1150,7 +1161,8 @@ export const EmergencyService = {
     if (status === 'en_route') msg = `Ambulance driver is en route to your location. GPS tracking active.`;
     else if (status === 'arrived') msg = `Ambulance has arrived at your location. Please board immediately.`;
     else if (status === 'in_transit') msg = `You are now in transit to ${hosp?.name || 'the hospital'}. Hold on, help is near.`;
-    else if (status === 'completed') msg = `Rescue completed. You have arrived safely at ${hosp?.name || 'the hospital'}. Clinical handoff finished.`;
+    else if (status === 'delivered') msg = `You have arrived safely at ${hosp?.name || 'the hospital'}. The medical team is now taking over your care.`;
+    else if (status === 'completed') msg = `Rescue completed. Clinical handoff at ${hosp?.name || 'the hospital'} is finished.`;
 
     if (motherUser) {
       NotificationService.createNotification(motherUser.id, '🚨 Rescue Status: ' + status.toUpperCase(), msg, 'status_update', emergencyId);
@@ -1162,7 +1174,8 @@ export const EmergencyService = {
       let doctorMsg = `Emergency status updated to ${status}`;
       if (status === 'in_transit') doctorMsg = `🚑 Patient is now in transit to your facility. Prepare for arrival.`;
       else if (status === 'arrived' && prevStatus === 'en_route') doctorMsg = `🚑 Ambulance has reached the patient. Pickup complete — transit to hospital beginning soon.`;
-      else if (status === 'completed') doctorMsg = `✅ Patient has arrived at ${hosp?.name || 'your facility'}. Please proceed with clinical handover.`;
+      else if (status === 'delivered') doctorMsg = `🏥 Patient has arrived at ${hosp?.name || 'your facility'}. Driver handoff complete — please proceed with clinical triage.`;
+      else if (status === 'completed') doctorMsg = `✅ Case closed for patient at ${hosp?.name || 'your facility'}.`;
       NotificationService.createNotification(doctorUser.id, '🩺 Patient Status: ' + status.toUpperCase(), doctorMsg, 'status_update', emergencyId);
     }
     if (adminUser && changedByUserId !== adminUser.id) {
@@ -1578,22 +1591,24 @@ export const SimulationEngine = {
         db.emergencies = emergencies.map(e => e.id === emergencyId ? updatedEmg : e);
         onUpdate(updatedEmg);
       } else {
-        // Ambulance arrived at hospital — mission complete
+        // Ambulance arrived at hospital — the driver's job is done, but the case
+        // stays open until the doctor completes clinical triage (see
+        // DoctorService.recordAssessment, which transitions 'delivered' -> 'completed').
         const updatedEmg: Emergency = {
           ...emg,
-          status: 'completed',
+          status: 'delivered',
           eta_minutes: 0,
-          completed_at: new Date().toISOString()
+          delivered_at: new Date().toISOString()
         };
 
-        // Release vehicle
+        // Release vehicle — driver is free for the next dispatch
         if (emg.vehicle_id) {
           db.vehicles = db.vehicles.map(v => v.id === emg.vehicle_id ? { ...v, status: 'available' } : v);
         }
 
         db.emergencies = emergencies.map(e => e.id === emergencyId ? updatedEmg : e);
 
-        EmergencyService.logTransition(emergencyId, 'in_transit', 'completed', emg.driver_id, `Patient delivered to ${hosp.name}. Rescue mission complete.`);
+        EmergencyService.logTransition(emergencyId, 'in_transit', 'delivered', emg.driver_id, `Patient delivered to ${hosp.name}. Driver handoff complete — awaiting clinical triage.`);
 
         // Notify all parties
         NotificationService.createNotification(
@@ -1628,8 +1643,8 @@ export const SimulationEngine = {
         adminUsers.forEach(admin => {
           NotificationService.createNotification(
             admin.id,
-            '✅ Rescue Mission Complete',
-            `Emergency ${emg.code}: Patient delivered to ${hosp.name}. Driver mission complete.`,
+            '🏥 Patient Delivered — Awaiting Triage',
+            `Emergency ${emg.code}: Patient delivered to ${hosp.name}. Driver mission complete; clinical triage pending.`,
             'status_update',
             emergencyId
           );

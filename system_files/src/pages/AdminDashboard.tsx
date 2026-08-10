@@ -8,6 +8,7 @@ import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { showToast } from '../components/Toast';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 
 export const AdminDashboard: React.FC = () => {
@@ -70,7 +71,7 @@ export const AdminDashboard: React.FC = () => {
       db.children = state.children || [];
       setUndoStack(nextStack);
       loadData();
-      alert('↩️ Database restored back to previous backup snapshot.');
+      showToast('Database restored back to previous backup snapshot.', 'success');
     }
   };
 
@@ -372,7 +373,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Stats calculation
   const pendingCount = emergencies.filter(e => e.status === 'pending').length;
-  const activeDispatchCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived'].includes(e.status)).length;
+  const activeDispatchCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered'].includes(e.status)).length;
   const onDutyDrivers = drivers.filter(d => d.is_on_duty).length;
   const onDutyDoctors = doctors.filter(doc => doc.is_on_duty).length;
   const totalAvailableBeds = hospitals.reduce((sum, h) => sum + h.available_beds, 0);
@@ -404,7 +405,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const getRoutePoints = (): [number, number][] => {
-    if (selectedEmergency && selectedEmergency.driver_id) {
+    if (selectedEmergency && selectedEmergency.driver_id && !['delivered', 'completed', 'cancelled'].includes(selectedEmergency.status)) {
       const driver = drivers.find(d => d.user_id === selectedEmergency.driver_id);
       if (driver) {
         // If in_transit, route from driver to hospital
@@ -510,7 +511,7 @@ export const AdminDashboard: React.FC = () => {
     if (!emg) return;
     const availableDrv = drivers.find(d => d.is_on_duty && d.vehicle_id);
     if (!availableDrv) {
-      alert('No ambulance driver currently on duty. Please assign one first.');
+      showToast('No ambulance driver currently on duty. Please assign one first.', 'error');
       return;
     }
     const hosp = hospitals.find(h => h.id === hospitalId);
@@ -542,9 +543,9 @@ export const AdminDashboard: React.FC = () => {
       loadData();
       // Show assigned doctor info
       const assignedDoc = dispatched.doctor_id ? db.users.find(u => u.id === dispatched.doctor_id) : null;
-      alert(`✅ DISPATCH APPROVED!\n\nDriver: ${drvUser?.full_name} dispatched to ${hosp?.name}.\nDoctor: ${assignedDoc?.full_name || 'Auto-assigned'} notified with medical prep details.\nETA: ${eta} minutes.\nPatient: ${motherUser?.full_name}`);
+      showToast(`Dispatch approved! Driver ${drvUser?.full_name} dispatched to ${hosp?.name}. Doctor ${assignedDoc?.full_name || 'Auto-assigned'} notified with medical prep details. ETA: ${eta} minutes. Patient: ${motherUser?.full_name}`, 'success', 8000);
     } catch (err: any) {
-      alert(err?.message || 'Dispatch failed. Please try again.');
+      showToast(err?.message || 'Dispatch failed. Please try again.', 'error');
     }
   };
 
@@ -553,7 +554,7 @@ export const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (!selectedEmergency) return;
     if (!dispatchDriver || !dispatchHospital) {
-      alert('Please select both a driver and a matched hospital.');
+      showToast('Please select both a driver and a matched hospital.', 'error');
       return;
     }
 
@@ -577,10 +578,10 @@ export const AdminDashboard: React.FC = () => {
       setDispatchHospital(0);
       loadData();
       const assignedDoc = dispatched.doctor_id ? db.users.find(u => u.id === dispatched.doctor_id) : null;
-      alert(`Ambulance dispatched successfully!${assignedDoc ? `\nDoctor ${assignedDoc.full_name} has been notified with medical preparation details.` : ''}`);
+      showToast(`Ambulance dispatched successfully!${assignedDoc ? ` Doctor ${assignedDoc.full_name} has been notified with medical preparation details.` : ''}`, 'success', 7000);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Dispatch failed';
-      alert(errMsg);
+      showToast(errMsg, 'error');
     }
   };
 
@@ -588,7 +589,7 @@ export const AdminDashboard: React.FC = () => {
     if (window.confirm('Reset all databases and tables to default seed parameters? (This clears custom logs)')) {
       db.resetDatabase();
       loadData();
-      alert('Database restored back to seeds. Please log in again.');
+      showToast('Database restored back to seeds. Please log in again.', 'success');
       navigate('/');
     }
   };
@@ -613,7 +614,7 @@ export const AdminDashboard: React.FC = () => {
     setShowPasswordModal(false);
     setPasswordUser(null);
     setNewPassword('');
-    alert('User password updated successfully. They can login with the new credential.');
+    showToast('User password updated successfully. They can login with the new credential.', 'success');
   };
 
   // --- EXPECTANT MOTHER ACTIONS ---
@@ -665,7 +666,7 @@ export const AdminDashboard: React.FC = () => {
     setShowMotherModal(false);
     setEditMother(null);
     loadData();
-    alert('Expectant Mother profile updated.');
+    showToast('Expectant Mother profile updated.', 'success');
   };
 
   const handleDeleteMother = (id: number, userId: number) => {
@@ -674,7 +675,7 @@ export const AdminDashboard: React.FC = () => {
       db.mothers = db.mothers.filter(m => m.id !== id);
       db.users = db.users.filter(u => u.id !== userId);
       loadData();
-      alert('Expectant mother record removed from database.');
+      showToast('Expectant mother record removed from database.', 'success');
     }
   };
 
@@ -732,7 +733,7 @@ export const AdminDashboard: React.FC = () => {
       const updated = db.hospitals.filter(h => h.id !== id);
       db.hospitals = updated;
       loadData();
-      alert('Health facility removed successfully.');
+      showToast('Health facility removed successfully.', 'success');
     }
   };
 
@@ -761,7 +762,7 @@ export const AdminDashboard: React.FC = () => {
         facility_type: facilityForm.facility_type
       } : h);
       db.hospitals = updated;
-      alert('Facility details updated successfully.');
+      showToast('Facility details updated successfully.', 'success');
     } else {
       const nextHospId = Math.max(...db.hospitals.map(h => h.id), 0) + 1;
       const newHospital: Hospital = {
@@ -785,7 +786,7 @@ export const AdminDashboard: React.FC = () => {
         facility_type: facilityForm.facility_type
       };
       db.hospitals = [...db.hospitals, newHospital];
-      alert('New health facility added.');
+      showToast('New health facility added.', 'success');
     }
     setShowFacilityModal(false);
     loadData();
@@ -837,7 +838,7 @@ export const AdminDashboard: React.FC = () => {
       }
       db.users = db.users.filter(u => u.id !== userId);
       loadData();
-      alert('Personnel profile deleted successfully.');
+      showToast('Personnel profile deleted successfully.', 'success');
     }
   };
 
@@ -868,7 +869,7 @@ export const AdminDashboard: React.FC = () => {
           license_number: personnelForm.license_number
         } as Driver : d);
       }
-      alert('Personnel details updated successfully.');
+      showToast('Personnel details updated successfully.', 'success');
     } else {
       const nextUserId = Math.max(...db.users.map(u => u.id), 0) + 1;
       const newUser: User = {
@@ -913,7 +914,7 @@ export const AdminDashboard: React.FC = () => {
         };
         db.drivers = [...db.drivers, newDriver];
       }
-      alert(`New ${personnelRole} profile configured successfully.`);
+      showToast(`New ${personnelRole} profile configured successfully.`, 'success');
     }
 
     setShowPersonnelModal(false);
@@ -2181,7 +2182,7 @@ export const AdminDashboard: React.FC = () => {
                             type="button"
                             onClick={() => {
                               if (!recDrv) {
-                                alert('No driver currently available on duty.');
+                                showToast('No driver currently available on duty.', 'error');
                                 return;
                               }
                               try {
@@ -2202,9 +2203,9 @@ export const AdminDashboard: React.FC = () => {
                                 setDispatchDoctor(0);
                                 setDispatchHospital(0);
                                 loadData();
-                                alert(`✅ Approved! Driver ${drvUser?.full_name} has been dispatched to pick up ${motherUser?.full_name} and transport to ${rec.hospital.name}!`);
+                                showToast(`Approved! Driver ${drvUser?.full_name} has been dispatched to pick up ${motherUser?.full_name} and transport to ${rec.hospital.name}!`, 'success', 7000);
                               } catch (err: any) {
-                                alert(err?.message || 'Dispatch failed');
+                                showToast(err?.message || 'Dispatch failed', 'error');
                               }
                             }}
                             style={{

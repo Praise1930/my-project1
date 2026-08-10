@@ -9,6 +9,7 @@ import { HeartbeatLoader } from '../components/LoadingStates';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
+import { showToast } from '../components/Toast';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -290,7 +291,7 @@ export const MotherDashboard: React.FC = () => {
     setEmergencyNotes('');
     setRequireCemonc(false);
     setActiveTab('emergency'); // Auto switch to live rescue beacon tab
-    alert('🚨 EMERGENCY SOS BROADCASTED!\n\nYour GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!');
+    showToast('Emergency SOS broadcasted! Your GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!', 'success', 8000);
   };
 
   const handleConfirmSOS = () => {
@@ -311,7 +312,7 @@ export const MotherDashboard: React.FC = () => {
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     UserService.updateMotherProfile(user.id, profileForm);
-    alert('Profile information updated successfully!');
+    showToast('Profile information updated successfully!', 'success');
   };
 
   // Get Seeded Doctors list
@@ -1023,7 +1024,7 @@ export const MotherDashboard: React.FC = () => {
                     <div className="card-glass" style={{ padding: '1.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
                         <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>🚨 Rescue Status</h3>
-                        <span className="badge" style={{ background: activeEmergency.status === 'arrived' ? '#16a34a' : '#ea580c', color: 'white', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                        <span className="badge" style={{ background: ['delivered', 'completed'].includes(activeEmergency.status) ? '#16a34a' : '#ea580c', color: 'white', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                           {activeEmergency.status.toUpperCase()}
                         </span>
                       </div>
@@ -1032,19 +1033,19 @@ export const MotherDashboard: React.FC = () => {
 
                       <div className="status-tracker">
                         <div className="status-steps">
-                          <div className={`status-step ${['pending', 'verified', 'dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
+                          <div className={`status-step ${['pending', 'verified', 'dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
                             <div className="step-circle">🆘</div>
                             <div className="step-label">SOS</div>
                           </div>
-                          <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'verified' ? 'active' : ''}`}>
+                          <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'verified' ? 'active' : ''}`}>
                             <div className="step-circle">📡</div>
                             <div className="step-label">Dispatched</div>
                           </div>
-                          <div className={`status-step ${['arrived', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
+                          <div className={`status-step ${['arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
                             <div className="step-circle">🚑</div>
                             <div className="step-label">En-Route</div>
                           </div>
-                          <div className={`status-step ${activeEmergency.status === 'completed' ? 'completed' : activeEmergency.status === 'arrived' ? 'active' : ''}`}>
+                          <div className={`status-step ${['delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : ['arrived', 'in_transit'].includes(activeEmergency.status) ? 'active' : ''}`}>
                             <div className="step-circle">🏥</div>
                             <div className="step-label">Arrived</div>
                           </div>
@@ -1292,7 +1293,7 @@ export const MotherDashboard: React.FC = () => {
                     const kicks = parseInt(kickInput);
 
                     if (isNaN(sys) || isNaN(dia) || isNaN(gluc) || isNaN(kicks)) {
-                      alert('Please fill out all vitals correctly.');
+                      showToast('Please fill out all vitals correctly.', 'error');
                       return;
                     }
 
@@ -1343,7 +1344,7 @@ export const MotherDashboard: React.FC = () => {
                     setDiaInput('');
                     setGlucInput('');
                     setKickInput('');
-                    alert('Vitals logged successfully!' + (hasAlert ? ' ⚠️ Warnings dispatched to clinical team.' : ''));
+                    showToast('Vitals logged successfully!' + (hasAlert ? ' Warnings dispatched to clinical team.' : ''), hasAlert ? 'error' : 'success');
                   }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                       <div className="form-group">

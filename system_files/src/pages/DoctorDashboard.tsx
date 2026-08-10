@@ -8,6 +8,7 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { MapComponent, MapMarker } from '../components/MapComponent';
+import { showToast } from '../components/Toast';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -122,7 +123,7 @@ export const DoctorDashboard: React.FC = () => {
   }
 
   // Metric aggregates
-  const inboundCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived', 'in_transit'].includes(e.status)).length;
+  const inboundCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered'].includes(e.status)).length;
   const totalTreated = emergencies.filter(e => e.status === 'completed').length;
   const pendingBloodReqs = bloodRequests.filter(r => r.status === 'pending').length;
 
@@ -227,7 +228,7 @@ export const DoctorDashboard: React.FC = () => {
       outcome: 'admitted'
     });
     loadData(user.id, doctor.hospital_id);
-    alert('Patient clinical assessment registered. Emergency status resolved.');
+    showToast('Patient clinical assessment registered. Emergency status resolved.', 'success');
   };
 
   // Bed increments
@@ -250,7 +251,7 @@ export const DoctorDashboard: React.FC = () => {
     setShowBloodModal(false);
     setBloodRequestForm({ blood_type: 'O+', units: 2 });
     loadData(user.id, doctor.hospital_id);
-    alert('Emergency Blood Request dispatched to Admin Center.');
+    showToast('Emergency Blood Request dispatched to Admin Center.', 'success');
   };
 
   return (
@@ -760,11 +761,11 @@ export const DoctorDashboard: React.FC = () => {
                   <div key={e.id} style={{ border: '1px solid #eef2f7', borderRadius: '6px', padding: '16px', marginBottom: '14px', background: '#fdfdfd' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <span style={{ fontSize: '14px', fontWeight: 700, color: '#1977cc' }}>{e.code}</span>
-                      <span className={e.status === 'arrived' ? 'badge-status-arrived' : 'badge-status-enroute'} style={{
-                        background: e.status === 'in_transit' ? '#dbeafe' : undefined,
-                        color: e.status === 'in_transit' ? '#1d4ed8' : undefined
+                      <span className={e.status === 'arrived' || e.status === 'delivered' ? 'badge-status-arrived' : 'badge-status-enroute'} style={{
+                        background: e.status === 'in_transit' ? '#dbeafe' : e.status === 'delivered' ? '#fef3c7' : undefined,
+                        color: e.status === 'in_transit' ? '#1d4ed8' : e.status === 'delivered' ? '#92400e' : undefined
                       }}>
-                        {e.status === 'in_transit' ? 'IN TRANSIT TO HOSPITAL' : e.status.toUpperCase()}
+                        {e.status === 'in_transit' ? 'IN TRANSIT TO HOSPITAL' : e.status === 'delivered' ? 'AWAITING TRIAGE' : e.status.toUpperCase()}
                       </span>
                     </div>
 
@@ -793,7 +794,7 @@ export const DoctorDashboard: React.FC = () => {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #eef2f7', paddingTop: '10px' }}>
                       <span style={{ fontSize: '12px', color: '#888888' }}>
-                        {e.status === 'arrived' ? '🚑 Ambulance Arrived at ER' : e.status === 'in_transit' ? `🚑 In Transit — ETA: ${e.eta_minutes || '?'} mins` : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
+                        {e.status === 'delivered' ? '🏥 Delivered — Driver handoff complete' : e.status === 'arrived' ? '🚑 Ambulance Arrived at ER' : e.status === 'in_transit' ? `🚑 In Transit — ETA: ${e.eta_minutes || '?'} mins` : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
                       </span>
 
                       <button
