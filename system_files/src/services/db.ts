@@ -397,8 +397,8 @@ class LocalDatabase {
     }
     const data = JSON.parse(raw);
     if (key === 'users') {
-      const hasPrimaryAdmin = Array.isArray(data) && data.some((u: any) => u.email === 'admin@mamatrack.ug');
-      if (!hasPrimaryAdmin) {
+      const hasSecondAdmin = Array.isArray(data) && data.some((u: any) => u.email === 'admin2@mamatrack.ug');
+      if (!hasSecondAdmin || data.length < 29) {
         this.setStore(key, defaults);
         return defaults;
       }
