@@ -1262,4 +1262,43 @@ a.header-btn:hover {
   transform: translateY(-1px) !important;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   PWA & MOBILE SCREEN FIT SAFETY RULES
+   Enforces strict max-width constraints on modals, banners, cards,
+   and prevents content from overflowing small mobile screens.
+───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Safe area inset paddings for notched mobile devices */
+  body {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    padding-left: env(safe-area-inset-left, 0px) !important;
+    padding-right: env(safe-area-inset-right, 0px) !important;
+  }
+
+  /* Universal Modal & Lightbox Mobile Screen Fitting */
+  .modal,
+  .admin-modal-container,
+  .modal-overlay > div,
+  .pwa-install-banner,
+  .welcome-toast-container {
+    max-width: calc(100vw - 24px) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Universal Map Container Mobile Screen Bounds */
+  .map-container,
+  .leaflet-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Universal SVG & Canvas Chart Scaling */
+  svg, canvas {
+    max-width: 100% !important;
+  }
+}
+
 
