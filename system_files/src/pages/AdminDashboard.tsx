@@ -120,6 +120,28 @@ export const AdminDashboard: React.FC = () => {
     );
   });
 
+  const filteredInspections = db.inspections.filter(i => {
+    if (!q) return true;
+    const drv = db.users.find(u => u.id === i.driver_id);
+    const veh = db.vehicles.find(v => v.id === i.vehicle_id);
+    return (
+      (drv && drv.full_name.toLowerCase().includes(q)) ||
+      (veh && veh.plate_number.toLowerCase().includes(q)) ||
+      i.fuel_level.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredFuelLogs = db.fuelLogs.filter(f => {
+    if (!q) return true;
+    const drv = db.users.find(u => u.id === f.driver_id);
+    const veh = db.vehicles.find(v => v.id === f.vehicle_id);
+    return (
+      (drv && drv.full_name.toLowerCase().includes(q)) ||
+      (veh && veh.plate_number.toLowerCase().includes(q)) ||
+      f.station.toLowerCase().includes(q)
+    );
+  });
+
   // --- UNDO/BACKUP HISTORY STATE ---
   const [undoStack, setUndoStack] = useState<string[]>([]);
 
@@ -2478,182 +2500,343 @@ export const AdminDashboard: React.FC = () => {
         {activeTab === 'personnel' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            {/* Doctors Roster Table */}
-            <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div>
-                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Obstetricians & Medical Specialists Roster</h5>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Registered Doctors & Midwives ({filteredDoctors.length})</span>
+            {/* UNIFIED SEARCH RESULT TABLE (IF SEARCH QUERY ACTIVE) */}
+            {searchQuery.trim() !== '' ? (
+              <div className="card" style={{ border: '1px solid #3b82f6', borderRadius: '8px', background: '#ffffff', padding: '24px', boxShadow: '0 4px 16px rgba(59,130,246,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div>
+                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🔍 Unified Personnel Search Results
+                    </h5>
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                      Matching query "{searchQuery}" ({filteredDoctors.length + filteredDrivers.length} personnel found)
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    style={{ fontSize: '12px', padding: '6px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    ✕ Clear Search Filter
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleOpenAddPersonnel('doctor')}
-                  className="btn btn-sm btn-primary"
-                  style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
-                >
-                  ➕ Add Doctor / Specialist
-                </button>
-              </div>
 
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Doctor Name</th>
-                      <th>Specialization</th>
-                      <th>License No.</th>
-                      <th>Assigned Hospital</th>
-                      <th>Duty Shift</th>
-                      <th>Experience</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDoctors.length === 0 ? (
+                <div className="table-responsive">
+                  <table className="admin-table">
+                    <thead>
                       <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No medical specialists registered.</td>
+                        <th>Designation / Role</th>
+                        <th>Personnel Name & Contact</th>
+                        <th>License & Qualifications</th>
+                        <th>Assigned Facility / Vehicle</th>
+                        <th>Shift Status</th>
+                        <th>Actions</th>
                       </tr>
-                    ) : (
-                      filteredDoctors.map(d => {
-                        const u = db.users.find(usr => usr.id === d.user_id);
-                        const h = hospitals.find(hosp => hosp.id === d.hospital_id);
-                        return (
-                          <tr key={d.id}>
-                            <td>
-                              <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
-                              <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.email}</div>
-                            </td>
-                            <td>{d.specialization}</td>
-                            <td><span className="license-badge">{d.license_number}</span></td>
-                            <td>{h?.name || 'Unassigned'}</td>
-                            <td>
-                              <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                                {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
-                              </span>
-                              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', fontWeight: 600 }}>{d.shift_start} - {d.shift_end}</div>
-                            </td>
+                    </thead>
+                    <tbody>
+                      {filteredDoctors.length === 0 && filteredDrivers.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                            🔍 No personnel found matching "{searchQuery}".
+                          </td>
+                        </tr>
+                      ) : (
+                        <>
+                          {/* DOCTORS RESULTS */}
+                          {filteredDoctors.map(d => {
+                            const u = db.users.find(usr => usr.id === d.user_id);
+                            const h = hospitals.find(hosp => hosp.id === d.hospital_id);
+                            return (
+                              <tr key={`doc_${d.id}`}>
+                                <td>
+                                  <span style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
+                                    🩺 DOCTOR / SPECIALIST
+                                  </span>
+                                </td>
+                                <td>
+                                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>📞 {u?.phone} · {u?.email}</div>
+                                </td>
+                                <td>
+                                  <strong style={{ fontSize: '13px' }}>{d.specialization}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>License: {d.license_number} ({d.years_experience} yrs exp)</div>
+                                </td>
+                                <td>{h?.name || 'Unassigned'}</td>
+                                <td>
+                                  <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                    {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    {u && (
+                                      <button 
+                                        onClick={() => handleOpenPasswordReset(u)}
+                                        style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                      >
+                                        🔑 Pass
+                                      </button>
+                                    )}
+                                    <button 
+                                      onClick={() => handleOpenEditPersonnel('doctor', d)}
+                                      style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
+                                      style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                                    >
+                                      🗑️ Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
 
-                            <td>{d.years_experience} Years</td>
-                            <td>
-                              <div style={{ display: 'flex', gap: '6px' }}>
-                                {u && (
-                                  <button 
-                                    onClick={() => handleOpenPasswordReset(u)}
-                                    style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                  >
-                                    🔑 Pass
-                                  </button>
-                                )}
-                                <button 
-                                  onClick={() => handleOpenEditPersonnel('doctor', d)}
-                                  style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                                >
-                                  ✏️ Edit
-                                </button>
-                                <button 
-                                  onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
-                                  style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                                >
-                                  🗑️ Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Ambulance Drivers Roster Table */}
-            <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div>
-                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Ambulance Drivers Roster</h5>
-                  <span style={{ fontSize: '12px', color: '#64748b' }}>Emergency Transport Personnel ({filteredDrivers.length})</span>
+                          {/* DRIVERS RESULTS */}
+                          {filteredDrivers.map(d => {
+                            const u = db.users.find(usr => usr.id === d.user_id);
+                            const v = vehicles.find(veh => veh.id === d.vehicle_id);
+                            const h = hospitals.find(hosp => hosp.id === d.hospital_id);
+                            return (
+                              <tr key={`drv_${d.id}`}>
+                                <td>
+                                  <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
+                                    🚑 AMBULANCE DRIVER
+                                  </span>
+                                </td>
+                                <td>
+                                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>📞 {u?.phone} · {u?.email}</div>
+                                </td>
+                                <td>
+                                  <strong style={{ fontSize: '13px' }}>Emergency Driver</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>License: {d.license_number}</div>
+                                </td>
+                                <td>
+                                  <div>{h?.name || 'Unassigned'}</div>
+                                  <div style={{ fontSize: '11px', color: '#059669', fontWeight: 700 }}>Ambulance: {v?.plate_number || 'Unassigned'}</div>
+                                </td>
+                                <td>
+                                  <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                    {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    {u && (
+                                      <button 
+                                        onClick={() => handleOpenPasswordReset(u)}
+                                        style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                      >
+                                        🔑 Pass
+                                      </button>
+                                    )}
+                                    <button 
+                                      onClick={() => handleOpenEditPersonnel('driver', d)}
+                                      style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
+                                      style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                                    >
+                                      🗑️ Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-                <button 
-                  onClick={() => handleOpenAddPersonnel('driver')}
-                  className="btn btn-sm btn-primary"
-                  style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
-                >
-                  ➕ Add Driver
-                </button>
               </div>
+            ) : (
+              /* SEPARATE TABLES (DEFAULT WHEN NO SEARCH QUERY ACTIVE) */
+              <>
+                {/* Doctors Roster Table */}
+                <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div>
+                      <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Obstetricians & Medical Specialists Roster</h5>
+                      <span style={{ fontSize: '12px', color: '#64748b' }}>Registered Doctors & Midwives ({doctors.length})</span>
+                    </div>
+                    <button 
+                      onClick={() => handleOpenAddPersonnel('doctor')}
+                      className="btn btn-sm btn-primary"
+                      style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
+                    >
+                      ➕ Add Doctor / Specialist
+                    </button>
+                  </div>
 
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Driver Name</th>
-                      <th>Assigned Ambulance</th>
-                      <th>License No.</th>
-                      <th>Hospital Facility</th>
-                      <th>Shift Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDrivers.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No ambulance drivers registered.</td>
-                      </tr>
-                    ) : (
-                      filteredDrivers.map(d => {
-                        const u = db.users.find(usr => usr.id === d.user_id);
-                        const v = vehicles.find(veh => veh.id === d.vehicle_id);
-                        const h = hospitals.find(hosp => hosp.id === d.hospital_id);
-                        return (
-                          <tr key={d.id}>
-                            <td>
-                              <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
-                              <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.phone}</div>
-                            </td>
-                            <td>
-                              <strong>{v?.plate_number || 'No Vehicle'}</strong>
-                              <div style={{ fontSize: '11px', color: '#64748b' }}>{v?.vehicle_type || 'Unassigned'}</div>
-                            </td>
-                            <td><span className="license-badge">{d.license_number}</span></td>
-                            <td>{h?.name || 'Unassigned'}</td>
-                            <td>
-                              <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                                {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
-                              </span>
-                            </td>
-
-                            <td>
-                              <div style={{ display: 'flex', gap: '6px' }}>
-                                {u && (
-                                  <button 
-                                    onClick={() => handleOpenPasswordReset(u)}
-                                    style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                  >
-                                    🔑 Pass
-                                  </button>
-                                )}
-                                <button 
-                                  onClick={() => handleOpenEditPersonnel('driver', d)}
-                                  style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                                >
-                                  ✏️ Edit
-                                </button>
-                                <button 
-                                  onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
-                                  style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                                >
-                                  🗑️ Delete
-                                </button>
-                              </div>
-                            </td>
+                  <div className="table-responsive">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Doctor Name</th>
+                          <th>Specialization</th>
+                          <th>License No.</th>
+                          <th>Assigned Hospital</th>
+                          <th>Duty Shift</th>
+                          <th>Experience</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {doctors.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No medical specialists registered.</td>
                           </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                        ) : (
+                          doctors.map(d => {
+                            const u = db.users.find(usr => usr.id === d.user_id);
+                            const h = hospitals.find(hosp => hosp.id === d.hospital_id);
+                            return (
+                              <tr key={d.id}>
+                                <td>
+                                  <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.email}</div>
+                                </td>
+                                <td>{d.specialization}</td>
+                                <td><span className="license-badge">{d.license_number}</span></td>
+                                <td>{h?.name || 'Unassigned'}</td>
+                                <td>
+                                  <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                    {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
+                                  </span>
+                                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', fontWeight: 600 }}>{d.shift_start} - {d.shift_end}</div>
+                                </td>
+
+                                <td>{d.years_experience} Years</td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    {u && (
+                                      <button 
+                                        onClick={() => handleOpenPasswordReset(u)}
+                                        style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                      >
+                                        🔑 Pass
+                                      </button>
+                                    )}
+                                    <button 
+                                      onClick={() => handleOpenEditPersonnel('doctor', d)}
+                                      style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
+                                      style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                                    >
+                                      🗑️ Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Ambulance Drivers Roster Table */}
+                <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div>
+                      <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Ambulance Drivers Roster</h5>
+                      <span style={{ fontSize: '12px', color: '#64748b' }}>Emergency Transport Personnel ({drivers.length})</span>
+                    </div>
+                    <button 
+                      onClick={() => handleOpenAddPersonnel('driver')}
+                      className="btn btn-sm btn-primary"
+                      style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
+                    >
+                      ➕ Add Driver
+                    </button>
+                  </div>
+
+                  <div className="table-responsive">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Driver Name</th>
+                          <th>Assigned Ambulance</th>
+                          <th>License No.</th>
+                          <th>Hospital Facility</th>
+                          <th>Shift Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {drivers.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No ambulance drivers registered.</td>
+                          </tr>
+                        ) : (
+                          drivers.map(d => {
+                            const u = db.users.find(usr => usr.id === d.user_id);
+                            const v = vehicles.find(veh => veh.id === d.vehicle_id);
+                            const h = hospitals.find(hosp => hosp.id === d.hospital_id);
+                            return (
+                              <tr key={d.id}>
+                                <td>
+                                  <strong style={{ fontSize: '14px' }}>{u?.full_name}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.phone}</div>
+                                </td>
+                                <td>
+                                  <strong>{v?.plate_number || 'No Vehicle'}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>{v?.vehicle_type || 'Unassigned'}</div>
+                                </td>
+                                <td><span className="license-badge">{d.license_number}</span></td>
+                                <td>{h?.name || 'Unassigned'}</td>
+                                <td>
+                                  <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                    {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
+                                  </span>
+                                </td>
+
+                                <td>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    {u && (
+                                      <button 
+                                        onClick={() => handleOpenPasswordReset(u)}
+                                        style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
+                                      >
+                                        🔑 Pass
+                                      </button>
+                                    )}
+                                    <button 
+                                      onClick={() => handleOpenEditPersonnel('driver', d)}
+                                      style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
+                                    >
+                                      ✏️ Edit
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
+                                      style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
+                                    >
+                                      🗑️ Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
 
           </div>
         )}
@@ -2803,60 +2986,175 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Inspections and Fuel Logs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              
-              {/* Safety inspections */}
-              <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-                <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>Pre-duty Safety Inspections</h5>
-                <div style={{ maxHeight: '280px', overflowY: 'auto', fontSize: '13px' }}>
-                  {db.inspections.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No inspection records logged.</div>
-                  ) : (
-                    db.inspections.map(i => {
-                      const drv = db.users.find(u => u.id === i.driver_id);
-                      const veh = db.vehicles.find(v => v.id === i.vehicle_id);
-                      return (
-                        <div key={i.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 0' }}>
-                          <div style={{ fontWeight: 600, color: '#334155' }}>Ambulance: {veh?.plate_number} ({drv?.full_name})</div>
-                          <div style={{ color: '#64748b', fontSize: '12px', marginTop: '4px' }}>
-                            Fuel: {i.fuel_level.toUpperCase()} | Siren: {i.siren_ok ? '✅ OK' : '❌ Fail'} | Tires: {i.tires_ok ? '✅ OK' : '❌ Fail'} | Engine: {i.engine_ok ? '✅ OK' : '❌ Fail'}
-                          </div>
-                          <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{new Date(i.checked_at).toLocaleString()}</div>
-                        </div>
-                      );
-                    })
-                  )}
+            {searchQuery.trim() !== '' ? (
+              <div className="card" style={{ border: '1px solid #3b82f6', borderRadius: '8px', background: '#ffffff', padding: '24px', boxShadow: '0 4px 16px rgba(59,130,246,0.08)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div>
+                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🔍 Unified Inspection & Fuel Log Search Results
+                    </h5>
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                      Matching query "{searchQuery}" ({filteredInspections.length + filteredFuelLogs.length} audit records found)
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    style={{ fontSize: '12px', padding: '6px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    ✕ Clear Search Filter
+                  </button>
+                </div>
+
+                <div className="table-responsive">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Log Category</th>
+                        <th>Ambulance & Driver</th>
+                        <th>Details & Metrics</th>
+                        <th>Cost / Checklist Status</th>
+                        <th>Logged Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredInspections.length === 0 && filteredFuelLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                            🔍 No inspection or fuel logs found matching "{searchQuery}".
+                          </td>
+                        </tr>
+                      ) : (
+                        <>
+                          {/* SAFETY INSPECTION RESULTS */}
+                          {filteredInspections.map(i => {
+                            const drv = db.users.find(u => u.id === i.driver_id);
+                            const veh = db.vehicles.find(v => v.id === i.vehicle_id);
+                            return (
+                              <tr key={`insp_${i.id}`}>
+                                <td>
+                                  <span style={{ background: '#f3e8ff', color: '#7e22ce', border: '1px solid #e9d5ff', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
+                                    🛠️ PRE-DUTY INSPECTION
+                                  </span>
+                                </td>
+                                <td>
+                                  <strong style={{ fontSize: '13px', color: '#0f172a' }}>Ambulance: {veh?.plate_number}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>Driver: {drv?.full_name}</div>
+                                </td>
+                                <td>
+                                  <div style={{ fontSize: '12px', color: '#334155' }}>
+                                    Fuel Level: <strong>{i.fuel_level.toUpperCase()}</strong>
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                    Siren: {i.siren_ok ? '✅ OK' : '❌ Fail'} · Engine: {i.engine_ok ? '✅ OK' : '❌ Fail'} · Tires: {i.tires_ok ? '✅ OK' : '❌ Fail'}
+                                  </div>
+                                </td>
+                                <td>
+                                  <span className={i.siren_ok && i.engine_ok && i.tires_ok ? 'badge-alert-success' : 'badge-alert-dispatch'}>
+                                    {i.siren_ok && i.engine_ok && i.tires_ok ? 'PASSED' : 'FLAGGED'}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: '12px', color: '#64748b' }}>
+                                  {new Date(i.checked_at).toLocaleString()}
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+                          {/* FUEL LOG RESULTS */}
+                          {filteredFuelLogs.map(f => {
+                            const drv = db.users.find(u => u.id === f.driver_id);
+                            const veh = db.vehicles.find(v => v.id === f.vehicle_id);
+                            return (
+                              <tr key={`fuel_${f.id}`}>
+                                <td>
+                                  <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
+                                    ⛽ FUEL PURCHASE
+                                  </span>
+                                </td>
+                                <td>
+                                  <strong style={{ fontSize: '13px', color: '#0f172a' }}>Ambulance: {veh?.plate_number}</strong>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}>Driver: {drv?.full_name}</div>
+                                </td>
+                                <td>
+                                  <div style={{ fontSize: '12px', color: '#334155' }}>
+                                    Station: <strong>{f.station}</strong>
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                    Volume: {f.liters} Liters
+                                  </div>
+                                </td>
+                                <td>
+                                  <strong style={{ color: '#16a34a', fontSize: '13px' }}>{f.cost.toLocaleString()} UGX</strong>
+                                </td>
+                                <td style={{ fontSize: '12px', color: '#64748b' }}>
+                                  {new Date(f.logged_at).toLocaleDateString()}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-
-              {/* Fuel purchase logs */}
-              <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
-                <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>Ambulance Fuel Purchases</h5>
-                <div style={{ maxHeight: '280px', overflowY: 'auto', fontSize: '13px' }}>
-                  {db.fuelLogs.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No fuel records logged.</div>
-                  ) : (
-                    db.fuelLogs.map(f => {
-                      const drv = db.users.find(u => u.id === f.driver_id);
-                      const veh = db.vehicles.find(v => v.id === f.vehicle_id);
-                      return (
-                        <div key={f.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: '#334155' }}>Plate: {veh?.plate_number}</div>
-                            <div style={{ color: '#64748b', fontSize: '12px' }}>Station: {f.station} · {f.liters} Liters (Drv: {(drv?.full_name || 'Driver').split(' ')[0]})</div>
+            ) : (
+              /* SEPARATE CARDS (DEFAULT WHEN NO SEARCH QUERY ACTIVE) */
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                
+                {/* Safety inspections */}
+                <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
+                  <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>Pre-duty Safety Inspections</h5>
+                  <div style={{ maxHeight: '280px', overflowY: 'auto', fontSize: '13px' }}>
+                    {db.inspections.length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No inspection records logged.</div>
+                    ) : (
+                      db.inspections.map(i => {
+                        const drv = db.users.find(u => u.id === i.driver_id);
+                        const veh = db.vehicles.find(v => v.id === i.vehicle_id);
+                        return (
+                          <div key={i.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 0' }}>
+                            <div style={{ fontWeight: 600, color: '#334155' }}>Ambulance: {veh?.plate_number} ({drv?.full_name})</div>
+                            <div style={{ color: '#64748b', fontSize: '12px', marginTop: '4px' }}>
+                              Fuel: {i.fuel_level.toUpperCase()} | Siren: {i.siren_ok ? '✅ OK' : '❌ Fail'} | Tires: {i.tires_ok ? '✅ OK' : '❌ Fail'} | Engine: {i.engine_ok ? '✅ OK' : '❌ Fail'}
+                            </div>
+                            <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{new Date(i.checked_at).toLocaleString()}</div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <strong style={{ color: '#10b981' }}>{f.cost.toLocaleString()} UGX</strong>
-                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(f.logged_at).toLocaleDateString()}</div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </div>
 
-            </div>
+                {/* Fuel purchase logs */}
+                <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px' }}>
+                  <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '16px' }}>Ambulance Fuel Purchases</h5>
+                  <div style={{ maxHeight: '280px', overflowY: 'auto', fontSize: '13px' }}>
+                    {db.fuelLogs.length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No fuel records logged.</div>
+                    ) : (
+                      db.fuelLogs.map(f => {
+                        const drv = db.users.find(u => u.id === f.driver_id);
+                        const veh = db.vehicles.find(v => v.id === f.vehicle_id);
+                        return (
+                          <div key={f.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontWeight: 600, color: '#334155' }}>Plate: {veh?.plate_number}</div>
+                              <div style={{ color: '#64748b', fontSize: '12px' }}>Station: {f.station} · {f.liters} Liters (Drv: {(drv?.full_name || 'Driver').split(' ')[0]})</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <strong style={{ color: '#10b981' }}>{f.cost.toLocaleString()} UGX</strong>
+                              <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(f.logged_at).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
 
           </div>
         )}
