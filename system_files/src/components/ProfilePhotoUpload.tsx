@@ -2,13 +2,13 @@
 import React, { useRef, useState } from 'react';
 import { UserService, User } from '../services/db';
 import { useTheme } from '../contexts/ThemeContext';
-import { Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Camera, Image as ImageIcon, Trash2, Eye, Check, X } from 'lucide-react';
 
 interface ProfilePhotoUploadProps {
   user: User;
   onUpdated: (updated: User) => void;
   size?: number;       // avatar circle size in px (default 80)
-  showLabel?: boolean; // show "Change Photo" text below (default true)
+  showLabel?: boolean; // show "Manage Photo" text below (default true)
 }
 
 export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
@@ -20,6 +20,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef  = useRef<HTMLInputElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [loading, setLoading]   = useState(false);
 
   const { theme } = useTheme();
@@ -51,12 +52,14 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     };
     reader.readAsDataURL(file);
     setMenuOpen(false);
+    setShowPreviewModal(false);
   };
 
   const handleRemove = () => {
     const updated = UserService.updateProfile(user.id, { avatar: null });
     onUpdated(updated);
     setMenuOpen(false);
+    setShowPreviewModal(false);
   };
 
   const initials = user.full_name
@@ -119,22 +122,22 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
           </span>
         )}
 
-        {/* Camera overlay badge */}
+        {/* Camera overlay badge using Lucide icon */}
         <span style={{
           position: 'absolute',
           bottom: 0,
           right: 0,
-          width: size * 0.32,
-          height: size * 0.32,
+          width: size * 0.34,
+          height: size * 0.34,
           background: '#f43f5e',
           borderRadius: '50%',
           border: '2px solid #fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: size * 0.16,
+          color: '#ffffff'
         }}>
-          📷
+          <Camera size={Math.max(10, Math.round(size * 0.18))} />
         </span>
 
         {/* Loading spinner */}
@@ -187,14 +190,19 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             }}
           >
             {/* View Profile Image at the top of the menu itself */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              paddingBottom: '12px',
-              borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9',
-              gap: '8px'
-            }}>
+            <div 
+              onClick={() => { setMenuOpen(false); setShowPreviewModal(true); }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                paddingBottom: '12px',
+                borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+              title="Click to view full photo"
+            >
               {user.avatar ? (
                 <img
                   src={user.avatar}
@@ -204,7 +212,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                     height: '90px',
                     borderRadius: '50%',
                     objectFit: 'cover',
-                    border: '3px solid rgba(244, 63, 94, 0.25)'
+                    border: '3px solid rgba(244, 63, 94, 0.35)'
                   }}
                 />
               ) : (
@@ -223,8 +231,8 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   {initials}
                 </div>
               )}
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#ffffff' : '#1f2937' }}>
-                Your Profile Photo
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#ffffff' : '#1f2937', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Eye size={14} style={{ color: '#f43f5e' }} /> View Full Photo
               </span>
             </div>
 
@@ -274,7 +282,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
               </button>
             </div>
 
-            {/* Remove Profile Photo option at the very bottom */}
+            {/* Remove Profile Photo option */}
             {user.avatar && (
               <button
                 onClick={handleRemove}
@@ -300,6 +308,141 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             )}
           </div>
         </>
+      )}
+
+      {/* FULL PHOTO VIEW & DECISION MODAL */}
+      {showPreviewModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: isDark ? '#1e293b' : '#ffffff',
+            borderRadius: '20px',
+            maxWidth: '440px',
+            width: '100%',
+            padding: '24px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+            color: isDark ? '#f8fafc' : '#0f172a',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Profile Photo Preview</h3>
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Photo preview container */}
+            <div style={{
+              width: '220px',
+              height: '220px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '4px solid #f43f5e',
+              boxShadow: '0 10px 25px rgba(244, 63, 94, 0.3)',
+              marginBottom: '20px',
+              background: 'linear-gradient(135deg,#fb7185,#f43f5e)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '4rem', fontWeight: 800, color: '#ffffff' }}>{initials}</span>
+              )}
+            </div>
+
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 800 }}>{user.full_name}</div>
+              <div style={{ fontSize: '0.8rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                {user.avatar ? 'Decide whether to keep, change, or remove your picture.' : 'No photo uploaded. Set a profile picture below.'}
+              </div>
+            </div>
+
+            {/* Decision Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <button
+                onClick={() => galleryRef.current?.click()}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#f43f5e',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <ImageIcon size={16} /> Upload / Change Photo
+              </button>
+
+              {user.avatar && (
+                <button
+                  onClick={handleRemove}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Trash2 size={16} /> Remove Photo
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                  background: 'transparent',
+                  color: isDark ? '#cbd5e1' : '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Check size={16} /> Keep Current Photo
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

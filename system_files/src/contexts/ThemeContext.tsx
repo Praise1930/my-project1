@@ -122,6 +122,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 // ─── Reusable Theme Toggle Button ───────────────────────────────────────────
 // Import this component in any dashboard header
 
+import { Sun, Moon } from 'lucide-react';
+
 export const ThemeToggle: React.FC<{ className?: string; style?: React.CSSProperties }> = ({
   className = '',
   style = {}
@@ -132,33 +134,28 @@ export const ThemeToggle: React.FC<{ className?: string; style?: React.CSSProper
     <button
       onClick={toggleTheme}
       title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       className={`theme-toggle-btn ${className}`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '6px',
-        padding: '7px 14px',
-        borderRadius: '20px',
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.1)',
+        justifyContent: 'center',
+        width: '36px',
+        height: '36px',
+        borderRadius: '50%',
+        border: isDark ? '1px solid rgba(255,255,255,0.18)' : '1px solid rgba(0,0,0,0.12)',
         background: isDark
-          ? 'rgba(255,255,255,0.07)'
-          : 'rgba(0,0,0,0.04)',
-        color: isDark ? '#f1f5f9' : '#374151',
+          ? 'rgba(255,255,255,0.1)'
+          : 'rgba(0,0,0,0.05)',
+        color: isDark ? '#fbbf24' : '#6366f1',
         cursor: 'pointer',
-        fontSize: '0.78rem',
-        fontWeight: 700,
-        fontFamily: 'inherit',
-        letterSpacing: '0.03em',
         transition: 'all 0.2s ease',
         backdropFilter: 'blur(4px)',
         userSelect: 'none',
         ...style,
       }}
     >
-      <span style={{ fontSize: '1rem', lineHeight: 1 }}>
-        {isDark ? '☀️' : '🌙'}
-      </span>
-      <span>{isDark ? 'Light' : 'Dark'}</span>
+      {isDark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 };
