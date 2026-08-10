@@ -236,8 +236,16 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     loadData();
 
+    // Several different events feed this handler and not all of them carry an
+    // emergency record — 'mamatrack_db_update' carries { key: <storeName> }.
+    // Guard so a non-emergency payload can never reach the modal, which would
+    // then blow up reading emg.severity / emg.code.
+    const isEmergencyPayload = (v: any): v is Emergency =>
+      !!v && typeof v === 'object' && typeof v.id === 'number' && typeof v.status === 'string';
+
     // Show SOS modal for an emergency if modal is not currently open or if key is newer
     const checkAndShowAlert = (emg: Emergency) => {
+      if (!isEmergencyPayload(emg)) return;
       const key = getEmergencyKey(emg);
       if (!incomingAlertEmergency || lastShownAlertKeyRef.current !== key) {
         lastShownAlertKeyRef.current = key;
@@ -260,18 +268,19 @@ export const AdminDashboard: React.FC = () => {
 
     const handleAlert = (e?: any) => {
       loadData();
-      // Show incoming alert modal for custom event or storage change
-      const emgDetail = e?.detail as Emergency | undefined;
-      if (emgDetail) {
-        checkAndShowAlert(emgDetail);
-      } else {
-        // No detail (storage event) — scan fresh data
-        const allEmgs = [...db.emergencies].sort((a, b) =>
-          new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()
-        );
-        const pending = allEmgs.filter(e => e.status === 'pending');
-        if (pending.length > 0) checkAndShowAlert(pending[0]);
+      // Only trust the payload when it really is an emergency record. A storage
+      // event has no detail, and a db-update event carries { key } — both of
+      // those fall through to a rescan of the live data instead.
+      const detail = e?.detail;
+      if (isEmergencyPayload(detail)) {
+        checkAndShowAlert(detail);
+        return;
       }
+      const allEmgs = [...db.emergencies].sort((a, b) =>
+        new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()
+      );
+      const pending = allEmgs.filter(e => e.status === 'pending');
+      if (pending.length > 0) checkAndShowAlert(pending[0]);
     };
 
     window.addEventListener('storage', handleAlert);

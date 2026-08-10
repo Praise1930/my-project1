@@ -276,92 +276,55 @@ const SEED_VEHICLES: Vehicle[] = [
   { id: 5, plate_number: 'UBG 005A', vehicle_type: 'Ambulance - Type I', hospital_id: 2, status: 'maintenance', current_latitude: 0.3548, current_longitude: 32.7501, capacity: 1, has_equipment: true, is_active: true }
 ];
 
+// One account per role. Keep these IDs stable — the seed rows below reference
+// them by user_id, and so do any records already synced to Supabase.
+//   1 admin | 2 doctor | 3 driver | 4 mother | 5 vht
 const SEED_USERS: User[] = [
-  // Admin
-  { id: 1, full_name: 'Dr. Sarah Namukasa', email: 'admin@mukonogeneral.go.ug', phone: '+256-742-100-001', password_hash: 'password123', role: 'admin', avatar: null, is_active: true, created_at: '2026-06-01T00:00:00Z' },
-  // Doctors
-  { id: 2, full_name: 'Dr. James Ssemakula', email: 'james.ssemakula@mukonogeneral.go.ug', phone: '+256-742-200-001', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 3, full_name: 'Dr. Grace Namutebi', email: 'grace.namutebi@mukonocou.org', phone: '+256-742-200-002', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, created_at: '2026-06-02T00:00:00Z' },
-  { id: 4, full_name: 'Dr. Peter Ochieng', email: 'peter.ochieng@mukonogeneral.go.ug', phone: '+256-742-200-003', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, created_at: '2026-06-03T00:00:00Z' },
-  // Drivers
-  { id: 5, full_name: 'Moses Kiggundu', email: 'moses.kiggundu@mukonogeneral.go.ug', phone: '+256-742-300-001', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 6, full_name: 'Joseph Lubwama', email: 'joseph.lubwama@mukonocou.org', phone: '+256-742-300-002', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, created_at: '2026-06-02T00:00:00Z' },
-  { id: 7, full_name: 'David Ssekandi', email: 'david.ssekandi@seetahospital.co.ug', phone: '+256-742-300-003', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, created_at: '2026-06-03T00:00:00Z' },
-  // Mothers
-  { id: 8, full_name: 'Nakato Fatima', email: 'fatima.nakato@gmail.com', phone: '+256-769-400-001', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 9, full_name: 'Auma Rosemary', email: 'rosemary.auma@gmail.com', phone: '+256-769-400-002', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-05T00:00:00Z' },
-  { id: 10, full_name: 'Babirye Joan', email: 'joan.babirye@gmail.com', phone: '+256-769-400-003', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-10T00:00:00Z' },
-  { id: 11, full_name: 'Namugga Esther', email: 'esther.namugga@gmail.com', phone: '+256-769-400-004', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-15T00:00:00Z' },
-  { id: 12, full_name: 'Kyomuhendo Ruth', email: 'ruth.kyomuhendo@gmail.com', phone: '+256-769-400-005', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, created_at: '2026-06-20T00:00:00Z' },
-  { id: 13, full_name: 'Nakitto Sarah (VHT)', email: 'vht@mamatrack.go.ug', phone: '+256-788-000-111', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, created_at: '2026-06-01T00:00:00Z' }
+  { id: 1, full_name: 'Dr. Sarah Namukasa', email: 'admin@mamatrack.ug', phone: '+256-742-100-001', password_hash: 'password123', role: 'admin', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 2, full_name: 'Dr. James Ssemakula', email: 'doctor@mamatrack.ug', phone: '+256-742-200-001', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 3, full_name: 'Moses Kiggundu', email: 'driver@mamatrack.ug', phone: '+256-742-300-001', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 4, full_name: 'Nakato Fatima', email: 'mother@mamatrack.ug', phone: '+256-769-400-001', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 5, full_name: 'Nakitto Sarah', email: 'vht@mamatrack.ug', phone: '+256-788-000-111', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' }
 ];
 
+// On duty by default so an SOS can be dispatched immediately after a reset.
 const SEED_DOCTORS: Doctor[] = [
-  { id: 1, user_id: 2, hospital_id: 1, specialization: 'Obstetrics & Gynecology', license_number: 'UG-MED-2018-4521', is_on_duty: true, shift_start: '08:00', shift_end: '20:00', years_experience: 8 },
-  { id: 2, user_id: 3, hospital_id: 2, specialization: 'Midwifery & Maternal Health', license_number: 'UG-MED-2016-3287', is_on_duty: true, shift_start: '08:00', shift_end: '20:00', years_experience: 10 },
-  { id: 3, user_id: 4, hospital_id: 1, specialization: 'Emergency Obstetrics', license_number: 'UG-MED-2020-5890', is_on_duty: false, shift_start: '20:00', shift_end: '08:00', years_experience: 4 }
+  { id: 1, user_id: 2, hospital_id: 1, specialization: 'Obstetrics & Gynecology', license_number: 'UG-MED-2018-4521', is_on_duty: true, shift_start: '08:00', shift_end: '20:00', years_experience: 8 }
 ];
 
 const SEED_DRIVERS: Driver[] = [
-  { id: 1, user_id: 5, hospital_id: 1, vehicle_id: 1, license_number: 'UG-DL-2019-88432', driver_role: 'Primary Emergency Driver', is_on_duty: true, current_latitude: 0.3536, current_longitude: 32.7554 },
-  { id: 2, user_id: 6, hospital_id: 2, vehicle_id: 3, license_number: 'UG-DL-2017-72145', driver_role: 'Primary Emergency Driver', is_on_duty: true, current_latitude: 0.3548, current_longitude: 32.7501 },
-  { id: 3, user_id: 7, hospital_id: 7, vehicle_id: 4, license_number: 'UG-DL-2020-91256', driver_role: 'Primary Emergency Driver', is_on_duty: false, current_latitude: 0.3680, current_longitude: 32.6890 }
+  { id: 1, user_id: 3, hospital_id: 1, vehicle_id: 1, license_number: 'UG-DL-2019-88432', driver_role: 'Primary Emergency Driver', is_on_duty: true, current_latitude: 0.3536, current_longitude: 32.7554 }
 ];
 
 const SEED_MOTHERS: Mother[] = [
-  { id: 1, user_id: 8, date_of_birth: '1995-03-15', national_id: 'CM950315D', blood_type: 'O+', pregnancy_start_date: '2026-01-10', expected_due_date: '2026-10-17', gravida: 2, parity: 1, medical_history: 'No known allergies. Previous normal delivery.', current_complications: 'None', next_of_kin_name: 'Ssemanda Ahmed', next_of_kin_phone: '+256-751-500-001', next_of_kin_relationship: 'Husband', village: 'Goma Village', sub_county: 'Goma', district: 'Mukono', vht_name: 'Namusoke Betty', vht_phone: '+256-772-600-001', home_latitude: 0.3420, home_longitude: 32.7680, preferred_hospital_id: 1 },
-  { id: 2, user_id: 9, date_of_birth: '1998-07-22', national_id: 'CM980722D', blood_type: 'A+', pregnancy_start_date: '2026-02-05', expected_due_date: '2026-11-12', gravida: 1, parity: 0, medical_history: 'Mild anaemia. First pregnancy.', current_complications: 'Anaemia under therapy', next_of_kin_name: 'Opio Daniel', next_of_kin_phone: '+256-751-500-002', next_of_kin_relationship: 'Husband', village: 'Seeta Trading Centre', sub_county: 'Nama', district: 'Mukono', vht_name: 'Lutwama Charles', vht_phone: '+256-772-600-002', home_latitude: 0.3650, home_longitude: 32.6920, preferred_hospital_id: 2 },
-  { id: 3, user_id: 10, date_of_birth: '1992-11-08', national_id: 'CM921108D', blood_type: 'B+', pregnancy_start_date: '2025-12-20', expected_due_date: '2026-09-26', gravida: 3, parity: 2, medical_history: 'History of PPH in second delivery. High-risk pregnancy.', current_complications: 'Threatened preterm labor', next_of_kin_name: 'Babirye Michael', next_of_kin_phone: '+256-751-500-003', next_of_kin_relationship: 'Husband', village: 'Ntenjeru Village', sub_county: 'Ntenjeru', district: 'Mukono', vht_name: 'Mugisha Francis', vht_phone: '+256-772-600-003', home_latitude: 0.3200, home_longitude: 32.8100, preferred_hospital_id: 1 },
-  { id: 4, user_id: 11, date_of_birth: '2000-05-30', national_id: 'CM000530D', blood_type: 'O-', pregnancy_start_date: '2026-03-01', expected_due_date: '2026-12-06', gravida: 1, parity: 0, medical_history: 'Gestational diabetes diagnosed. Under monitoring.', current_complications: 'Gestational Diabetes', next_of_kin_name: 'Namugga Robert', next_of_kin_phone: '+256-751-500-004', next_of_kin_relationship: 'Brother', village: 'Koome Island', sub_county: 'Koome', district: 'Mukono', vht_name: 'Nantongo Agnes', vht_phone: '+256-772-600-004', home_latitude: 0.1480, home_longitude: 32.8750, preferred_hospital_id: 6 },
-  { id: 5, user_id: 12, date_of_birth: '1997-09-14', national_id: 'CM970914D', blood_type: 'AB+', pregnancy_start_date: '2026-01-25', expected_due_date: '2026-11-01', gravida: 2, parity: 1, medical_history: 'No complications. Previous C-section.', current_complications: 'Prior Caesarian Section', next_of_kin_name: 'Ssekandi Paul', next_of_kin_phone: '+256-751-500-005', next_of_kin_relationship: 'Husband', village: 'Mukono Town', sub_county: 'Mukono Municipality', district: 'Mukono', vht_name: 'Kawuma Isaac', vht_phone: '+256-772-600-005', home_latitude: 0.3530, home_longitude: 32.7540, preferred_hospital_id: 1 }
+  { id: 1, user_id: 4, date_of_birth: '1995-03-15', national_id: 'CM950315D', blood_type: 'O+', pregnancy_start_date: '2026-01-10', expected_due_date: '2026-10-17', gravida: 2, parity: 1, medical_history: 'No known allergies. Previous normal delivery.', current_complications: 'None', next_of_kin_name: 'Ssemanda Ahmed', next_of_kin_phone: '+256-751-500-001', next_of_kin_relationship: 'Husband', village: 'Goma Village', sub_county: 'Goma', district: 'Mukono', vht_name: 'Nakitto Sarah', vht_phone: '+256-788-000-111', home_latitude: 0.3420, home_longitude: 32.7680, preferred_hospital_id: 1 }
 ];
 
 const SEED_CHILDREN: Child[] = [
-  { id: 1, mother_id: 8, name: 'Ssemanda Joel (Son)', gender: 'Son', date_of_birth: '2024-04-12', birth_weight: '3.5 kg', delivery_type: 'Spontaneous Normal', health_status: 'Healthy', hospital_id: 1, immunization_status: 'Fully Immunized' },
-  { id: 2, mother_id: 10, name: 'Babirye Ethan (Son)', gender: 'Son', date_of_birth: '2022-11-05', birth_weight: '3.1 kg', delivery_type: 'Caesarean Section', health_status: 'Routine Checkup Required', hospital_id: 1, immunization_status: 'Up-to-Date' },
-  { id: 3, mother_id: 10, name: 'Babirye Lucas (Son)', gender: 'Son', date_of_birth: '2020-08-18', birth_weight: '3.3 kg', delivery_type: 'Spontaneous Normal', health_status: 'Healthy', hospital_id: 1, immunization_status: 'Fully Immunized' },
-  { id: 4, mother_id: 12, name: 'Ssekandi Caleb (Son)', gender: 'Son', date_of_birth: '2023-09-30', birth_weight: '3.6 kg', delivery_type: 'Caesarean Section', health_status: 'Healthy', hospital_id: 2, immunization_status: 'Up-to-Date' }
+  { id: 1, mother_id: 4, name: 'Ssemanda Joel (Son)', gender: 'Son', date_of_birth: '2024-04-12', birth_weight: '3.5 kg', delivery_type: 'Spontaneous Normal', health_status: 'Healthy', hospital_id: 1, immunization_status: 'Fully Immunized' }
 ];
 
 const SEED_CHECKUPS: CheckupSchedule[] = [
-  { id: 1, mother_id: 8, hospital_id: 1, checkup_type: 'Antenatal Visit 4', scheduled_date: '2026-06-25', scheduled_time: '09:00', notes: 'Routine checkup - 24 weeks', status: 'completed' },
-  { id: 2, mother_id: 8, hospital_id: 1, checkup_type: 'Ultrasound Scan', scheduled_date: '2026-07-10', scheduled_time: '10:30', notes: 'Anomaly scan', status: 'upcoming' },
-  { id: 3, mother_id: 9, hospital_id: 2, checkup_type: 'Antenatal Visit 3', scheduled_date: '2026-06-20', scheduled_time: '08:30', notes: 'Blood pressure and weight check', status: 'completed' },
-  { id: 4, mother_id: 9, hospital_id: 2, checkup_type: 'Blood Test', scheduled_date: '2026-06-28', scheduled_time: '09:00', notes: 'Hemoglobin level check for anaemia', status: 'missed' },
-  { id: 5, mother_id: 10, hospital_id: 1, checkup_type: 'Antenatal Visit 5', scheduled_date: '2026-06-22', scheduled_time: '11:00', notes: 'High-risk monitoring - PPH history', status: 'completed' },
-  { id: 6, mother_id: 10, hospital_id: 1, checkup_type: 'Specialist Consultation', scheduled_date: '2026-07-05', scheduled_time: '14:00', notes: 'Obstetrician review for delivery plan', status: 'upcoming' },
-  { id: 7, mother_id: 11, hospital_id: 6, checkup_type: 'Antenatal Visit 3', scheduled_date: '2026-07-01', scheduled_time: '09:00', notes: 'Glucose monitoring', status: 'upcoming' },
-  { id: 8, mother_id: 12, hospital_id: 1, checkup_type: 'Antenatal Visit 4', scheduled_date: '2026-06-30', scheduled_time: '10:00', notes: 'Routine checkup', status: 'upcoming' }
+  { id: 1, mother_id: 4, hospital_id: 1, checkup_type: 'Antenatal Visit 4', scheduled_date: '2026-06-25', scheduled_time: '09:00', notes: 'Routine checkup - 24 weeks', status: 'completed' },
+  { id: 2, mother_id: 4, hospital_id: 1, checkup_type: 'Ultrasound Scan', scheduled_date: '2026-07-10', scheduled_time: '10:30', notes: 'Anomaly scan', status: 'upcoming' }
 ];
 
-const SEED_EMERGENCIES: Emergency[] = [
-  { id: 1, code: 'EMG-2026-0001', mother_id: 10, latitude: 0.3200, longitude: 32.8100, status: 'completed', severity: 'critical', notes: 'Severe abdominal pain and bleeding. History of PPH.', hospital_id: 1, driver_id: 5, doctor_id: 2, vehicle_id: 1, cancel_reason: null, eta_minutes: 30, dispatched_by: 1, triggered_at: '2026-06-15T14:30:00Z', dispatched_at: '2026-06-15T14:32:00Z', picked_up_at: '2026-06-15T15:00:00Z', arrived_at: '2026-06-15T15:30:00Z', delivered_at: '2026-06-15T16:00:00Z', completed_at: '2026-06-15T16:30:00Z', cancelled_at: null },
-  { id: 2, code: 'EMG-2026-0002', mother_id: 8, latitude: 0.3420, longitude: 32.7680, status: 'completed', severity: 'high', notes: 'Strong contractions, possible early labour.', hospital_id: 1, driver_id: 5, doctor_id: 2, vehicle_id: 1, cancel_reason: null, eta_minutes: 15, dispatched_by: 1, triggered_at: '2026-06-17T22:15:00Z', dispatched_at: '2026-06-17T22:16:30Z', picked_up_at: '2026-06-17T22:30:00Z', arrived_at: '2026-06-17T22:55:00Z', delivered_at: '2026-06-17T23:45:00Z', completed_at: '2026-06-18T00:15:00Z', cancelled_at: null }
-];
+// Start with no emergency history so the first SOS raised after a reset is
+// EMG-2026-0001 and the dispatch queue is genuinely empty for testing.
+const SEED_EMERGENCIES: Emergency[] = [];
 
-const SEED_EMERGENCY_LOGS: EmergencyLog[] = [
-  { id: 1, emergency_id: 1, previous_status: null, new_status: 'pending', changed_by: 10, notes: 'Emergency triggered by mother via GPS', latitude: 0.3200, longitude: 32.8100, created_at: '2026-06-15T14:30:00Z' },
-  { id: 2, emergency_id: 1, previous_status: 'pending', new_status: 'dispatched', changed_by: 1, notes: 'Dispatched ambulance UBG 001A to location', latitude: null, longitude: null, created_at: '2026-06-15T14:32:00Z' },
-  { id: 3, emergency_id: 1, previous_status: 'dispatched', new_status: 'en_route', changed_by: 5, notes: 'Driver en route to patient', latitude: 0.3536, longitude: 32.7554, created_at: '2026-06-15T14:35:00Z' },
-  { id: 4, emergency_id: 1, previous_status: 'en_route', new_status: 'arrived', changed_by: 5, notes: 'Arrived at patient location & picked up', latitude: 0.3200, longitude: 32.8100, created_at: '2026-06-15T15:00:00Z' },
-  { id: 5, emergency_id: 1, previous_status: 'arrived', new_status: 'completed', changed_by: 2, notes: 'Patient treated successfully. PPH controlled.', latitude: null, longitude: null, created_at: '2026-06-15T16:30:00Z' }
-];
+const SEED_EMERGENCY_LOGS: EmergencyLog[] = [];
 
-const SEED_NOTIFICATIONS: Notification[] = [
-  { id: 1, user_id: 1, title: 'Emergency Completed', message: 'Emergency EMG-2026-0001 has been resolved. Patient treated successfully.', type: 'status_update', reference_id: 1, is_read: true, created_at: '2026-06-15T16:30:00Z' },
-  { id: 2, user_id: 8, title: 'Checkup Completed', message: 'Your checkup (Antenatal Visit 4) was recorded as completed.', type: 'checkup_reminder', reference_id: 1, is_read: false, created_at: '2026-06-25T11:00:00Z' },
-  { id: 3, user_id: 2, title: 'New Assignment', message: 'You have been assigned to emergency clinical support for Joan (EMG-2026-0001).', type: 'dispatch', reference_id: 1, is_read: true, created_at: '2026-06-15T14:32:00Z' }
-];
+const SEED_NOTIFICATIONS: Notification[] = [];
 
 const SEED_VHT_VISITS: VhtVisitLog[] = [
-  { id: 1, vht_id: 13, mother_id: 8, visit_date: '2026-07-01', blood_pressure: '120/80', temperature: 36.6, fetal_movement: 'normal', notes: 'Mother feels healthy. Prescribed folate compliance.', complications_observed: 'None' },
-  { id: 2, vht_id: 13, mother_id: 9, visit_date: '2026-07-03', blood_pressure: '115/75', temperature: 36.8, fetal_movement: 'normal', notes: 'Fetal movement is active. Checked hemoglobin card.', complications_observed: 'None' }
+  { id: 1, vht_id: 5, mother_id: 4, visit_date: '2026-07-01', blood_pressure: '120/80', temperature: 36.6, fetal_movement: 'normal', notes: 'Mother feels healthy. Prescribed folate compliance.', complications_observed: 'None' }
 ];
 
 const SEED_VITALS: VitalsRecord[] = [
-  { id: 1, mother_id: 8, timestamp: '2026-07-10T09:00:00Z', systolic: 120, diastolic: 80, glucose: 95, kick_count: 12, recorded_by: 'patient' },
-  { id: 2, mother_id: 8, timestamp: '2026-07-12T10:00:00Z', systolic: 122, diastolic: 82, glucose: 98, kick_count: 10, recorded_by: 'patient' },
-  { id: 3, mother_id: 8, timestamp: '2026-07-14T08:30:00Z', systolic: 121, diastolic: 79, glucose: 92, kick_count: 11, recorded_by: 'vht' }
+  { id: 1, mother_id: 4, timestamp: '2026-07-10T09:00:00Z', systolic: 120, diastolic: 80, glucose: 95, kick_count: 12, recorded_by: 'patient' },
+  { id: 2, mother_id: 4, timestamp: '2026-07-12T10:00:00Z', systolic: 122, diastolic: 82, glucose: 98, kick_count: 10, recorded_by: 'patient' },
+  { id: 3, mother_id: 4, timestamp: '2026-07-14T08:30:00Z', systolic: 121, diastolic: 79, glucose: 92, kick_count: 11, recorded_by: 'vht' }
 ];
 
 // ============================================================================

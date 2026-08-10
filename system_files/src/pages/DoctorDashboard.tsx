@@ -21,7 +21,9 @@ export const DoctorDashboard: React.FC = () => {
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
   const [assessments, setAssessments] = useState<ClinicalAssessment[]>([]);
   const [bloodRequests, setBloodRequests] = useState<BloodRequest[]>([]);
-  const [selectedMotherId, setSelectedMotherId] = useState<number>(8);
+  // Default to whichever mother is first in the database rather than a hardcoded
+  // seed id, so the vitals chart still works if the seed data changes.
+  const [selectedMotherId, setSelectedMotherId] = useState<number>(() => db.mothers[0]?.user_id ?? 0);
 
   // Forms
   const [activeEmergency, setActiveEmergency] = useState<Emergency | null>(null);
