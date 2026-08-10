@@ -276,15 +276,57 @@ const SEED_VEHICLES: Vehicle[] = [
   { id: 5, plate_number: 'UBG 005A', vehicle_type: 'Ambulance - Type I', hospital_id: 2, status: 'maintenance', current_latitude: 0.3548, current_longitude: 32.7501, capacity: 1, has_equipment: true, is_active: true }
 ];
 
-// One account per role. Keep these IDs stable — the seed rows below reference
-// them by user_id, and so do any records already synced to Supabase.
-//   1 admin | 2 doctor | 3 driver | 4 mother | 5 vht
+// Personnel roster for Mukono District. Keep these IDs stable — every seed row
+// below references them by user_id, as do records already synced to Supabase.
+//   1-2   admins
+//   3-12  doctors  (5 male, 5 female)
+//   13-17 drivers  (4 male, 1 female)
+//   18-27 mothers
+//   28-34 VHTs     (3 male, 4 female)
 const SEED_USERS: User[] = [
-  { id: 1, full_name: 'Dr. Sarah Namukasa', email: 'admin@mamatrack.ug', phone: '+256-742-100-001', password_hash: 'password123', role: 'admin', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 2, full_name: 'Dr. James Ssemakula', email: 'doctor@mamatrack.ug', phone: '+256-742-200-001', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 3, full_name: 'Moses Kiggundu', email: 'driver@mamatrack.ug', phone: '+256-742-300-001', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 4, full_name: 'Nakato Fatima', email: 'mother@mamatrack.ug', phone: '+256-769-400-001', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
-  { id: 5, full_name: 'Nakitto Sarah', email: 'vht@mamatrack.ug', phone: '+256-788-000-111', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' }
+  // ── Administrators ──
+  { id: 1, full_name: 'Dr. Sarah Namukasa', email: 'sarah.namukasa@mukonogeneral.go.ug', phone: '+256-742-100-001', password_hash: 'password123', role: 'admin', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 2, full_name: 'Robert Kaggwa', email: 'robert.kaggwa@mukonogeneral.go.ug', phone: '+256-742-100-002', password_hash: 'password123', role: 'admin', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+
+  // ── Doctors ──
+  { id: 3, full_name: 'Dr. James Ssemakula', email: 'james.ssemakula@mukonogeneral.go.ug', phone: '+256-742-200-001', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 4, full_name: 'Dr. Grace Namutebi', email: 'grace.namutebi@mukonocou.org', phone: '+256-742-200-002', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 5, full_name: 'Dr. Peter Ochieng', email: 'peter.ochieng@mukonogeneral.go.ug', phone: '+256-742-200-003', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 6, full_name: 'Dr. Immaculate Nabukenya', email: 'immaculate.nabukenya@ccare-mukono.com', phone: '+256-742-200-004', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 7, full_name: 'Dr. Daniel Wasswa', email: 'daniel.wasswa@aarpearl.co.ug', phone: '+256-742-200-005', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 8, full_name: 'Dr. Rebecca Atim', email: 'rebecca.atim@health.go.ug', phone: '+256-742-200-006', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 9, full_name: 'Dr. Samuel Kizza', email: 'samuel.kizza@mukonogeneral.go.ug', phone: '+256-742-200-007', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 10, full_name: 'Dr. Harriet Nakayiza', email: 'harriet.nakayiza@seetahospital.co.ug', phone: '+256-742-200-008', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 11, full_name: 'Dr. Emmanuel Tumusiime', email: 'emmanuel.tumusiime@mukonocou.org', phone: '+256-742-200-009', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 12, full_name: 'Dr. Justine Akello', email: 'justine.akello@health.go.ug', phone: '+256-742-200-010', password_hash: 'password123', role: 'doctor', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+
+  // ── Ambulance drivers ──
+  { id: 13, full_name: 'Moses Kiggundu', email: 'moses.kiggundu@mukonogeneral.go.ug', phone: '+256-742-300-001', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 14, full_name: 'Joseph Lubwama', email: 'joseph.lubwama@mukonogeneral.go.ug', phone: '+256-742-300-002', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 15, full_name: 'David Ssekandi', email: 'david.ssekandi@mukonocou.org', phone: '+256-742-300-003', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 16, full_name: 'Annet Nakiwala', email: 'annet.nakiwala@seetahospital.co.ug', phone: '+256-742-300-004', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 17, full_name: 'Ronald Mukasa', email: 'ronald.mukasa@mukonocou.org', phone: '+256-742-300-005', password_hash: 'password123', role: 'driver', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+
+  // ── Expectant mothers ──
+  { id: 18, full_name: 'Nakato Fatima', email: 'fatima.nakato@gmail.com', phone: '+256-769-400-001', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 19, full_name: 'Auma Rosemary', email: 'rosemary.auma@gmail.com', phone: '+256-769-400-002', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-02T00:00:00Z' },
+  { id: 20, full_name: 'Babirye Joan', email: 'joan.babirye@gmail.com', phone: '+256-769-400-003', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-03T00:00:00Z' },
+  { id: 21, full_name: 'Namugga Esther', email: 'esther.namugga@gmail.com', phone: '+256-769-400-004', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-04T00:00:00Z' },
+  { id: 22, full_name: 'Kyomuhendo Ruth', email: 'ruth.kyomuhendo@gmail.com', phone: '+256-769-400-005', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-05T00:00:00Z' },
+  { id: 23, full_name: 'Nabirye Sylvia', email: 'sylvia.nabirye@gmail.com', phone: '+256-769-400-006', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-06T00:00:00Z' },
+  { id: 24, full_name: 'Achieng Brenda', email: 'brenda.achieng@gmail.com', phone: '+256-769-400-007', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-07T00:00:00Z' },
+  { id: 25, full_name: 'Nassuna Miriam', email: 'miriam.nassuna@gmail.com', phone: '+256-769-400-008', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-08T00:00:00Z' },
+  { id: 26, full_name: 'Tumusiime Peace', email: 'peace.tumusiime@gmail.com', phone: '+256-769-400-009', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-09T00:00:00Z' },
+  { id: 27, full_name: 'Nakiganda Cynthia', email: 'cynthia.nakiganda@gmail.com', phone: '+256-769-400-010', password_hash: 'password123', role: 'mother', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-10T00:00:00Z' },
+
+  // ── Village Health Team members ──
+  { id: 28, full_name: 'Nakitto Sarah', email: 'sarah.nakitto@vht.mamatrack.ug', phone: '+256-788-000-101', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 29, full_name: 'Namusoke Betty', email: 'betty.namusoke@vht.mamatrack.ug', phone: '+256-788-000-102', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 30, full_name: 'Lutwama Charles', email: 'charles.lutwama@vht.mamatrack.ug', phone: '+256-788-000-103', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 31, full_name: 'Mugisha Francis', email: 'francis.mugisha@vht.mamatrack.ug', phone: '+256-788-000-104', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 32, full_name: 'Nantongo Agnes', email: 'agnes.nantongo@vht.mamatrack.ug', phone: '+256-788-000-105', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 33, full_name: 'Kawuma Isaac', email: 'isaac.kawuma@vht.mamatrack.ug', phone: '+256-788-000-106', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' },
+  { id: 34, full_name: 'Nabatanzi Florence', email: 'florence.nabatanzi@vht.mamatrack.ug', phone: '+256-788-000-107', password_hash: 'password123', role: 'vht', avatar: null, is_active: true, email_verified: true, created_at: '2026-06-01T00:00:00Z' }
 ];
 
 // On duty by default so an SOS can be dispatched immediately after a reset.
