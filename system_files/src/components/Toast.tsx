@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-export type ToastVariant = 'success' | 'error' | 'info';
+export type ToastVariant = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastItem {
   id: number;
@@ -23,6 +23,7 @@ const VARIANT_STYLES: Record<ToastVariant, { bg: string; border: string; icon: s
   success: { bg: '#0f5132', border: '#22c55e', icon: '✅' },
   error: { bg: '#7f1d1d', border: '#ef4444', icon: '⚠️' },
   info: { bg: '#0f172a', border: '#3b82f6', icon: 'ℹ️' },
+  warning: { bg: '#78350f', border: '#f59e0b', icon: '⚠️' },
 };
 
 export const ToastContainer: React.FC = () => {
@@ -57,7 +58,7 @@ export const ToastContainer: React.FC = () => {
       }}
     >
       {toasts.map(t => {
-        const style = VARIANT_STYLES[t.variant];
+        const style = VARIANT_STYLES[t.variant] || VARIANT_STYLES.info;
         return (
           <div
             key={t.id}
