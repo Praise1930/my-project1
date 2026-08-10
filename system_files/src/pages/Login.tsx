@@ -43,62 +43,20 @@ export const Login: React.FC = () => {
     { id: 'admin', title: 'Command Control Center', icon: '📡', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
   ];
 
-  const roleUserAccounts: Record<string, { name: string; email: string }[]> = {
-    admin: [
-      { name: 'Dr. Sarah Namukasa (Admin 1)', email: 'admin@mamatrack.ug' },
-      { name: 'Robert Kaggwa (Admin 2)', email: 'admin2@mamatrack.ug' }
-    ],
-    doctor: [
-      { name: 'Dr. James Ssemakula (Male - Mukono General)', email: 'doctor@mamatrack.ug' },
-      { name: 'Dr. Grace Namutebi (Female - Mukono CoU)', email: 'grace.namutebi@mamatrack.ug' },
-      { name: 'Dr. Peter Ochieng (Male - Mukono General)', email: 'peter.ochieng@mamatrack.ug' },
-      { name: 'Dr. Immaculate Nabukenya (Female - C-Care)', email: 'immaculate.nabukenya@mamatrack.ug' },
-      { name: 'Dr. Daniel Wasswa (Male - AAR Pearl)', email: 'daniel.wasswa@mamatrack.ug' },
-      { name: 'Dr. Rebecca Atim (Female - Nama HC IV)', email: 'rebecca.atim@mamatrack.ug' },
-      { name: 'Dr. Samuel Kizza (Male - Mukono General)', email: 'samuel.kizza@mamatrack.ug' }
-    ],
-    driver: [
-      { name: 'Moses Kiggundu (UBG 001A)', email: 'driver@mamatrack.ug' },
-      { name: 'Joseph Lubwama (UBG 002A)', email: 'joseph.lubwama@mamatrack.ug' },
-      { name: 'David Ssekandi (UBG 003A)', email: 'david.ssekandi@mamatrack.ug' },
-      { name: 'Annet Nakiwala (UBG 004A)', email: 'annet.nakiwala@mamatrack.ug' },
-      { name: 'Ronald Mukasa (UBG 005A)', email: 'ronald.mukasa@mamatrack.ug' }
-    ],
-    mother: [
-      { name: 'Nakato Fatima (Goma Village)', email: 'mother@mamatrack.ug' },
-      { name: 'Auma Rosemary (Seeta Town)', email: 'rosemary.auma@mamatrack.ug' },
-      { name: 'Babirye Joan (Mukono Central)', email: 'joan.babirye@mamatrack.ug' },
-      { name: 'Namugga Esther (Nama Sub-County)', email: 'esther.namugga@mamatrack.ug' },
-      { name: 'Kyomuhendo Ruth (Industrial Zone)', email: 'ruth.kyomuhendo@mamatrack.ug' },
-      { name: 'Nabirye Sylvia (Goma)', email: 'sylvia.nabirye@mamatrack.ug' },
-      { name: 'Achieng Brenda (Seeta)', email: 'brenda.achieng@mamatrack.ug' },
-      { name: 'Nassuna Miriam (Mukono Town)', email: 'miriam.nassuna@mamatrack.ug' },
-      { name: 'Tumusiime Peace (Nama Town)', email: 'peace.tumusiime@mamatrack.ug' },
-      { name: 'Nakiganda Cynthia (Goma Centre)', email: 'cynthia.nakiganda@mamatrack.ug' }
-    ],
-    vht: [
-      { name: 'Nakitto Sarah (Goma Village)', email: 'vht@mamatrack.ug' },
-      { name: 'Namusoke Betty (Seeta Town)', email: 'betty.namusoke@mamatrack.ug' },
-      { name: 'Lutwama Charles (Mukono Central)', email: 'charles.lutwama@mamatrack.ug' },
-      { name: 'Mugisha Francis (Nama Sub-County)', email: 'francis.mugisha@mamatrack.ug' },
-      { name: 'Nantongo Agnes (Industrial Zone)', email: 'agnes.nantongo@mamatrack.ug' }
-    ]
-  };
-
   const defaultCredentials: Record<string, string> = {
-    admin: 'admin@mamatrack.ug',
-    doctor: 'doctor@mamatrack.ug',
-    driver: 'driver@mamatrack.ug',
-    mother: 'mother@mamatrack.ug',
-    vht: 'vht@mamatrack.ug'
+    admin: '',
+    doctor: '',
+    driver: '',
+    mother: '',
+    vht: ''
   };
 
-  // Pre-fill email & password when role changes
+  // Reset inputs when role changes
   React.useEffect(() => {
     setError(null);
     setEmailError(null);
-    setEmail(defaultCredentials[role] || '');
-    setPassword('password123');
+    setEmail('');
+    setPassword('');
   }, [role]);
 
 
@@ -346,38 +304,6 @@ export const Login: React.FC = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-              {/* Account Dropdown Selector */}
-              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 600, color: isDark ? '#cbd5e1' : '#4b5563', marginBottom: '6px' }}>
-                  <span>👤</span> Select Person / Account ({roleUserAccounts[role]?.length || 0} Available)
-                </label>
-                <select
-                  className="form-input"
-                  style={{
-                    padding: '10px 14px',
-                    fontSize: '0.92rem',
-                    borderRadius: '6px',
-                    background: isDark ? '#0f172a' : '#f8fafc',
-                    color: isDark ? '#f1f5f9' : '#1f2937',
-                    border: isDark ? '1px solid #475569' : '1px solid #d1d5db',
-                    width: '100%',
-                    fontWeight: 600
-                  }}
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setPassword('password123');
-                    if (emailError) setEmailError(null);
-                  }}
-                >
-                  {(roleUserAccounts[role] || []).map((acc) => (
-                    <option key={acc.email} value={acc.email}>
-                      {acc.name} — {acc.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.92rem', fontWeight: 600, color: isDark ? '#cbd5e1' : '#4b5563', marginBottom: '6px' }}>
                   Email Address
