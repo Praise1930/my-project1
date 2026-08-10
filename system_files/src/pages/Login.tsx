@@ -43,10 +43,20 @@ export const Login: React.FC = () => {
     { id: 'admin', title: 'Command Control Center', icon: '📡', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
   ];
 
-  // Clear error when role changes
+  const defaultCredentials: Record<string, string> = {
+    admin: 'admin@mamatrack.ug',
+    doctor: 'doctor@mamatrack.ug',
+    driver: 'driver@mamatrack.ug',
+    mother: 'mother@mamatrack.ug',
+    vht: 'vht@mamatrack.ug'
+  };
+
+  // Pre-fill email & password when role changes
   React.useEffect(() => {
     setError(null);
     setEmailError(null);
+    setEmail(defaultCredentials[role] || '');
+    setPassword('password123');
   }, [role]);
 
 
