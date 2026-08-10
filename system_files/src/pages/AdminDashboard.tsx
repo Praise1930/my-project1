@@ -39,6 +39,8 @@ export const AdminDashboard: React.FC = () => {
   // Track the key of the last emergency we showed an alert for.
   // Using a ref so interval closures always read the fresh value.
   const lastShownAlertKeyRef = React.useRef<string | null>(null);
+  // Track emergency IDs that have already been notified as cancelled to prevent duplicate toasts
+  const notifiedCancelledIdsRef = React.useRef<Set<number>>(new Set());
 
   const getEmergencyKey = (emg: Emergency) => `${emg.id}_${emg.triggered_at || ''}`;
 
@@ -257,6 +259,13 @@ export const AdminDashboard: React.FC = () => {
       }
     };
 
+    const notifyCancelled = (emg: Emergency) => {
+      if (notifiedCancelledIdsRef.current.has(emg.id)) return;
+      notifiedCancelledIdsRef.current.add(emg.id);
+      const motherUser = db.users.find(u => u.id === emg.mother_id);
+      showToast(`Emergency ${emg.code} for ${motherUser?.full_name || 'Patient'} was CANCELLED by patient. Reason: "${emg.cancel_reason || 'No reason provided'}"`, 'warning', 8000);
+    };
+
     const syncModalWithLiveData = () => {
       loadData();
       if (incomingAlertEmergencyRef.current) {
@@ -266,8 +275,7 @@ export const AdminDashboard: React.FC = () => {
           setIncomingAlertEmergency(null);
           lastShownAlertKeyRef.current = null;
           if (fresh && fresh.status === 'cancelled') {
-            const motherUser = db.users.find(u => u.id === fresh.mother_id);
-            showToast(`⚠️ Emergency ${fresh.code} for ${motherUser?.full_name || 'Patient'} was CANCELLED by patient. Reason: "${fresh.cancel_reason || 'No reason provided'}"`, 'warning', 8000);
+            notifyCancelled(fresh);
           }
         }
       }
@@ -294,8 +302,7 @@ export const AdminDashboard: React.FC = () => {
             setIncomingAlertEmergency(null);
             lastShownAlertKeyRef.current = null;
           }
-          const motherUser = db.users.find(u => u.id === detail.mother_id);
-          showToast(`⚠️ Emergency ${detail.code} for ${motherUser?.full_name || 'Patient'} was CANCELLED by patient. Reason: "${detail.cancel_reason || 'No reason provided'}"`, 'warning', 8000);
+          notifyCancelled(detail);
           return;
         }
         checkAndShowAlert(detail);

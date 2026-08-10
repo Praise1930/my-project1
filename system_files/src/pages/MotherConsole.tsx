@@ -554,15 +554,9 @@ export const MotherConsole: React.FC = () => {
                       <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>Trigger SOS</span>
                     </button>
                   ) : (
-                    <div className="emergency-btn triggered" style={{ width: '150px', height: '150px', animation: 'active-emergency-pulse 1s infinite alternate' }}>
-                      <span style={{ fontSize: '2rem' }}>🚨</span>
-                      <span style={{ fontSize: '0.9rem' }}>SOS Active</span>
-                    </div>
-                  )}
-
-                  {activeEmergency && (
-                    <button className="cancel-alert-btn" onClick={handleCancelSOS} style={{ marginTop: '12px', padding: '0.5rem 1rem' }}>
-                      Cancel Rescue Beacon
+                    <button className="emergency-btn triggered" onClick={handleCancelSOS} style={{ width: '150px', height: '150px', animation: 'active-emergency-pulse 1s infinite alternate', background: '#ef4444', border: '3px solid #dc2626', cursor: 'pointer' }}>
+                      <span style={{ fontSize: '2rem' }}>⚠️</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>Cancel SOS</span>
                     </button>
                   )}
                 </div>

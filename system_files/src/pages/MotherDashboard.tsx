@@ -854,8 +854,8 @@ export const MotherDashboard: React.FC = () => {
                         🚨 Trigger Emergency SOS
                       </button>
                     ) : (
-                      <button className="emergency-btn-home triggered" onClick={() => setActiveTab('emergency')}>
-                        🚨 Tracking Active SOS
+                      <button className="emergency-btn-home triggered" onClick={handleCancelSOS} style={{ background: '#ef4444', borderColor: '#dc2626' }}>
+                        ⚠️ Cancel Emergency SOS
                       </button>
                     )}
                   </div>
@@ -1016,10 +1016,10 @@ export const MotherDashboard: React.FC = () => {
                           <span style={{ fontWeight: 800 }}>Trigger SOS</span>
                         </button>
                       ) : (
-                        <div className="emergency-btn triggered" style={{ animation: 'active-emergency-pulse 1s infinite alternate' }}>
-                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}>🚨</span>
-                          <span>SOS Active</span>
-                        </div>
+                        <button className="emergency-btn triggered" onClick={handleCancelSOS} style={{ animation: 'active-emergency-pulse 1s infinite alternate', background: '#ef4444', border: '3px solid #dc2626', cursor: 'pointer' }}>
+                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}>⚠️</span>
+                          <span style={{ fontWeight: 800 }}>Cancel SOS</span>
+                        </button>
                       )}
                       
                       <span style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
