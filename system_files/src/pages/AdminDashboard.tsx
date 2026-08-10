@@ -2137,6 +2137,11 @@ export const AdminDashboard: React.FC = () => {
                   ) : (
                     filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
                       const m = db.users.find(usr => usr.id === e.mother_id);
+                      const drvUser = e.driver_id ? db.users.find(usr => usr.id === e.driver_id) : null;
+                      const drvObj = e.driver_id ? db.drivers.find(d => d.user_id === e.driver_id) : null;
+                      const vehicle = drvObj?.vehicle_id ? db.vehicles.find(v => v.id === drvObj.vehicle_id) : null;
+                      const hospital = e.hospital_id ? db.hospitals.find(h => h.id === e.hospital_id) : null;
+
                       return (
                         <div
                           key={e.id}
@@ -2164,6 +2169,20 @@ export const AdminDashboard: React.FC = () => {
                           </div>
                           <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Patient: {m?.full_name || 'Mother'}</div>
                           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Distress: {e.notes}</div>
+
+                          {/* Assigned Hospital & Driver Details */}
+                          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px' }}>
+                            <div style={{ color: '#0284c7', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>🏥 Hospital:</span>
+                              <span style={{ fontWeight: 700, color: '#0f172a' }}>{hospital ? hospital.name : 'Pending Facility Match'}</span>
+                            </div>
+                            <div style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>🚑 Assigned Driver:</span>
+                              <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                                {drvUser ? `${drvUser.full_name} (${vehicle?.plate_number || 'Ambulance'})` : 'Pending Driver Match'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       );
                     })
