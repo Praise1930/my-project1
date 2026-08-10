@@ -22,6 +22,11 @@ export const MotherConsole: React.FC = () => {
   const [emergencyNotes, setEmergencyNotes] = useState('');
   const [requireCemonc, setRequireCemonc] = useState(false);
   
+  // Cancellation Modal States
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReasonPreset, setCancelReasonPreset] = useState('Accidental press / false alarm');
+  const [customCancelReason, setCustomCancelReason] = useState('');
+  
   // Lists
   const [checkups, setCheckups] = useState<CheckupSchedule[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -226,12 +231,23 @@ export const MotherConsole: React.FC = () => {
 
   const handleCancelSOS = () => {
     if (!activeEmergency) return;
-    if (window.confirm('Cancel rescue request?')) {
-      const updated = EmergencyService.cancelEmergency(activeEmergency.id, 'Cancelled by patient', user.id);
-      setActiveEmergency(null);
-      SimulationEngine.stopSimulation(updated.id);
-      setNotifications(NotificationService.getNotificationsForUser(user.id));
-    }
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancelSOS = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeEmergency || !user) return;
+    const finalReason = cancelReasonPreset === 'Other custom reason'
+      ? (customCancelReason.trim() || 'No specific reason provided')
+      : cancelReasonPreset;
+
+    const updated = EmergencyService.cancelEmergency(activeEmergency.id, finalReason, user.id);
+    setActiveEmergency(null);
+    SimulationEngine.stopSimulation(updated.id);
+    setNotifications(NotificationService.getNotificationsForUser(user.id));
+    setShowCancelModal(false);
+    setCustomCancelReason('');
+    showToast(`Emergency alert ${updated.code} has been cancelled. District Emergency Command & Admins have been notified.`, 'info', 6000);
   };
 
   const handleUpdateProfile = (e: React.FormEvent) => {
@@ -789,6 +805,140 @@ export const MotherConsole: React.FC = () => {
               <button className="btn-momentra-outline" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => setShowConfirmModal(false)}>Cancel</button>
               <button className="btn-momentra-primary" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={handleConfirmSOS}>Trigger SOS</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Reason Modal */}
+      {showCancelModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: theme === 'dark' ? '#1e293b' : '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '480px',
+            width: '100%',
+            padding: '28px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+            color: theme === 'dark' ? '#f8fafc' : '#0f172a'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ background: '#fef2f2', color: '#ef4444', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800 }}>
+                ⚠️
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: theme === 'dark' ? '#ffffff' : '#0f172a' }}>Cancel Emergency Rescue?</h3>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>Please select a reason for cancelling this SOS dispatch.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmCancelSOS}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '8px', color: theme === 'dark' ? '#cbd5e1' : '#334155' }}>
+                  Select Reason:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    'Accidental press / false alarm',
+                    'Distress resolved / patient feeling better',
+                    'Alternative transport arranged independently',
+                    'Assisted by local VHT / Community responder',
+                    'Other custom reason'
+                  ].map((preset) => (
+                    <label key={preset} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: cancelReasonPreset === preset ? '2px solid #ef4444' : (theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0'),
+                      background: cancelReasonPreset === preset ? (theme === 'dark' ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2') : (theme === 'dark' ? '#0f172a' : '#f8fafc'),
+                      cursor: 'pointer',
+                      fontSize: '0.88rem',
+                      fontWeight: cancelReasonPreset === preset ? 700 : 500
+                    }}>
+                      <input
+                        type="radio"
+                        name="cancelReason"
+                        checked={cancelReasonPreset === preset}
+                        onChange={() => setCancelReasonPreset(preset)}
+                      />
+                      <span>{preset}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {cancelReasonPreset === 'Other custom reason' && (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '6px' }}>
+                    Describe Reason Details:
+                  </label>
+                  <textarea
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: theme === 'dark' ? '1px solid #475569' : '1px solid #cbd5e1',
+                      background: theme === 'dark' ? '#0f172a' : '#ffffff',
+                      color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+                      fontSize: '0.9rem'
+                    }}
+                    placeholder="Provide additional context for system admins & dispatch command..."
+                    value={customCancelReason}
+                    onChange={(e) => setCustomCancelReason(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCancelModal(false)}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: 'transparent',
+                    color: theme === 'dark' ? '#94a3b8' : '#475569',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Keep Active
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 22px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)'
+                  }}
+                >
+                  Confirm Cancellation
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

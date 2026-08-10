@@ -385,6 +385,31 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         </button>
 
       </div>
+
+      {/* Official Google Maps Watermark Badge */}
+      <div style={{
+        position: 'absolute',
+        bottom: '10px',
+        left: '10px',
+        zIndex: 1000,
+        background: theme === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.92)',
+        padding: '4px 10px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        color: theme === 'dark' ? '#60a5fa' : '#1a73e8',
+        border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0',
+        pointerEvents: 'none'
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ea4335"/>
+        </svg>
+        <span>Google Maps</span>
+      </div>
     </div>
   );
 };

@@ -1265,20 +1265,30 @@ export const EmergencyService = {
     }
 
     db.emergencies = emergencies.map(e => e.id === emergencyId ? updatedEmg : e);
-    this.logTransition(emergencyId, emg.status, 'cancelled', cancelledByUserId, `Emergency cancelled: ${reason}`);
+    this.logTransition(emergencyId, emg.status, 'cancelled', cancelledByUserId, `Emergency cancelled by user ${cancelledByUserId}: ${reason}`);
 
-    // Notify participants
-    const party = [emg.mother_id, emg.driver_id, emg.doctor_id, 1].filter(Boolean) as number[];
+    // Notify ALL Admins, Doctors, Drivers, and Mother
+    const admins = db.users.filter(u => u.role === 'admin');
+    const adminIds = admins.map(a => a.id);
+    const motherName = db.users.find(u => u.id === emg.mother_id)?.full_name || 'Patient';
+    const party = Array.from(new Set([emg.mother_id, emg.driver_id, emg.doctor_id, ...adminIds])).filter(Boolean) as number[];
+
     party.forEach(uid => {
-      if (uid === cancelledByUserId) return;
+      if (uid === cancelledByUserId && uid === emg.mother_id) return;
       NotificationService.createNotification(
         uid,
-        '⚠️ Emergency Cancelled',
-        `Rescue mission ${emg.code} has been cancelled. Reason: ${reason}`,
+        '⚠️ Emergency SOS Cancelled',
+        `Emergency alert ${emg.code} for ${motherName} was CANCELLED. Reason: "${reason}"`,
         'cancelled',
         emergencyId
       );
     });
+
+    // Broadcast real-time events for instant UI updates on Admin, Doctor, Driver, VHT dashboards
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('mamatrack_alert_triggered', { detail: updatedEmg }));
+      window.dispatchEvent(new CustomEvent('mamatrack_db_update', { detail: { key: 'emergencies' } }));
+    }
 
     return updatedEmg;
   },
