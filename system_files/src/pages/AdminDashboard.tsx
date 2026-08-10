@@ -34,6 +34,8 @@ export const AdminDashboard: React.FC = () => {
 
   // Incoming SOS Alert Modal state
   const [incomingAlertEmergency, setIncomingAlertEmergency] = useState<Emergency | null>(null);
+  const incomingAlertEmergencyRef = React.useRef<Emergency | null>(null);
+  incomingAlertEmergencyRef.current = incomingAlertEmergency;
   // Track the key of the last emergency we showed an alert for.
   // Using a ref so interval closures always read the fresh value.
   const lastShownAlertKeyRef = React.useRef<string | null>(null);
@@ -246,16 +248,33 @@ export const AdminDashboard: React.FC = () => {
     // Show SOS modal for an emergency if modal is not currently open or if key is newer
     const checkAndShowAlert = (emg: Emergency) => {
       if (!isEmergencyPayload(emg)) return;
+      if (emg.status !== 'pending') return;
       const key = getEmergencyKey(emg);
-      if (!incomingAlertEmergency || lastShownAlertKeyRef.current !== key) {
+      if (!incomingAlertEmergencyRef.current || lastShownAlertKeyRef.current !== key) {
         lastShownAlertKeyRef.current = key;
         setIncomingAlertEmergency(emg);
         playAlertSound();
       }
     };
 
-    const timer = setInterval(() => {
+    const syncModalWithLiveData = () => {
       loadData();
+      if (incomingAlertEmergencyRef.current) {
+        const activeId = incomingAlertEmergencyRef.current.id;
+        const fresh = db.emergencies.find(e => e.id === activeId);
+        if (!fresh || fresh.status !== 'pending') {
+          setIncomingAlertEmergency(null);
+          lastShownAlertKeyRef.current = null;
+          if (fresh && fresh.status === 'cancelled') {
+            const motherUser = db.users.find(u => u.id === fresh.mother_id);
+            showToast(`⚠️ Emergency ${fresh.code} for ${motherUser?.full_name || 'Patient'} was CANCELLED by patient. Reason: "${fresh.cancel_reason || 'No reason provided'}"`, 'warning', 8000);
+          }
+        }
+      }
+    };
+
+    const timer = setInterval(() => {
+      syncModalWithLiveData();
       // Pull freshest pending emergency directly from localStorage
       const allEmgs = [...db.emergencies].sort((a, b) =>
         new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()
@@ -267,12 +286,18 @@ export const AdminDashboard: React.FC = () => {
     }, 1500);
 
     const handleAlert = (e?: any) => {
-      loadData();
-      // Only trust the payload when it really is an emergency record. A storage
-      // event has no detail, and a db-update event carries { key } — both of
-      // those fall through to a rescan of the live data instead.
+      syncModalWithLiveData();
       const detail = e?.detail;
       if (isEmergencyPayload(detail)) {
+        if (detail.status === 'cancelled') {
+          if (incomingAlertEmergencyRef.current && incomingAlertEmergencyRef.current.id === detail.id) {
+            setIncomingAlertEmergency(null);
+            lastShownAlertKeyRef.current = null;
+          }
+          const motherUser = db.users.find(u => u.id === detail.mother_id);
+          showToast(`⚠️ Emergency ${detail.code} for ${motherUser?.full_name || 'Patient'} was CANCELLED by patient. Reason: "${detail.cancel_reason || 'No reason provided'}"`, 'warning', 8000);
+          return;
+        }
         checkAndShowAlert(detail);
         return;
       }
@@ -3343,6 +3368,7 @@ export const AdminDashboard: React.FC = () => {
       {/* ====== INCOMING SOS ALERT MODAL (auto-shows on new alert) ====== */}
       {incomingAlertEmergency && (() => {
         const emg = db.emergencies.find(e => e.id === incomingAlertEmergency.id) || incomingAlertEmergency;
+        if (emg.status !== 'pending') return null;
         const motherUser = db.users.find(u => u.id === emg.mother_id);
         const motherProfile = db.mothers.find(m => m.user_id === emg.mother_id);
         const topHospitals = getTopHospitalOptions(emg, 3);
