@@ -428,63 +428,6 @@ export const AdminDashboard: React.FC = () => {
 
   if (!user) return <SkeletonDashboardLoader />;
 
-  // Contextual search filters
-  const filteredMothers = mothers.filter(m => {
-    const u = db.users.find(usr => usr.id === m.user_id);
-    const q = searchQuery.toLowerCase();
-    return (
-      u?.full_name.toLowerCase().includes(q) ||
-      u?.email.toLowerCase().includes(q) ||
-      u?.phone.toLowerCase().includes(q) ||
-      m.village.toLowerCase().includes(q) ||
-      m.sub_county.toLowerCase().includes(q) ||
-      m.blood_type.toLowerCase().includes(q)
-    );
-  });
-
-  const filteredHospitals = hospitals.filter(h => {
-    const q = searchQuery.toLowerCase();
-    return (
-      h.name.toLowerCase().includes(q) ||
-      h.sub_county.toLowerCase().includes(q) ||
-      h.address.toLowerCase().includes(q) ||
-      h.facility_type.toLowerCase().includes(q)
-    );
-  });
-
-  const filteredDoctors = doctors.filter(doc => {
-    const u = db.users.find(usr => usr.id === doc.user_id);
-    const q = searchQuery.toLowerCase();
-    return (
-      u?.full_name.toLowerCase().includes(q) ||
-      doc.specialization.toLowerCase().includes(q) ||
-      doc.license_number.toLowerCase().includes(q)
-    );
-  });
-
-  const filteredDrivers = drivers.filter(drv => {
-    const u = db.users.find(usr => usr.id === drv.user_id);
-    const q = searchQuery.toLowerCase();
-    return (
-      u?.full_name.toLowerCase().includes(q) ||
-      drv.driver_role.toLowerCase().includes(q) ||
-      drv.license_number.toLowerCase().includes(q)
-    );
-  });
-
-
-  const filteredEmergencies = emergencies.filter(emg => {
-    const u = db.users.find(usr => usr.id === emg.mother_id);
-    const q = searchQuery.toLowerCase();
-    return (
-      emg.code.toLowerCase().includes(q) ||
-      emg.status.toLowerCase().includes(q) ||
-      emg.severity.toLowerCase().includes(q) ||
-      (u && u.full_name.toLowerCase().includes(q)) ||
-      emg.notes.toLowerCase().includes(q)
-    );
-  });
-
   // Stats calculation
   const pendingCount = emergencies.filter(e => e.status === 'pending').length;
   const activeDispatchCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered'].includes(e.status)).length;
