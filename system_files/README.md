@@ -1,50 +1,35 @@
-# React + TypeScript + Vite
+# MamaTrack GPS — Maternal & Emergency Health Tracking System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MamaTrack GPS is a web and mobile PWA application designed for tracking expectant mothers, community VHT (Village Health Team) health records, doctor consultations, driver emergency dispatch, and administrative analytics.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📌 System Documentation & Recommendations
+* **Latest System Recommendations & Roadmap**: See [RECOMMENDATIONS.md](./RECOMMENDATIONS.md) for the latest architectural recommendations, offline-first strategy, security policies, and performance enhancements.
+* **Supabase Integration Guide**: See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for setup instructions and SQL database schema migration steps.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 🛠️ Development & Available Scripts
 
-- Configure the top-level `parserOptions` property like this:
+In the `system_files` directory, you can run:
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### `npm run dev`
+Runs the app in development mode using Vite. Open [http://localhost:5173](http://localhost:5173) to view in browser.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### `npm run build`
+Builds the production-ready application bundle in the `dist` folder.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+### `npm run type-check`
+Runs the TypeScript compiler check (`tsc -b`) across all modules without emitting files.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+### `npm run lint`
+Runs ESLint across `src/` to verify code quality and rule compliance.
+
+---
+
+## 🏗️ Core Architecture Overview
+* **Frontend**: React 18 + TypeScript + Vite + Tailwind/Vanilla CSS
+* **Mapping**: Leaflet + OpenStreetMap + OSRM Routing Engine
+* **Persistence & Synchronization**: Local Storage + IndexedDB (`offlineStorage.ts`) + Supabase DB Client
+* **PWA & Mobile**: Service Worker + Web App Manifest (`manifest.json`)
