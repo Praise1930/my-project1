@@ -90,22 +90,18 @@ export const MotherConsole: React.FC = () => {
 
   // Handle browser back button navigation
   useEffect(() => {
-    window.history.pushState({ tab: activeTab }, '');
+    window.history.pushState(null, '');
 
     const handlePopState = () => {
-      if (activeTab !== 'home') {
-        setActiveTab('home');
-      } else {
-        AuthService.logout();
-        navigate('/login?role=mother', { replace: true });
-      }
+      AuthService.logout();
+      navigate('/login?role=mother', { replace: true });
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [activeTab, navigate]);
+  }, [navigate]);
 
   // 2. Poll active emergency status or run simulation
   const activeEmgId = activeEmergency?.id;
@@ -207,7 +203,7 @@ export const MotherConsole: React.FC = () => {
   const handleTriggerSOS = () => {
     // Play audio siren alert sound
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
         const ctx = new AudioCtx();
         const osc = ctx.createOscillator();
@@ -223,7 +219,7 @@ export const MotherConsole: React.FC = () => {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.5);
       }
-    } catch (e) {
+    } catch {
       console.log('Audio alert notification sound played');
     }
 

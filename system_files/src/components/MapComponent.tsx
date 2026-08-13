@@ -81,7 +81,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   theme = 'light',
   onMapClick
 }) => {
-  const [viewMode, setViewMode] = useState<'google' | 'satellite' | 'terrain'>('google');
+  const [viewMode] = useState<'google' | 'satellite' | 'terrain'>('google');
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
@@ -248,7 +248,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
           if (active && data.routes && data.routes.length > 0 && mapRef.current) {
             const osrmCoords = data.routes[0].geometry.coordinates;
-            const roadPoints: [number, number][] = osrmCoords.map((c: any) => [c[1], c[0]]);
+            const roadPoints: [number, number][] = osrmCoords.map((c: [number, number]) => [c[1], c[0]]);
 
             if (routeLineRef.current) {
               routeLineRef.current.remove();

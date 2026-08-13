@@ -1,7 +1,7 @@
 // MamaTrack GPS — AI Health Assistant Chatbot Component
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { Send, Bot, X, Trash2, Sparkles, MessageSquare } from 'lucide-react';
+import { Send, Bot, X, Trash2, Sparkles } from 'lucide-react';
 
 interface ChatMessage {
   id: number;
@@ -19,7 +19,7 @@ export const SMSSimulator: React.FC = () => {
   const [chatLogs, setChatLogs] = useState<ChatMessage[]>(() => {
     const saved = localStorage.getItem('mamatrack_ai_chat');
     if (saved) {
-      try { return JSON.parse(saved); } catch { }
+      try { return JSON.parse(saved); } catch { /* ignore error */ }
     }
     return [
       {

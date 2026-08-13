@@ -29,10 +29,9 @@ export const PWAInstallBanner: React.FC = () => {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // @ts-ignore
-    if (window.deferredPWAInstallPrompt) {
-      // @ts-ignore
-      handler(window.deferredPWAInstallPrompt);
+    const win = window as unknown as { deferredPWAInstallPrompt?: Event };
+    if (win.deferredPWAInstallPrompt) {
+      handler(win.deferredPWAInstallPrompt);
     }
 
     // Fallback: show iOS Safari guide after 3s if no prompt fires and on iOS
@@ -71,7 +70,9 @@ export const PWAInstallBanner: React.FC = () => {
   };
 
   const handleDismiss = () => {
-    sessionStorage.getItem('pwa-banner-dismissed') ? null : sessionStorage.setItem('pwa-banner-dismissed', '1');
+    if (!sessionStorage.getItem('pwa-banner-dismissed')) {
+      sessionStorage.setItem('pwa-banner-dismissed', '1');
+    }
     setVisible(false);
   };
 

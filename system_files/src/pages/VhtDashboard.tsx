@@ -269,7 +269,7 @@ export const VhtDashboard: React.FC = () => {
 
     // Warning validation
     let danger = false;
-    let alerts = [];
+    const alerts: string[] = [];
     if (systolic >= 140 || diastolic >= 90) {
       danger = true;
       alerts.push(`High BP (${bpInput} mmHg)`);
