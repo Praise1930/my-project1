@@ -91,6 +91,21 @@ export const DoctorDashboard: React.FC = () => {
     loadData(sessionUser.id, docProfile?.hospital_id || 1);
   }, [navigate]);
 
+  // Handle browser back button navigation to log out user
+  useEffect(() => {
+    window.history.pushState(null, '');
+
+    const handlePopState = () => {
+      AuthService.logout();
+      navigate('/login?role=doctor', { replace: true });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate]);
+
   const loadData = (docUserId: number, hospitalId: number) => {
     setEmergencies(db.emergencies.filter(e => e.hospital_id === hospitalId).reverse());
     setAssessments(db.clinicalAssessments.filter(a => a.doctor_id === docUserId));

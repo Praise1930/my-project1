@@ -71,6 +71,21 @@ export const DriverDashboard: React.FC = () => {
     }
   }, [navigate]);
 
+  // Handle browser back button navigation to log out user
+  useEffect(() => {
+    window.history.pushState(null, '');
+
+    const handlePopState = () => {
+      AuthService.logout();
+      navigate('/login?role=driver', { replace: true });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate]);
+
   // 2. Poll dispatch changes or simulation updates
   useEffect(() => {
     if (!user || !driver) return;

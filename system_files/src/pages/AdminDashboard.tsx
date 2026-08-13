@@ -295,6 +295,25 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [navigate]);
 
+  // Handle browser back button navigation
+  useEffect(() => {
+    window.history.pushState({ tab: activeTab }, '');
+
+    const handlePopState = () => {
+      if (activeTab !== 'dispatch') {
+        setActiveTab('dispatch');
+      } else {
+        AuthService.logout();
+        navigate('/login?role=admin', { replace: true });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [activeTab, navigate]);
+
   const loadData = () => {
     // Sort newest first by triggered_at timestamp
     const sorted = [...db.emergencies].sort((a, b) =>

@@ -123,6 +123,25 @@ export const VhtDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [navigate]);
 
+  // Handle browser back button navigation
+  useEffect(() => {
+    window.history.pushState({ tab: activeTab }, '');
+
+    const handlePopState = () => {
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+      } else {
+        AuthService.logout();
+        navigate('/login?role=vht', { replace: true });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [activeTab, navigate]);
+
   if (!user) return <SkeletonDashboardLoader />;
 
   const handleRegisterMother = (e: React.FormEvent) => {

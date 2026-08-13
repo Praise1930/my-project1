@@ -88,6 +88,25 @@ export const MotherConsole: React.FC = () => {
     setActiveEmergency(emg);
   }, [navigate]);
 
+  // Handle browser back button navigation
+  useEffect(() => {
+    window.history.pushState({ tab: activeTab }, '');
+
+    const handlePopState = () => {
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+      } else {
+        AuthService.logout();
+        navigate('/login?role=mother', { replace: true });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [activeTab, navigate]);
+
   // 2. Poll active emergency status or run simulation
   const activeEmgId = activeEmergency?.id;
   const activeEmgStatus = activeEmergency?.status;
