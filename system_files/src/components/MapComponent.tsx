@@ -169,16 +169,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       tileUrl = 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
       attribution = '&copy; Google Maps Terrain &mdash; Map data &copy; Google';
     } else if (theme === 'dark') {
-      // Pure Google Maps Dark Night Mode Tiles
-      tileUrl = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-      attribution = '&copy; Google Maps &mdash; Map data &copy; Google';
+      // CartoDB Dark Matter tile layer for dark mode UI integration
+      tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+      attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
     }
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution: attribution,
       maxZoom: 20,
       maxNativeZoom: 19,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+      subdomains: theme === 'dark' && viewMode === 'google' ? ['a', 'b', 'c', 'd'] : ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(mapRef.current);
 
     tileLayerRef.current = tileLayer;
@@ -343,7 +343,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ea4335"/>
         </svg>
-        <span>Google Maps</span>
+        <span>{theme === 'dark' && viewMode === 'google' ? 'Dark GPS Map' : 'Google Maps'}</span>
       </div>
     </div>
   );
