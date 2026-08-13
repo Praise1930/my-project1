@@ -7,6 +7,7 @@ MamaTrack GPS is a web and mobile PWA application designed for tracking expectan
 ## 📌 System Documentation & Recommendations
 * **Latest System Recommendations & Roadmap**: See [RECOMMENDATIONS.md](./RECOMMENDATIONS.md) for the latest architectural recommendations, offline-first strategy, security policies, and performance enhancements.
 * **Supabase Integration Guide**: See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for setup instructions and SQL database schema migration steps.
+* **Production Status**: Connected to live Supabase backend instance.
 
 ---
 
