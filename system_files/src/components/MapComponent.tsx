@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTheme } from '../contexts/ThemeContext';
 
 export interface MapMarker {
   id: string;
@@ -24,24 +25,36 @@ interface MapComponentProps {
   onMapClick?: (lat: number, lng: number) => void;
 }
 
-// Marker icon generator using Emojis and styled HTML divs for maximum reliability
-const getMarkerIcon = (type: MapMarker['type']) => {
-  let emoji = '📍';
-  let color = 'linear-gradient(135deg, #3b82f6, #1d4ed8)'; // primary blue
+// Marker glyphs, drawn as inline SVG rather than emoji. Leaflet builds markers
+// from an HTML string, so the icon has to be markup rather than a component.
+// Emoji were unusable here: each platform draws its own cartoon, they cannot be
+// recoloured against the marker fill, and they sit off-centre in the disc.
+const MARKER_PATHS: Record<string, string> = {
+  // expectant mother — person
+  mother: '<circle cx="12" cy="7.5" r="3.2"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
+  // ambulance — van with a cross
+  driver: '<path d="M2 8.5h11v8H2z"/><path d="M13 11h4.2l2.8 3v2.5h-7z"/><circle cx="6" cy="18.5" r="1.8"/><circle cx="16.5" cy="18.5" r="1.8"/><path d="M7.5 10.5v3M6 12h3"/>',
+  // health facility — building with a cross
+  hospital: '<path d="M4 20V6.5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1V20"/><path d="M2.5 20h19"/><path d="M12 8.5v5M9.5 11h5"/>',
+  // emergency — alert
+  emergency: '<path d="M12 3.2 21 19H3Z"/><path d="M12 9.5v4"/><path d="M12 16.4h.01"/>',
+  // fallback — map pin
+  default: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/>',
+};
 
-  if (type === 'mother') {
-    emoji = '🤰';
-    color = 'linear-gradient(135deg, #ec4899, #be123c)'; // pink/rose
-  } else if (type === 'driver') {
-    emoji = '🚑';
-    color = 'linear-gradient(135deg, #f59e0b, #b45309)'; // amber/yellow
-  } else if (type === 'hospital') {
-    emoji = '🏥';
-    color = 'linear-gradient(135deg, #10b981, #047857)'; // green/emerald
-  } else if (type === 'emergency') {
-    emoji = '🚨';
-    color = 'linear-gradient(135deg, #ef4444, #b91c1c)'; // critical red
-  }
+const getMarkerIcon = (type: MapMarker['type']) => {
+  const palette: Record<string, string> = {
+    mother: 'linear-gradient(135deg, #ec4899, #be123c)',
+    driver: 'linear-gradient(135deg, #f59e0b, #b45309)',
+    hospital: 'linear-gradient(135deg, #10b981, #047857)',
+    emergency: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+  };
+  const color = palette[type] || 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+  const glyph = MARKER_PATHS[type] || MARKER_PATHS.default;
+
+  const svg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="#ffffff" stroke-width="1.9" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true">${glyph}</svg>`;
 
   return L.divIcon({
     html: `<div style="
@@ -54,10 +67,9 @@ const getMarkerIcon = (type: MapMarker['type']) => {
       border-radius: 50%;
       border: 2px solid #ffffff;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      font-size: 1.25rem;
       animation: ${type === 'emergency' ? 'pulse-marker 1.5s infinite alternate' : 'none'};
       position: relative;
-    ">${emoji}</div>
+    ">${svg}</div>
     <style>
       @keyframes pulse-marker {
         0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
@@ -78,9 +90,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   routePoints = [],
   emergencyCircle = null,
   interactive = true,
-  theme = 'light',
+  theme: themeProp,
   onMapClick
 }) => {
+  // Fall back to the application theme rather than a hard-coded 'light'. Seven
+  // of the eight maps never passed this prop, which left them on the light
+  // basemap while the dashboard around them went dark.
+  const { theme: appTheme } = useTheme();
+  const theme = themeProp ?? appTheme;
+
   const [viewMode] = useState<'google' | 'satellite' | 'terrain'>('google');
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
