@@ -10,6 +10,7 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { showToast, confirmAction } from '../components/toastBus';
 import { SupabaseMigrationModal } from '../components/SupabaseMigrationModal';
+import { playAlertSound, releaseAlertSound } from '../services/alertSound';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { errorMessage } from '../services/errors';
 import { Icon } from '../components/Icon';
@@ -348,29 +349,8 @@ export const AdminDashboard: React.FC = () => {
 
   // Real-time state poller, BroadcastChannel, and storage event listeners for instant alerts
   // playAlertSound defined here so it's available to the useEffect closure below
-  const playAlertSound = () => {
-    try {
-      // Safari still only exposes the prefixed constructor.
-      const AudioContext = window.AudioContext
-        || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
-      gain.gain.setValueAtTime(0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-      console.log('Audio play blocked or failed', e);
-    }
-  };
+  // Tone lives in a service so a single audio context is shared across alerts;
+  // see src/services/alertSound.ts for why that matters.
 
   useEffect(() => {
     loadData();
@@ -478,6 +458,8 @@ export const AdminDashboard: React.FC = () => {
       window.removeEventListener('mamatrack_alert_triggered', handleAlert);
       window.removeEventListener('mamatrack_db_update', handleAlert);
       if (bc) bc.close();
+      // Hand the audio device back when leaving the console.
+      releaseAlertSound();
     };
   }, []);
 
