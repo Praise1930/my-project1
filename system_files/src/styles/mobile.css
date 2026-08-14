@@ -21,6 +21,7 @@ html, body {
 @media (max-width: 768px) {
   html, body, #root {
     min-height: 100vh;
+    min-height: 100dvh;
     width: 100% !important;
     max-width: 100vw !important;
     overflow-x: clip !important;
@@ -30,6 +31,7 @@ html, body {
 
   .mother-theme, .driver-theme, .vht-theme, .dasher-dashboard, .medilab-dashboard, .momentra-root, .driver-map-layout, .medilab-doctor-root, .driver-dashboard-root {
     min-height: 100vh;
+    min-height: 100dvh;
     width: 100% !important;
     max-width: 100vw !important;
     overflow-x: clip !important;
@@ -39,6 +41,7 @@ html, body {
 
   .main-content-area, .main-content, .momentra-root main, .vht-theme main {
     min-height: calc(100vh - 65px);
+    min-height: calc(100dvh - 65px);
     flex: 1 !important;
     margin-left: 0 !important;
     width: 100% !important;
@@ -76,18 +79,17 @@ html, body {
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
-  /* ── 0. DROPDOWN & POPOVER CENTERING (PREVENT RIGHT-EDGE CLIPPING) ─ */
+  /* ── 0. DROPDOWNS & POPOVERS ─────────────────────────────────────
+     The profile menu is positioned in JavaScript from the avatar's own
+     rectangle and clamped to the viewport, then rendered through a portal.
+     It must not be re-centred here: this block previously forced
+     top/left: 50% with !important, and because the headers use
+     backdrop-filter — which makes an ancestor the containing block for
+     position: fixed — that centred the menu inside the 114px header and
+     pushed its top off the screen. Only the scroll behaviour is set now. */
   .profile-upload-dropdown {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: translate(-50%, -50%) !important;
-    width: min(280px, calc(100vw - 32px)) !important;
-    max-height: 88vh !important;
-    overflow-y: auto !important;
-    z-index: 999999 !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .notifications-panel {
@@ -616,62 +618,62 @@ html, body {
 /* ─────────────────────────────────────────────────────────────
    DARK MODE OVERRIDES (applies to all dashboards)
    ───────────────────────────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  /* Global background and text */
-  html:not([data-theme="light"]),
-  html:not([data-theme="light"]) body {
-    background: #1e293b !important;
-    color: #e0e0e0 !important;
-  }
-  /* Dashboard containers */
-  html:not([data-theme="light"]) .mother-theme,
-  html:not([data-theme="light"]) .driver-theme,
-  html:not([data-theme="light"]) .dasher-dashboard,
-  html:not([data-theme="light"]) .medilab-dashboard {
-    background: #121212 !important;
-    color: #e0e0e0 !important;
-  }
-  /* Headers, footers, sidebars, navbars */
-  html:not([data-theme="light"]) .site-header,
-  html:not([data-theme="light"]) .dashboard-footer,
-  html:not([data-theme="light"]) .sidebar,
-  html:not([data-theme="light"]) .sidebar-admin,
-  html:not([data-theme="light"]) header.medilab-navbar {
-    background: #1a1a1a !important;
-    color: #e0e0e0 !important;
-  }
-  /* Cards and modals */
-  html:not([data-theme="light"]) .card,
-  html:not([data-theme="light"]) .card-glass,
-  html:not([data-theme="light"]) .medical-card,
-  html:not([data-theme="light"]) .admin-modal-container,
-  html:not([data-theme="light"]) .medilab-modal-container {
-    background: #1e1e1e !important;
-    color: #e0e0e0 !important;
-    border-color: #333 !important;
-  }
-  /* Tables */
-  html:not([data-theme="light"]) table {
-    background: #1e1e1e !important;
-    color: #e0e0e0 !important;
-  }
-  html:not([data-theme="light"]) th,
-  html:not([data-theme="light"]) td {
-    background: #1e1e1e !important;
-    color: #e0e0e0 !important;
-    border-color: #333 !important;
-  }
-  /* Links */
-  html:not([data-theme="light"]) a:not(.btn):not(.header-btn):not([class*="btn"]) {
-    color: #90caf9 !important;
-  }
-  /* Ensure root components have dark backgrounds */
-  html:not([data-theme="light"]) .medical-register-root,
-  html:not([data-theme="light"]) .medical-login-root,
-  html:not([data-theme="light"]) .medical-landing-root {
-    background: #1e293b !important;
-    color: #e0e0e0 !important;
-  }
+/* DARK MODE OVERRIDES (all dashboards) — keyed to the toggle, not the OS preference, so switching
+   theme is authoritative even when the operating system disagrees. */
+/* Global background and text */
+html[data-theme="dark"],
+html[data-theme="dark"] body {
+  background: #1e293b !important;
+  color: #e0e0e0 !important;
+}
+/* Dashboard containers */
+html[data-theme="dark"] .mother-theme,
+html[data-theme="dark"] .driver-theme,
+html[data-theme="dark"] .dasher-dashboard,
+html[data-theme="dark"] .medilab-dashboard {
+  background: #121212 !important;
+  color: #e0e0e0 !important;
+}
+/* Headers, footers, sidebars, navbars */
+html[data-theme="dark"] .site-header,
+html[data-theme="dark"] .dashboard-footer,
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .sidebar-admin,
+html[data-theme="dark"] header.medilab-navbar {
+  background: #1a1a1a !important;
+  color: #e0e0e0 !important;
+}
+/* Cards and modals */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .card-glass,
+html[data-theme="dark"] .medical-card,
+html[data-theme="dark"] .admin-modal-container,
+html[data-theme="dark"] .medilab-modal-container {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border-color: #333 !important;
+}
+/* Tables */
+html[data-theme="dark"] table {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+}
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+  background: #1e1e1e !important;
+  color: #e0e0e0 !important;
+  border-color: #333 !important;
+}
+/* Links */
+html[data-theme="dark"] a:not(.btn):not(.header-btn):not([class*="btn"]) {
+  color: #90caf9 !important;
+}
+/* Ensure root components have dark backgrounds */
+html[data-theme="dark"] .medical-register-root,
+html[data-theme="dark"] .medical-login-root,
+html[data-theme="dark"] .medical-landing-root {
+  background: #1e293b !important;
+  color: #e0e0e0 !important;
 }
 
 /* Explicit data-theme dark overrides */
@@ -727,49 +729,49 @@ html[data-theme="dark"] .medical-landing-root {
 /* ─────────────────────────────────────────────────────────────
    LIGHT MODE OVERRIDES (applies to all dashboards)
    ───────────────────────────────────────────────────────────── */
-@media (prefers-color-scheme: light) {
-  html:not([data-theme="dark"]),
-  html:not([data-theme="dark"]) body {
-    background: #ffffff !important;
-    color: #111111 !important;
-  }
-  html:not([data-theme="dark"]) .mother-theme,
-  html:not([data-theme="dark"]) .driver-theme,
-  html:not([data-theme="dark"]) .dasher-dashboard,
-  html:not([data-theme="dark"]) .medilab-dashboard {
-    background: #ffffff !important;
-    color: #111111 !important;
-  }
-  html:not([data-theme="dark"]) .site-header,
-  html:not([data-theme="dark"]) .dashboard-footer,
-  html:not([data-theme="dark"]) .sidebar,
-  html:not([data-theme="dark"]) .sidebar-admin,
-  html:not([data-theme="dark"]) header.medilab-navbar {
-    background: #f8f9fa !important;
-    color: #111111 !important;
-  }
-  html:not([data-theme="dark"]) .card,
-  html:not([data-theme="dark"]) .card-glass,
-  html:not([data-theme="dark"]) .medical-card,
-  html:not([data-theme="dark"]) .admin-modal-container,
-  html:not([data-theme="dark"]) .medilab-modal-container {
-    background: #ffffff !important;
-    color: #111111 !important;
-    border-color: #e2e8f0 !important;
-  }
-  html:not([data-theme="dark"]) table {
-    background: #ffffff !important;
-    color: #111111 !important;
-  }
-  html:not([data-theme="dark"]) th,
-  html:not([data-theme="dark"]) td {
-    background: #ffffff !important;
-    color: #111111 !important;
-    border-color: #e2e8f0 !important;
-  }
-  html:not([data-theme="dark"]) a:not(.btn):not(.header-btn):not([class*="btn"]) {
-    color: #2563eb !important;
-  }
+/* LIGHT MODE OVERRIDES (all dashboards) — keyed to the toggle, not the OS preference, so switching
+   theme is authoritative even when the operating system disagrees. */
+html[data-theme="light"],
+html[data-theme="light"] body {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] .mother-theme,
+html[data-theme="light"] .driver-theme,
+html[data-theme="light"] .dasher-dashboard,
+html[data-theme="light"] .medilab-dashboard {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] .site-header,
+html[data-theme="light"] .dashboard-footer,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .sidebar-admin,
+html[data-theme="light"] header.medilab-navbar {
+  background: #f8f9fa !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] .card,
+html[data-theme="light"] .card-glass,
+html[data-theme="light"] .medical-card,
+html[data-theme="light"] .admin-modal-container,
+html[data-theme="light"] .medilab-modal-container {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-theme="light"] table {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+html[data-theme="light"] th,
+html[data-theme="light"] td {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-theme="light"] a:not(.btn):not(.header-btn):not([class*="btn"]) {
+  color: #2563eb !important;
 }
 
 /* Explicit data-theme light overrides */
@@ -1268,13 +1270,9 @@ a.header-btn:hover {
    and prevents content from overflowing small mobile screens.
 ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Safe area inset paddings for notched mobile devices */
-  body {
-    padding-top: env(safe-area-inset-top, 0px) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    padding-left: env(safe-area-inset-left, 0px) !important;
-    padding-right: env(safe-area-inset-right, 0px) !important;
-  }
+  /* Safe-area insets are applied per fixed element in viewport.css. Padding
+     the body did not reach them (fixed elements are placed against the
+     viewport, not the body) and it pushed 100vh children below the fold. */
 
   /* Universal Modal & Lightbox Mobile Screen Fitting */
   .modal,
@@ -1302,3 +1300,51 @@ a.header-btn:hover {
 }
 
 
+
+/* ─────────────────────────────────────────────────────────────
+   COORDINATED THEME SWITCH
+   The toggle adds .theme-switching to <html> for the length of the
+   cross-fade, so every surface changes colour together and once.
+   Individual elements must NOT carry their own background/colour
+   transitions: React rewrites inline style attributes on re-render,
+   which restarts those transitions and leaves panels stranded on the
+   previous theme's colour.
+   ───────────────────────────────────────────────────────────── */
+html.theme-switching,
+html.theme-switching body,
+html.theme-switching *:not(svg):not(svg *) {
+  transition: background-color 200ms linear,
+              border-color 200ms linear,
+              color 200ms linear !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-switching,
+  html.theme-switching body,
+  html.theme-switching *:not(svg):not(svg *) {
+    transition: none !important;
+  }
+}
+
+/* Light-mode reset for the page roots. The dark rules above are emphatic, so
+   the light side needs equally specific counterparts or a root keeps whatever
+   the vendor template painted it. */
+html[data-theme="light"],
+html[data-theme="light"] body,
+html[data-theme="light"] #root,
+html[data-theme="light"] .medical-landing-root,
+html[data-theme="light"] .medical-login-root,
+html[data-theme="light"] .medical-register-root {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root,
+html[data-theme="dark"] .medical-landing-root,
+html[data-theme="dark"] .medical-login-root,
+html[data-theme="dark"] .medical-register-root {
+  background: #1e293b !important;
+  background-color: #1e293b !important;
+}

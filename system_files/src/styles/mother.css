@@ -879,3 +879,23 @@ body.mother-theme-active::after {
 .momentra-dashboard .page-header .greeting-title {
     font-size: 1.65rem;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Dark-mode surfaces for the mother portal
+   These cards were authored with a hard-coded white fill, so they
+   stayed white when the rest of the portal went dark.
+   ───────────────────────────────────────────────────────────── */
+html[data-theme="dark"] .momentra-feature-card,
+html[data-theme="dark"] .momentra-feature-card.active {
+    background: #1c2b38 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-theme="dark"] .momentra-feature-card:hover {
+    border-color: rgba(244, 63, 94, 0.35) !important;
+}
+
+html[data-theme="dark"] .feature-icon-wrap {
+    background: rgba(244, 63, 94, 0.16) !important;
+}

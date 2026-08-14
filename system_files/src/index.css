@@ -4,6 +4,9 @@
 @import './styles/doctor.css';
 @import './styles/driver.css';
 @import './styles/mobile.css';
+/* Last, so it can correct viewport and safe-area handling in the vendor
+   templates above it. */
+@import './styles/viewport.css';
 
 html {
   width: 100%;
@@ -16,6 +19,7 @@ body {
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   overflow-x: clip;
   overscroll-behavior-y: auto;
@@ -26,6 +30,7 @@ body {
   width: 100%;
   max-width: 100vw;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: clip;
 }
 

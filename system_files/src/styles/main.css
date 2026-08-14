@@ -699,6 +699,7 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
+    min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -737,6 +738,7 @@ img {
 .dashboard-layout {
     display: flex;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* Sidebar keeps its dark navy theme regardless of main theme */
@@ -774,6 +776,7 @@ img {
     margin-left: 280px;
     padding: var(--space-xl);
     min-height: 100vh;
+    min-height: 100dvh;
     transition: margin-left var(--transition-base);
 }
 
@@ -1600,6 +1603,7 @@ img {
 
 .map-container.full-height {
     height: calc(100vh - 200px);
+    height: calc(100dvh - 200px);
 }
 
 /* ============================================================

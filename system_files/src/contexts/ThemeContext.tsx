@@ -1,6 +1,6 @@
 // MamaTrack GPS — Global Dark/Light Theme Context
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 export type Theme = 'dark' | 'light';
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
@@ -69,6 +69,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [screenSize, setScreenSize] = useState<ScreenSizeInfo>(getScreenSizeInfo);
 
+  // Holds the timer that removes the cross-fade class after a theme switch.
+  const themeFadeTimer = useRef<number | undefined>(undefined);
+
   // Sync with OS system theme changes if user hasn't explicitly set a preference
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -109,6 +112,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const toggleTheme = useCallback(() => {
+    // Colours are cross-faded by a single class on <html> for the length of the
+    // switch, rather than by a transition on each element. Per-element
+    // transitions were restarted every time React rewrote a style attribute,
+    // so panels stalled or arrived at the new colour at different moments.
+    const root = document.documentElement;
+    root.classList.add('theme-switching');
+    window.clearTimeout(themeFadeTimer.current);
+    themeFadeTimer.current = window.setTimeout(
+      () => root.classList.remove('theme-switching'),
+      260,
+    );
+
     setTheme((prev: Theme) => (prev === 'light' ? 'dark' : 'light'));
   }, []);
 

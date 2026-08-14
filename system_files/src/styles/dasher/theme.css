@@ -668,10 +668,12 @@
 
 .vh-100 {
   height: 100vh !important;
+  height: 100dvh !important;
 }
 
 .min-vh-100 {
   min-height: 100vh !important;
+  min-height: 100dvh !important;
 }
 
 .flex-fill {
@@ -19520,6 +19522,7 @@ textarea.form-control-lg {
   z-index: var(--ds-backdrop-zindex);
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: var(--ds-backdrop-bg);
 }
 .modal-backdrop.fade {
@@ -20710,6 +20713,7 @@ textarea.form-control-lg {
   z-index: 1040;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: #000;
 }
 .offcanvas-backdrop.fade {
@@ -21804,10 +21808,12 @@ textarea.form-control-lg {
 
 .vh-100 {
   height: 100vh !important;
+  height: 100dvh !important;
 }
 
 .min-vh-100 {
   min-height: 100vh !important;
+  min-height: 100dvh !important;
 }
 
 .flex-fill {
@@ -34381,6 +34387,7 @@ a:hover {
 
 .side-nav .nav {
   max-height: calc(100vh - 4.5rem);
+  max-height: calc(100dvh - 4.5rem);
   display: flex;
   flex-direction: column !important;
   flex-wrap: nowrap;
@@ -35722,6 +35729,7 @@ html.expanded #miniSidebar .brand-logo {
 html.expanded #miniSidebar .navbar-nav {
   overflow: auto;
   height: calc(100vh - 4.5rem);
+  height: calc(100dvh - 4.5rem);
   padding-bottom: 30px;
   background-color: var(--ds-navbar-bg);
 }
@@ -35809,6 +35817,7 @@ html.collapsed #content {
   margin-left: 3.75rem;
   padding: 80px 40px;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 @media (max-width: 990px) {
   html.collapsed #content {
@@ -35907,6 +35916,7 @@ html.expanded #content .navbar-glass .collapse-expanded {
 .offcanvasNav .navbar-nav {
   overflow: auto;
   height: calc(100vh - 4.5rem);
+  height: calc(100dvh - 4.5rem);
   padding-bottom: 30px;
   background-color: var(--ds-navbar-bg);
 }
