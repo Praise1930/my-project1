@@ -1,0 +1,450 @@
+/* MamaTrack GPS — Overlay surfaces
+ *
+ * One stylesheet for everything that floats above the page: toasts, dialogs,
+ * the session banner and the install prompt. These previously carried several
+ * hundred lines of inline style each, which made them drift apart visually and
+ * impossible to restyle in one place.
+ *
+ * Theme is driven by [data-theme] on <html>, set by ThemeContext, so no
+ * component needs to branch on isDark to paint itself. */
+
+:root {
+  --ov-surface: #ffffff;
+  --ov-surface-sunk: #f4f6f8;
+  --ov-border: #dde3e8;
+  --ov-border-strong: #c6d0d8;
+
+  --ov-text: #16212b;
+  --ov-text-muted: #5b6b78;
+  --ov-text-faint: #7d8d99;
+
+  --ov-good: #12674a;
+  --ov-good-wash: #e4f1ec;
+  --ov-warn: #8a5a06;
+  --ov-warn-wash: #f8efdd;
+  --ov-bad: #a32a1c;
+  --ov-bad-wash: #f8e6e3;
+  --ov-info: #1d5a86;
+  --ov-info-wash: #e2edf5;
+
+  --ov-scrim: rgba(20, 30, 38, 0.42);
+  --ov-shadow: 0 1px 2px rgba(16, 26, 34, 0.06), 0 8px 24px -6px rgba(16, 26, 34, 0.18);
+  --ov-shadow-lg: 0 2px 4px rgba(16, 26, 34, 0.08), 0 24px 48px -12px rgba(16, 26, 34, 0.28);
+
+  --ov-radius: 8px;
+  --ov-radius-sm: 5px;
+  --ov-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+[data-theme='dark'] {
+  --ov-surface: #16222c;
+  --ov-surface-sunk: #101a22;
+  --ov-border: #2a3b47;
+  --ov-border-strong: #3a4e5c;
+
+  --ov-text: #e3eaee;
+  --ov-text-muted: #a0b1bc;
+  --ov-text-faint: #7d919e;
+
+  --ov-good: #63bd97;
+  --ov-good-wash: #14302a;
+  --ov-warn: #d7a950;
+  --ov-warn-wash: #302816;
+  --ov-bad: #e7897b;
+  --ov-bad-wash: #33201d;
+  --ov-info: #6fb1dd;
+  --ov-info-wash: #142834;
+
+  --ov-scrim: rgba(4, 10, 14, 0.62);
+  --ov-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+  --ov-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.35), 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* ------------------------------------------------------------------ toasts */
+
+.ov-toasts {
+  position: fixed;
+  /* Offset by the device insets so an installed PWA does not tuck notifications
+     under the notch or the rounded corners. */
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+.ov-toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 10px;
+  padding: 11px 12px 12px 13px;
+  background: var(--ov-surface);
+  color: var(--ov-text);
+  border: 1px solid var(--ov-border);
+  border-left: 3px solid var(--ov-accent, var(--ov-info));
+  border-radius: var(--ov-radius);
+  box-shadow: var(--ov-shadow);
+  font-size: 13.5px;
+  line-height: 1.45;
+  animation: ov-toast-in 200ms var(--ov-ease) both;
+}
+
+.ov-toast[data-variant='success'] { --ov-accent: var(--ov-good); }
+.ov-toast[data-variant='warning'] { --ov-accent: var(--ov-warn); }
+.ov-toast[data-variant='error']   { --ov-accent: var(--ov-bad); }
+.ov-toast[data-variant='info']    { --ov-accent: var(--ov-info); }
+
+.ov-toast.is-leaving {
+  animation: ov-toast-out 160ms var(--ov-ease) both;
+}
+
+.ov-toast__icon {
+  color: var(--ov-accent);
+  flex: none;
+  margin-top: 1px;
+}
+
+.ov-toast__body { min-width: 0; }
+
+.ov-toast__title {
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  margin: 0 0 1px;
+  color: var(--ov-text);
+}
+
+.ov-toast__message {
+  margin: 0;
+  color: var(--ov-text-muted);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.ov-close {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--ov-radius-sm);
+  background: transparent;
+  color: var(--ov-text-faint);
+  cursor: pointer;
+  transition: background-color 120ms var(--ov-ease), color 120ms var(--ov-ease);
+}
+
+.ov-close:hover { background: var(--ov-surface-sunk); color: var(--ov-text); }
+.ov-close:focus-visible { outline: 2px solid var(--ov-info); outline-offset: 1px; }
+
+/* ----------------------------------------------------------------- dialogs */
+
+.ov-scrim {
+  position: fixed;
+  inset: 0;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--ov-scrim);
+  animation: ov-fade-in 140ms var(--ov-ease) both;
+}
+
+.ov-dialog {
+  width: 100%;
+  max-width: 420px;
+  background: var(--ov-surface);
+  color: var(--ov-text);
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  box-shadow: var(--ov-shadow-lg);
+  animation: ov-dialog-in 180ms var(--ov-ease) both;
+  overflow: hidden;
+}
+
+.ov-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 18px 18px 0;
+}
+
+.ov-dialog__mark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ov-tone-wash, var(--ov-info-wash));
+  color: var(--ov-tone, var(--ov-info));
+}
+
+.ov-dialog[data-tone='danger']  { --ov-tone: var(--ov-bad);  --ov-tone-wash: var(--ov-bad-wash); }
+.ov-dialog[data-tone='warning'] { --ov-tone: var(--ov-warn); --ov-tone-wash: var(--ov-warn-wash); }
+.ov-dialog[data-tone='info']    { --ov-tone: var(--ov-info); --ov-tone-wash: var(--ov-info-wash); }
+
+.ov-dialog__title {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.ov-dialog__body {
+  padding: 8px 18px 0 61px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ov-text-muted);
+}
+
+.ov-dialog__body p { margin: 0 0 8px; }
+
+.ov-dialog__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 18px;
+  margin-top: 10px;
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+.ov-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  padding: 7px 14px;
+  border-radius: var(--ov-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 120ms var(--ov-ease), border-color 120ms var(--ov-ease);
+}
+
+.ov-btn:focus-visible { outline: 2px solid var(--ov-info); outline-offset: 1px; }
+
+.ov-btn--quiet {
+  background: transparent;
+  border-color: var(--ov-border-strong);
+  color: var(--ov-text-muted);
+}
+
+.ov-btn--quiet:hover { background: var(--ov-surface-sunk); color: var(--ov-text); }
+
+.ov-btn--solid {
+  background: var(--ov-tone, var(--ov-info));
+  color: #ffffff;
+}
+
+.ov-btn--solid:hover { filter: brightness(0.93); }
+
+[data-theme='dark'] .ov-btn--solid { color: #0d1620; }
+
+/* ---------------------------------------------------------- session banner */
+
+.ov-banner {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: 340px;
+  padding: 10px 12px;
+  background: var(--ov-surface);
+  color: var(--ov-text);
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  box-shadow: var(--ov-shadow);
+  animation: ov-toast-in 220ms var(--ov-ease) both;
+  transition: opacity 300ms var(--ov-ease), transform 300ms var(--ov-ease);
+}
+
+.ov-banner.is-leaving {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.ov-banner__initials {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ov-surface-sunk);
+  border: 1px solid var(--ov-border);
+  color: var(--ov-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ov-banner__body { min-width: 0; flex: 1; }
+
+.ov-banner__name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ov-banner__role {
+  font-size: 11px;
+  color: var(--ov-text-faint);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------- install prompt */
+
+.ov-install {
+  position: fixed;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 99997;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 15px;
+  background: var(--ov-surface);
+  color: var(--ov-text);
+  border: 1px solid var(--ov-border);
+  border-radius: var(--ov-radius);
+  box-shadow: var(--ov-shadow);
+  animation: ov-rise-in 240ms var(--ov-ease) both;
+}
+
+.ov-install__title {
+  margin: 0 0 3px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.ov-install__text {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ov-text-muted);
+}
+
+.ov-install__actions { display: flex; gap: 8px; }
+
+/* ------------------------------------------------------------------ motion */
+
+@keyframes ov-toast-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ov-toast-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(12px); }
+}
+
+@keyframes ov-rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ov-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ov-dialog-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-toast, .ov-scrim, .ov-dialog, .ov-banner, .ov-install {
+    animation-duration: 1ms;
+    transition-duration: 1ms;
+  }
+}
+
+@media (max-width: 560px) {
+  .ov-toasts {
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    width: auto;
+  }
+  .ov-banner {
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    max-width: none;
+  }
+  .ov-install {
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+  }
+  .ov-dialog__body { padding-left: 18px; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HEADER GLASS WITHOUT THE CONTAINING-BLOCK TRAP
+
+   The dashboard headers set `backdrop-filter` inline for their frosted
+   look. A filtered element becomes the containing block for any
+   position:fixed descendant, so a popup anchored with top/left percentages
+   was being positioned inside the ~114px header instead of the viewport and
+   ended up off the top of the screen.
+
+   The blur is moved onto a pseudo-element, which produces the same
+   appearance while leaving the header itself unfiltered — so fixed popups
+   inside it resolve against the viewport again. Inline styles are the
+   source of the filter, hence !important.
+   ───────────────────────────────────────────────────────────── */
+header.site-header,
+header.medilab-navbar,
+.dasher-topbar,
+.driver-topbar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  position: relative;
+  isolation: isolate;
+}
+
+header.site-header::before,
+header.medilab-navbar::before,
+.dasher-topbar::before,
+.driver-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  pointer-events: none;
+}
+
+/* Any popup that still positions itself against the viewport must never be
+   wider or taller than it. */
+.profile-upload-dropdown,
+.notifications-panel,
+.mobile-nav-dropdown {
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
