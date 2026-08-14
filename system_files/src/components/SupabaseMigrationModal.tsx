@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { isSupabaseConfigured, testSupabaseConnection, SupabaseConnectionResult } from '../services/supabase';
 import { DataMigrationService, FullMigrationResult, SUPABASE_SQL_SCHEMA } from '../services/dataMigrationService';
+import { errorMessage } from '../services/errors';
 import { Database, CheckCircle, AlertTriangle, RefreshCw, Copy, Check, Server, ArrowRight, ShieldCheck, FileCode } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 interface Props {
   isOpen: boolean;
@@ -27,10 +29,10 @@ export const SupabaseMigrationModal: React.FC<Props> = ({ isOpen, onClose }) => 
     try {
       const result = await testSupabaseConnection();
       setConnectionStatus(result);
-    } catch (err: any) {
+    } catch (err) {
       setConnectionStatus({
         success: false,
-        message: `Connection test error: ${err.message}`
+        message: `Connection test error: ${errorMessage(err)}`
       });
     } finally {
       setTesting(false);
@@ -43,14 +45,14 @@ export const SupabaseMigrationModal: React.FC<Props> = ({ isOpen, onClose }) => 
     try {
       const res = await DataMigrationService.runMigration();
       setMigrationResult(res);
-    } catch (err: any) {
+    } catch (err) {
       setMigrationResult({
         overallSuccess: false,
         timestamp: new Date().toISOString(),
         connectionStatus: 'Failed',
         summaries: [],
         totalRecordsTransferred: 0,
-        verificationMessage: `Migration error: ${err.message}`
+        verificationMessage: `Migration error: ${errorMessage(err)}`
       });
     } finally {
       setMigrating(false);
@@ -106,7 +108,7 @@ export const SupabaseMigrationModal: React.FC<Props> = ({ isOpen, onClose }) => 
           <button 
             onClick={onClose}
             style={{ backgroundColor: '#334155', color: '#94a3b8', border: 'none', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px' }}
-          >✕</button>
+          ><Icon name="close" size={18} /></button>
         </div>
 
         {/* 1. Connection Status Card */}
