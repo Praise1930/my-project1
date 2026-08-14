@@ -146,7 +146,7 @@ export const Landing: React.FC = () => {
         html[data-theme='dark'] .main-menu ul li a,
         html[data-theme='dark'] .slicknav_nav a,
         html[data-theme='dark'] .sticky-bar a,
-        html[data-theme='dark'] .mobile-nav-dropdown a {
+        html[data-theme='dark'] .mobile-nav-dropdown a:not(.header-btn) {
           color: #ffffff !important;
           font-size: 16px !important;
           font-weight: 600 !important;
@@ -169,7 +169,7 @@ export const Landing: React.FC = () => {
         html[data-theme='light'] .main-menu ul li a,
         html[data-theme='light'] .slicknav_nav a,
         html[data-theme='light'] .sticky-bar a,
-        html[data-theme='light'] .mobile-nav-dropdown a {
+        html[data-theme='light'] .mobile-nav-dropdown a:not(.header-btn) {
           color: #102039 !important;
           font-size: 16px !important;
           font-weight: 600 !important;

@@ -27,32 +27,51 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const avatarRef = useRef<HTMLButtonElement>(null);
   // Viewport coordinates for the menu, worked out from the avatar when it opens.
   const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [menuMaxHeight, setMenuMaxHeight] = useState(340);
 
   const MENU_WIDTH = 260;
   const MENU_MAX_HEIGHT = 340;
   const EDGE = 12;
 
   /** Place the menu next to the avatar, then pull it back inside the screen. */
+  /** Device inset in px, e.g. the status bar an installed PWA draws under. */
+  const inset = (name: string) => {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return parseFloat(raw) || 0;
+  };
+
   const openMenu = () => {
     const trigger = avatarRef.current?.getBoundingClientRect();
     const vw = document.documentElement.clientWidth;
     const vh = document.documentElement.clientHeight;
 
     if (trigger) {
-      const width = Math.min(MENU_WIDTH, vw - EDGE * 2);
-      // Prefer right-aligned to the avatar, which is where these sit in the
-      // headers, then clamp so neither edge leaves the screen.
-      let left = trigger.right - width;
-      left = Math.min(Math.max(EDGE, left), vw - width - EDGE);
+      // With viewport-fit=cover the viewport extends behind the status bar and
+      // the home indicator, so the usable box is the viewport minus the insets.
+      // Clamping to the raw viewport is what left the top of this menu tucked
+      // under the status bar in the installed app.
+      const safeTop = inset('--safe-top') + EDGE;
+      const safeBottom = inset('--safe-bottom') + EDGE;
+      const safeLeft = inset('--safe-left') + EDGE;
+      const safeRight = inset('--safe-right') + EDGE;
 
-      // Below the avatar if it fits, otherwise above it.
+      const width = Math.min(MENU_WIDTH, vw - safeLeft - safeRight);
+      // Prefer right-aligned to the avatar, which is where these sit in the
+      // headers, then clamp so neither edge leaves the usable box.
+      let left = trigger.right - width;
+      left = Math.min(Math.max(safeLeft, left), vw - width - safeRight);
+
+      const available = vh - safeTop - safeBottom;
+      const height = Math.min(MENU_MAX_HEIGHT, available);
+
+      // Below the avatar when it fits, otherwise above it, then clamp so the
+      // menu can never start above the safe area or run past its bottom.
       const below = trigger.bottom + 8;
-      const spaceBelow = vh - below - EDGE;
-      const top = spaceBelow >= Math.min(MENU_MAX_HEIGHT, 220)
-        ? below
-        : Math.max(EDGE, trigger.top - Math.min(MENU_MAX_HEIGHT, vh - EDGE * 2) - 8);
+      let top = (vh - safeBottom) - below >= height ? below : trigger.top - height - 8;
+      top = Math.min(Math.max(safeTop, top), vh - safeBottom - height);
 
       setMenuPos({ top, left });
+      setMenuMaxHeight(height);
     }
     setMenuOpen(o => !o);
   };
@@ -226,7 +245,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
               boxShadow: isDark ? '0 12px 35px rgba(0,0,0,0.5)' : '0 12px 35px rgba(0,0,0,0.18)',
               padding: '16px',
               width: `min(${MENU_WIDTH}px, calc(100vw - ${EDGE * 2}px))`,
-              maxHeight: `min(${MENU_MAX_HEIGHT}px, calc(100dvh - ${EDGE * 2}px))`,
+              maxHeight: menuMaxHeight,
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',

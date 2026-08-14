@@ -47,6 +47,21 @@ export const AdminDashboard: React.FC = () => {
 
   const getEmergencyKey = (emg: Emergency) => `${emg.id}_${emg.triggered_at || ''}`;
 
+  /**
+   * Close the SOS modal for a case that is still pending.
+   *
+   * The case has to be recorded as seen first. The dispatch poller re-checks
+   * pending emergencies every 1.5s, so simply closing the modal — or worse,
+   * clearing the seen key — puts it straight back on screen. The alert strip
+   * stays visible either way, so the emergency is not lost from view.
+   */
+  const dismissIncomingAlert = () => {
+    if (incomingAlertEmergencyRef.current) {
+      lastShownAlertKeyRef.current = getEmergencyKey(incomingAlertEmergencyRef.current);
+    }
+    setIncomingAlertEmergency(null);
+  };
+
   // --- SEARCH QUERY STATE & FILTERED LISTS ---
   const [searchQuery, setSearchQuery] = useState('');
   const q = searchQuery.toLowerCase().trim();
@@ -369,16 +384,21 @@ export const AdminDashboard: React.FC = () => {
       && typeof (v as Emergency).id === 'number'
       && typeof (v as Emergency).status === 'string';
 
-    // Show SOS modal for an emergency if modal is not currently open or if key is newer
+    // Raise the SOS modal only for a case this console has not shown yet.
+    //
+    // The key is id + triggered_at, so a genuinely new emergency, or the same
+    // one re-triggered, still interrupts. Anything already shown does not,
+    // which is what makes Dismiss stick: the poller runs every 1.5s and would
+    // otherwise reopen the modal on the next tick for as long as the case
+    // stayed pending.
     const checkAndShowAlert = (emg: Emergency) => {
       if (!isEmergencyPayload(emg)) return;
       if (emg.status !== 'pending') return;
       const key = getEmergencyKey(emg);
-      if (!incomingAlertEmergencyRef.current || lastShownAlertKeyRef.current !== key) {
-        lastShownAlertKeyRef.current = key;
-        setIncomingAlertEmergency(emg);
-        playAlertSound();
-      }
+      if (lastShownAlertKeyRef.current === key) return;
+      lastShownAlertKeyRef.current = key;
+      setIncomingAlertEmergency(emg);
+      playAlertSound();
     };
 
     const notifyCancelled = (emg: Emergency) => {
@@ -4027,7 +4047,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => { lastShownAlertKeyRef.current = null; setIncomingAlertEmergency(null); }}
+                  onClick={dismissIncomingAlert}
                   style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', borderRadius: '50%', width: '36px', height: '36px', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}
                 >&times;</button>
               </div>
@@ -4156,8 +4176,7 @@ export const AdminDashboard: React.FC = () => {
                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                   <button
                     onClick={() => {
-                      lastShownAlertKeyRef.current = null;
-                      setIncomingAlertEmergency(null);
+                      dismissIncomingAlert();
                       setActiveTab('dispatch');
                       setSelectedEmergency(emg);
                     }}
@@ -4174,7 +4193,9 @@ export const AdminDashboard: React.FC = () => {
                   ><Icon name="clipboard" size={16} /> View in Dispatch Board
                   </button>
                   <button
-                    onClick={() => { lastShownAlertKeyRef.current = null; setIncomingAlertEmergency(null); }}
+                    onClick={() => {
+                      dismissIncomingAlert();
+                    }}
                     style={{
                       padding: '9px 18px',
                       background: '#ffffff',
