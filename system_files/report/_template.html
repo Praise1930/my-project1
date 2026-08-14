@@ -1,0 +1,913 @@
+<title>MamaTrack GPS — System Status &amp; Design Report</title>
+
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --ground:      #f4f7f7;
+    --surface:     #ffffff;
+    --surface-alt: #eaf0f0;
+    --rule:        #cdd9da;
+    --rule-soft:   #e0e8e9;
+
+    --ink:         #0f1e2b;
+    --ink-soft:    #47606d;
+    --ink-faint:   #6e858f;
+
+    --accent:      #0e6b6b;
+    --accent-soft: #d3e6e4;
+
+    --critical:    #a92e1e;
+    --advisory:    #8a5c06;
+    --good:        #14664a;
+    --crit-wash:   #f7e6e3;
+    --adv-wash:    #f8eedb;
+    --good-wash:   #dfeee7;
+
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --data: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+
+    --measure: 68ch;
+    --pad: clamp(1.15rem, 4vw, 3.25rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #0c161e;
+      --surface:     #12212c;
+      --surface-alt: #1a2c39;
+      --rule:        #2b4250;
+      --rule-soft:   #1f333f;
+
+      --ink:         #dde8ea;
+      --ink-soft:    #9db0ba;
+      --ink-faint:   #748d99;
+      --ink-faint:   #75919d;
+
+      --accent:      #4ab5ad;
+      --accent-soft: #17403f;
+
+      --critical:    #e8877a;
+      --advisory:    #d9ab55;
+      --good:        #63bd97;
+      --crit-wash:   #35201d;
+      --adv-wash:    #322a17;
+      --good-wash:   #16302a;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0c161e;
+    --surface:     #12212c;
+    --surface-alt: #1a2c39;
+    --rule:        #2b4250;
+    --rule-soft:   #1f333f;
+    --ink:         #dde8ea;
+    --ink-soft:    #9db0ba;
+    --ink-faint:   #75919d;
+    --accent:      #4ab5ad;
+    --accent-soft: #17403f;
+    --critical:    #e8877a;
+    --advisory:    #d9ab55;
+    --good:        #63bd97;
+    --crit-wash:   #35201d;
+    --adv-wash:    #322a17;
+    --good-wash:   #16302a;
+  }
+
+  :root[data-theme="light"] {
+    --ground:      #f4f7f7;
+    --surface:     #ffffff;
+    --surface-alt: #eaf0f0;
+    --rule:        #cdd9da;
+    --rule-soft:   #e0e8e9;
+    --ink:         #0f1e2b;
+    --ink-soft:    #47606d;
+    --ink-faint:   #6e858f;
+    --accent:      #0e6b6b;
+    --accent-soft: #d3e6e4;
+    --critical:    #a92e1e;
+    --advisory:    #8a5c06;
+    --good:        #14664a;
+    --crit-wash:   #f7e6e3;
+    --adv-wash:    #f8eedb;
+    --good-wash:   #dfeee7;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 var(--pad) 6rem;
+  }
+
+  .prose { max-width: var(--measure); }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    padding: clamp(2.5rem, 7vw, 5rem) 0 2rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .eyebrow {
+    font-family: var(--data);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 1.1rem;
+  }
+
+  .masthead h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 6vw, 3.6rem);
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .standfirst {
+    font-family: var(--display);
+    font-size: clamp(1.02rem, 2.3vw, 1.24rem);
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0;
+  }
+
+  .byline {
+    font-family: var(--data);
+    font-size: 0.74rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+  }
+
+  /* ---------- verdict tiles ---------- */
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 2.75rem 0 0;
+  }
+
+  .tile {
+    background: var(--surface);
+    padding: 1.15rem 1.25rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .tile dt {
+    font-family: var(--data);
+    font-size: 0.66rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .tile dd {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.6rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tile .note {
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  .pass { color: var(--good); }
+  .warn { color: var(--advisory); }
+  .crit { color: var(--critical); }
+
+  /* ---------- sections ---------- */
+
+  section { margin-top: clamp(3rem, 8vw, 5rem); }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3.6vw, 2.1rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.4rem;
+    text-wrap: balance;
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+  }
+
+  h2 .num {
+    font-family: var(--data);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    flex: none;
+  }
+
+  h3 {
+    font-family: var(--body);
+    font-weight: 650;
+    font-size: 1.02rem;
+    letter-spacing: -0.005em;
+    margin: 2.2rem 0 0.55rem;
+  }
+
+  h2 + .lede {
+    color: var(--ink-soft);
+    max-width: var(--measure);
+    margin: 0 0 1.9rem;
+    padding-bottom: 1.4rem;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  p { margin: 0 0 1.05rem; max-width: var(--measure); }
+
+  ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 1.05rem; }
+  li { margin-bottom: 0.42rem; }
+
+  code {
+    font-family: var(--data);
+    font-size: 0.855em;
+    background: var(--surface-alt);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+  }
+
+  a { color: var(--accent); }
+
+  /* ---------- finding cards ---------- */
+
+  .findings { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+
+  .finding {
+    background: var(--surface);
+    padding: 1.4rem 1.5rem 1.5rem;
+    border-left: 4px solid var(--sev, var(--accent));
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .finding[data-sev="critical"] { --sev: var(--critical); }
+  .finding[data-sev="major"]    { --sev: var(--advisory); }
+  .finding[data-sev="minor"]    { --sev: var(--accent); }
+
+  .finding-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem 0.85rem;
+  }
+
+  .finding-head h3 { margin: 0; font-size: 1.04rem; }
+
+  .chip {
+    font-family: var(--data);
+    font-size: 0.62rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    padding: 0.24em 0.6em;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .chip.critical { background: var(--crit-wash); color: var(--critical); }
+  .chip.major    { background: var(--adv-wash);  color: var(--advisory); }
+  .chip.minor    { background: var(--accent-soft); color: var(--accent); }
+  .chip.fixed    { background: var(--good-wash); color: var(--good); }
+  .chip.open     { background: var(--adv-wash);  color: var(--advisory); }
+
+  .finding p { margin: 0; font-size: 0.94rem; }
+  .finding .where { font-family: var(--data); font-size: 0.76rem; color: var(--ink-faint); }
+
+  /* ---------- tables ---------- */
+
+  .scroll { overflow-x: auto; margin: 0 0 1.4rem; border: 1px solid var(--rule); background: var(--surface); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+
+  th, td {
+    text-align: left;
+    padding: 0.62rem 0.95rem;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+
+  thead th {
+    font-family: var(--data);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--data); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.mono { font-family: var(--data); font-size: 0.8rem; }
+
+  /* ---------- figures ---------- */
+
+  figure {
+    margin: 2.2rem 0 2.6rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+  }
+
+  figure .plate { overflow-x: auto; padding: 0.9rem; background: #ffffff; }
+
+  figure img { display: block; width: 100%; height: auto; min-width: 540px; }
+
+  figcaption {
+    border-top: 1px solid var(--rule);
+    padding: 0.85rem 1.1rem 0.95rem;
+    font-size: 0.845rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  figcaption b {
+    font-family: var(--body);
+    font-weight: 650;
+    color: var(--ink);
+  }
+
+  /* ---------- misc ---------- */
+
+  .callout {
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--advisory);
+    background: var(--surface);
+    padding: 1.15rem 1.35rem;
+    margin: 1.8rem 0;
+    max-width: var(--measure);
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+
+  .callout .label {
+    font-family: var(--data);
+    font-size: 0.65rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--advisory);
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .colophon {
+    margin-top: 4.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--ink);
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    max-width: var(--measure);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">
+      <span>System Status Report</span>
+      <span>Build verified 13 Aug 2026</span>
+    </div>
+    <h1>MamaTrack GPS — Maternal Emergency Response and Monitoring System</h1>
+    <p class="standfirst">
+      A full status check of the working system: compiler, linter, production build, runtime
+      behaviour across all five portals, and an end-to-end emergency dispatch. Five defects were
+      found and fixed; four known limitations are documented but left in place. The system design
+      is recorded in ten figures.
+    </p>
+    <div class="byline">
+      <span>Case study: Mukono District, Uganda</span>
+      <span>React 18 · TypeScript 5.6 · Vite 5.4 · Supabase · Leaflet</span>
+    </div>
+  </header>
+
+  <dl class="tiles">
+    <div class="tile">
+      <dt>TypeScript</dt>
+      <dd class="pass">0</dd>
+      <span class="note">compiler errors from <code>tsc -b</code></span>
+    </div>
+    <div class="tile">
+      <dt>ESLint</dt>
+      <dd class="pass">0</dd>
+      <span class="note">warnings — down from 52</span>
+    </div>
+    <div class="tile">
+      <dt>Production build</dt>
+      <dd class="pass">Pass</dd>
+      <span class="note">11 chunks in 13.6&nbsp;s</span>
+    </div>
+    <div class="tile">
+      <dt>Runtime console</dt>
+      <dd class="pass">Clean</dd>
+      <span class="note">no uncaught errors on any portal</span>
+    </div>
+    <div class="tile">
+      <dt>Defects fixed</dt>
+      <dd>5</dd>
+      <span class="note">1 critical, 2 major, 2 minor</span>
+    </div>
+    <div class="tile">
+      <dt>Known limits</dt>
+      <dd class="warn">4</dd>
+      <span class="note">documented, not fixed</span>
+    </div>
+  </dl>
+
+  <section id="scope">
+    <h2><span class="num">01</span> What was checked</h2>
+    <p class="lede">
+      The check covered static analysis, a production build, and live exercise of the running
+      application — not just whether the code compiles, but whether the emergency pathway actually
+      works between devices.
+    </p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Check</th><th>Method</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Type safety</td>
+            <td class="mono">npm run type-check</td>
+            <td><b class="pass">Pass</b> — 0 errors across 25 modules</td>
+          </tr>
+          <tr>
+            <td>Lint</td>
+            <td class="mono">npm run lint</td>
+            <td><b class="pass">Pass</b> — 0 warnings (52 before this pass)</td>
+          </tr>
+          <tr>
+            <td>Production build</td>
+            <td class="mono">npm run build</td>
+            <td><b class="pass">Pass</b> — 388&nbsp;kB entry, 97&nbsp;kB gzipped</td>
+          </tr>
+          <tr>
+            <td>Asset loading</td>
+            <td>Network log, 120 requests</td>
+            <td><b class="pass">Pass</b> — no 404s, no missing fonts or images</td>
+          </tr>
+          <tr>
+            <td>Portal rendering</td>
+            <td>Mother, Doctor, Driver, VHT, Admin</td>
+            <td><b class="pass">Pass</b> — all five render with live data and maps</td>
+          </tr>
+          <tr>
+            <td>Emergency pathway</td>
+            <td>SOS raised, observed from a second browser session</td>
+            <td><b class="pass">Pass</b> — see below</td>
+          </tr>
+          <tr>
+            <td>Realtime sync</td>
+            <td>Supabase channel subscription</td>
+            <td><b class="crit">Failed, now fixed</b> — see finding&nbsp;1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>End-to-end emergency test</h3>
+    <p>
+      An SOS was raised from the mother portal. In a <em>separate browser session</em> with its own
+      empty local storage, the admin console was opened and signed in. The emergency was already
+      there — carried by Supabase realtime, not by shared local state:
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Field</th><th>Value observed on the admin console</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Case reference</td><td class="mono">EMG-2026-0031</td></tr>
+          <tr><td>Patient</td><td>Nakato Fatima</td></tr>
+          <tr><td>Facility assigned</td><td>Mukono General Hospital</td></tr>
+          <tr><td>Ambulance assigned</td><td>Moses Kiggundu — <span class="mono">UBG 001A</span></td></tr>
+          <tr><td>Mission state</td><td>Advanced automatically through to <b>Delivered</b></td></tr>
+          <tr><td>Map</td><td>SOS marker plotted alongside 8 facilities and 5 ambulances</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      This exercises the whole chain in one action: geolocation capture, nearest-facility selection,
+      driver assignment, cross-device replication, and the dispatch state machine.
+    </p>
+  </section>
+
+  <section id="fixed">
+    <h2><span class="num">02</span> Defects found and fixed</h2>
+    <p class="lede">
+      Ordered by severity. Each was reproduced before the fix and re-verified after, with the
+      compiler, linter, and build re-run clean.
+    </p>
+
+    <div class="findings">
+
+      <article class="finding" data-sev="critical">
+        <div class="finding-head">
+          <h3>Realtime re-subscription crashed the entire application</h3>
+          <span class="chip critical">Critical</span>
+          <span class="chip fixed">Fixed</span>
+        </div>
+        <p class="where">src/services/syncService.ts — SyncService.init()</p>
+        <p>
+          The Supabase client caches channels by topic and outlives the module that created them.
+          When <code>init()</code> ran a second time against a cached channel that had already been
+          subscribed, registering <code>postgres_changes</code> handlers threw
+          <code>cannot add postgres_changes callbacks … after subscribe()</code>. Nothing caught it,
+          so the error propagated out of <code>&lt;App&gt;</code> and — with no error boundary in the
+          tree — unmounted the whole interface. A responder would have been left staring at a blank
+          screen mid-emergency.
+        </p>
+        <p>
+          <b>Fix:</b> any stale channel on the <code>mamatrack-sync</code> topic is removed before a
+          fresh one is built, and the whole subscription is wrapped so that losing realtime degrades
+          to queue-and-poll sync instead of taking the app down. Raising an SOS never depends on the
+          live channel.
+        </p>
+      </article>
+
+      <article class="finding" data-sev="major">
+        <div class="finding-head">
+          <h3>A corrupt offline queue permanently stranded every pending edit</h3>
+          <span class="chip major">Major</span>
+          <span class="chip fixed">Fixed</span>
+        </div>
+        <p class="where">src/services/syncService.ts — enqueueOfflineChange(), flushOfflineQueue()</p>
+        <p>
+          Both functions called <code>JSON.parse</code> on the queue with no guard. Because the queue
+          lives in browser-writable local storage, a single malformed value would throw on every
+          subsequent flush — so work captured offline in a rural area would never reach the server,
+          silently and permanently.
+        </p>
+        <p>
+          <b>Fix:</b> a shared <code>readQueue()</code> helper that tolerates a bad parse, resets the
+          corrupt entry, and warns, so the next flush proceeds.
+        </p>
+      </article>
+
+      <article class="finding" data-sev="major">
+        <div class="finding-head">
+          <h3>Failure paths reported success</h3>
+          <span class="chip major">Major</span>
+          <span class="chip fixed">Fixed</span>
+        </div>
+        <p class="where">src/services/db.ts (×3), src/pages/MotherDashboard.tsx</p>
+        <p>
+          Four <code>catch</code> blocks logged a success message on the error path — a failed
+          cross-tab broadcast printed <code>"Broadcast channel event posted"</code>, and a failed SOS
+          siren printed <code>"Audio alert notification sound played"</code>. Anyone reading the
+          console during a demo or a defence would have been told the opposite of what happened, and
+          the underlying error was discarded.
+        </p>
+        <p><b>Fix:</b> each now warns and includes the real error.</p>
+      </article>
+
+      <article class="finding" data-sev="minor">
+        <div class="finding-head">
+          <h3>A non-array offline cache could discard a queued SOS</h3>
+          <span class="chip minor">Minor</span>
+          <span class="chip fixed">Fixed</span>
+        </div>
+        <p class="where">src/services/offlineStorage.ts — getQueuedEmergencies()</p>
+        <p>
+          The function returned whatever <code>JSON.parse</code> produced. A stored object rather
+          than an array would make the callers' <code>.push()</code> and <code>.filter()</code>
+          throw, losing the queued emergency. <b>Fix:</b> the shape is now guarded as well as the parse.
+        </p>
+      </article>
+
+      <article class="finding" data-sev="minor">
+        <div class="finding-head">
+          <h3>52 lint warnings, including a Fast Refresh violation</h3>
+          <span class="chip minor">Minor</span>
+          <span class="chip fixed">Fixed</span>
+        </div>
+        <p class="where">Across 11 files</p>
+        <p>
+          47 uses of <code>any</code> were replaced with real types — a <code>SyncedRow</code>
+          contract for everything crossing the sync boundary, <code>MotherWithContact</code> and
+          <code>Notification</code> in the VHT portal, typed <code>CustomEvent</code> payloads,
+          <code>as const</code> navigation arrays that make each tab id check against its portal's
+          union, and a properly typed fallback for Safari's prefixed
+          <code>webkitAudioContext</code>. Four unused catch bindings were removed.
+        </p>
+        <p>
+          <code>Toast.tsx</code> exported both a component and a function, which breaks React Fast
+          Refresh: every edit remounted the module and dropped dashboard state mid-test. The event
+          bus now lives in <code>toastBus.ts</code> and <code>Toast.tsx</code> exports only its
+          component.
+        </p>
+      </article>
+
+    </div>
+  </section>
+
+  <section id="open">
+    <h2><span class="num">03</span> Known limitations left in place</h2>
+    <p class="lede">
+      These are design consequences rather than accidents. Changing any of them alters how the
+      system behaves, so they are documented for the decision rather than changed silently.
+    </p>
+
+    <div class="findings">
+
+      <article class="finding" data-sev="critical">
+        <div class="finding-head">
+          <h3>Row Level Security is enabled but fully permissive</h3>
+          <span class="chip critical">Security</span>
+          <span class="chip open">Open</span>
+        </div>
+        <p class="where">supabase_schema.sql</p>
+        <p>
+          The schema enables RLS on every table and then attaches a single policy —
+          <code>FOR ALL USING (true) WITH CHECK (true)</code>. Since the anonymous key ships to the
+          browser, anyone who loads the site can read and write every table, including
+          <code>users</code>. That is workable for a demonstration seeded with fictional patients,
+          but it must be tightened before the system holds a real mother's record.
+        </p>
+        <p>
+          <b>Recommended:</b> move accounts into Supabase Auth, then key policies to
+          <code>auth.uid()</code> and role — a mother reads only her own rows; a driver reads only
+          the emergency assigned to them; an administrator reads the district.
+        </p>
+      </article>
+
+      <article class="finding" data-sev="major">
+        <div class="finding-head">
+          <h3>Authentication is local-first</h3>
+          <span class="chip major">Security</span>
+          <span class="chip open">Open</span>
+        </div>
+        <p class="where">src/pages/Login.tsx</p>
+        <p>
+          Login tries Supabase Auth first and falls back to the local seeded store. The demonstration
+          accounts do not exist in Supabase Auth, so that first attempt returns
+          <code>400</code> on <code>/auth/v1/token</code> — the one error visible in a clean console.
+          It is handled and intentional, but it means passwords for seeded accounts are compared on
+          the device rather than by the identity provider.
+        </p>
+      </article>
+
+      <article class="finding" data-sev="major">
+        <div class="finding-head">
+          <h3>No React error boundary</h3>
+          <span class="chip major">Resilience</span>
+          <span class="chip open">Open</span>
+        </div>
+        <p class="where">src/App.tsx</p>
+        <p>
+          Finding 1 was severe precisely because there is nothing between a thrown render error and a
+          blank page. The specific trigger is fixed, but a boundary around the routed portals would
+          contain the next one and let a responder retry rather than reload.
+        </p>
+      </article>
+
+      <article class="finding" data-sev="minor">
+        <div class="finding-head">
+          <h3>The offline storage module is not wired in</h3>
+          <span class="chip minor">Documentation</span>
+          <span class="chip open">Open</span>
+        </div>
+        <p class="where">src/services/offlineStorage.ts</p>
+        <p>
+          The module exists and is now hardened, but nothing imports it. Offline behaviour in the
+          running system is provided by <code>SyncService</code>'s queue, which captures changes when
+          the network drops and replays them on reconnect. Any documentation describing
+          <code>offlineStorage</code> as the live offline path overstates it — either wire it in or
+          describe the queue instead.
+        </p>
+      </article>
+
+    </div>
+
+    <div class="callout">
+      <span class="label">Also noted</span>
+      <p>
+        React Router prints two v7 future-flag warnings (<code>v7_startTransition</code>,
+        <code>v7_relativeSplatPath</code>). They are advisory. Opting in changes routing behaviour,
+        so it is a deliberate upgrade step rather than a fix, and was left alone.
+      </p>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2><span class="num">04</span> System architecture</h2>
+    <p class="lede">
+      MamaTrack is a single React application serving five role-specific portals over one shared
+      data layer, with local storage as an offline-first cache in front of a Supabase Postgres
+      database.
+    </p>
+
+    <figure>
+      <div class="plate">{{FIG01}}</div>
+      <figcaption><b>Figure 1: System architecture.</b> The deployed stack, from the mother's handset through the browser application and sync layer to Supabase Postgres, with the GPS, OpenStreetMap tile, and SMS services it draws on.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="plate">{{FIG02}}</div>
+      <figcaption><b>Figure 2: Module architecture.</b> How the 25 source modules group into portals, shared components, and services, and which of them depend on the database and sync layer.</figcaption>
+    </figure>
+
+    <h3>Technology stack</h3>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Role in the system</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Interface</td><td>React 18.3 · TypeScript 5.6</td><td>Five portals, lazily loaded per role</td></tr>
+          <tr><td>Build</td><td>Vite 5.4</td><td>Development server and chunked production build</td></tr>
+          <tr><td>Routing</td><td>React Router 6.28</td><td>Portal routing with scroll restoration</td></tr>
+          <tr><td>Mapping</td><td>Leaflet 1.9 · OpenStreetMap / CARTO</td><td>Live GPS tracking, light and dark basemaps</td></tr>
+          <tr><td>Database</td><td>Supabase (Postgres + Realtime)</td><td>Shared state across devices, 11 synced tables</td></tr>
+          <tr><td>Offline</td><td>localStorage · Service Worker</td><td>Cache, queued writes, installable PWA</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Production bundle</h3>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Chunk</th><th>Raw</th><th>Gzipped</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Entry (<span class="mono">index</span>)</td><td class="num">387.8 kB</td><td class="num">97.0 kB</td></tr>
+          <tr><td>Router vendor</td><td class="num">163.3 kB</td><td class="num">53.4 kB</td></tr>
+          <tr><td>Leaflet vendor</td><td class="num">149.6 kB</td><td class="num">43.4 kB</td></tr>
+          <tr><td>Admin portal</td><td class="num">132.2 kB</td><td class="num">24.8 kB</td></tr>
+          <tr><td>Mother portal</td><td class="num">76.8 kB</td><td class="num">18.1 kB</td></tr>
+          <tr><td>Doctor portal</td><td class="num">43.4 kB</td><td class="num">10.1 kB</td></tr>
+          <tr><td>VHT portal</td><td class="num">35.3 kB</td><td class="num">7.8 kB</td></tr>
+          <tr><td>Driver portal</td><td class="num">29.4 kB</td><td class="num">7.0 kB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Each portal is a separate chunk, so a mother on a rural connection downloads her own interface
+      and not the administrator's — the largest portal by a wide margin.
+    </p>
+  </section>
+
+  <section id="dataflow">
+    <h2><span class="num">05</span> Data flow</h2>
+    <p class="lede">
+      The context diagram fixes the system boundary; the levelled diagrams decompose the emergency
+      pathway that runs across it.
+    </p>
+
+    <figure>
+      <div class="plate">{{FIG03}}</div>
+      <figcaption><b>Figure 3: Context diagram.</b> The system as a single process, with its five human actors and three external services. Every flow crossing this boundary is either a location, a clinical fact, or a dispatch instruction.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="plate">{{FIG04}}</div>
+      <figcaption><b>Figure 4: Data flow diagram, level 0.</b> The top-level processes — registration, emergency capture, dispatch, monitoring, and reporting — and the data stores they read and write.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="plate">{{FIG05}}</div>
+      <figcaption><b>Figure 5: Data flow diagram, level 1.</b> The emergency dispatch process decomposed: beacon capture, nearest-facility resolution, ambulance assignment, clinical notification, and status tracking.</figcaption>
+    </figure>
+  </section>
+
+  <section id="data">
+    <h2><span class="num">06</span> Database design</h2>
+    <p class="lede">
+      Eleven tables are replicated between the device cache and Postgres. Referential integrity is
+      enforced in the application rather than by foreign-key constraints, because realtime rows can
+      arrive out of order — an emergency may land before the mother row it references.
+    </p>
+
+    <figure>
+      <div class="plate">{{FIG06}}</div>
+      <figcaption><b>Figure 6: Entity-relationship diagram.</b> Entities, attributes, and cardinality in crow's-foot notation. <code>users</code> is the identity spine: mothers, doctors, drivers, and VHT workers each extend it one-to-one with role-specific fields.</figcaption>
+    </figure>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Table</th><th>Holds</th><th>Key relationships</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">users</td><td>Identity, role, contact details</td><td>Parent of all role tables</td></tr>
+          <tr><td class="mono">mothers</td><td>Obstetric history, home coordinates, next of kin</td><td>1:1 to <span class="mono">users</span></td></tr>
+          <tr><td class="mono">doctors</td><td>Specialisation, licence, duty state</td><td>1:1 to <span class="mono">users</span>, M:1 to <span class="mono">hospitals</span></td></tr>
+          <tr><td class="mono">drivers</td><td>Duty state, live vehicle position</td><td>1:1 to <span class="mono">users</span>, M:1 to <span class="mono">vehicles</span></td></tr>
+          <tr><td class="mono">hospitals</td><td>Location, bed count, CEmONC and blood-bank capability</td><td>Referenced by emergencies</td></tr>
+          <tr><td class="mono">vehicles</td><td>Plate, status, current coordinates</td><td>M:1 to <span class="mono">hospitals</span></td></tr>
+          <tr><td class="mono">emergencies</td><td>The SOS case: coordinates, severity, assignments, ETA</td><td>Central transaction table</td></tr>
+          <tr><td class="mono">emergency_logs</td><td>Every status transition and who caused it</td><td>M:1 to <span class="mono">emergencies</span></td></tr>
+          <tr><td class="mono">vitals</td><td>Blood pressure, glucose, foetal kick counts</td><td>M:1 to <span class="mono">mothers</span></td></tr>
+          <tr><td class="mono">vht_visits</td><td>Home visit findings and risk flags</td><td>M:1 to mother and VHT worker</td></tr>
+          <tr><td class="mono">notifications</td><td>Per-user alerts and read state</td><td>M:1 to <span class="mono">users</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="behaviour">
+    <h2><span class="num">07</span> System behaviour</h2>
+    <p class="lede">
+      What each role can do, how an emergency progresses, and how the system holds together when the
+      network does not.
+    </p>
+
+    <figure>
+      <div class="plate">{{FIG07}}</div>
+      <figcaption><b>Figure 7: Use case diagram.</b> The five actors and the cases available to each, including the cases shared across roles such as viewing the live map and receiving alerts.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="plate">{{FIG08}}</div>
+      <figcaption><b>Figure 8: Emergency state machine.</b> The lifecycle of a case from <code>pending</code> through dispatch, transit, and arrival to <code>completed</code>, including the cancellation paths available before pickup.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="plate">{{FIG09}}</div>
+      <figcaption><b>Figure 9: Sequence diagram — emergency dispatch.</b> The ordered exchange from the mother pressing SOS to the driver receiving a route and the doctor receiving a patient brief. This is the path verified end to end in section 1.</figcaption>
+    </figure>
+
+    <figure>
+      <div class="plate">{{FIG10}}</div>
+      <figcaption><b>Figure 10: Offline synchronisation.</b> How writes are queued when connectivity drops and replayed on reconnect, and how remote rows are merged without echoing back — the mechanism behind findings 1 and 2.</figcaption>
+    </figure>
+  </section>
+
+  <section id="conclusion">
+    <h2><span class="num">08</span> Assessment</h2>
+    <p class="lede">
+      The system builds clean, runs clean, and the emergency pathway works across devices. What
+      remains is a security posture appropriate to a demonstration rather than to patient data.
+    </p>
+
+    <p>
+      The most consequential finding was not a compiler error — the compiler was already silent. It
+      was a realtime subscription that could throw during startup and, with no error boundary to
+      catch it, take the entire interface down. That class of defect is invisible to static analysis
+      and only appears when the running application is exercised, which is why the check included a
+      live emergency rather than stopping at a green build.
+    </p>
+    <p>
+      Before the system carries a real mother's record, two things should change: the permissive
+      Row Level Security policy should be replaced with policies keyed to authenticated identity and
+      role, and accounts should move into Supabase Auth so that credentials are verified by the
+      identity provider rather than compared on the device. An error boundary around the routed
+      portals is a small addition with a large effect on resilience in the field.
+    </p>
+    <p>
+      Nothing in this report blocks a demonstration or a defence. The fixes applied are behaviour
+      preserving except where the previous behaviour was a crash or a false success message.
+    </p>
+  </section>
+
+  <div class="colophon">
+    <p>
+      Prepared from a direct inspection of the working system on 13 August 2026: static analysis and
+      production build in the repository, and live exercise of the running application across all
+      five portals including a full emergency dispatch. Figures 1–10 are generated from the
+      implemented schema and code paths, not from the proposal.
+    </p>
+  </div>
+
+</div>
