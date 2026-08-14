@@ -1,0 +1,297 @@
+/* MamaTrack GPS — Viewport, safe areas and mobile fit
+ *
+ * Loaded last so it can correct the vendor template stylesheets.
+ *
+ * Two problems this solves:
+ *
+ * 1. The app is installable and runs with viewport-fit=cover and a
+ *    black-translucent status bar, so in standalone mode the page extends
+ *    underneath the notch, the status bar and the home indicator. Padding the
+ *    <body> does not help, because every header, drawer, toast and dialog here
+ *    is position:fixed and so is placed against the viewport rather than the
+ *    padded body. The insets therefore have to be applied to the fixed
+ *    elements themselves.
+ *
+ * 2. 100vh on a phone is the viewport with the browser chrome hidden, so a
+ *    100vh element is taller than the visible area while the address bar is
+ *    showing, and the bottom of the screen is pushed out of view. 100dvh
+ *    tracks the space actually available.
+ *
+ * env(safe-area-inset-*) resolves to 0px on hardware without insets, so none
+ * of this is gated behind a breakpoint — a foldable or tablet in standalone
+ * mode needs it just as much as a phone.
+ */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ---------------------------------------------------- document container */
+
+html {
+  /* Stop iOS rubber-banding from revealing the page behind the app. */
+  overscroll-behavior: none;
+}
+
+body {
+  /* Padding here was pushing 100vh children past the bottom of the screen.
+     The insets are applied per-element below instead. */
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* Keep long unbroken strings (case codes, coordinates, emails) from forcing
+     the page wider than the screen. */
+  overflow-wrap: break-word;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Anything that measures itself against the full screen should track the
+   visible area, not the address-bar-hidden area. */
+[style*="100vh"] {
+  max-height: none;
+}
+
+/* --------------------------------------------------- horizontal overflow */
+
+/* 100vw includes the scrollbar, so a full-width element sits wider than the
+   content box and produces a sideways scroll. Constrain the usual suspects. */
+img,
+video,
+canvas,
+svg,
+iframe,
+table,
+pre {
+  max-width: 100%;
+}
+
+/* Wide tables scroll inside themselves rather than stretching the page. Only
+   on phones: display:block drops the table formatting context, so columns stop
+   aligning, which is a worse trade on a screen wide enough to show them. */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
+
+/* ------------------------------------------------ safe areas for overlays */
+
+/* Toasts, the session banner and the install prompt are fixed to the corners,
+   which is exactly where the notch and the home indicator are. */
+.ov-toasts {
+  top: calc(16px + var(--safe-top));
+  right: calc(16px + var(--safe-right));
+}
+
+.ov-banner {
+  top: calc(16px + var(--safe-top));
+  right: calc(16px + var(--safe-right));
+}
+
+.ov-install {
+  left: calc(16px + var(--safe-left));
+  bottom: calc(16px + var(--safe-bottom));
+}
+
+.ov-scrim {
+  padding-top: calc(20px + var(--safe-top));
+  padding-bottom: calc(20px + var(--safe-bottom));
+  padding-left: calc(20px + var(--safe-left));
+  padding-right: calc(20px + var(--safe-right));
+}
+
+/* Sticky and fixed page furniture. */
+header,
+.site-header,
+.header-area,
+.main-header,
+.header-sticky,
+.medilab-navbar {
+  padding-top: var(--safe-top);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* Off-canvas drawers run the full height, so they meet both insets. */
+aside,
+.sidebar,
+.sidebar-admin,
+.sidebar-mother,
+.mobile-nav-dropdown,
+.offcanvas,
+.drawer {
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Footers and any bottom-docked action bar clear the home indicator. */
+footer,
+.dashboard-footer,
+.bottom-bar,
+.mobile-action-bar {
+  padding-bottom: calc(var(--safe-bottom) + 4px);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* ------------------------------------------------------------- phones */
+
+@media (max-width: 768px) {
+  /* Full-bleed panels must not exceed the screen once insets are counted. */
+  .modal,
+  .modal-overlay > div,
+  .admin-modal-container,
+  .medilab-modal-container,
+  .ov-dialog {
+    max-width: calc(100vw - 24px - var(--safe-left) - var(--safe-right)) !important;
+  }
+
+  /* Leaflet panes get a usable minimum rather than collapsing or overflowing. */
+  .leaflet-container {
+    max-width: 100% !important;
+  }
+
+  /* Tap targets. 44px is the smallest reliably hittable size on a phone,
+     which matters more here than anywhere — this is an emergency control. */
+  button,
+  a.btn,
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Circular icon controls keep their own dimensions: forcing a minimum height
+     on a 38px round button makes it 38x44, and border-radius:50% then renders
+     an oval. They are already sized to be tappable. */
+  .ov-close,
+  .theme-toggle-btn,
+  button[style*="border-radius: 50%"],
+  button[style*="borderRadius: 50%"],
+  [role="button"][style*="border-radius: 50%"] {
+    min-height: 0;
+  }
+
+  /* iOS zooms the page in when a focused field is under 16px. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
+}
+
+/* ------------------------------------------------------- narrow phones */
+
+@media (max-width: 520px) {
+  /* Action rows are laid out inline for a desktop width. Below roughly 520px
+     the last control in the row is pushed past the edge of the screen, where
+     overflow-x:clip hides it — so the button is not merely ugly, it cannot be
+     tapped at all. Letting these rows wrap is what keeps them reachable.
+     Scoped to inline-styled flex rows because that is how the dashboards are
+     built; component stylesheets set their own wrapping deliberately. */
+  [style*="display: flex"]:not(.ov-toast):not(.ov-dialog__foot),
+  [style*="display:flex"]:not(.ov-toast):not(.ov-dialog__foot) {
+    flex-wrap: wrap;
+  }
+
+  /* A flex item defaults to min-width:auto, so it refuses to shrink below its
+     content and overflows instead of compressing. */
+  [style*="display: flex"] > *,
+  [style*="display:flex"] > * {
+    min-width: 0;
+  }
+
+  /* Long labels break rather than forcing the button wider than the screen. */
+  button,
+  a.btn {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  /* An element that is both a flex container and refuses to shrink is a button
+     group, and it holds its desktop width until it runs off the screen. Icons
+     and avatars also use flex-shrink:0 but are not flex containers, so they
+     keep their size and stay round. */
+  [style*="display: flex"][style*="flex-shrink: 0"],
+  [style*="display:flex"][style*="flex-shrink:0"] {
+    flex-shrink: 1 !important;
+    flex-wrap: wrap;
+  }
+
+  /* Section wrappers carry desktop padding — 30px to 40px a side. On a 320px
+     screen that is a quarter of the width gone before any content, and it is
+     what makes a panel measure wider than the display. */
+  [style*="padding: 30px 40px"],
+  [style*="padding: 30px 40px 10px"],
+  [style*="padding: 40px"],
+  [style*="padding: 30px"],
+  [style*="padding: 24px 32px"],
+  [style*="padding: 20px 30px"],
+  [style*="padding: 2rem"] {
+    padding-left: clamp(12px, 4vw, 20px) !important;
+    padding-right: clamp(12px, 4vw, 20px) !important;
+  }
+
+  /* Nothing lays itself out wider than the screen it is on. */
+  main,
+  section,
+  article,
+  header,
+  footer {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Flex and grid items default to min-width:auto and so refuse to shrink
+     below their content, overflowing rather than wrapping. */
+  main *,
+  section * {
+    min-width: 0;
+  }
+}
+
+/* ---------------------------------------------- very small and landscape */
+
+@media (max-width: 380px) {
+  /* Grids that assume a 2-up layout become unreadable below this width. */
+  .stats-grid,
+  .metrics-grid,
+  .momentra-feature-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* A phone held sideways has almost no vertical room; let full-height panels
+   scroll instead of clipping their contents. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .ov-dialog,
+  .modal,
+  .modal-overlay > div {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+}
+
+/* ------------------------------------------------------ standalone (PWA) */
+
+@media all and (display-mode: standalone) {
+  /* There is no browser chrome to scroll away, so the dynamic and small
+     viewport units agree; pin the shell to the real screen height and let the
+     inner regions scroll. */
+  #root {
+    min-height: 100svh;
+  }
+
+  /* Text stays selectable deliberately. Disabling selection would look more
+     like a native app, but a responder needs to be able to long-press and copy
+     a case code, a phone number or a coordinate. */
+}

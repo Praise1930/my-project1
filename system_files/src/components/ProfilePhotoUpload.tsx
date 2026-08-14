@@ -1,5 +1,6 @@
 // MamaTrack GPS — Reusable Profile Photo Upload & View Component
 import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { UserService, User } from '../services/db';
 import { useTheme } from '../contexts/ThemeContext';
 import { Camera, Image as ImageIcon, Trash2, Eye, Check, X } from 'lucide-react';
@@ -22,6 +23,39 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [loading, setLoading]   = useState(false);
+
+  const avatarRef = useRef<HTMLButtonElement>(null);
+  // Viewport coordinates for the menu, worked out from the avatar when it opens.
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  const MENU_WIDTH = 260;
+  const MENU_MAX_HEIGHT = 340;
+  const EDGE = 12;
+
+  /** Place the menu next to the avatar, then pull it back inside the screen. */
+  const openMenu = () => {
+    const trigger = avatarRef.current?.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+
+    if (trigger) {
+      const width = Math.min(MENU_WIDTH, vw - EDGE * 2);
+      // Prefer right-aligned to the avatar, which is where these sit in the
+      // headers, then clamp so neither edge leaves the screen.
+      let left = trigger.right - width;
+      left = Math.min(Math.max(EDGE, left), vw - width - EDGE);
+
+      // Below the avatar if it fits, otherwise above it.
+      const below = trigger.bottom + 8;
+      const spaceBelow = vh - below - EDGE;
+      const top = spaceBelow >= Math.min(MENU_MAX_HEIGHT, 220)
+        ? below
+        : Math.max(EDGE, trigger.top - Math.min(MENU_MAX_HEIGHT, vh - EDGE * 2) - 8);
+
+      setMenuPos({ top, left });
+    }
+    setMenuOpen(o => !o);
+  };
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -76,6 +110,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         ref={galleryRef}
         type="file"
         accept="image/*"
+        aria-label="Choose a profile photo from your device"
         style={{ display: 'none' }}
         onChange={e => e.target.files?.[0] && processFile(e.target.files[0])}
       />
@@ -84,13 +119,15 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         type="file"
         accept="image/*"
         capture="environment"
+        aria-label="Take a profile photo with the camera"
         style={{ display: 'none' }}
         onChange={e => e.target.files?.[0] && processFile(e.target.files[0])}
       />
 
       {/* Avatar Circle — click to open menu */}
       <button
-        onClick={() => setMenuOpen(o => !o)}
+        ref={avatarRef}
+        onClick={openMenu}
         title="Manage profile photo"
         style={{
           width: size,
@@ -159,8 +196,14 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         </span>
       )}
 
-      {/* Dropdown Menu Popup */}
-      {menuOpen && (
+      {/* Dropdown menu.
+          Rendered into <body> rather than in place. The headers that host this
+          avatar use backdrop-filter, and a filtered ancestor becomes the
+          containing block for position:fixed descendants — so a menu centred
+          with top:50% was centring inside the 114px header and hanging off the
+          top of the screen. Several of those ancestors also set overflow:clip,
+          which would cut the menu off. A portal escapes both. */}
+      {menuOpen && createPortal(
         <>
           {/* Click-away backdrop */}
           <div
@@ -170,19 +213,20 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
           <div 
             className="profile-upload-dropdown"
             style={{
-              position: 'absolute',
-              top: size + 8,
-              right: 0,
-              left: 'auto',
+              position: 'fixed',
+              top: menuPos.top,
+              left: menuPos.left,
+              right: 'auto',
+              bottom: 'auto',
+              transform: 'none',
               zIndex: 999999,
               background: isDark ? '#1e293b' : '#ffffff',
               border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0',
               borderRadius: 16,
               boxShadow: isDark ? '0 12px 35px rgba(0,0,0,0.5)' : '0 12px 35px rgba(0,0,0,0.18)',
               padding: '16px',
-              width: '260px',
-              maxWidth: 'calc(100vw - 32px)',
-              maxHeight: '85vh',
+              width: `min(${MENU_WIDTH}px, calc(100vw - ${EDGE * 2}px))`,
+              maxHeight: `min(${MENU_MAX_HEIGHT}px, calc(100dvh - ${EDGE * 2}px))`,
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
@@ -307,7 +351,8 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
               </button>
             )}
           </div>
-        </>
+        </>,
+        document.body,
       )}
 
       {/* FULL PHOTO VIEW & DECISION MODAL */}
@@ -317,7 +362,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
           top: 0,
           left: 0,
           width: '100vw',
-          height: '100vh',
+          height: '100dvh',
           background: 'rgba(15, 23, 42, 0.85)',
           backdropFilter: 'blur(8px)',
           zIndex: 9999999,
