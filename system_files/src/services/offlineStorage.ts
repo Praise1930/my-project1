@@ -38,7 +38,10 @@ export const OfflineStorageService = {
     const raw = localStorage.getItem(STORAGE_KEYS.EMERGENCY_QUEUE);
     if (!raw) return [];
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Guard the shape as well as the parse: a non-array here would make the
+      // callers' .push()/.filter() throw and lose the queued SOS entirely.
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }

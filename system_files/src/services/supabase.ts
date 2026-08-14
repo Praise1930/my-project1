@@ -1,5 +1,6 @@
 // MamaTrack GPS — Supabase Client & Connection Service
 import { createClient } from '@supabase/supabase-js';
+import { errorMessage } from './errors';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -20,7 +21,7 @@ export interface SupabaseConnectionResult {
   message: string;
   url?: string;
   latencyMs?: number;
-  details?: any;
+  details?: unknown;
 }
 
 export async function testSupabaseConnection(): Promise<SupabaseConnectionResult> {
@@ -66,10 +67,10 @@ export async function testSupabaseConnection(): Promise<SupabaseConnectionResult
       latencyMs,
       details: { sampleCount: data?.length || 0 }
     };
-  } catch (err: any) {
+  } catch (err) {
     return {
       success: false,
-      message: `Supabase connection error: ${err?.message || 'Unknown network error'}`,
+      message: `Supabase connection error: ${errorMessage(err, 'Unknown network error')}`,
       url: supabaseUrl,
       details: err
     };

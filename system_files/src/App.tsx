@@ -5,6 +5,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { ThemeProvider } from './contexts/ThemeContext';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { ToastContainer } from './components/Toast';
+import { ConfirmDialog } from './components/ConfirmDialog';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 // Helper component to scroll window to top on client-side route changes
@@ -35,6 +37,10 @@ const DoctorDashboard = lazy(() => import('./pages/DoctorDashboard').then(m => (
 const DriverDashboard = lazy(() => import('./pages/DriverDashboard').then(m => ({ default: m.DriverDashboard })));
 const VhtDashboard    = lazy(() => import('./pages/VhtDashboard').then(m => ({ default: m.VhtDashboard })));
 
+// Reference page for the loading and skeleton states, so the set can be
+// reviewed side by side rather than by navigating to each screen that uses one.
+const LoadingShowcase = lazy(() => import('./pages/LoadingShowcase').then(m => ({ default: m.LoadingShowcase })));
+
 // Lightweight loading spinner shown while a lazy chunk loads
 const PageLoader: React.FC = () => (
   <div style={{
@@ -42,7 +48,7 @@ const PageLoader: React.FC = () => (
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: '100vh',
+    minHeight: '100dvh',
     background: '#0f172a',
   }}>
     <HeartbeatLoader message="Loading MamaTrack System..." subtitle="Connecting Mukono District emergency health network" />
@@ -58,8 +64,17 @@ const App: React.FC = () => {
     <ThemeProvider>
       <PWAInstallBanner />
       <ToastContainer />
-      <Router>
+      <ConfirmDialog />
+      {/* Opt in to the v7 behaviours now: state updates are wrapped in
+          startTransition, and relative paths inside splat routes resolve the
+          way v7 will. The only splat route here is the catch-all redirect, so
+          neither changes how this app routes — it just settles the behaviour
+          before the upgrade rather than during it. */}
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
+        {/* Inside the router so a failed screen can still be navigated away
+            from, and so the boundary resets when the route changes. */}
+        <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public Routes */}
@@ -77,10 +92,14 @@ const App: React.FC = () => {
             <Route path="/driver" element={<DriverDashboard />} />
             <Route path="/vht" element={<VhtDashboard />} />
 
+            {/* Internal reference page */}
+            <Route path="/loading-states" element={<LoadingShowcase />} />
+
             {/* Fallback Catch-All */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </Router>
     </ThemeProvider>
   );

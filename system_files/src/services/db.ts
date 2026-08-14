@@ -1,5 +1,10 @@
 // MamaTrack GPS — Local Database & Simulation Service
 
+// Type-only import: erased at compile time, so it does not reintroduce the
+// circular runtime dependency that setStore()'s dynamic import() avoids.
+import type { SyncedRow } from './syncService';
+import { OfflineStorageService } from './offlineStorage';
+
 // ============================================================================
 // 1. DATA INTERFACES
 // ============================================================================
@@ -397,28 +402,28 @@ class LocalDatabase {
     }
     const data = JSON.parse(raw);
     if (key === 'users') {
-      const hasSecondAdmin = Array.isArray(data) && data.some((u: any) => u.email === 'admin2@mamatrack.ug');
+      const hasSecondAdmin = Array.isArray(data) && data.some((u: { email?: string }) => u.email === 'admin2@mamatrack.ug');
       if (!hasSecondAdmin || data.length < 29) {
         this.setStore(key, defaults);
         return defaults;
       }
     }
     if (key === 'doctors') {
-      const hasCorrectDoctorMapping = Array.isArray(data) && data.some((d: any) => d.user_id === 3);
+      const hasCorrectDoctorMapping = Array.isArray(data) && data.some((d: { user_id?: number }) => d.user_id === 3);
       if (!hasCorrectDoctorMapping || data.length < 7) {
         this.setStore(key, defaults);
         return defaults;
       }
     }
     if (key === 'drivers') {
-      const hasCorrectDriverMapping = Array.isArray(data) && data.some((d: any) => d.user_id === 10);
+      const hasCorrectDriverMapping = Array.isArray(data) && data.some((d: { user_id?: number }) => d.user_id === 10);
       if (!hasCorrectDriverMapping || data.length < 5) {
         this.setStore(key, defaults);
         return defaults;
       }
     }
     if (key === 'mothers') {
-      const hasCorrectMotherMapping = Array.isArray(data) && data.some((m: any) => m.user_id === 15);
+      const hasCorrectMotherMapping = Array.isArray(data) && data.some((m: { user_id?: number }) => m.user_id === 15);
       if (!hasCorrectMotherMapping || data.length < 10) {
         this.setStore(key, defaults);
         return defaults;
@@ -429,7 +434,19 @@ class LocalDatabase {
 
   private setStore<T>(key: string, data: T[]): void {
     const oldDataRaw = localStorage.getItem(`mamatrack_${key}`);
-    localStorage.setItem(`mamatrack_${key}`, JSON.stringify(data));
+
+    // A device with a full storage quota throws here. Left unhandled that would
+    // abort the caller mid-write — including the path that records an SOS — so
+    // the failure is contained and the change still goes out to the network and
+    // to the rest of the interface.
+    try {
+      localStorage.setItem(`mamatrack_${key}`, JSON.stringify(data));
+    } catch (e) {
+      console.error(
+        `Could not save "${key}" to this device (storage may be full). ` +
+        'The change will still be sent to the server.', e,
+      );
+    }
 
     // Dispatch global window event for same-tab and multi-tab instant UI sync
     if (typeof window !== 'undefined') {
@@ -440,15 +457,16 @@ class LocalDatabase {
     // desktop, driver's phone, doctor's console) see them. SyncService decides
     // which stores are cloud-backed; purely device-local stores are ignored there.
     try {
-      const oldData: any[] = oldDataRaw ? JSON.parse(oldDataRaw) : [];
+      const parsedOld = oldDataRaw ? JSON.parse(oldDataRaw) : [];
+      const oldData: SyncedRow[] = Array.isArray(parsedOld) ? parsedOld : [];
       const oldMap = new Map(oldData.map(item => [String(item.id), item]));
 
-      data.forEach((newItem: any) => {
-        const oldItem = oldMap.get(String((newItem as any).id));
+      (data as unknown as SyncedRow[]).forEach((newItem) => {
+        const oldItem = oldMap.get(String(newItem.id));
         if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
           // Lazy import SyncService to prevent circular dependency imports
           import('./syncService').then(({ SyncService }) => {
-            SyncService.syncLocalChange(key, (newItem as any).id, newItem);
+            SyncService.syncLocalChange(key, newItem.id, newItem);
           });
         }
       });
@@ -927,7 +945,7 @@ export const EmergencyService = {
     admins.forEach(admin => {
       NotificationService.createNotification(
         admin.id,
-        '🆘 Critical SOS Triggered',
+        'Critical SOS Triggered',
         `Patient ${motherName} has triggered an emergency beacon. Hospital matched: ${matchedHospital.name}`,
         'emergency',
         active.id
@@ -939,7 +957,7 @@ export const EmergencyService = {
     doctors.forEach(doc => {
       NotificationService.createNotification(
         doc.user_id,
-        '🚨 Emergency Patient Rescue Incoming',
+        'Emergency Patient Rescue Incoming',
         `Expectant mother ${motherName} triggered an emergency SOS. Matched to ${matchedHospital.name}. Notes: ${active.notes}`,
         'emergency',
         active.id
@@ -951,8 +969,8 @@ export const EmergencyService = {
     drivers.forEach(driver => {
       NotificationService.createNotification(
         driver.user_id,
-        '🚑 Emergency Dispatch Available',
-        `New distress beacon from ${motherName} near ${matchedHospital.name}. Check Command Fleet for dispatch.`,
+        'Emergency Dispatch Available',
+        `New distress beacon from ${motherName} near ${matchedHospital.name}. Open your dispatch list to respond.`,
         'emergency',
         active.id
       );
@@ -963,7 +981,7 @@ export const EmergencyService = {
     vhts.forEach(vht => {
       NotificationService.createNotification(
         vht.id,
-        '📳 Community SOS Alert',
+        'Community SOS Alert',
         `Maternal emergency triggered by ${motherName} in your operational zone.`,
         'emergency',
         active.id
@@ -1000,7 +1018,22 @@ export const EmergencyService = {
         bc.close();
       }
     } catch (e) {
-      console.log('Broadcast channel event posted');
+      console.warn('Broadcast of new emergency SOS failed:', e);
+    }
+
+    // 7. If the device has no connection, keep a local record of the alert.
+    // SyncService queues the row for transport; this is the copy the mother's
+    // own screen reads, so she can be told the alert is held and will go out
+    // when she has signal, rather than being left unsure it registered.
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      OfflineStorageService.queueEmergency({
+        id: String(active.id),
+        mother_id: String(motherUserId),
+        latitude: lat,
+        longitude: lng,
+        notes: active.notes,
+        created_at: active.triggered_at,
+      });
     }
 
     return active;
@@ -1066,7 +1099,7 @@ export const EmergencyService = {
     if (motherUser) {
       NotificationService.createNotification(
         motherUser.id,
-        '🚑 Ambulance Dispatched!',
+        'Ambulance Dispatched!',
         `Ambulance driver ${driverUser?.full_name || 'Emergency Team'} is en route to your location. Destination hospital: ${hosp?.name || 'Nearest facility'}. Expected ETA: ${etaMinutes} mins.`,
         'dispatch',
         emergencyId
@@ -1079,7 +1112,7 @@ export const EmergencyService = {
       : 'Mukono District';
     NotificationService.createNotification(
       driverUserId,
-      '🚨 EMERGENCY DISPATCH — Navigate to Patient',
+      'EMERGENCY DISPATCH — Navigate to Patient',
       `PICKUP: ${motherUser?.full_name || 'Patient'} at ${motherLocation} (GPS: ${emg.latitude.toFixed(4)}, ${emg.longitude.toFixed(4)}).\nDESTINATION: ${hosp?.name || 'Hospital'} (${hosp?.address || ''}).\nBlood Type: ${motherProfile?.blood_type || 'Unknown'} | Severity: ${emg.severity.toUpperCase()}\nNotes: ${emg.notes}\nETA: ${etaMinutes} mins.`,
       'dispatch',
       emergencyId
@@ -1089,7 +1122,7 @@ export const EmergencyService = {
     if (assignedDoctorId) {
       const weeksPregnant = motherProfile ? Math.max(1, Math.min(42, Math.floor((new Date().getTime() - new Date(motherProfile.pregnancy_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))) : 0;
       const medicalBrief = [
-        `🚨 INBOUND MATERNAL EMERGENCY — Prepare for arrival`,
+        `INBOUND MATERNAL EMERGENCY — Prepare for arrival`,
         ``,
         `Patient: ${motherUser?.full_name || 'Unknown'}`,
         `Phone: ${motherUser?.phone || 'N/A'}`,
@@ -1111,7 +1144,7 @@ export const EmergencyService = {
 
       NotificationService.createNotification(
         assignedDoctorId,
-        '🩺 INCOMING PATIENT — Medical Preparation Required',
+        'INCOMING PATIENT — Medical Preparation Required',
         medicalBrief,
         'dispatch',
         emergencyId
@@ -1155,7 +1188,7 @@ export const EmergencyService = {
         bc.close();
       }
     } catch (e) {
-      console.log('Broadcast dispatch event posted');
+      console.warn('Broadcast of ambulance dispatch failed:', e);
     }
 
     return updatedEmg;
@@ -1215,21 +1248,21 @@ export const EmergencyService = {
     else if (status === 'completed') msg = `Rescue completed. Clinical handoff at ${hosp?.name || 'the hospital'} is finished.`;
 
     if (motherUser) {
-      NotificationService.createNotification(motherUser.id, '🚨 Rescue Status: ' + status.toUpperCase(), msg, 'status_update', emergencyId);
+      NotificationService.createNotification(motherUser.id, 'Status: ' + status.toUpperCase(), msg, 'status_update', emergencyId);
     }
     if (driverUser && changedByUserId !== driverUser.id) {
-      NotificationService.createNotification(driverUser.id, '🚨 Emergency Update', `Emergency status changed to ${status}`, 'status_update', emergencyId);
+      NotificationService.createNotification(driverUser.id, 'Emergency Update', `Emergency status changed to ${status}`, 'status_update', emergencyId);
     }
     if (doctorUser && changedByUserId !== doctorUser.id) {
       let doctorMsg = `Emergency status updated to ${status}`;
-      if (status === 'in_transit') doctorMsg = `🚑 Patient is now in transit to your facility. Prepare for arrival.`;
-      else if (status === 'arrived' && prevStatus === 'en_route') doctorMsg = `🚑 Ambulance has reached the patient. Pickup complete — transit to hospital beginning soon.`;
-      else if (status === 'delivered') doctorMsg = `🏥 Patient has arrived at ${hosp?.name || 'your facility'}. Driver handoff complete — please proceed with clinical triage.`;
-      else if (status === 'completed') doctorMsg = `✅ Case closed for patient at ${hosp?.name || 'your facility'}.`;
-      NotificationService.createNotification(doctorUser.id, '🩺 Patient Status: ' + status.toUpperCase(), doctorMsg, 'status_update', emergencyId);
+      if (status === 'in_transit') doctorMsg = `Patient is now in transit to your facility. Prepare for arrival.`;
+      else if (status === 'arrived' && prevStatus === 'en_route') doctorMsg = `Ambulance has reached the patient. Pickup complete — transit to hospital beginning soon.`;
+      else if (status === 'delivered') doctorMsg = `Patient has arrived at ${hosp?.name || 'your facility'}. Driver handoff complete — please proceed with clinical triage.`;
+      else if (status === 'completed') doctorMsg = `Case closed for patient at ${hosp?.name || 'your facility'}.`;
+      NotificationService.createNotification(doctorUser.id, 'Patient Status: ' + status.toUpperCase(), doctorMsg, 'status_update', emergencyId);
     }
     if (adminUser && changedByUserId !== adminUser.id) {
-      NotificationService.createNotification(adminUser.id, '📡 Fleet Alert: ' + status.toUpperCase(), `Emergency ${emg.code} updated to ${status}`, 'status_update', emergencyId);
+      NotificationService.createNotification(adminUser.id, 'Fleet Alert: ' + status.toUpperCase(), `Emergency ${emg.code} updated to ${status}`, 'status_update', emergencyId);
     }
 
     // Broadcast status update for real-time tracking
@@ -1240,7 +1273,7 @@ export const EmergencyService = {
         bc.close();
       }
     } catch (e) {
-      console.log('Broadcast status update event posted');
+      console.warn('Broadcast of emergency status update failed:', e);
     }
 
     return updatedEmg;
@@ -1277,7 +1310,7 @@ export const EmergencyService = {
       if (uid === cancelledByUserId && uid === emg.mother_id) return;
       NotificationService.createNotification(
         uid,
-        '⚠️ Emergency SOS Cancelled',
+        'Emergency SOS Cancelled',
         `Emergency alert ${emg.code} for ${motherName} was CANCELLED. Reason: "${reason}"`,
         'cancelled',
         emergencyId
@@ -1419,7 +1452,7 @@ export const DoctorService = {
     db.users.filter(u => u.role === 'admin').forEach(admin => {
       NotificationService.createNotification(
         admin.id,
-        '💉 Blood Supply Needed',
+        'Blood Supply Needed',
         `Blood Request: ${units} units of ${bloodType} requested by Dr. ${db.users.find(u => u.id === doctorUserId)?.full_name}`,
         'system'
       );
@@ -1576,7 +1609,7 @@ export const SimulationEngine = {
         // Notify Mother
         NotificationService.createNotification(
           emg.mother_id,
-          '🚑 Ambulance Arrived',
+          'Ambulance Arrived',
           'The ambulance has arrived! Please prepare to board.',
           'status_update',
           emergencyId
@@ -1586,7 +1619,7 @@ export const SimulationEngine = {
         if (emg.doctor_id) {
           NotificationService.createNotification(
             emg.doctor_id,
-            '🚑 Patient Picked Up',
+            'Patient Picked Up',
             `Ambulance has reached the patient. Transit to your facility will begin shortly.`,
             'status_update',
             emergencyId
@@ -1673,7 +1706,7 @@ export const SimulationEngine = {
         // Notify all parties
         NotificationService.createNotification(
           emg.mother_id,
-          '🏥 Arrived at Hospital',
+          'Arrived at Hospital',
           `You have arrived safely at ${hosp.name}. The medical team is ready for you.`,
           'status_update',
           emergencyId
@@ -1682,7 +1715,7 @@ export const SimulationEngine = {
         if (emg.driver_id) {
           NotificationService.createNotification(
             emg.driver_id,
-            '✅ Mission Complete',
+            'Mission Complete',
             `Patient delivered to ${hosp.name}. You are now available for new dispatches.`,
             'status_update',
             emergencyId
@@ -1692,7 +1725,7 @@ export const SimulationEngine = {
         if (emg.doctor_id) {
           NotificationService.createNotification(
             emg.doctor_id,
-            '🏥 Patient Has Arrived',
+            'Patient Has Arrived',
             `Patient has arrived at ${hosp.name}. Please proceed with clinical assessment and triage.`,
             'status_update',
             emergencyId
@@ -1703,7 +1736,7 @@ export const SimulationEngine = {
         adminUsers.forEach(admin => {
           NotificationService.createNotification(
             admin.id,
-            '🏥 Patient Delivered — Awaiting Triage',
+            'Patient Delivered — Awaiting Triage',
             `Emergency ${emg.code}: Patient delivered to ${hosp.name}. Driver mission complete; clinical triage pending.`,
             'status_update',
             emergencyId

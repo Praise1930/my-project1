@@ -1,6 +1,7 @@
 // MamaTrack GPS — Supabase Data Migration & Verification Service
 import { supabase, testSupabaseConnection } from './supabase';
 import { db } from './db';
+import { errorMessage as toErrorMessage } from './errors';
 
 export interface MigrationSummary {
   collectionName: string;
@@ -298,7 +299,7 @@ export class DataMigrationService {
 
       try {
         // Clean dataset objects for Postgres compatibility
-        const cleanData = data.map((record: any) => {
+        const cleanData = data.map((record) => {
           const cleaned = { ...record };
           // Convert date/timestamp objects or string IDs if needed
           return cleaned;
@@ -328,13 +329,13 @@ export class DataMigrationService {
             status: 'SUCCESS'
           });
         }
-      } catch (err: any) {
+      } catch (err) {
         summaries.push({
           collectionName: name,
           sourceCount,
           transferredCount: 0,
           status: 'FAILED',
-          errorMessage: err?.message || 'Unknown upsert error'
+          errorMessage: toErrorMessage(err, 'Unknown upsert error')
         });
       }
     }

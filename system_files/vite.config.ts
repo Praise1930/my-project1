@@ -4,6 +4,19 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: 'localhost',
+    port: 5173,
+    strictPort: true,
+    // Pin the hot-reload socket. When the dev server is reached through a proxy
+    // the client cannot always infer its own port, and falls back to
+    // "ws://localhost:undefined", which throws on every page load.
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      clientPort: 5173,
+    },
+  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {
