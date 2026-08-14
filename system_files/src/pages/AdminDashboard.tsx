@@ -1,4 +1,4 @@
-// MamaTrack GPS — System Admin Command Center (Dasher Theme with Mothers & Undo Capability)
+// MamaTrack GPS — System Administrator Center (Dasher Theme with Mothers & Undo Capability)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,8 +8,11 @@ import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
-import { showToast } from '../components/Toast';
+import { showToast, confirmAction } from '../components/toastBus';
+import { SupabaseMigrationModal } from '../components/SupabaseMigrationModal';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
+import { errorMessage } from '../services/errors';
+import { Icon } from '../components/Icon';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -203,6 +206,7 @@ export const AdminDashboard: React.FC = () => {
   // Facilities Modals
   const [showFacilityModal, setShowFacilityModal] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(true);
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
   const [editFacility, setEditFacility] = useState<Hospital | null>(null);
   const [facilityForm, setFacilityForm] = useState({
     name: '',
@@ -331,7 +335,9 @@ export const AdminDashboard: React.FC = () => {
   // playAlertSound defined here so it's available to the useEffect closure below
   const playAlertSound = () => {
     try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      // Safari still only exposes the prefixed constructor.
+      const AudioContext = window.AudioContext
+        || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
       const osc = ctx.createOscillator();
@@ -358,8 +364,10 @@ export const AdminDashboard: React.FC = () => {
     // emergency record — 'mamatrack_db_update' carries { key: <storeName> }.
     // Guard so a non-emergency payload can never reach the modal, which would
     // then blow up reading emg.severity / emg.code.
-    const isEmergencyPayload = (v: any): v is Emergency =>
-      !!v && typeof v === 'object' && typeof v.id === 'number' && typeof v.status === 'string';
+    const isEmergencyPayload = (v: unknown): v is Emergency =>
+      !!v && typeof v === 'object'
+      && typeof (v as Emergency).id === 'number'
+      && typeof (v as Emergency).status === 'string';
 
     // Show SOS modal for an emergency if modal is not currently open or if key is newer
     const checkAndShowAlert = (emg: Emergency) => {
@@ -407,9 +415,9 @@ export const AdminDashboard: React.FC = () => {
       }
     }, 1500);
 
-    const handleAlert = (e?: any) => {
+    const handleAlert = (e?: Event) => {
       syncModalWithLiveData();
-      const detail = e?.detail;
+      const detail = (e as CustomEvent<unknown> | undefined)?.detail;
       if (isEmergencyPayload(detail)) {
         if (detail.status === 'cancelled') {
           if (incomingAlertEmergencyRef.current && incomingAlertEmergencyRef.current.id === detail.id) {
@@ -496,7 +504,7 @@ export const AdminDashboard: React.FC = () => {
     // Add active emergencies
     emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).forEach(e => {
       const m = db.users.find(usr => usr.id === e.mother_id);
-      list.push({ id: `emg-${e.id}`, lat: e.latitude, lng: e.longitude, type: 'emergency', label: `🚨 Distress: ${m?.full_name || 'Patient'}`, sublabel: e.notes });
+      list.push({ id: `emg-${e.id}`, lat: e.latitude, lng: e.longitude, type: 'emergency', label: ` Distress: ${m?.full_name ||'Patient'}`, sublabel: e.notes });
     });
 
     return list;
@@ -642,8 +650,8 @@ export const AdminDashboard: React.FC = () => {
       // Show assigned doctor info
       const assignedDoc = dispatched.doctor_id ? db.users.find(u => u.id === dispatched.doctor_id) : null;
       showToast(`Dispatch approved! Driver ${drvUser?.full_name} dispatched to ${hosp?.name}. Doctor ${assignedDoc?.full_name || 'Auto-assigned'} notified with medical prep details. ETA: ${eta} minutes. Patient: ${motherUser?.full_name}`, 'success', 8000);
-    } catch (err: any) {
-      showToast(err?.message || 'Dispatch failed. Please try again.', 'error');
+    } catch (err) {
+      showToast(errorMessage(err, 'Dispatch failed. Please try again.'), 'error');
     }
   };
 
@@ -683,13 +691,18 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleResetDatabase = () => {
-    if (window.confirm('Reset all databases and tables to default seed parameters? (This clears custom logs)')) {
-      db.resetDatabase();
-      loadData();
-      showToast('Database restored back to seeds. Please log in again.', 'success');
-      navigate('/');
-    }
+  const handleResetDatabase = async () => {
+    const ok = await confirmAction({
+      title: 'Reset the database?',
+      message: 'Every record returns to its seeded state. Custom logs, registered mothers and emergency history added since setup will be discarded. You will be signed out.',
+      confirmLabel: 'Reset database',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    db.resetDatabase();
+    loadData();
+    showToast('All records have been returned to their seeded state. Please sign in again.', 'success', 5000, 'Database reset');
+    navigate('/');
   };
 
   // --- PASSWORD RESET ACTION ---
@@ -767,14 +780,20 @@ export const AdminDashboard: React.FC = () => {
     showToast('Expectant Mother profile updated.', 'success');
   };
 
-  const handleDeleteMother = (id: number, userId: number) => {
-    if (window.confirm('Are you sure you want to delete this expectant mother?')) {
-      saveBackupState(); // Save undo state
-      db.mothers = db.mothers.filter(m => m.id !== id);
-      db.users = db.users.filter(u => u.id !== userId);
-      loadData();
-      showToast('Expectant mother record removed from database.', 'success');
-    }
+  const handleDeleteMother = async (id: number, userId: number) => {
+    const mother = db.users.find(u => u.id === userId);
+    const ok = await confirmAction({
+      title: 'Remove this mother?',
+      message: `${mother?.full_name || 'This mother'} will no longer appear on the register, and her antenatal history and home location will be removed from the district view.`,
+      confirmLabel: 'Remove record',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    saveBackupState(); // Save undo state
+    db.mothers = db.mothers.filter(m => m.id !== id);
+    db.users = db.users.filter(u => u.id !== userId);
+    loadData();
+    showToast(`${mother?.full_name || 'The record'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Record removed');
   };
 
   // --- FACILITY CRUD ACTIONS ---
@@ -825,14 +844,19 @@ export const AdminDashboard: React.FC = () => {
     setShowFacilityModal(true);
   };
 
-  const handleDeleteFacility = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this health facility?')) {
-      saveBackupState(); // Save undo state
-      const updated = db.hospitals.filter(h => h.id !== id);
-      db.hospitals = updated;
-      loadData();
-      showToast('Health facility removed successfully.', 'success');
-    }
+  const handleDeleteFacility = async (id: number) => {
+    const facility = db.hospitals.find(h => h.id === id);
+    const ok = await confirmAction({
+      title: 'Remove this facility?',
+      message: `${facility?.name || 'This facility'} will stop appearing on the fleet map and will no longer be considered when the system resolves a destination for an emergency.`,
+      confirmLabel: 'Remove facility',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    saveBackupState(); // Save undo state
+    db.hospitals = db.hospitals.filter(h => h.id !== id);
+    loadData();
+    showToast(`${facility?.name || 'The facility'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Facility removed');
   };
 
   const handleFacilitySubmit = (e: React.FormEvent) => {
@@ -926,18 +950,25 @@ export const AdminDashboard: React.FC = () => {
     setShowPersonnelModal(true);
   };
 
-  const handleDeletePersonnel = (role: 'doctor' | 'driver', id: number, userId: number) => {
-    if (window.confirm(`Are you sure you want to delete this ${role}?`)) {
-      saveBackupState(); // Save undo state
-      if (role === 'doctor') {
-        db.doctors = db.doctors.filter(d => d.id !== id);
-      } else {
-        db.drivers = db.drivers.filter(d => d.id !== id);
-      }
-      db.users = db.users.filter(u => u.id !== userId);
-      loadData();
-      showToast('Personnel profile deleted successfully.', 'success');
+  const handleDeletePersonnel = async (role: 'doctor' | 'driver', id: number, userId: number) => {
+    const person = db.users.find(u => u.id === userId);
+    const duty = role === 'doctor' ? 'receive inbound transfers' : 'be assigned to a dispatch';
+    const ok = await confirmAction({
+      title: `Remove this ${role}?`,
+      message: `${person?.full_name || 'This person'} will lose access to the portal and will no longer ${duty}.`,
+      confirmLabel: 'Remove profile',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    saveBackupState(); // Save undo state
+    if (role === 'doctor') {
+      db.doctors = db.doctors.filter(d => d.id !== id);
+    } else {
+      db.drivers = db.drivers.filter(d => d.id !== id);
     }
+    db.users = db.users.filter(u => u.id !== userId);
+    loadData();
+    showToast(`${person?.full_name || 'The profile'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Profile removed');
   };
 
   const handlePersonnelSubmit = (e: React.FormEvent) => {
@@ -1021,7 +1052,7 @@ export const AdminDashboard: React.FC = () => {
 
 
   return (
-    <div className="dasher-dashboard" style={{ background: '#f8fafd', minHeight: '100vh', fontFamily: "'Public Sans', sans-serif", display: 'flex' }}>
+    <div className="dasher-dashboard" style={{ background: '#f8fafd', minHeight: '100dvh', fontFamily: "'Public Sans', sans-serif", display: 'flex' }}>
       
       {/* SCOPED OVERRIDES */}
       <style>{`
@@ -1101,7 +1132,7 @@ export const AdminDashboard: React.FC = () => {
 
         @media (max-width: 768px) {
           .dasher-dashboard {
-            min-height: 100vh !important;
+            min-height: 100dvh !important;
             height: auto !important;
             display: block !important;
             overflow-x: clip !important;
@@ -1112,7 +1143,7 @@ export const AdminDashboard: React.FC = () => {
             width: 100% !important;
             padding: 1rem !important;
             height: auto !important;
-            min-height: calc(100vh - 60px) !important;
+            min-height: calc(100dvh - 60px) !important;
             overflow-x: clip !important;
           }
         }
@@ -1690,7 +1721,7 @@ export const AdminDashboard: React.FC = () => {
               margin: 0,
               letterSpacing: '0.04em'
             }}>MamaTrack</h5>
-            <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Command Desk</span>
+            <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dispatch</span>
           </div>
         </div>
 
@@ -1785,7 +1816,7 @@ export const AdminDashboard: React.FC = () => {
               top: 0,
               left: 0,
               width: '280px',
-              height: '100vh',
+              height: '100dvh',
               zIndex: 99999,
               background: theme === 'light' ? '#ffffff' : '#0f172a',
               color: theme === 'light' ? '#0f172a' : '#ffffff',
@@ -1800,7 +1831,7 @@ export const AdminDashboard: React.FC = () => {
                   <div style={{ background: '#3b82f6', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>M</div>
                   <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
                 </div>
-                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}><Icon name="close" size={18} /></button>
               </div>
 
               {/* Profile Card */}
@@ -1814,17 +1845,17 @@ export const AdminDashboard: React.FC = () => {
 
               {/* Nav Menu */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                {[
+                {([
                   { id: 'dispatch', icon: 'ti-map-pin', label: 'GPS Dispatch' },
                   { id: 'facilities', icon: 'ti-building-hospital', label: 'Health Facilities' },
                   { id: 'personnel', icon: 'ti-users', label: 'Duty Personnel' },
                   { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
                   { id: 'reports', icon: 'ti-chart-bar', label: 'Reports & Audits' },
                   { id: 'performance', icon: 'ti-chart-dots', label: 'System Performance' }
-                ].map(item => (
+                ] as const).map(item => (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveTab(item.id as any); setMobileSidebarOpen(false); }}
+                    onClick={() => { setActiveTab(item.id); setMobileSidebarOpen(false); }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -1882,11 +1913,9 @@ export const AdminDashboard: React.FC = () => {
               }}
               className="d-inline-flex d-md-none"
               title="Open Navigation Menu"
-            >
-              ☰
-            </button>
+            ><Icon name="menu" size={18} /></button>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'inherit', margin: 0, lineHeight: 1.25 }}>Command Center Workspace</h4>
+              <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'inherit', margin: 0, lineHeight: 1.25 }}>Dispatch</h4>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Mukono Regional Ambulance Dispatch Fleet Monitor</span>
             </div>
           </div>
@@ -1942,6 +1971,23 @@ export const AdminDashboard: React.FC = () => {
             >
               <RefreshCw size={13} className="reset-icon" /> Reset Database
             </button>
+            <button
+              onClick={() => setShowMigrationModal(true)}
+              className="btn-reset-db"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                fontWeight: 700,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+              title="Check the database connection and upload local records"
+            >
+              <Icon name="signal" size={13} /> Database
+            </button>
             <ThemeToggle />
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button 
@@ -1957,7 +2003,12 @@ export const AdminDashboard: React.FC = () => {
         </header>
 
       {/* FLOATING WELCOME TOAST NOTIFICATION (Disappears after 7 seconds) */}
-      <WelcomeToast userName={user.full_name} roleName="Admin Command" subtitle="Welcome to Mukono Regional Dispatch. Fleet active & synchronized." icon="👋" />
+      <WelcomeToast userName={user.full_name} roleName="Administrator" subtitle="Welcome to Mukono Regional Dispatch. Fleet active & synchronized." />
+
+      <SupabaseMigrationModal
+        isOpen={showMigrationModal}
+        onClose={() => setShowMigrationModal(false)}
+      />
 
       {/* ===== GLOBAL PERSISTENT SOS ALERT STRIP — always visible on ALL tabs ===== */}
       {pendingCount > 0 && (() => {
@@ -1991,7 +2042,7 @@ export const AdminDashboard: React.FC = () => {
               }
             `}</style>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '1.6rem', animation: 'sos-strip-pulse 0.8s infinite alternate' }}>🚨</span>
+              <span style={{ fontSize: '1.6rem', animation: 'sos-strip-pulse 0.8s infinite alternate' }}><Icon name="emergency" size={18} /></span>
               <div>
                 <div style={{ fontWeight: 900, fontSize: '0.95rem', letterSpacing: '0.03em' }}>
                   INCOMING SOS — {patientUser?.full_name || 'Expectant Mother'} needs emergency dispatch!
@@ -2020,8 +2071,7 @@ export const AdminDashboard: React.FC = () => {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
-              >
-                ⚡ View &amp; Dispatch
+              ><Icon name="fast" size={16} /> View &amp; Dispatch
               </button>
               <button
                 onClick={() => { setActiveTab('dispatch'); }}
@@ -2036,8 +2086,7 @@ export const AdminDashboard: React.FC = () => {
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
-              >
-                📋 Go to Dispatch
+              ><Icon name="clipboard" size={16} /> Go to Dispatch
               </button>
             </div>
           </div>
@@ -2054,9 +2103,9 @@ export const AdminDashboard: React.FC = () => {
         flexWrap: 'wrap'
       }}>
         <div style={{ flex: '1.3', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
-          <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>System Command Console</span>
+          <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Dispatch</span>
           <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 8px' }}>
-            Mukono District Command Fleet
+            Mukono District dispatch
           </h2>
           <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>
             Coordinate emergency obstetric dispatches, monitor safety parameters, and manage clinic facility status parameters in Mukono District. Use the navigation panel on the left to review maps, drivers, and hospitals.
@@ -2135,7 +2184,7 @@ export const AdminDashboard: React.FC = () => {
               border: '2px solid #fca5a5'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <span style={{ fontSize: '2rem' }}>🚨</span>
+                <span style={{ fontSize: '2rem' }}><Icon name="emergency" size={18} /></span>
                 <div>
                   <div style={{ fontSize: '1rem', fontWeight: 800, letterSpacing: '0.02em' }}>
                     CRITICAL SOS EMERGENCY ALERT: {motherUser?.full_name || 'Expectant Mother'}
@@ -2165,8 +2214,7 @@ export const AdminDashboard: React.FC = () => {
                   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   transition: 'transform 0.2s ease'
                 }}
-              >
-                ⚡ View & Dispatch Ambulance
+              ><Icon name="fast" size={16} /> View & Dispatch Ambulance
               </button>
             </div>
           );
@@ -2178,18 +2226,17 @@ export const AdminDashboard: React.FC = () => {
         {activeTab === 'dispatch' && (
           <div className="row g-4" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '24px' }}>
             
-            {/* Distress Triage Queue column */}
+            {/* Active emergencies column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               
               <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff' }}>
                 <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}>🚨 Distress Triage Queue</h5>
+                  <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}><Icon name="emergency" size={16} /> Active emergencies</h5>
                 </div>
                 
                 <div style={{ padding: '16px', maxHeight: '420px', overflowY: 'auto' }}>
                   {filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '13px', color: '#64748b' }}>
-                      🟢 No matching active emergencies reported in the region
+                    <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '13px', color: '#64748b' }}><Icon name="online" size={16} /> No matching active emergencies reported in the region
                     </div>
                   ) : (
                     filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
@@ -2230,11 +2277,11 @@ export const AdminDashboard: React.FC = () => {
                           {/* Assigned Hospital & Driver Details */}
                           <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px' }}>
                             <div style={{ color: '#0284c7', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>🏥 Hospital:</span>
+                              <span><Icon name="hospital" size={16} /> Hospital:</span>
                               <span style={{ fontWeight: 700, color: '#0f172a' }}>{hospital ? hospital.name : 'Pending Facility Match'}</span>
                             </div>
                             <div style={{ color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>🚑 Assigned Driver:</span>
+                              <span><Icon name="ambulance" size={16} /> Assigned Driver:</span>
                               <span style={{ fontWeight: 700, color: '#0f172a' }}>
                                 {drvUser ? `${drvUser.full_name} (${vehicle?.plate_number || 'Ambulance'})` : 'Pending Driver Match'}
                               </span>
@@ -2275,8 +2322,7 @@ export const AdminDashboard: React.FC = () => {
                           marginBottom: '18px'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              🌟 Recommended Nearest Facility with Resources
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}><Icon name="sparkle" size={16} /> Recommended Nearest Facility with Resources
                             </span>
                             <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669', background: '#d1fae5', padding: '2px 8px', borderRadius: '12px' }}>
                               {rec.distanceKm} km away
@@ -2284,18 +2330,18 @@ export const AdminDashboard: React.FC = () => {
                           </div>
 
                           <div style={{ fontSize: '15px', fontWeight: 800, color: '#065f46' }}>
-                            🏥 {rec.hospital.name}
+                            <Icon name="hospital" size={14} /> {rec.hospital.name}
                           </div>
 
                           <div style={{ fontSize: '12px', color: '#047857', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                            <span>🛏️ <strong>{rec.hospital.available_beds}</strong> Beds Available</span>
-                            {rec.hospital.has_cemonc && <span>✅ <strong>CEmONC</strong> Certified</span>}
-                            {rec.hospital.has_blood_bank && <span>🩸 <strong>Blood Bank</strong> Active</span>}
+                            <span><Icon name="bed" size={14} /> <strong>{rec.hospital.available_beds}</strong> Beds Available</span>
+                            {rec.hospital.has_cemonc && <span><Icon name="success" size={14} /> <strong>CEmONC</strong> Certified</span>}
+                            {rec.hospital.has_blood_bank && <span><Icon name="blood" size={14} /> <strong>Blood Bank</strong> Active</span>}
                           </div>
 
                           {recDrv && (
                             <div style={{ fontSize: '12px', color: '#065f46', marginTop: '8px', borderTop: '1px dashed #a7f3d0', paddingTop: '8px' }}>
-                              🚑 <strong>Available Driver:</strong> {drvUser?.full_name} ({drvVehicle?.plate_number || 'Ambulance'})
+                              <Icon name="ambulance" size={14} /> <strong>Available Driver:</strong> {drvUser?.full_name} ({drvVehicle?.plate_number || 'Ambulance'})
                             </div>
                           )}
 
@@ -2326,8 +2372,8 @@ export const AdminDashboard: React.FC = () => {
                                 setDispatchHospital(0);
                                 loadData();
                                 showToast(`Approved! Driver ${drvUser?.full_name} has been dispatched to pick up ${motherUser?.full_name} and transport to ${rec.hospital.name}!`, 'success', 7000);
-                              } catch (err: any) {
-                                showToast(err?.message || 'Dispatch failed', 'error');
+                              } catch (err) {
+                                showToast(errorMessage(err, 'Dispatch failed'), 'error');
                               }
                             }}
                             style={{
@@ -2347,8 +2393,7 @@ export const AdminDashboard: React.FC = () => {
                               gap: '6px',
                               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
                             }}
-                          >
-                            ⚡ One-Click Approve Driver & Dispatch to {rec.hospital.name} ({rec.distanceKm} km)
+                          ><Icon name="fast" size={16} /> One-Click Approve Driver & Dispatch to {rec.hospital.name} ({rec.distanceKm} km)
                           </button>
                         </div>
                       )}
@@ -2359,7 +2404,7 @@ export const AdminDashboard: React.FC = () => {
                           <select className="form-select" style={{ fontSize: '13px', padding: '8px 12px' }} value={dispatchHospital} onChange={e => setDispatchHospital(Number(e.target.value))}>
                             {hospitals.map(h => (
                               <option key={h.id} value={h.id}>
-                                {h.name} (Beds: {h.available_beds}{h.id === rec?.hospital.id ? ' - ⭐ Recommended' : ''})
+                                {h.name} (Beds: {h.available_beds}{h.id === rec?.hospital.id ? '- Recommended' : ''})
                               </option>
                             ))}
                           </select>
@@ -2414,7 +2459,7 @@ export const AdminDashboard: React.FC = () => {
             {/* Map Fleet Monitor column */}
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '16px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '12px' }}>
-                <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}><i className="ti ti-map-pin" style={{ color: '#3b82f6' }}></i> GPS Fleet monitor Map</h5>
+                <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}><i className="ti ti-map-pin" style={{ color: '#3b82f6' }}></i> Fleet map</h5>
               </div>
               <div style={{ flex: 1, minHeight: '440px', borderRadius: '6px', overflow: 'hidden' }}>
                 <MapComponent
@@ -2442,8 +2487,7 @@ export const AdminDashboard: React.FC = () => {
                 onClick={handleOpenAddFacility}
                 className="btn btn-primary" 
                 style={{ fontSize: '13px', fontWeight: 700, padding: '6px 16px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
-              >
-                ➕ Add Health Facility
+              ><Icon name="add" size={16} /> Add Health Facility
               </button>
             </div>
             
@@ -2480,29 +2524,27 @@ export const AdminDashboard: React.FC = () => {
                           </span>
                         </td>
                         <td>
-                          <div>📍 {h.sub_county}</div>
+                          <div><Icon name="location" size={14} /> {h.sub_county}</div>
                           <div className="facility-subtext">{h.address}</div>
                         </td>
                         <td>
                           <strong style={{ color: h.available_beds > 5 ? '#16a34a' : '#ef4444' }}>{h.available_beds}</strong> / {h.total_beds}
                         </td>
                         <td>{h.phone}</td>
-                        <td>{h.has_cemonc ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✅ Available</span> : <span style={{ color: '#94a3b8' }}>❌ No</span>}</td>
-                        <td>{h.has_surgical_capacity ? <span style={{ color: '#16a34a', fontWeight: 700 }}>✅ Ready</span> : <span style={{ color: '#94a3b8' }}>❌ None</span>}</td>
-                        <td>{h.has_ambulance ? <span style={{ color: '#16a34a', fontWeight: 700 }}>🚑 Active</span> : <span style={{ color: '#94a3b8' }}>❌ None</span>}</td>
+                        <td>{h.has_cemonc ? <span style={{ color: '#16a34a', fontWeight: 700 }}><Icon name="success" size={16} /> Available</span> : <span style={{ color: '#94a3b8' }}><Icon name="failed" size={16} /> No</span>}</td>
+                        <td>{h.has_surgical_capacity ? <span style={{ color: '#16a34a', fontWeight: 700 }}><Icon name="success" size={16} /> Ready</span> : <span style={{ color: '#94a3b8' }}><Icon name="failed" size={16} /> None</span>}</td>
+                        <td>{h.has_ambulance ? <span style={{ color: '#16a34a', fontWeight: 700 }}><Icon name="ambulance" size={16} /> Active</span> : <span style={{ color: '#94a3b8' }}><Icon name="failed" size={16} /> None</span>}</td>
                         <td>
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button 
                               onClick={() => handleOpenEditFacility(h)}
                               style={{ fontSize: '12px', padding: '4px 8px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                            >
-                              ✏️ Edit
+                            ><Icon name="edit" size={16} /> Edit
                             </button>
                             <button 
                               onClick={() => handleDeleteFacility(h.id)}
                               style={{ fontSize: '12px', padding: '4px 8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                            >
-                              🗑️ Delete
+                            ><Icon name="delete" size={16} /> Delete
                             </button>
                           </div>
                         </td>
@@ -2524,8 +2566,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="card" style={{ border: '1px solid #3b82f6', borderRadius: '8px', background: '#ffffff', padding: '24px', boxShadow: '0 4px 16px rgba(59,130,246,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <div>
-                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🔍 Unified Personnel Search Results
+                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="search" size={16} /> Unified Personnel Search Results
                     </h5>
                     <span style={{ fontSize: '12px', color: '#64748b' }}>
                       Matching query "{searchQuery}" ({filteredDoctors.length + filteredDrivers.length} personnel found)
@@ -2534,8 +2575,7 @@ export const AdminDashboard: React.FC = () => {
                   <button 
                     onClick={() => setSearchQuery('')}
                     style={{ fontSize: '12px', padding: '6px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    ✕ Clear Search Filter
+                  ><Icon name="close" size={16} /> Clear Search Filter
                   </button>
                 </div>
 
@@ -2554,8 +2594,7 @@ export const AdminDashboard: React.FC = () => {
                     <tbody>
                       {filteredDoctors.length === 0 && filteredDrivers.length === 0 ? (
                         <tr>
-                          <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                            🔍 No personnel found matching "{searchQuery}".
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}><Icon name="search" size={16} /> No personnel found matching "{searchQuery}".
                           </td>
                         </tr>
                       ) : (
@@ -2567,13 +2606,12 @@ export const AdminDashboard: React.FC = () => {
                             return (
                               <tr key={`doc_${d.id}`}>
                                 <td>
-                                  <span style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
-                                    🩺 DOCTOR / SPECIALIST
+                                  <span style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}><Icon name="doctor" size={16} /> DOCTOR / SPECIALIST
                                   </span>
                                 </td>
                                 <td>
                                   <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
-                                  <div style={{ fontSize: '11px', color: '#64748b' }}>📞 {u?.phone} · {u?.email}</div>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}><Icon name="phone" size={14} /> {u?.phone} · {u?.email}</div>
                                 </td>
                                 <td>
                                   <strong style={{ fontSize: '13px' }}>{d.specialization}</strong>
@@ -2582,7 +2620,7 @@ export const AdminDashboard: React.FC = () => {
                                 <td>{h?.name || 'Unassigned'}</td>
                                 <td>
                                   <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                                    {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
+                                    {d.is_on_duty ? 'ON SHIFT' : 'STANDBY'}
                                   </span>
                                 </td>
                                 <td>
@@ -2591,21 +2629,18 @@ export const AdminDashboard: React.FC = () => {
                                       <button 
                                         onClick={() => handleOpenPasswordReset(u)}
                                         style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                      >
-                                        🔑 Pass
+                                      ><Icon name="key" size={16} /> Pass
                                       </button>
                                     )}
                                     <button 
                                       onClick={() => handleOpenEditPersonnel('doctor', d)}
                                       style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                                    >
-                                      ✏️ Edit
+                                    ><Icon name="edit" size={16} /> Edit
                                     </button>
                                     <button 
                                       onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
                                       style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                                    >
-                                      🗑️ Delete
+                                    ><Icon name="delete" size={16} /> Delete
                                     </button>
                                   </div>
                                 </td>
@@ -2621,13 +2656,12 @@ export const AdminDashboard: React.FC = () => {
                             return (
                               <tr key={`drv_${d.id}`}>
                                 <td>
-                                  <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
-                                    🚑 AMBULANCE DRIVER
+                                  <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}><Icon name="ambulance" size={16} /> AMBULANCE DRIVER
                                   </span>
                                 </td>
                                 <td>
                                   <strong style={{ fontSize: '14px', color: '#0f172a' }}>{u?.full_name}</strong>
-                                  <div style={{ fontSize: '11px', color: '#64748b' }}>📞 {u?.phone} · {u?.email}</div>
+                                  <div style={{ fontSize: '11px', color: '#64748b' }}><Icon name="phone" size={14} /> {u?.phone} · {u?.email}</div>
                                 </td>
                                 <td>
                                   <strong style={{ fontSize: '13px' }}>Emergency Driver</strong>
@@ -2639,7 +2673,7 @@ export const AdminDashboard: React.FC = () => {
                                 </td>
                                 <td>
                                   <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                                    {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
+                                    {d.is_on_duty ? 'ACTIVE SHIFT' : 'OFF SHIFT'}
                                   </span>
                                 </td>
                                 <td>
@@ -2648,21 +2682,18 @@ export const AdminDashboard: React.FC = () => {
                                       <button 
                                         onClick={() => handleOpenPasswordReset(u)}
                                         style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                      >
-                                        🔑 Pass
+                                      ><Icon name="key" size={16} /> Pass
                                       </button>
                                     )}
                                     <button 
                                       onClick={() => handleOpenEditPersonnel('driver', d)}
                                       style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                                    >
-                                      ✏️ Edit
+                                    ><Icon name="edit" size={16} /> Edit
                                     </button>
                                     <button 
                                       onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
                                       style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                                    >
-                                      🗑️ Delete
+                                    ><Icon name="delete" size={16} /> Delete
                                     </button>
                                   </div>
                                 </td>
@@ -2689,8 +2720,7 @@ export const AdminDashboard: React.FC = () => {
                       onClick={() => handleOpenAddPersonnel('doctor')}
                       className="btn btn-sm btn-primary"
                       style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
-                    >
-                      ➕ Add Doctor / Specialist
+                    ><Icon name="add" size={16} /> Add Doctor / Specialist
                     </button>
                   </div>
 
@@ -2727,7 +2757,7 @@ export const AdminDashboard: React.FC = () => {
                                 <td>{h?.name || 'Unassigned'}</td>
                                 <td>
                                   <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                                    {d.is_on_duty ? '🟢 ON SHIFT' : '🟡 STANDBY'}
+                                    {d.is_on_duty ? 'ON SHIFT' : 'STANDBY'}
                                   </span>
                                   <div style={{ fontSize: '11px', color: '#64748b', marginTop: '3px', fontWeight: 600 }}>{d.shift_start} - {d.shift_end}</div>
                                 </td>
@@ -2739,21 +2769,18 @@ export const AdminDashboard: React.FC = () => {
                                       <button 
                                         onClick={() => handleOpenPasswordReset(u)}
                                         style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                      >
-                                        🔑 Pass
+                                      ><Icon name="key" size={16} /> Pass
                                       </button>
                                     )}
                                     <button 
                                       onClick={() => handleOpenEditPersonnel('doctor', d)}
                                       style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                                    >
-                                      ✏️ Edit
+                                    ><Icon name="edit" size={16} /> Edit
                                     </button>
                                     <button 
                                       onClick={() => handleDeletePersonnel('doctor', d.id, d.user_id)}
                                       style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                                    >
-                                      🗑️ Delete
+                                    ><Icon name="delete" size={16} /> Delete
                                     </button>
                                   </div>
                                 </td>
@@ -2777,8 +2804,7 @@ export const AdminDashboard: React.FC = () => {
                       onClick={() => handleOpenAddPersonnel('driver')}
                       className="btn btn-sm btn-primary"
                       style={{ fontSize: '13px', fontWeight: 700, padding: '6px 14px', border: 'none', background: '#3b82f6', borderRadius: '6px' }}
-                    >
-                      ➕ Add Driver
+                    ><Icon name="add" size={16} /> Add Driver
                     </button>
                   </div>
 
@@ -2818,7 +2844,7 @@ export const AdminDashboard: React.FC = () => {
                                 <td>{h?.name || 'Unassigned'}</td>
                                 <td>
                                   <span className={d.is_on_duty ? 'badge-alert-success' : 'badge-alert-dispatch'}>
-                                    {d.is_on_duty ? '🟢 ACTIVE SHIFT' : '🔴 OFF SHIFT'}
+                                    {d.is_on_duty ? 'ACTIVE SHIFT' : 'OFF SHIFT'}
                                   </span>
                                 </td>
 
@@ -2828,21 +2854,18 @@ export const AdminDashboard: React.FC = () => {
                                       <button 
                                         onClick={() => handleOpenPasswordReset(u)}
                                         style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                      >
-                                        🔑 Pass
+                                      ><Icon name="key" size={16} /> Pass
                                       </button>
                                     )}
                                     <button 
                                       onClick={() => handleOpenEditPersonnel('driver', d)}
                                       style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                                    >
-                                      ✏️ Edit
+                                    ><Icon name="edit" size={16} /> Edit
                                     </button>
                                     <button 
                                       onClick={() => handleDeletePersonnel('driver', d.id, d.user_id)}
                                       style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                                    >
-                                      🗑️ Delete
+                                    ><Icon name="delete" size={16} /> Delete
                                     </button>
                                   </div>
                                 </td>
@@ -2905,7 +2928,7 @@ export const AdminDashboard: React.FC = () => {
                             </span>
                           </td>
                           <td>
-                            <div>📞 {u?.phone}</div>
+                            <div><Icon name="phone" size={14} /> {u?.phone}</div>
                             <div style={{ fontSize: '11px', color: '#64748b' }}>{u?.email}</div>
                           </td>
                           <td>
@@ -2928,21 +2951,18 @@ export const AdminDashboard: React.FC = () => {
                                 <button 
                                   onClick={() => handleOpenPasswordReset(u)}
                                   style={{ fontSize: '11px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#475569' }}
-                                >
-                                  🔑 Pass
+                                ><Icon name="key" size={16} /> Pass
                                 </button>
                               )}
                               <button 
                                 onClick={() => handleOpenEditMother(m)}
                                 style={{ fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#334155' }}
-                              >
-                                ✏️ Edit
+                              ><Icon name="edit" size={16} /> Edit
                               </button>
                               <button 
                                 onClick={() => handleDeleteMother(m.id, m.user_id)}
                                 style={{ fontSize: '11px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', color: '#ef4444' }}
-                              >
-                                🗑️ Delete
+                              ><Icon name="delete" size={16} /> Delete
                               </button>
                             </div>
                           </td>
@@ -3009,8 +3029,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="card" style={{ border: '1px solid #3b82f6', borderRadius: '8px', background: '#ffffff', padding: '24px', boxShadow: '0 4px 16px rgba(59,130,246,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <div>
-                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🔍 Unified Inspection & Fuel Log Search Results
+                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="search" size={16} /> Unified Inspection & Fuel Log Search Results
                     </h5>
                     <span style={{ fontSize: '12px', color: '#64748b' }}>
                       Matching query "{searchQuery}" ({filteredInspections.length + filteredFuelLogs.length} audit records found)
@@ -3019,8 +3038,7 @@ export const AdminDashboard: React.FC = () => {
                   <button 
                     onClick={() => setSearchQuery('')}
                     style={{ fontSize: '12px', padding: '6px 12px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
-                  >
-                    ✕ Clear Search Filter
+                  ><Icon name="close" size={16} /> Clear Search Filter
                   </button>
                 </div>
 
@@ -3038,8 +3056,7 @@ export const AdminDashboard: React.FC = () => {
                     <tbody>
                       {filteredInspections.length === 0 && filteredFuelLogs.length === 0 ? (
                         <tr>
-                          <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                            🔍 No inspection or fuel logs found matching "{searchQuery}".
+                          <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}><Icon name="search" size={16} /> No inspection or fuel logs found matching "{searchQuery}".
                           </td>
                         </tr>
                       ) : (
@@ -3051,8 +3068,7 @@ export const AdminDashboard: React.FC = () => {
                             return (
                               <tr key={`insp_${i.id}`}>
                                 <td>
-                                  <span style={{ background: '#f3e8ff', color: '#7e22ce', border: '1px solid #e9d5ff', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
-                                    🛠️ PRE-DUTY INSPECTION
+                                  <span style={{ background: '#f3e8ff', color: '#7e22ce', border: '1px solid #e9d5ff', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}><Icon name="tools" size={16} /> PRE-DUTY INSPECTION
                                   </span>
                                 </td>
                                 <td>
@@ -3064,7 +3080,7 @@ export const AdminDashboard: React.FC = () => {
                                     Fuel Level: <strong>{i.fuel_level.toUpperCase()}</strong>
                                   </div>
                                   <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                    Siren: {i.siren_ok ? '✅ OK' : '❌ Fail'} · Engine: {i.engine_ok ? '✅ OK' : '❌ Fail'} · Tires: {i.tires_ok ? '✅ OK' : '❌ Fail'}
+                                    Siren: {i.siren_ok ? 'OK' : 'Fail'} · Engine: {i.engine_ok ? 'OK' : 'Fail'} · Tires: {i.tires_ok ? 'OK' : 'Fail'}
                                   </div>
                                 </td>
                                 <td>
@@ -3086,8 +3102,7 @@ export const AdminDashboard: React.FC = () => {
                             return (
                               <tr key={`fuel_${f.id}`}>
                                 <td>
-                                  <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}>
-                                    ⛽ FUEL PURCHASE
+                                  <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 800 }}><Icon name="fuel" size={16} /> FUEL PURCHASE
                                   </span>
                                 </td>
                                 <td>
@@ -3135,7 +3150,7 @@ export const AdminDashboard: React.FC = () => {
                           <div key={i.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 0' }}>
                             <div style={{ fontWeight: 600, color: '#334155' }}>Ambulance: {veh?.plate_number} ({drv?.full_name})</div>
                             <div style={{ color: '#64748b', fontSize: '12px', marginTop: '4px' }}>
-                              Fuel: {i.fuel_level.toUpperCase()} | Siren: {i.siren_ok ? '✅ OK' : '❌ Fail'} | Tires: {i.tires_ok ? '✅ OK' : '❌ Fail'} | Engine: {i.engine_ok ? '✅ OK' : '❌ Fail'}
+                              Fuel: {i.fuel_level.toUpperCase()} | Siren: {i.siren_ok ? 'OK' : 'Fail'} | Tires: {i.tires_ok ? 'OK' : 'Fail'} | Engine: {i.engine_ok ? 'OK' : 'Fail'}
                             </div>
                             <div style={{ textAlign: 'right', fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{new Date(i.checked_at).toLocaleString()}</div>
                           </div>
@@ -3187,25 +3202,25 @@ export const AdminDashboard: React.FC = () => {
               <div className="card" style={{ padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #3b82f6' }}>
                 <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Avg Dispatch Latency</div>
                 <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px' }}>124 ms</div>
-                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700 }}>⚡ P99: 210ms (Optimal)</span>
+                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700 }}><Icon name="fast" size={16} /> P99: 210ms (Optimal)</span>
               </div>
 
               <div className="card" style={{ padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #10b981' }}>
                 <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>System SLA Uptime</div>
                 <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px' }}>99.98%</div>
-                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700 }}>✅ 0 Outages (30 days)</span>
+                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 700 }}><Icon name="success" size={14} /> 0 Outages (30 days)</span>
               </div>
 
               <div className="card" style={{ padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #8b5cf6' }}>
                 <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>API Traffic Volume</div>
                 <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px' }}>1.4k req/m</div>
-                <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700 }}>📈 +14% vs avg</span>
+                <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700 }}><Icon name="trend" size={14} /> +14% vs avg</span>
               </div>
 
               <div className="card" style={{ padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #f59e0b' }}>
                 <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>GPS Sync Accuracy</div>
                 <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: '6px 0 2px' }}>99.4%</div>
-                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}>🛰️ 29 Responders Synced</span>
+                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}><Icon name="satellite" size={14} /> 29 Responders Synced</span>
               </div>
             </div>
 
@@ -3216,7 +3231,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <div>
-                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>📈 Emergency Dispatch Latency (24h Trend)</h5>
+                    <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}><Icon name="trend" size={16} /> Emergency Dispatch Latency (24h Trend)</h5>
                     <span style={{ fontSize: '12px', color: '#64748b' }}>Response time in milliseconds from SOS trigger to hospital dispatch lock</span>
                   </div>
                   <span style={{ fontSize: '12px', background: 'rgba(59,130,246,0.1)', color: '#2563eb', padding: '4px 10px', borderRadius: '12px', fontWeight: 700 }}>Live Telemetry</span>
@@ -3287,7 +3302,7 @@ export const AdminDashboard: React.FC = () => {
               {/* GRAPH 2: Capacity & Fleet Utilization Gauges */}
               <div className="card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
-                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>📊 Fleet & Capacity Readiness</h5>
+                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}><Icon name="chart" size={16} /> Fleet & Capacity Readiness</h5>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>Operational resource distribution</span>
                 </div>
 
@@ -3295,7 +3310,7 @@ export const AdminDashboard: React.FC = () => {
                   {/* Fleet gauge */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>
-                      <span>🚑 Ambulance Fleet On-Duty</span>
+                      <span><Icon name="ambulance" size={16} /> Ambulance Fleet On-Duty</span>
                       <span style={{ color: '#10b981' }}>80% (4/5 Active)</span>
                     </div>
                     <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
@@ -3306,7 +3321,7 @@ export const AdminDashboard: React.FC = () => {
                   {/* Bed Capacity gauge */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>
-                      <span>🛏️ Hospital Ward Bed Availability</span>
+                      <span><Icon name="bed" size={16} /> Hospital Ward Bed Availability</span>
                       <span style={{ color: '#3b82f6' }}>74% Available</span>
                     </div>
                     <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
@@ -3317,7 +3332,7 @@ export const AdminDashboard: React.FC = () => {
                   {/* Doctor Coverage gauge */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>
-                      <span>🩺 Specialist Duty Coverage</span>
+                      <span><Icon name="doctor" size={16} /> Specialist Duty Coverage</span>
                       <span style={{ color: '#8b5cf6' }}>100% Covered</span>
                     </div>
                     <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
@@ -3326,8 +3341,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ fontSize: '11px', color: '#64748b', background: '#f8fafc', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
-                  🟢 All regional emergency response hubs operating within safe SLA thresholds.
+                <div style={{ fontSize: '11px', color: '#64748b', background: '#f8fafc', padding: '10px', borderRadius: '8px', textAlign: 'center' }}><Icon name="online" size={16} /> All regional emergency response hubs operating within safe SLA thresholds.
                 </div>
               </div>
 
@@ -3339,7 +3353,7 @@ export const AdminDashboard: React.FC = () => {
               {/* GRAPH 3: API Traffic & Request Volume Bar Chart */}
               <div className="card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
                 <div style={{ marginBottom: '16px' }}>
-                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>📶 API Request Throughput (Reqs / min)</h5>
+                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}><Icon name="network" size={16} /> API Request Throughput (Reqs / min)</h5>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>Realtime database query and websocket traffic volume</span>
                 </div>
 
@@ -3375,7 +3389,7 @@ export const AdminDashboard: React.FC = () => {
               {/* GRAPH 4: Triage & SOS Outcome Distribution Bar Chart */}
               <div className="card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff' }}>
                 <div style={{ marginBottom: '16px' }}>
-                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>🚨 Emergency Status & Resolution Breakdown</h5>
+                  <h5 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}><Icon name="emergency" size={16} /> Emergency Status & Resolution Breakdown</h5>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>Distribution of live emergencies across status categories</span>
                 </div>
 
@@ -3418,7 +3432,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="admin-modal-overlay">
           <div className="admin-modal-container" style={{ maxWidth: '400px' }}>
             <div style={{ background: '#0f172a', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
-              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>🔑 Reset User Password</h5>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}><Icon name="key" size={16} /> Reset User Password</h5>
               <button onClick={() => { setShowPasswordModal(false); setPasswordUser(null); }} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
             
@@ -3452,7 +3466,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="admin-modal-overlay">
           <div className="admin-modal-container">
             <div style={{ background: '#be123c', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
-              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>✏️ Edit Expectant Mother Health Profile</h5>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}><Icon name="edit" size={16} /> Edit Expectant Mother Health Profile</h5>
               <button onClick={() => { setShowMotherModal(false); setEditMother(null); }} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
 
@@ -3606,7 +3620,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="admin-modal-container">
             <div style={{ background: '#3b82f6', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
               <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
-                {editFacility ? '✏️ Edit Referral Facility' : '🏥 Add New Referral Facility'}
+                {editFacility ? 'Edit Referral Facility' : 'Add New Referral Facility'}
               </h5>
               <button onClick={() => setShowFacilityModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
@@ -3659,8 +3673,7 @@ export const AdminDashboard: React.FC = () => {
                 background: theme === 'dark' ? '#0d1117' : '#f8fafc'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <label className="form-label-admin" style={{ margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    🗺️ Google Map Location Picker (Click Pin Dropper)
+                  <label className="form-label-admin" style={{ margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}><Icon name="map" size={16} /> Google Map Location Picker (Click Pin Dropper)
                   </label>
                   <button
                     type="button"
@@ -3693,8 +3706,7 @@ export const AdminDashboard: React.FC = () => {
                         }}
                       />
                     </div>
-                    <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      📍 Click anywhere on the Google Maps view to drop exact hospital pin! Selected: <strong>(Lat: {facilityForm.latitude}, Lng: {facilityForm.longitude})</strong>
+                    <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}><Icon name="location" size={16} /> Click anywhere on the Google Maps view to drop exact hospital pin! Selected: <strong>(Lat: {facilityForm.latitude}, Lng: {facilityForm.longitude})</strong>
                     </div>
                   </div>
                 )}
@@ -3827,7 +3839,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="admin-modal-container">
             <div style={{ background: '#3b82f6', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
               <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
-                {editPersonnel ? `✏️ Edit ${personnelRole.toUpperCase()}` : `👥 Add New ${personnelRole.toUpperCase()}`}
+                {editPersonnel ? `<Icon name="edit" size={14} /> Edit ${personnelRole.toUpperCase()}` : `<Icon name="people" size={14} /> Add New ${personnelRole.toUpperCase()}`}
               </h5>
               <button onClick={() => setShowPersonnelModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
@@ -4008,7 +4020,7 @@ export const AdminDashboard: React.FC = () => {
                     background: 'rgba(255,255,255,0.2)',
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>🚨</span>
+                  }}><Icon name="emergency" size={18} /></span>
                   <div>
                     <div style={{ color: '#ffffff', fontWeight: 900, fontSize: '1.15rem', letterSpacing: '0.01em' }}>INCOMING SOS ALERT</div>
                     <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.82rem', marginTop: '2px' }}>Code: <strong>{emg.code}</strong> • Triggered: {new Date(emg.triggered_at).toLocaleTimeString()}</div>
@@ -4036,7 +4048,7 @@ export const AdminDashboard: React.FC = () => {
                   <div>
                     <div style={{ fontSize: '10px', fontWeight: 700, color: '#9f1239', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient</div>
                     <div style={{ fontSize: '15px', fontWeight: 800, color: '#7f1d1d' }}>{motherUser?.full_name || 'Unknown Patient'}</div>
-                    <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '2px' }}>📞 {motherUser?.phone}</div>
+                    <div style={{ fontSize: '12px', color: '#991b1b', marginTop: '2px' }}><Icon name="phone" size={14} /> {motherUser?.phone}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '10px', fontWeight: 700, color: '#9f1239', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Medical</div>
@@ -4049,7 +4061,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   {motherProfile?.next_of_kin_name && (
                     <div style={{ gridColumn: '1/-1', borderTop: '1px solid #fecaca', paddingTop: '8px' }}>
-                      <div style={{ fontSize: '11px', color: '#991b1b' }}>👨‍👩‍👧 Kin: <strong>{motherProfile.next_of_kin_name}</strong> ({motherProfile.next_of_kin_relationship}) • {motherProfile.next_of_kin_phone}</div>
+                      <div style={{ fontSize: '11px', color: '#991b1b' }}><Icon name="people" size={14} /> Kin: <strong>{motherProfile.next_of_kin_name}</strong> ({motherProfile.next_of_kin_relationship}) • {motherProfile.next_of_kin_phone}</div>
                     </div>
                   )}
                 </div>
@@ -4066,15 +4078,14 @@ export const AdminDashboard: React.FC = () => {
                   color: availDrv ? '#14532d' : '#78350f'
                 }}>
                   {availDrv ? (
-                    <span>🚑 Driver Ready: <strong>{availDrvUser?.full_name}</strong> — {availVehicle?.plate_number || 'Ambulance'} ({availVehicle?.vehicle_type})</span>
+                    <span><Icon name="ambulance" size={16} /> Driver Ready: <strong>{availDrvUser?.full_name}</strong> — {availVehicle?.plate_number || 'Ambulance'} ({availVehicle?.vehicle_type})</span>
                   ) : (
-                    <span>⚠️ No driver currently on duty. Assign a driver before dispatching.</span>
+                    <span><Icon name="warning" size={16} /> No driver currently on duty. Assign a driver before dispatching.</span>
                   )}
                 </div>
 
                 {/* Hospital options */}
-                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                  🏥 Nearest Available Hospitals (System Ranked by Resources)
+                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}><Icon name="hospital" size={16} /> Nearest Available Hospitals (System Ranked by Resources)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {topHospitals.map((rec, idx) => (
@@ -4092,7 +4103,7 @@ export const AdminDashboard: React.FC = () => {
                           fontSize: '10px', fontWeight: 800,
                           padding: '2px 10px', borderRadius: '20px',
                           textTransform: 'uppercase', letterSpacing: '0.05em'
-                        }}>⭐ Best Match</span>
+                        }}><Icon name="star" size={16} /> Best Match</span>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <div>
@@ -4107,13 +4118,13 @@ export const AdminDashboard: React.FC = () => {
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
                         <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: rec.hasBeds ? '#dcfce7' : '#fee2e2', color: rec.hasBeds ? '#15803d' : '#dc2626' }}>
-                          🛏️ {rec.hospital.available_beds} beds
+                          <Icon name="bed" size={14} /> {rec.hospital.available_beds} beds
                         </span>
-                        {rec.hospital.has_cemonc && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#dbeafe', color: '#1d4ed8' }}>✅ CEmONC</span>}
-                        {rec.hospital.has_blood_bank && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fce7f3', color: '#9d174d' }}>🩸 Blood Bank</span>}
-                        {rec.hospital.has_surgical_capacity && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fef9c3', color: '#854d0e' }}>🔪 Surgical</span>}
-                        {rec.hospital.has_ambulance && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#f0fdf4', color: '#166534' }}>🚑 Ambulance</span>}
-                        {rec.bloodMatch && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fdf4ff', color: '#6b21a8' }}>🩺 Blood Match</span>}
+                        {rec.hospital.has_cemonc && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#dbeafe', color: '#1d4ed8' }}><Icon name="success" size={16} /> CEmONC</span>}
+                        {rec.hospital.has_blood_bank && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fce7f3', color: '#9d174d' }}><Icon name="blood" size={16} /> Blood Bank</span>}
+                        {rec.hospital.has_surgical_capacity && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fef9c3', color: '#854d0e' }}><Icon name="surgery" size={16} /> Surgical</span>}
+                        {rec.hospital.has_ambulance && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#f0fdf4', color: '#166534' }}><Icon name="ambulance" size={16} /> Ambulance</span>}
+                        {rec.bloodMatch && <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', fontWeight: 700, background: '#fdf4ff', color: '#6b21a8' }}><Icon name="doctor" size={16} /> Blood Match</span>}
                       </div>
 
                       <div style={{ display: 'flex', gap: '8px' }}>
@@ -4134,7 +4145,7 @@ export const AdminDashboard: React.FC = () => {
                             boxShadow: availDrv ? (idx === 0 ? '0 4px 12px rgba(5,150,105,0.3)' : '0 4px 12px rgba(59,130,246,0.25)') : 'none'
                           }}
                         >
-                          {idx === 0 ? '⚡ Approve & Dispatch Here' : '→ Dispatch to This Hospital'}
+                          {idx === 0 ? 'Approve & Dispatch Here' : '→ Dispatch to This Hospital'}
                         </button>
                       </div>
                     </div>
@@ -4160,8 +4171,7 @@ export const AdminDashboard: React.FC = () => {
                       cursor: 'pointer',
                       color: '#475569'
                     }}
-                  >
-                    📋 View in Dispatch Board
+                  ><Icon name="clipboard" size={16} /> View in Dispatch Board
                   </button>
                   <button
                     onClick={() => { lastShownAlertKeyRef.current = null; setIncomingAlertEmergency(null); }}

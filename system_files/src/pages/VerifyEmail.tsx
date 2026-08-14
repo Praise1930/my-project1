@@ -5,6 +5,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { db } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { CheckCircle, Mail, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 export const VerifyEmail: React.FC = () => {
   const { theme } = useTheme();
@@ -52,10 +53,9 @@ export const VerifyEmail: React.FC = () => {
       background: isDark ? '#0f172a' : '#f8fafc',
       color: isDark ? '#f1f5f9' : '#1e293b',
       fontFamily: "'Outfit', 'Muli', sans-serif",
-      minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex',
-      flexDirection: 'column',
-      transition: 'background-color 0.3s ease, color 0.3s ease'
+      flexDirection: 'column'
     }}>
       {/* Header bar */}
       <header style={{
@@ -68,7 +68,7 @@ export const VerifyEmail: React.FC = () => {
         boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
       }}>
         <Link to="/" style={{ fontSize: '1.4rem', fontWeight: 800, color: isDark ? '#ffffff' : '#030431', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          <span style={{ color: '#f43f5e' }}>🤰</span> Mama<span style={{ color: '#0f61ef' }}>Track</span>
+          <span style={{ color: '#f43f5e' }}><Icon name="mother" size={18} /></span> Mama<span style={{ color: '#0f61ef' }}>Track</span>
         </Link>
         <ThemeToggle />
       </header>
@@ -143,8 +143,7 @@ export const VerifyEmail: React.FC = () => {
                     color: isDark ? '#ffffff' : '#1e293b',
                     fontSize: '0.9rem',
                     fontFamily: 'inherit',
-                    outline: 'none',
-                    transition: 'border-color 0.2s'
+                    outline: 'none'
                   }}
                 />
               </div>

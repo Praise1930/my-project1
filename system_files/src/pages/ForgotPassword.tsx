@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
+import { errorMessage } from '../services/errors';
 
 export const ForgotPassword: React.FC = () => {
   const { theme } = useTheme();
@@ -30,15 +31,15 @@ export const ForgotPassword: React.FC = () => {
       if (error) throw error;
       setStatus('success');
       setMessage('Password reset email sent! Please check your inbox.');
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setStatus('error');
-      setMessage(err.message || 'Failed to send reset email. Please ensure the email is correct.');
+      setMessage(errorMessage(err, 'Failed to send reset email. Please ensure the email is correct.'));
     }
   };
 
   return (
-    <div className="login-area section-padding" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? '#0f172a' : '#f8fafd', color: isDark ? '#cbd5e1' : '#757575', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+    <div className="login-area section-padding" style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? '#0f172a' : '#f8fafd', color: isDark ? '#cbd5e1' : '#757575' }}>
       <style>{`
         /* Prevent button hover effect overlay from covering button text */
         .btn::before {
@@ -48,7 +49,7 @@ export const ForgotPassword: React.FC = () => {
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-5 col-lg-6 col-md-8 col-sm-10">
-            <div className="login-form-area login-bg" style={{ padding: '40px', borderRadius: '12px', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 4px 15px rgba(0,0,0,0.05)', position: 'relative', background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)', transition: 'background-color 0.3s ease' }}>
+            <div className="login-form-area login-bg" style={{ padding: '40px', borderRadius: '12px', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 4px 15px rgba(0,0,0,0.05)', position: 'relative', background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)' }}>
               <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
                 <ThemeToggle />
               </div>

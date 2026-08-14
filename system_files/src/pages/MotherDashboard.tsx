@@ -1,4 +1,4 @@
-// MamaTrack GPS — Expectant Mother Dashboard (Momentra Redesign)
+// MamaTrack GPS — Expectant Mother Dashboard 
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,7 +9,9 @@ import { HeartbeatLoader } from '../components/LoadingStates';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
-import { showToast } from '../components/Toast';
+import { showToast } from '../components/toastBus';
+import { Icon } from '../components/Icon';
+import { OfflineStorageService } from '../services/offlineStorage';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ export const MotherDashboard: React.FC = () => {
   
   // States for active emergency
   const [activeEmergency, setActiveEmergency] = useState<Emergency | null>(null);
+  // True while an alert exists only on this device and has not reached the server.
+  const [heldOffline, setHeldOffline] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [emergencyNotes, setEmergencyNotes] = useState('');
   const [requireCemonc, setRequireCemonc] = useState(false);
@@ -67,33 +71,28 @@ export const MotherDashboard: React.FC = () => {
 
   const guideSteps = [
     {
-      title: "Welcome to Momentra",
-      icon: "🤱",
+      title: "Welcome to MamaTrack",
+      icon: "",
       desc: "Your comprehensive maternal health console. Let's walk you through the key features designed to ensure you and your baby remain safe.",
     },
     {
-      title: "🚨 Real-Time Rescue Beacon",
-      icon: "🆘",
+      title: "Real-Time Emergency",
+      icon: "",
       desc: "Tap the glowing red SOS button during any pregnancy distress. This instantly logs your GPS coordinates, dispatches the nearest ambulance, and alerts Obstetricians at Mukono General Hospital.",
     },
     {
-      title: "🤖 MamaTrack AI Assistant",
-      icon: "💬",
-      desc: "Click the floating pink robot bubble in the bottom right corner at any time to chat with our virtual AI pregnancy health helper for quick guidance.",
-    },
-    {
-      title: "👶 Antenatal Milestones Checklist",
-      icon: "📈",
+      title: "Antenatal Milestones Checklist",
+      icon: "",
       desc: "Track World Health Organization (WHO) pregnancy milestones from weeks 8 to 40. Stay informed about key visits, ultrasound schedules, and critical checks for your delivery care.",
     },
     {
-      title: "🩺 Expert Doctor Consultations",
-      icon: "💬",
+      title: "Expert Doctor Consultations",
+      icon: "",
       desc: "Inquire about symptoms in real-time. Chat with on-duty obstetricians and midwives, upload symptom notes (cramping, feet swelling), and receive clinical replies.",
     },
     {
-      title: "📋 Smart Appointment Schedules",
-      icon: "📅",
+      title: "Smart Appointment Schedules",
+      icon: "",
       desc: "Review scheduled antenatal visits, log personal medical history (allergies, blood group), and set next-of-kin emergency contact profiles for automated alerts.",
     }
   ];
@@ -145,6 +144,11 @@ export const MotherDashboard: React.FC = () => {
     // Get active emergency
     const emg = EmergencyService.getActiveEmergencyForMother(sessionUser.id);
     setActiveEmergency(emg);
+
+    // An alert still listed in offline storage has not reached the server yet.
+    setHeldOffline(
+      !!emg && OfflineStorageService.getQueuedEmergencies().some(q => q.id === String(emg.id)),
+    );
   }, [navigate]);
 
   // Handle browser back button navigation
@@ -205,7 +209,7 @@ export const MotherDashboard: React.FC = () => {
 
   if (!user || !profile) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
         <HeartbeatLoader message="Syncing Maternal Health Record..." subtitle="Connecting to Mukono General Hospital emergency node" />
       </div>
     );
@@ -281,7 +285,9 @@ export const MotherDashboard: React.FC = () => {
   const handleTriggerSOS = () => {
     // Play audio siren alert sound
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      // Safari still only exposes the prefixed constructor.
+      const AudioCtx = window.AudioContext
+        || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
       if (AudioCtx) {
         const ctx = new AudioCtx();
         const osc = ctx.createOscillator();
@@ -298,7 +304,7 @@ export const MotherDashboard: React.FC = () => {
         osc.stop(ctx.currentTime + 0.5);
       }
     } catch (e) {
-      console.log('Audio alert notification sound played');
+      console.warn('SOS audio alert could not be played:', e);
     }
 
     const lat = profile?.home_latitude || 0.3536;
@@ -316,7 +322,22 @@ export const MotherDashboard: React.FC = () => {
     setEmergencyNotes('');
     setRequireCemonc(false);
     setActiveTab('emergency'); // Auto switch to live rescue beacon tab
-    showToast('Emergency SOS broadcasted! Your GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!', 'success', 8000);
+
+    const held = OfflineStorageService
+      .getQueuedEmergencies()
+      .some(q => q.id === String(newEmg.id));
+    setHeldOffline(held);
+
+    if (held) {
+      // Say plainly that it has not gone out yet. Telling her responders have
+      // been alerted when the phone has no signal would be a dangerous lie.
+      showToast(
+        'Your alert is saved on this phone and will be sent the moment you have signal. If you can, move to where you get network, or call 0800-MAMATRACK.',
+        'warning', 12000, 'No signal — alert not sent yet',
+      );
+    } else {
+      showToast('Your location has been sent. Mukono District dispatch, the matched hospital and nearby ambulance drivers have all been alerted.', 'success', 8000, 'Help is on the way');
+    }
   };
 
   const handleConfirmSOS = () => {
@@ -341,7 +362,7 @@ export const MotherDashboard: React.FC = () => {
     setNotifications(NotificationService.getNotificationsForUser(user.id));
     setShowCancelModal(false);
     setCustomCancelReason('');
-    showToast(`Emergency alert ${updated.code} has been cancelled. District Emergency Command & Admins have been notified.`, 'info', 6000);
+    showToast(`Emergency alert ${updated.code} has been cancelled. District dispatch & Admins have been notified.`, 'info', 6000);
   };
 
   // Form Submit
@@ -450,7 +471,7 @@ export const MotherDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="mother-theme momentra-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>
+    <div className="mother-theme momentra-root" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'row' }}>
       {/* Scoped style overrides for sidebar layout */}
       <style>{`
         .momentra-root aside.sidebar-mother {
@@ -504,9 +525,7 @@ export const MotherDashboard: React.FC = () => {
             alignItems: 'center',
             gap: '10px'
           }}>
-            <div style={{ background: 'rgba(244,63,94,0.1)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
-              🤱
-            </div>
+            <div style={{ background: 'rgba(244,63,94,0.1)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}><Icon name="breastfeeding" size={18} /></div>
             <div>
               <h5 style={{
                 fontSize: '16px',
@@ -514,8 +533,8 @@ export const MotherDashboard: React.FC = () => {
                 margin: 0,
                 letterSpacing: '0.04em',
                 color: '#f43f5e'
-              }}>Momentra</h5>
-              <span style={{ fontSize: '11px', color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maternal Console</span>
+              }}>MamaTrack</h5>
+              <span style={{ fontSize: '11px', color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mother portal</span>
             </div>
           </div>
 
@@ -565,7 +584,7 @@ export const MotherDashboard: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}>
-              <span>🏠</span>
+              <span><Icon name="home" size={18} /></span>
               <span>Home Overview</span>
             </div>
 
@@ -584,7 +603,7 @@ export const MotherDashboard: React.FC = () => {
               justifyContent: 'space-between'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span>🆘</span>
+                <span><Icon name="sos" size={18} /></span>
                 <span>Emergency Rescue</span>
               </div>
               {activeEmergency && <span style={{ width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', display: 'inline-block' }} />}
@@ -603,7 +622,7 @@ export const MotherDashboard: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}>
-              <span>📅</span>
+              <span><Icon name="calendar" size={18} /></span>
               <span>Checkup Schedules</span>
             </div>
 
@@ -620,7 +639,7 @@ export const MotherDashboard: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}>
-              <span>📈</span>
+              <span><Icon name="trend" size={18} /></span>
               <span>WHO ANC Timeline</span>
             </div>
 
@@ -637,7 +656,7 @@ export const MotherDashboard: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}>
-              <span>📊</span>
+              <span><Icon name="chart" size={18} /></span>
               <span>Health Ledger</span>
             </div>
 
@@ -654,14 +673,14 @@ export const MotherDashboard: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}>
-              <span>🩺</span>
+              <span><Icon name="doctor" size={18} /></span>
               <span>Profile & Doctors</span>
             </div>
           </nav>
         </aside>
 
         {/* MAIN VIEWPORT */}
-        <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
           {/* Top Navbar */}
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -685,9 +704,7 @@ export const MotherDashboard: React.FC = () => {
                 }}
                 className="d-inline-flex d-md-none"
                 title="Open Navigation Menu"
-              >
-                ☰
-              </button>
+              ><Icon name="menu" size={18} /></button>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', color: theme === 'light' ? '#1f2937' : '#ffffff', lineHeight: 1.25 }}>
                 {activeTab === 'anc-timeline' ? 'WHO ANC Timeline' : activeTab === 'profile' ? 'Profile & Doctors' : activeTab === 'ledger' ? 'Health Ledger & Vitals' : activeTab} Panel
               </h3>
@@ -698,7 +715,7 @@ export const MotherDashboard: React.FC = () => {
               
               {/* Notifications */}
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                <button aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
                   <Bell size={18} />
                   {notifications.some(n => !n.is_read) && (
                     <span style={{ position: 'absolute', top: '1px', right: '1px', background: '#f43f5e', width: '8px', height: '8px', borderRadius: '50%' }} />
@@ -752,7 +769,7 @@ export const MotherDashboard: React.FC = () => {
 
           {/* FLOATING WELCOME TOAST NOTIFICATION */}
           {user && (
-            <WelcomeToast userName={user.full_name} roleName="Maternal Deck" subtitle="Welcome to your safe maternity console. Emergency SOS & ANC timeline active." icon="🤱" />
+            <WelcomeToast userName={user.full_name} roleName="Mother portal" subtitle="Welcome to your safe maternity console. Emergency SOS & ANC timeline active." />
           )}
 
           {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
@@ -767,7 +784,7 @@ export const MotherDashboard: React.FC = () => {
                 top: 0,
                 left: 0,
                 width: '280px',
-                height: '100vh',
+                height: '100dvh',
                 zIndex: 99999,
                 background: theme === 'light' ? '#ffffff' : '#0f172a',
                 color: theme === 'light' ? '#0f172a' : '#ffffff',
@@ -779,10 +796,10 @@ export const MotherDashboard: React.FC = () => {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ background: '#f43f5e', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>🤱</div>
+                    <div style={{ background: '#f43f5e', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}><Icon name="breastfeeding" size={18} /></div>
                     <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
                   </div>
-                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}><Icon name="close" size={18} /></button>
                 </div>
 
                 {/* Profile Card */}
@@ -796,17 +813,17 @@ export const MotherDashboard: React.FC = () => {
 
                 {/* Navigation Menu */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                  {[
-                    { id: 'home', icon: '🏠', label: 'Overview' },
-                    { id: 'emergency', icon: '🚨', label: 'Rescue Beacon' },
-                    { id: 'checkups', icon: '🩺', label: 'Appointments & Consult' },
-                    { id: 'anc-timeline', icon: '👶', label: 'WHO ANC Checklist' },
-                    { id: 'ledger', icon: '📊', label: 'Vitals Ledger' },
-                    { id: 'profile', icon: '👤', label: 'Profile & Contacts' }
-                  ].map(item => (
+                  {([
+                    { id: 'home', icon: 'home', label: 'Overview' },
+                    { id: 'emergency', icon: 'emergency', label: 'Emergency' },
+                    { id: 'checkups', icon: 'doctor', label: 'Appointments & Consult' },
+                    { id: 'anc-timeline', icon: 'baby', label: 'WHO ANC Checklist' },
+                    { id: 'ledger', icon: 'chart', label: 'Vitals history' },
+                    { id: 'profile', icon: 'profile', label: 'Profile & Contacts' }
+                  ] as const).map(item => (
                     <button
                       key={item.id}
-                      onClick={() => { setActiveTab(item.id as any); setMobileSidebarOpen(false); }}
+                      onClick={() => { setActiveTab(item.id); setMobileSidebarOpen(false); }}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -870,12 +887,10 @@ export const MotherDashboard: React.FC = () => {
                     </button>
                     
                     {!activeEmergency ? (
-                      <button className="emergency-btn-home" onClick={handleTriggerSOS}>
-                        🚨 Trigger Emergency SOS
+                      <button className="emergency-btn-home" onClick={handleTriggerSOS}><Icon name="emergency" size={16} /> Trigger Emergency SOS
                       </button>
                     ) : (
-                      <button className="emergency-btn-home triggered" onClick={handleCancelSOS} style={{ background: '#ef4444', borderColor: '#dc2626' }}>
-                        ⚠️ Cancel Emergency SOS
+                      <button className="emergency-btn-home triggered" onClick={handleCancelSOS} style={{ background: '#ef4444', borderColor: '#dc2626' }}><Icon name="warning" size={16} /> Cancel Emergency SOS
                       </button>
                     )}
                   </div>
@@ -883,9 +898,9 @@ export const MotherDashboard: React.FC = () => {
                   {/* Social Proof */}
                   <div className="social-proof" style={{ marginTop: '5px' }}>
                     <div className="avatar-stack">
-                      <div className="avatar-placeholder" style={{ background: '#fecdd3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>👩</div>
-                      <div className="avatar-placeholder" style={{ background: '#ddd6fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>👩‍⚕️</div>
-                      <div className="avatar-placeholder" style={{ background: '#bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}>🤰</div>
+                      <div className="avatar-placeholder" style={{ background: '#fecdd3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}><Icon name="woman" size={18} /></div>
+                      <div className="avatar-placeholder" style={{ background: '#ddd6fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}><Icon name="people" size={14} /></div>
+                      <div className="avatar-placeholder" style={{ background: '#bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem' }}><Icon name="mother" size={18} /></div>
                     </div>
                     <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#4b5563' }}>50k+ <span style={{ color: '#8b96a5', fontWeight: 400 }}>Satisfied Mothers</span></span>
                   </div>
@@ -922,7 +937,7 @@ export const MotherDashboard: React.FC = () => {
                     {/* Floating Baby Heart Rate Card */}
                     <div className="floating-widget widget-heart" style={{ cursor: 'pointer' }} onClick={() => setShowHeartRateModal(true)} title="Click to see how baby's heart rate is measured">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ color: '#ef4444', animation: 'active-emergency-pulse 1s infinite alternate', fontSize: '1.25rem' }}>❤️</span>
+                        <span style={{ color: '#ef4444', animation: 'active-emergency-pulse 1s infinite alternate', fontSize: '1.25rem' }}><Icon name="heart" size={18} /></span>
                         <div>
                           <div style={{ fontSize: '0.62rem', color: '#8b96a5', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             Baby's Heart Rate <span style={{ background: 'rgba(244,63,94,0.12)', color: '#f43f5e', borderRadius: '50%', width: '12px', height: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 'bold' }}>i</span>
@@ -939,7 +954,7 @@ export const MotherDashboard: React.FC = () => {
 
                     {/* Floating Next Appointment Card */}
                     <div className="floating-widget widget-appointment">
-                      <div className="appointment-icon-wrap">📅</div>
+                      <div className="appointment-icon-wrap"><Icon name="calendar" size={18} /></div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.62rem', color: '#8b96a5', fontWeight: 700, textTransform: 'uppercase' }}>Next Appointment</div>
                         <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1f2937' }}>{nextAppt.date}</div>
@@ -964,14 +979,14 @@ export const MotherDashboard: React.FC = () => {
                 color: theme === 'light' ? '#374151' : '#cbd5e1'
               }}>
                 <div style={{ flex: '1.2', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '300px' }}>
-                  <span style={{ fontSize: '10px', color: '#f43f5e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Maternal Wellness Guide</span>
+                  <span style={{ fontSize: '10px', color: '#f43f5e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Pregnancy guidance</span>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 6px', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>Safe Antenatal Care Guidelines</h3>
                   <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: theme === 'light' ? '#4b5563' : '#9ca3af', margin: '0 0 12px' }}>
                     Follow WHO guidelines for a safe pregnancy. Sign up for monthly VHT home checkups, record critical blood pressure results inside your profile log, and communicate live symptoms with on-duty specialists via the clinical deck.
                   </p>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '0.75rem' }}>
-                    <span style={{ background: 'rgba(244, 63, 94, 0.08)', color: '#f43f5e', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>🛡️ Healthy Pregnancy Milestones</span>
-                    <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>🤰 WHO Checked</span>
+                    <span style={{ background: 'rgba(244, 63, 94, 0.08)', color: '#f43f5e', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}><Icon name="shield" size={16} /> Healthy Pregnancy Milestones</span>
+                    <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}><Icon name="mother" size={16} /> WHO Checked</span>
                   </div>
                 </div>
                 <div style={{
@@ -987,25 +1002,25 @@ export const MotherDashboard: React.FC = () => {
               {/* Bottom clickable cards to display functional tabs */}
               <div id="dashboard-features" className="momentra-bottom-grid">
                 <div className="momentra-feature-card" onClick={() => setActiveTab('emergency')}>
-                  <div className="feature-icon-wrap">🚨</div>
+                  <div className="feature-icon-wrap"><Icon name="emergency" size={18} /></div>
                   <div className="feature-title">Real-Time Health Monitoring</div>
                   <p className="feature-desc">Active GPS tracking coordinates, ambulance routing status maps, and distress triggers.</p>
                 </div>
 
                 <div className="momentra-feature-card" onClick={() => setActiveTab('anc-timeline')}>
-                  <div className="feature-icon-wrap">👶</div>
+                  <div className="feature-icon-wrap"><Icon name="baby" size={18} /></div>
                   <div className="feature-title">Personalized Pregnancy Insights</div>
                   <p className="feature-desc">Interactive WHO milestones checklists covering weeks 8 to 40 for optimal delivery care.</p>
                 </div>
 
                 <div className="momentra-feature-card" onClick={() => setActiveTab('profile')}>
-                  <div className="feature-icon-wrap">🩺</div>
+                  <div className="feature-icon-wrap"><Icon name="doctor" size={18} /></div>
                   <div className="feature-title">Expert Doctor Consultation</div>
                   <p className="feature-desc">Coordinate and chat with on-duty specialists and matched medical responders.</p>
                 </div>
 
                 <div className="momentra-feature-card" onClick={() => setActiveTab('checkups')}>
-                  <div className="feature-icon-wrap">📋</div>
+                  <div className="feature-icon-wrap"><Icon name="clipboard" size={18} /></div>
                   <div className="feature-title">Smart Reminders & Scheduling</div>
                   <p className="feature-desc">Never miss clinic visits. View detailed antenatal care appointments, statuses, and history logs.</p>
                 </div>
@@ -1032,12 +1047,12 @@ export const MotherDashboard: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       {!activeEmergency ? (
                         <button className="emergency-btn" onClick={handleTriggerSOS}>
-                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}>🆘</span>
+                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}><Icon name="sos" size={18} /></span>
                           <span style={{ fontWeight: 800 }}>Trigger SOS</span>
                         </button>
                       ) : (
                         <button className="emergency-btn triggered" onClick={handleCancelSOS} style={{ animation: 'active-emergency-pulse 1s infinite alternate', background: '#ef4444', border: '3px solid #dc2626', cursor: 'pointer' }}>
-                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}>⚠️</span>
+                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}><Icon name="warning" size={18} /></span>
                           <span style={{ fontWeight: 800 }}>Cancel SOS</span>
                         </button>
                       )}
@@ -1045,10 +1060,17 @@ export const MotherDashboard: React.FC = () => {
                       <span style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {!activeEmergency ? (
                           <span>Tap to dispatch ambulance</span>
+                        ) : heldOffline ? (
+                          <>
+                            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#b45309' }} />
+                            <span style={{ color: '#b45309', fontWeight: 700 }}>
+                              Saved on your phone — it will be sent the moment you have signal
+                            </span>
+                          </>
                         ) : (
                           <>
                             <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 10px #ef4444', animation: 'active-emergency-pulse 1s infinite alternate' }} />
-                            <span style={{ color: '#ef4444', fontWeight: 700 }}>GPS Beacon Transmitting Live Coordinates</span>
+                            <span style={{ color: '#ef4444', fontWeight: 700 }}>Sharing your location</span>
                           </>
                         )}
                       </span>
@@ -1059,30 +1081,30 @@ export const MotherDashboard: React.FC = () => {
                   {activeEmergency ? (
                     <div className="card-glass" style={{ padding: '1.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>🚨 Rescue Status</h3>
+                        <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}><Icon name="emergency" size={16} /> Status</h3>
                         <span className="badge" style={{ background: ['delivered', 'completed'].includes(activeEmergency.status) ? '#16a34a' : '#ea580c', color: 'white', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                           {activeEmergency.status.toUpperCase()}
                         </span>
                       </div>
 
-                      <HeartbeatLoader message="Broadcasting Emergency SOS Beacon..." subtitle="GPS satellite beacon active — Mukono Dispatch is tracking your position" />
+                      <HeartbeatLoader message="Broadcasting Emergency alert..." subtitle="GPS satellite beacon active — Mukono Dispatch is tracking your position" />
 
                       <div className="status-tracker">
                         <div className="status-steps">
                           <div className={`status-step ${['pending', 'verified', 'dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
-                            <div className="step-circle">🆘</div>
+                            <div className="step-circle"><Icon name="sos" size={18} /></div>
                             <div className="step-label">SOS</div>
                           </div>
                           <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'verified' ? 'active' : ''}`}>
-                            <div className="step-circle">📡</div>
+                            <div className="step-circle"><Icon name="signal" size={18} /></div>
                             <div className="step-label">Dispatched</div>
                           </div>
                           <div className={`status-step ${['arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
-                            <div className="step-circle">🚑</div>
+                            <div className="step-circle"><Icon name="ambulance" size={18} /></div>
                             <div className="step-label">En-Route</div>
                           </div>
                           <div className={`status-step ${['delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : ['arrived', 'in_transit'].includes(activeEmergency.status) ? 'active' : ''}`}>
-                            <div className="step-circle">🏥</div>
+                            <div className="step-circle"><Icon name="hospital" size={18} /></div>
                             <div className="step-label">Arrived</div>
                           </div>
                         </div>
@@ -1109,7 +1131,7 @@ export const MotherDashboard: React.FC = () => {
                         </div>
 
                         <button className="cancel-alert-btn" onClick={handleCancelSOS}>
-                          Cancel Rescue Beacon
+                          Cancel Emergency
                         </button>
                       </div>
                     </div>
@@ -1118,8 +1140,7 @@ export const MotherDashboard: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       {/* Danger signs list */}
                       <div className="card-glass" style={{ padding: '1.25rem' }}>
-                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                          ⚠️ Critical Maternal Danger Signs
+                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}><Icon name="warning" size={16} /> Critical Maternal Danger Signs
                         </h4>
                         <p style={{ fontSize: '0.72rem', color: '#6b7280', marginBottom: '10px', lineHeight: 1.45 }}>
                           If you experience any of these signs, please press the **Trigger Emergency SOS** button immediately to dispatch clinical help:
@@ -1136,8 +1157,7 @@ export const MotherDashboard: React.FC = () => {
 
                       {/* Clinic and VHT support numbers */}
                       <div className="card-glass" style={{ padding: '1.25rem' }}>
-                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                          📞 Mukono Support Contacts
+                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}><Icon name="phone" size={16} /> Mukono Support Contacts
                         </h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.03)', paddingBottom: '4px' }}>
@@ -1161,7 +1181,7 @@ export const MotherDashboard: React.FC = () => {
                 {/* Right column Map Component */}
                 <div className="card-glass" style={{ display: 'flex', flexDirection: 'column', padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px 12px', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}>📍 Live Tracking Map</h3>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 800 }}><Icon name="location" size={16} /> Live Tracking Map</h3>
                     <span style={{ fontSize: '0.72rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
                       <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)', animation: 'active-emergency-pulse 1.2s infinite alternate' }} />
                       GPS Transmitting (±15m)
@@ -1208,7 +1228,7 @@ export const MotherDashboard: React.FC = () => {
                       <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%`, height: '100%', background: 'linear-gradient(135deg, #fb7185, #f43f5e)' }} />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', marginTop: '20px', background: 'rgba(244,63,94,0.03)', border: '1px solid rgba(244,63,94,0.05)', padding: '12px', borderRadius: '12px' }}>
-                      <span>📅</span> Expected Due Date: <strong style={{ color: '#f43f5e' }}>{new Date(profile.expected_due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
+                      <span><Icon name="calendar" size={18} /></span> Expected Due Date: <strong style={{ color: '#f43f5e' }}>{new Date(profile.expected_due_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
                     </div>
                   </div>
                 </div>
@@ -1257,7 +1277,7 @@ export const MotherDashboard: React.FC = () => {
 
               <div className="card-glass" style={{ padding: '2rem' }}>
                 <div style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '10px', marginBottom: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>🗓️ WHO Antenatal Care Progress Timeline</h3>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}><Icon name="calendar" size={14} /> WHO Antenatal Care Progress Timeline</h3>
                   <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>
                     The World Health Organization recommends at least 8 ANC contacts. Expand each visit milestone to understand details.
                   </p>
@@ -1317,7 +1337,7 @@ export const MotherDashboard: React.FC = () => {
                 {/* Vitals Form Card */}
                 <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(251, 113, 133, 0.2)', borderRadius: '12px' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    📥 Record Daily Vitals
+                    <Icon name="notes" size={14} /> Record Daily Vitals
                   </h3>
                   
                   <form onSubmit={(e) => {
@@ -1412,8 +1432,7 @@ export const MotherDashboard: React.FC = () => {
 
                 {/* Complications Checklist Card */}
                 <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(251, 113, 133, 0.2)', borderRadius: '12px' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '12px' }}>
-                    ⚠️ Complications Checker
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '12px' }}><Icon name="warning" size={16} /> Complications Checker
                   </h3>
                   <p style={{ fontSize: '0.78rem', color: theme === 'light' ? '#6b7280' : '#94a3b8', lineHeight: 1.4, marginBottom: '16px' }}>
                     Our automated clinical validation scanner checks your logged pregnancy vitals against safe clinical thresholds:
@@ -1427,7 +1446,7 @@ export const MotherDashboard: React.FC = () => {
                       return (
                         <div style={{ background: isHigh ? 'rgba(239, 68, 68, 0.08)' : 'rgba(34, 197, 94, 0.08)', border: `1px solid ${isHigh ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`, borderRadius: '6px', padding: '10px 12px' }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isHigh ? '#ef4444' : '#22c55e', display: 'block' }}>
-                            {isHigh ? '⚠️ Elevated Blood Pressure (Pre-eclampsia Risk)' : '✅ Healthy Blood Pressure'}
+                            {isHigh ? 'Elevated Blood Pressure (Pre-eclampsia Risk)' : 'Healthy Blood Pressure'}
                           </span>
                           <span style={{ fontSize: '0.72rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1' }}>
                             Last Reading: {latest.systolic}/{latest.diastolic} mmHg (Threshold: &lt; 140/90)
@@ -1443,7 +1462,7 @@ export const MotherDashboard: React.FC = () => {
                       return (
                         <div style={{ background: isHigh ? 'rgba(239, 68, 68, 0.08)' : 'rgba(34, 197, 94, 0.08)', border: `1px solid ${isHigh ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`, borderRadius: '6px', padding: '10px 12px' }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isHigh ? '#ef4444' : '#22c55e', display: 'block' }}>
-                            {isHigh ? '⚠️ Gestational Diabetes Risk detected' : '✅ Healthy Blood Glucose'}
+                            {isHigh ? 'Gestational Diabetes Risk detected' : 'Healthy Blood Glucose'}
                           </span>
                           <span style={{ fontSize: '0.72rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1' }}>
                             Last Reading: {latest.glucose} mg/dL (Threshold: &lt; 140)
@@ -1459,7 +1478,7 @@ export const MotherDashboard: React.FC = () => {
                       return (
                         <div style={{ background: isLow ? 'rgba(245, 158, 11, 0.08)' : 'rgba(34, 197, 94, 0.08)', border: `1px solid ${isLow ? 'rgba(245, 158, 11, 0.2)' : 'rgba(34, 197, 94, 0.2)'}`, borderRadius: '6px', padding: '10px 12px' }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isLow ? '#f59e0b' : '#22c55e', display: 'block' }}>
-                            {isLow ? '⚠️ Reduced Fetal Kick Counts' : '✅ Healthy Fetal Movements'}
+                            {isLow ? 'Reduced Fetal Kick Counts' : 'Healthy Fetal Movements'}
                           </span>
                           <span style={{ fontSize: '0.72rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1' }}>
                             Last Reading: {latest.kick_count} kicks in 2 hours (Recommended: &gt;= 10)
@@ -1473,8 +1492,7 @@ export const MotherDashboard: React.FC = () => {
 
               {/* Vitals History & Trends Chart */}
               <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '20px' }}>
-                  📈 Vitals Trend Visualizations
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '20px' }}><Icon name="trend" size={16} /> Vitals Trend Visualizations
                 </h3>
 
                 {vitalsList.length < 2 ? (
@@ -1557,8 +1575,7 @@ export const MotherDashboard: React.FC = () => {
 
               {/* Log History list */}
               <div className="card-glass" style={{ padding: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '14px' }}>
-                  📋 Vitals Log Registry
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '14px' }}><Icon name="clipboard" size={16} /> Vitals Log Registry
                 </h3>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="table table-borderless" style={{ fontSize: '0.82rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1', width: '100%' }}>
@@ -1610,8 +1627,7 @@ export const MotherDashboard: React.FC = () => {
               <div className="consultation-panel">
                 {/* Left panel: Expert doctor consultations */}
                 <div className="card-glass" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '1rem', color: '#1f2937' }}>
-                    🩺 Consult Clinical Specialists
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '1rem', color: '#1f2937' }}><Icon name="doctor" size={16} /> Consult Doctors
                   </h3>
                   
                   {!selectedDoctor ? (
@@ -1685,7 +1701,7 @@ export const MotherDashboard: React.FC = () => {
 
                         {isTyping && (
                           <div className="typing-indicator">
-                            <span style={{ animation: 'active-emergency-pulse 0.8s infinite alternate' }}>✍️</span> {selectedDoctor.name} is typing...
+                            <span style={{ animation: 'active-emergency-pulse 0.8s infinite alternate' }}><Icon name="edit" size={14} /></span> {selectedDoctor.name} is typing...
                           </div>
                         )}
                       </div>
@@ -1809,8 +1825,7 @@ export const MotherDashboard: React.FC = () => {
         <div className="modal-overlay active">
           <div className="modal card-glass" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem', background: theme === 'light' ? '#ffffff' : '#1e293b', color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-                ❤️ Measuring Baby's Heart Rate
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}><Icon name="heart" size={16} /> Measuring Baby's Heart Rate
               </h3>
               <button onClick={() => setShowHeartRateModal(false)} style={{ background: 'none', border: 'none', color: '#4b5563', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
@@ -1849,7 +1864,7 @@ export const MotherDashboard: React.FC = () => {
           <div className="modal card-glass" style={{ width: '100%', maxWidth: '500px', padding: '2rem', border: '1px solid rgba(244,63,94,0.2)' }}>
             <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '10px', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🤱</span> Momentra System Guide
+                <span><Icon name="breastfeeding" size={18} /></span> MamaTrack guide
               </h3>
               <button onClick={() => setShowGuideModal(false)} style={{ background: 'none', border: 'none', color: '#4b5563', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
@@ -1893,7 +1908,7 @@ export const MotherDashboard: React.FC = () => {
                   }
                 }}
               >
-                {guideStep === guideSteps.length - 1 ? "Enter Console" : "Next Step"}
+                {guideStep === guideSteps.length - 1 ? "Go to dashboard" : "Next Step"}
               </button>
             </div>
           </div>
@@ -1907,7 +1922,7 @@ export const MotherDashboard: React.FC = () => {
           top: 0,
           left: 0,
           width: '100vw',
-          height: '100vh',
+          height: '100dvh',
           background: 'rgba(15, 23, 42, 0.75)',
           backdropFilter: 'blur(4px)',
           zIndex: 9999,
@@ -1927,9 +1942,7 @@ export const MotherDashboard: React.FC = () => {
             color: theme === 'dark' ? '#f8fafc' : '#0f172a'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ background: '#fef2f2', color: '#ef4444', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800 }}>
-                ⚠️
-              </div>
+              <div style={{ background: '#fef2f2', color: '#ef4444', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800 }}><Icon name="warning" size={18} /></div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: theme === 'dark' ? '#ffffff' : '#0f172a' }}>Cancel Emergency Rescue?</h3>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>Please select a reason for cancelling this SOS dispatch.</p>

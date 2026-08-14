@@ -1,12 +1,18 @@
 // MamaTrack GPS — Village Health Team (VHT) Dashboard
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency } from '../services/db';
+import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency, Mother, Notification } from '../services/db';
+
+// A mother record joined with the display fields taken from her user account.
+type MotherWithContact = Mother & { name: string; email: string; phone: string };
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { Bell, LogOut, Search } from 'lucide-react';
+import { showToast, confirmAction } from '../components/toastBus';
+import { Icon } from '../components/Icon';
+import { OfflineStorageService } from '../services/offlineStorage';
 
 export const VhtDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -18,15 +24,15 @@ export const VhtDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Lists
-  const [mothersList, setMothersList] = useState<any[]>([]);
+  const [mothersList, setMothersList] = useState<MotherWithContact[]>([]);
   const [visitsList, setVisitsList] = useState<VhtVisitLog[]>([]);
   const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Home Visit Form State
-  const [selectedMother, setSelectedMother] = useState<any | null>(null);
+  const [selectedMother, setSelectedMother] = useState<MotherWithContact | null>(null);
   const [bpInput, setBpInput] = useState('120/80');
   const [tempInput, setTempInput] = useState('36.6');
   const [kicksInput, setKicksInput] = useState('10');
@@ -212,7 +218,7 @@ export const VhtDashboard: React.FC = () => {
       });
       setMothersList(mothers);
 
-      alert(`Mother ${regForm.full_name} registered successfully! A welcome text has been sent.`);
+      showToast(`${regForm.full_name} is now on the district register. A welcome text has been sent to her phone.`, 'success', 6000, 'Mother registered');
       setRegForm({
         full_name: '',
         email: '',
@@ -232,7 +238,7 @@ export const VhtDashboard: React.FC = () => {
       setRegDobYear('');
       setActiveTab('mothers');
     } else {
-      alert(res.error || 'Failed to register mother.');
+      showToast(res.error || 'The mother could not be registered. Check the details and try again.', 'error');
     }
   };
 
@@ -258,13 +264,27 @@ export const VhtDashboard: React.FC = () => {
       complications_observed: compInput
     });
 
-    // Sync to Vitals Ledger
+    // Sync to Vitals history
     VitalsService.addVitalsRecord(selectedMother.user_id, {
       systolic,
       diastolic,
       glucose: 90, // mock average glucose
       kick_count: kicksVal,
       recorded_by: 'vht'
+    });
+
+    // Keep the last readings on this device as well. A VHT often works through
+    // several homes with no signal and only reconnects later; this is what lets
+    // the most recent numbers be read back in the field before that happens.
+    OfflineStorageService.cacheVitals(String(selectedMother.user_id), {
+      blood_pressure: bpInput,
+      systolic,
+      diastolic,
+      temperature: tempVal,
+      kick_count: kicksVal,
+      fetal_movement: movementInput,
+      complications_observed: compInput,
+      recorded_by_vht: user.full_name,
     });
 
     // Warning validation
@@ -305,21 +325,32 @@ export const VhtDashboard: React.FC = () => {
     setSelectedMother(null);
     setNotesInput('');
     setCompInput('None');
-    alert('VHT visit logged successfully!' + (danger ? ' ⚠️ High risk triggers dispatched to clinical staff.' : ''));
+    if (danger) {
+      showToast('The readings you recorded are outside safe ranges, so clinical staff have been alerted.', 'warning', 8000, 'Visit logged — risk flagged');
+    } else {
+      showToast('The home visit and its readings have been added to her record.', 'success', 5000, 'Visit logged');
+    }
   };
 
-  const handleTriggerSOSForMother = (mother: any) => {
-    if (window.confirm(`Trigger an emergency medical rescue dispatch for ${mother.name}?`)) {
-      EmergencyService.triggerEmergency(
-        mother.user_id,
-        mother.home_latitude,
-        mother.home_longitude,
-        `Emergency triggered by VHT Sarah on scene: suspected labor or maternal distress.`,
-        false
-      );
-      alert(`SOS Dispatched! Rescue responders have been alerted.`);
-      setActiveTab('home');
-    }
+  const handleTriggerSOSForMother = async (mother: MotherWithContact) => {
+    const ok = await confirmAction({
+      title: `Raise an emergency for ${mother.name}?`,
+      message: `An ambulance will be dispatched to her home in ${mother.village}, the receiving hospital will be alerted, and her next of kin will be sent a text. Only continue if she needs urgent medical help now.`,
+      confirmLabel: 'Raise emergency',
+      cancelLabel: 'Not now',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
+    EmergencyService.triggerEmergency(
+      mother.user_id,
+      mother.home_latitude,
+      mother.home_longitude,
+      `Emergency raised by VHT ${user.full_name} on scene: suspected labour or maternal distress.`,
+      false
+    );
+    showToast(`Responders are on their way to ${mother.name} in ${mother.village}. Track the rescue from your dashboard.`, 'success', 8000, 'Emergency raised');
+    setActiveTab('home');
   };
 
   const filteredMothers = mothersList.filter(m =>
@@ -329,27 +360,27 @@ export const VhtDashboard: React.FC = () => {
   );
 
   return (
-    <div className="vht-theme" style={{ display: 'flex', minHeight: '100vh', background: isDark ? '#0f172a' : '#f0f9ff', color: isDark ? '#f1f5f9' : '#334155', fontFamily: "'Muli', sans-serif" }}>
+    <div className="vht-theme" style={{ display: 'flex', minHeight: '100dvh', background: isDark ? '#0f172a' : '#f0f9ff', color: isDark ? '#f1f5f9' : '#334155', fontFamily: "'Muli', sans-serif" }}>
       
       {/* SIDEBAR NAVIGATION */}
       <aside style={{ width: '260px', background: isDark ? '#1e293b' : '#ffffff', borderRight: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e0f2fe', display: 'flex', flexDirection: 'column', padding: '24px 16px', position: 'fixed', top: 0, bottom: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px' }}>
           <img src="/assets/img/icons/logo.png" alt="Logo" style={{ width: '38px', height: '38px' }} />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#0284c7' }}>VHT Console</h2>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#0284c7' }}>Village Health Team</h2>
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           <button onClick={() => setActiveTab('home')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'home' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'home' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'home' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-            <span>🏠</span> Dashboard Home
+            <span><Icon name="home" size={18} /></span> Dashboard Home
           </button>
           <button onClick={() => setActiveTab('mothers')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'mothers' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'mothers' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'mothers' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-            <span>🤰</span> Expectant Mothers
+            <span><Icon name="mother" size={18} /></span> Expectant Mothers
           </button>
           <button onClick={() => setActiveTab('visits')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'visits' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'visits' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'visits' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-            <span>📋</span> Visit Logs History
+            <span><Icon name="clipboard" size={18} /></span> Visit Logs History
           </button>
           <button onClick={() => setActiveTab('register')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: activeTab === 'register' ? 'none' : '1px solid rgba(2,132,199,0.3)', background: activeTab === 'register' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : (isDark ? 'rgba(14,165,233,0.1)' : 'rgba(2,132,199,0.06)'), color: activeTab === 'register' ? '#ffffff' : '#0284c7', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%', boxShadow: activeTab === 'register' ? '0 4px 12px rgba(2,132,199,0.3)' : 'none', transition: 'all 0.2s ease' }}>
-            <span>➕</span> Register Mother
+            <span><Icon name="add" size={18} /></span> Register Mother
           </button>
         </nav>
 
@@ -407,9 +438,7 @@ export const VhtDashboard: React.FC = () => {
               }}
               className="d-inline-flex d-md-none"
               title="Open Navigation Menu"
-            >
-              ☰
-            </button>
+            ><Icon name="menu" size={18} /></button>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, textTransform: 'capitalize', lineHeight: 1.25 }}>{activeTab} Workspace</h1>
               <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Mukono District Maternal Health Network</span>
@@ -418,7 +447,7 @@ export const VhtDashboard: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
             <ThemeToggle />
             <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', position: 'relative' }}>
+              <button aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', position: 'relative' }}>
                 <Bell size={20} />
                 {notifications.filter(n => !n.is_read).length > 0 && (
                   <span style={{ position: 'absolute', top: -2, right: -2, background: '#ef4444', color: '#fff', width: 8, height: 8, borderRadius: '50%' }} />
@@ -467,7 +496,7 @@ export const VhtDashboard: React.FC = () => {
 
         {/* FLOATING WELCOME TOAST NOTIFICATION */}
         {user && (
-          <WelcomeToast userName={user.full_name} roleName="Village Health Team" subtitle="Mukono District maternal field network active & synced." icon="🩺" />
+          <WelcomeToast userName={user.full_name} roleName="Village Health Team" subtitle="Mukono District maternal field network active & synced." />
         )}
 
         {/* OFF-CANVAS MOBILE DRAWER SIDEBAR */}
@@ -482,7 +511,7 @@ export const VhtDashboard: React.FC = () => {
               top: 0,
               left: 0,
               width: '280px',
-              height: '100vh',
+              height: '100dvh',
               zIndex: 99999,
               background: isDark ? '#1e293b' : '#ffffff',
               color: isDark ? '#ffffff' : '#0f172a',
@@ -494,10 +523,10 @@ export const VhtDashboard: React.FC = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ background: '#0ea5e9', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>📳</div>
+                  <div style={{ background: '#0ea5e9', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}><Icon name="vht" size={18} /></div>
                   <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
                 </div>
-                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}><Icon name="close" size={18} /></button>
               </div>
 
               {/* Profile Card */}
@@ -511,15 +540,15 @@ export const VhtDashboard: React.FC = () => {
 
               {/* Navigation Menu */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                {[
-                  { id: 'home', icon: '🏠', label: 'Dashboard' },
-                  { id: 'mothers', icon: '🤰', label: 'Assigned Mothers' },
-                  { id: 'visits', icon: '📋', label: 'Visit Logs' },
-                  { id: 'register', icon: '➕', label: 'Register Mother' }
-                ].map(item => (
+                {([
+                  { id: 'home', icon: 'home', label: 'Dashboard' },
+                  { id: 'mothers', icon: 'mother', label: 'Assigned Mothers' },
+                  { id: 'visits', icon: 'clipboard', label: 'Visit Logs' },
+                  { id: 'register', icon: 'add', label: 'Register Mother' }
+                ] as const).map(item => (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveTab(item.id as any); setMobileSidebarOpen(false); }}
+                    onClick={() => { setActiveTab(item.id); setMobileSidebarOpen(false); }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -560,21 +589,21 @@ export const VhtDashboard: React.FC = () => {
             {/* KPI statistics cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
               <div className="card" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ background: 'rgba(2,132,199,0.1)', color: '#0284c7', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>🤰</div>
+                <div style={{ background: 'rgba(2,132,199,0.1)', color: '#0284c7', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}><Icon name="mother" size={18} /></div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>{mothersList.length}</h3>
                   <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Mothers Monitored</span>
                 </div>
               </div>
               <div className="card" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>📋</div>
+                <div style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}><Icon name="clipboard" size={18} /></div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>{visitsList.length}</h3>
                   <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Home Visits Logged</span>
                 </div>
               </div>
               <div className="card" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 10px rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>🚨</div>
+                <div style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}><Icon name="emergency" size={18} /></div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>{activeEmergencies.length}</h3>
                   <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Active SOS Alerts</span>
@@ -584,8 +613,7 @@ export const VhtDashboard: React.FC = () => {
 
             {/* Active emergencies list section */}
             <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px', marginBottom: '16px' }}>
-                🚨 Active Rescue Alerts (Mukono District)
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px', marginBottom: '16px' }}><Icon name="emergency" size={16} /> Active emergencies (Mukono District)
               </h3>
               {activeEmergencies.length === 0 ? (
                 <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', textAlign: 'center', padding: '20px 0' }}>No active emergency rescues in progress.</p>
@@ -624,7 +652,7 @@ export const VhtDashboard: React.FC = () => {
             {selectedMother ? (
               // Log Visit Form Overlay
               <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', border: '1px solid rgba(14,165,233,0.2)' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px' }}>📝 Log Home Visit - {selectedMother.name}</h3>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px' }}><Icon name="notes" size={16} /> Log Home Visit - {selectedMother.name}</h3>
                 <form onSubmit={handleLogVisit}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                     <div className="form-group">
@@ -644,7 +672,7 @@ export const VhtDashboard: React.FC = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                     <div className="form-group">
                       <label className="form-label" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Fetal Movements Status</label>
-                      <select value={movementInput} onChange={e => setMovementInput(e.target.value as any)} className="form-input" style={{ padding: '8px 12px', fontSize: '0.85rem', width: '100%' }}>
+                      <select value={movementInput} onChange={e => setMovementInput(e.target.value as 'normal' | 'reduced' | 'none')} className="form-input" style={{ padding: '8px 12px', fontSize: '0.85rem', width: '100%' }}>
                         <option value="normal">Normal / Active</option>
                         <option value="reduced">Reduced / Sluggish</option>
                         <option value="none">No movement felt</option>
@@ -680,15 +708,15 @@ export const VhtDashboard: React.FC = () => {
                   <div key={mother.id} style={{ background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #e0f2fe', borderRadius: '8px', padding: '20px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
                     <div>
                       <h4 style={{ margin: '0 0 4px', fontSize: '1.05rem', fontWeight: 800 }}>{mother.name}</h4>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}>📞 Phone: {mother.phone} | Village: {mother.village} ({mother.sub_county})</span>
-                      <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '2px' }}>🩺 Blood Type: {mother.blood_type} | EDD: {mother.expected_due_date}</span>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}><Icon name="phone" size={16} /> Phone: {mother.phone} | Village: {mother.village} ({mother.sub_county})</span>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '2px' }}><Icon name="doctor" size={16} /> Blood Type: {mother.blood_type} | EDD: {mother.expected_due_date}</span>
                     </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button onClick={() => setSelectedMother(mother)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>📝</span> Log Visit
+                        <span><Icon name="notes" size={18} /></span> Log Visit
                       </button>
                       <button onClick={() => handleTriggerSOSForMother(mother)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>🆘</span> SOS Rescue
+                        <span><Icon name="sos" size={18} /></span> SOS Rescue
                       </button>
                     </div>
                   </div>
@@ -701,7 +729,7 @@ export const VhtDashboard: React.FC = () => {
         {/* TAB: VISIT LOGS HISTORY */}
         {activeTab === 'visits' && (
           <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '16px' }}>📋 Monitored Visit Registry</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '16px' }}><Icon name="clipboard" size={16} /> Monitored Visit Registry</h3>
             <div className="table-responsive">
               <table style={{ width: '100%', fontSize: '0.8rem', textAlign: 'left', borderCollapse: 'collapse' }}>
                 <thead>
@@ -743,7 +771,7 @@ export const VhtDashboard: React.FC = () => {
         {/* TAB: REGISTER EXPECTANT MOTHER */}
         {activeTab === 'register' && (
           <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px', maxWidth: '680px', margin: '0 auto' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0284c7', marginBottom: '16px', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '6px' }}>🤰 Expectant Mother Enrollment Form</h3>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0284c7', marginBottom: '16px', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '6px' }}><Icon name="mother" size={16} /> Expectant Mother Enrollment Form</h3>
             <form onSubmit={handleRegisterMother} noValidate>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div className="form-group">

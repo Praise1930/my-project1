@@ -16,6 +16,7 @@ import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 import { Plus } from 'lucide-react';
 import { GlassmorphicOverlayLoader } from '../components/LoadingStates';
+import { Icon } from '../components/Icon';
 
 export const Login: React.FC = () => {
   const { theme } = useTheme();
@@ -36,11 +37,11 @@ export const Login: React.FC = () => {
   const [showRoleModal, setShowRoleModal] = useState(false);
 
   const rolesList = [
-    { id: 'mother', title: 'Expectant Mother Portal', icon: '🤰', desc: 'Emergency beacons, ANC schedule & doctor chat', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },
-    { id: 'doctor', title: 'Clinical Doctor Console', icon: '🩺', desc: 'Patient diagnostics, bed capacity & triage', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-    { id: 'driver', title: 'Ambulance Navigation Panel', icon: '🚑', desc: 'GPS dispatches & vehicle safety checklists', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-    { id: 'vht', title: 'Village Health Team (VHT)', icon: '📳', desc: 'Community maternal tracking & SOS alerts', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.1)' },
-    { id: 'admin', title: 'Command Control Center', icon: '📡', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
+    { id: 'mother', title: 'Mother portal', icon: 'mother', desc: 'Emergency beacons, ANC schedule & doctor chat', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },
+    { id: 'doctor', title: 'Clinical portal', icon: 'doctor', desc: 'Patient diagnostics, bed capacity & triage', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+    { id: 'driver', title: 'Ambulance portal', icon: 'ambulance', desc: 'GPS dispatches & vehicle safety checklists', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+    { id: 'vht', title: 'Village Health Team (VHT)', icon: 'vht', desc: 'Community maternal tracking & SOS alerts', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.1)' },
+    { id: 'admin', title: 'Administrator portal', icon: 'signal', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
   ];
 
   // Reset inputs when role changes
@@ -115,7 +116,8 @@ export const Login: React.FC = () => {
       } else {
         setError(res.error || 'Invalid email or password for the selected portal role.');
       }
-    } catch (err: any) {
+    } catch (err) {
+      console.error('Login failed:', err);
       setError('Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
@@ -130,11 +132,11 @@ export const Login: React.FC = () => {
   };
 
   const roleLabels = {
-    mother: { title: 'Expectant Mother Portal', icon: '🤰', color: '#f43f5e' },
-    admin: { title: 'Command Control Center', icon: '📡', color: '#0f172a' },
-    doctor: { title: 'Clinical Care Console', icon: '🩺', color: '#10b981' },
-    driver: { title: 'Ambulance Navigation Panel', icon: '🚑', color: '#d97706' },
-    vht: { title: 'Village Health Team Portal', icon: '📳', color: '#0284c7' }
+    mother: { title: 'Mother portal', icon: 'mother', color: '#f43f5e' },
+    admin: { title: 'Administrator portal', icon: 'signal', color: '#0f172a' },
+    doctor: { title: 'Clinical portal', icon: 'doctor', color: '#10b981' },
+    driver: { title: 'Ambulance portal', icon: 'ambulance', color: '#d97706' },
+    vht: { title: 'Village Health Team Portal', icon: 'vht', color: '#0284c7' }
   };
 
   const themeSettings = {
@@ -191,7 +193,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="medical-login-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+    <div className="medical-login-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100dvh' }}>
       <style>{`
         /* Prevent button hover effect overlay from covering button text */
         .btn::before {
@@ -202,7 +204,7 @@ export const Login: React.FC = () => {
       {/* HEADER START */}
       <header>
         <div className="header-area">
-          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', transition: 'background-color 0.3s ease' }}>
+          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
             <div className="container-fluid" style={{ padding: '0 40px' }}>
               <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0' }}>
                 <div className="logo">
@@ -230,7 +232,7 @@ export const Login: React.FC = () => {
       </header>
 
       {/* CENTERED LOGIN FORM SECTION */}
-      <section className="login-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', backgroundAttachment: 'fixed', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+      <section className="login-form-section" style={{ minHeight: 'calc(100dvh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', backgroundAttachment: 'fixed', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
         
         {/* Floating Orbs inside the section wrapper */}
         <div className="bg-orbs" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', zIndex: 1, pointerEvents: 'none' }}>
@@ -254,11 +256,11 @@ export const Login: React.FC = () => {
           {/* Quick Role-Switcher Bar */}
           <div style={{ display: 'flex', gap: '6px', padding: '10px 14px', background: isDark ? '#0f172a' : '#f8fafc', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { id: 'mother', label: 'Mother', icon: '🤰' },
-              { id: 'doctor', label: 'Doctor', icon: '🩺' },
-              { id: 'driver', label: 'Driver', icon: '🚑' },
-              { id: 'vht', label: 'VHT', icon: '📳' },
-              { id: 'admin', label: 'Admin', icon: '📡' },
+              { id: 'mother', label: 'Mother', icon: 'mother' },
+              { id: 'doctor', label: 'Doctor', icon: 'doctor' },
+              { id: 'driver', label: 'Driver', icon: 'ambulance' },
+              { id: 'vht', label: 'VHT', icon: 'vht' },
+              { id: 'admin', label: 'Admin', icon: 'signal' },
             ].map(item => (
               <button
                 key={item.id}
@@ -281,7 +283,7 @@ export const Login: React.FC = () => {
                   transition: 'all 0.2s ease'
                 }}
               >
-                <span>{item.icon}</span> {item.label}
+                <Icon name={item.icon} size={16} /> {item.label}
               </button>
             ))}
           </div>
@@ -291,7 +293,7 @@ export const Login: React.FC = () => {
             
             {error && (
               <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>⚠️</span> {error}
+                <span><Icon name="warning" size={14} /></span> {error}
               </div>
             )}
 
@@ -398,7 +400,7 @@ export const Login: React.FC = () => {
                 <div style={{ width: '100%', minHeight: '82px', padding: '12px 14px', background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2', borderRadius: '8px', border: isDark ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#fda4af' : '#9f1239', display: 'block', marginBottom: '6px', fontWeight: 600 }}>New Expectant Mother?</span>
                   <Link to="/register" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '9px 16px', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', color: '#ffffff', fontWeight: 700, borderRadius: '6px', fontSize: '0.84rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(15, 97, 239, 0.35)' }}>
-                    <span style={{ color: '#ffffff', fontWeight: 700 }}>➕</span>
+                    <span style={{ color: '#ffffff', fontWeight: 700 }}><Icon name="add" size={14} /></span>
                     <span style={{ color: '#ffffff', fontWeight: 700 }}>Register Mother Account</span>
                   </Link>
                 </div>
@@ -415,7 +417,7 @@ export const Login: React.FC = () => {
                   onClick={() => setShowRoleModal(true)}
                   style={{ background: 'none', border: 'none', color: isDark ? '#60a5fa' : '#2563eb', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'underline', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <span>🔄</span> Change Portal Role
+                  <span><Icon name="refresh" size={14} /></span> Change Portal Role
                 </button>
                 <span style={{ opacity: 0.5 }}>•</span>
                 <Link to="/" style={{ color: isDark ? '#cbd5e1' : '#4b5563', fontSize: '0.85rem', textDecoration: 'underline' }}>
@@ -432,8 +434,7 @@ export const Login: React.FC = () => {
         padding: '40px 0 20px',
         background: isDark ? '#0b162b' : '#f8fafc',
         color: isDark ? '#909090' : '#475569',
-        borderTop: isDark ? 'none' : '1px solid #e2e8f0',
-        transition: 'background-color 0.3s ease, color 0.3s ease'
+        borderTop: isDark ? 'none' : '1px solid #e2e8f0'
       }}>
         <div className="container">
           <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', justifyContent: 'space-between' }}>
@@ -493,7 +494,7 @@ export const Login: React.FC = () => {
             }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>🔄</span> Select Portal Dashboard
+                  <span><Icon name="refresh" size={14} /></span> Select Portal Dashboard
                 </h3>
                 <span style={{ fontSize: '0.8rem', color: isDark ? '#94a3b8' : '#64748b' }}>Select a portal to switch login authentication</span>
               </div>
@@ -529,7 +530,7 @@ export const Login: React.FC = () => {
                   }}
                 >
                   <div style={{ fontSize: '1.6rem', width: '42px', height: '42px', borderRadius: '10px', background: r.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {r.icon}
+                    <Icon name={r.icon} size={22} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.95rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>

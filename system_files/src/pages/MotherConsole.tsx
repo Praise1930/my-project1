@@ -1,4 +1,4 @@
-// MamaTrack GPS — Unified Expectant Mother Console
+// MamaTrack GPS — Expectant mother portal
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,8 @@ import { Bell, LogOut, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
-import { showToast } from '../components/Toast';
+import { showToast } from '../components/toastBus';
+import { Icon } from '../components/Icon';
 
 export const MotherConsole: React.FC = () => {
   const navigate = useNavigate();
@@ -136,7 +137,7 @@ export const MotherConsole: React.FC = () => {
     };
   }, [activeEmgId, activeEmgStatus, user, activeEmergency]);
 
-  if (!user || !profile) return <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading Clinical Console...</div>;
+  if (!user || !profile) return <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Loading your records...</div>;
 
   // Pregnancy details calculations
   const start = new Date(profile.pregnancy_start_date);
@@ -237,7 +238,7 @@ export const MotherConsole: React.FC = () => {
     setShowConfirmModal(false);
     setEmergencyNotes('');
     setRequireCemonc(false);
-    showToast('Emergency SOS broadcasted! Your GPS coordinates have been locked. Mukono District Emergency Command, matched Obstetricians, and nearby Ambulance Drivers have been alerted!', 'success', 8000);
+    showToast('Emergency SOS broadcasted! Your GPS coordinates have been locked. Mukono District dispatch, matched Obstetricians, and nearby Ambulance Drivers have been alerted!', 'success', 8000);
   };
 
   const handleConfirmSOS = () => {
@@ -262,7 +263,7 @@ export const MotherConsole: React.FC = () => {
     setNotifications(NotificationService.getNotificationsForUser(user.id));
     setShowCancelModal(false);
     setCustomCancelReason('');
-    showToast(`Emergency alert ${updated.code} has been cancelled. District Emergency Command & Admins have been notified.`, 'info', 6000);
+    showToast(`Emergency alert ${updated.code} has been cancelled. District dispatch & Admins have been notified.`, 'info', 6000);
   };
 
   const handleUpdateProfile = (e: React.FormEvent) => {
@@ -342,7 +343,7 @@ export const MotherConsole: React.FC = () => {
   ];
 
   return (
-    <div className="mother-theme momentra-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row' }}>
+    <div className="mother-theme momentra-root" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'row' }}>
       {/* Scoped style overrides for sidebar layout */}
       <style>{`
         .momentra-root aside.sidebar-mother {
@@ -395,9 +396,7 @@ export const MotherConsole: React.FC = () => {
             alignItems: 'center',
             gap: '10px'
           }}>
-            <div style={{ background: 'rgba(244,63,94,0.1)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
-              🤱
-            </div>
+            <div style={{ background: 'rgba(244,63,94,0.1)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}><Icon name="breastfeeding" size={18} /></div>
             <div>
               <h5 style={{
                 fontSize: '16px',
@@ -405,8 +404,8 @@ export const MotherConsole: React.FC = () => {
                 margin: 0,
                 letterSpacing: '0.04em',
                 color: '#f43f5e'
-              }}>Momentra</h5>
-              <span style={{ fontSize: '11px', color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Maternal Console</span>
+              }}>MamaTrack</h5>
+              <span style={{ fontSize: '11px', color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mother portal</span>
             </div>
           </div>
 
@@ -456,14 +455,14 @@ export const MotherConsole: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s'
             }}>
-              <span>⬅️</span>
+              <span><Icon name="back" size={18} /></span>
               <span>Back to Dashboard</span>
             </div>
           </nav>
         </aside>
 
         {/* MAIN VIEWPORT */}
-        <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
           {/* Top Navbar */}
           {/* Mobile Sidebar Drawer */}
           {mobileSidebarOpen && (
@@ -471,8 +470,8 @@ export const MotherConsole: React.FC = () => {
               <div onClick={() => setMobileSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998, backdropFilter: 'blur(2px)' }} />
               <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px', background: theme === 'light' ? '#ffffff' : '#0f172a', zIndex: 9999, display: 'flex', flexDirection: 'column', boxShadow: '4px 0 25px rgba(0,0,0,0.3)', overflowY: 'auto' }}>
                 <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)' }}>
-                  <h4 style={{ margin: 0, fontWeight: 800, color: '#f43f5e', fontSize: '1rem' }}>🤱 Momentra Console</h4>
-                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0' }}>✕</button>
+                  <h4 style={{ margin: 0, fontWeight: 800, color: '#f43f5e', fontSize: '1rem' }}><Icon name="breastfeeding" size={16} /> Overview</h4>
+                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0' }}><Icon name="close" size={18} /></button>
                 </div>
                 <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.08)' }}>
                   <ProfilePhotoUpload user={user} onUpdated={setUser} size={38} showLabel={false} />
@@ -483,7 +482,7 @@ export const MotherConsole: React.FC = () => {
                 </div>
                 <nav style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <div onClick={() => { setMobileSidebarOpen(false); navigate('/mother'); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', cursor: 'pointer', color: theme === 'light' ? '#4b5563' : '#cbd5e1', fontSize: '13px', fontWeight: 500 }}>
-                    <span>⬅️</span><span>Back to Dashboard</span>
+                    <span><Icon name="back" size={18} /></span><span>Back to Dashboard</span>
                   </div>
                 </nav>
                 <div style={{ padding: '16px', borderTop: theme === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.08)' }}>
@@ -497,9 +496,9 @@ export const MotherConsole: React.FC = () => {
 
           <header className="site-header" style={{ width: '100%', padding: '1.25rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(20px)', borderBottom: theme === 'light' ? '1px solid rgba(0,0,0,0.03)' : '1px solid rgba(255,255,255,0.08)', zIndex: 100 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button className="d-inline-flex d-md-none" onClick={() => setMobileSidebarOpen(true)} style={{ background: 'none', border: 'none', fontSize: '1.75rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0', width: '40px', height: '40px', alignItems: 'center', justifyContent: 'center', padding: 0 }}>☰</button>
+              <button className="d-inline-flex d-md-none" onClick={() => setMobileSidebarOpen(true)} style={{ background: 'none', border: 'none', fontSize: '1.75rem', cursor: 'pointer', color: theme === 'light' ? '#374151' : '#e2e8f0', width: '40px', height: '40px', alignItems: 'center', justifyContent: 'center', padding: 0 }}><Icon name="menu" size={18} /></button>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#1f2937' : '#ffffff' }}>
-                Momentra Rescue Console
+                Emergency
               </h3>
             </div>
 
@@ -508,7 +507,7 @@ export const MotherConsole: React.FC = () => {
               
               {/* Notifications */}
               <div style={{ position: 'relative' }}>
-                <button onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+                <button aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)} style={{ background: theme === 'light' ? 'white' : '#1e293b', border: theme === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.1)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: theme === 'light' ? '#4b5563' : '#cbd5e1', cursor: 'pointer', position: 'relative', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
                   <Bell size={18} />
                   {notifications.some(n => !n.is_read) && (
                     <span style={{ position: 'absolute', top: '1px', right: '1px', background: '#f43f5e', width: '8px', height: '8px', borderRadius: '50%' }} />
@@ -539,7 +538,7 @@ export const MotherConsole: React.FC = () => {
 
           {/* FLOATING WELCOME TOAST NOTIFICATION */}
           {user && (
-            <WelcomeToast userName={user.full_name} roleName="Maternal Rescue" subtitle="SOS & GPS dispatch center ready." icon="🚑" />
+            <WelcomeToast userName={user.full_name} roleName="Emergency" subtitle="SOS & GPS dispatch center ready." />
           )}
 
         {/* Main Content Layout */}
@@ -565,12 +564,12 @@ export const MotherConsole: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   {!activeEmergency ? (
                     <button className="emergency-btn" onClick={handleTriggerSOS} style={{ width: '150px', height: '150px' }}>
-                      <span style={{ fontSize: '2rem' }}>🆘</span>
+                      <span style={{ fontSize: '2rem' }}><Icon name="sos" size={18} /></span>
                       <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>Trigger SOS</span>
                     </button>
                   ) : (
                     <button className="emergency-btn triggered" onClick={handleCancelSOS} style={{ width: '150px', height: '150px', animation: 'active-emergency-pulse 1s infinite alternate', background: '#ef4444', border: '3px solid #dc2626', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '2rem' }}>⚠️</span>
+                      <span style={{ fontSize: '2rem' }}><Icon name="warning" size={18} /></span>
                       <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>Cancel SOS</span>
                     </button>
                   )}
@@ -581,7 +580,7 @@ export const MotherConsole: React.FC = () => {
               {activeEmergency && (
                 <div className="card-glass" style={{ padding: '1.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '6px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>🚑 Rescue Tracker</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800 }}><Icon name="ambulance" size={16} /> Rescue Tracker</span>
                     <span className="badge" style={{ background: ['delivered', 'completed'].includes(activeEmergency.status) ? '#16a34a' : '#ea580c', color: 'white', fontSize: '0.62rem', padding: '1px 6px', borderRadius: '8px' }}>
                       {activeEmergency.status.toUpperCase()}
                     </span>
@@ -589,15 +588,15 @@ export const MotherConsole: React.FC = () => {
                   <div className="status-tracker">
                     <div className="status-steps" style={{ gap: '8px' }}>
                       <div className="status-step completed">
-                        <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>🆘</div>
+                        <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}><Icon name="sos" size={18} /></div>
                         <div className="step-label" style={{ fontSize: '0.6rem' }}>SOS</div>
                       </div>
                       <div className={`status-step ${['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : ''}`}>
-                        <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>📡</div>
+                        <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}><Icon name="signal" size={18} /></div>
                         <div className="step-label" style={{ fontSize: '0.6rem' }}>Sent</div>
                       </div>
                       <div className={`status-step ${['arrived', 'in_transit', 'delivered', 'completed'].includes(activeEmergency.status) ? 'completed' : activeEmergency.status === 'en_route' ? 'active' : ''}`}>
-                        <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>🚑</div>
+                        <div className="step-circle" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}><Icon name="ambulance" size={18} /></div>
                         <div className="step-label" style={{ fontSize: '0.6rem' }}>Route</div>
                       </div>
                     </div>
@@ -608,7 +607,7 @@ export const MotherConsole: React.FC = () => {
               {/* High Contrast map widget */}
               <div className="card-glass" style={{ padding: '12px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 800 }}>📍 Dispatch Map</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800 }}><Icon name="location" size={16} /> Dispatch Map</span>
                   <span style={{ fontSize: '0.65rem', color: '#ef4444', fontWeight: 600 }}>GPS Live</span>
                 </div>
                 <div style={{ height: '260px', position: 'relative', borderRadius: '16px', overflow: 'hidden' }}>
@@ -625,7 +624,7 @@ export const MotherConsole: React.FC = () => {
 
               {/* Support Guidelines */}
               <div className="card-glass" style={{ padding: '1.15rem' }}>
-                <h4 style={{ fontSize: '0.82rem', color: '#dc2626', fontWeight: 800, marginBottom: '6px' }}>⚠️ Critical Warning Red-Flags</h4>
+                <h4 style={{ fontSize: '0.82rem', color: '#dc2626', fontWeight: 800, marginBottom: '6px' }}><Icon name="warning" size={16} /> Critical Warning Red-Flags</h4>
                 <ul style={{ fontSize: '0.68rem', color: '#4b5563', paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '3px', lineHeight: 1.45 }}>
                   <li>Severe bleeding or sudden fluid gush</li>
                   <li>Swelling of face/hands, blurred vision</li>
@@ -647,14 +646,13 @@ export const MotherConsole: React.FC = () => {
                 <div className="progress-bar" style={{ height: '6px', background: 'rgba(0,0,0,0.04)', borderRadius: '3px', overflow: 'hidden' }}>
                   <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%`, height: '100%', background: 'linear-gradient(135deg, #fb7185, #f43f5e)' }} />
                 </div>
-                <div style={{ fontSize: '0.72rem', color: '#4b5563', marginTop: '12px', background: 'rgba(244,63,94,0.03)', padding: '8px 10px', borderRadius: '8px' }}>
-                  📅 Expected Delivery: <strong>{new Date(profile.expected_due_date).toLocaleDateString()}</strong>
+                <div style={{ fontSize: '0.72rem', color: '#4b5563', marginTop: '12px', background: 'rgba(244,63,94,0.03)', padding: '8px 10px', borderRadius: '8px' }}><Icon name="calendar" size={16} /> Expected Delivery: <strong>{new Date(profile.expected_due_date).toLocaleDateString()}</strong>
                 </div>
               </div>
 
               {/* ANC clinic visits schedules calendar */}
               <div className="card-glass" style={{ padding: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '8px' }}>📅 Clinic Visits & Appointments</h4>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '8px' }}><Icon name="calendar" size={16} /> Clinic Visits & Appointments</h4>
                 {checkups.length === 0 ? (
                   <p style={{ fontSize: '0.72rem', color: '#6b7280' }}>No scheduled visits logged.</p>
                 ) : (
@@ -680,7 +678,7 @@ export const MotherConsole: React.FC = () => {
 
               {/* Milestones checklist */}
               <div className="card-glass" style={{ padding: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '10px' }}>👶 WHO Pregnancy Milestones</h4>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '10px' }}><Icon name="baby" size={16} /> WHO Pregnancy Milestones</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
                   {whoMilestones.map(m => (
                     <div key={m.visit} style={{ borderLeft: '2px solid rgba(244,63,94,0.2)', paddingLeft: '8px' }}>
@@ -699,7 +697,7 @@ export const MotherConsole: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Consultation messaging */}
               <div className="card-glass" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)', paddingBottom: '6px' }}>🩺 Consult Clinical Doctors</h4>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '8px', borderBottom: '1px solid rgba(0,0,0,0.04)', paddingBottom: '6px' }}><Icon name="doctor" size={16} /> Consult Clinical Doctors</h4>
                 
                 {!selectedDoctor ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -742,7 +740,7 @@ export const MotherConsole: React.FC = () => {
 
               {/* VHT contact list support details */}
               <div className="card-glass" style={{ padding: '1.15rem' }}>
-                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, marginBottom: '6px' }}>📞 VHT Support Coordinators</h4>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, marginBottom: '6px' }}><Icon name="phone" size={16} /> VHT Support Coordinators</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.7rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Emergency Dispatcher:</span>
@@ -757,7 +755,7 @@ export const MotherConsole: React.FC = () => {
 
               {/* Profile Details Edit Form */}
               <div className="card-glass" style={{ padding: '1.25rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>👤 Personal Medical Details</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800 }}><Icon name="profile" size={16} /> Personal Medical Details</span>
                 <form onSubmit={handleUpdateProfile} style={{ marginTop: '8px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
                     <div className="form-group">
@@ -825,7 +823,7 @@ export const MotherConsole: React.FC = () => {
           top: 0,
           left: 0,
           width: '100vw',
-          height: '100vh',
+          height: '100dvh',
           background: 'rgba(15, 23, 42, 0.75)',
           backdropFilter: 'blur(4px)',
           zIndex: 9999,
@@ -845,9 +843,7 @@ export const MotherConsole: React.FC = () => {
             color: theme === 'dark' ? '#f8fafc' : '#0f172a'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ background: '#fef2f2', color: '#ef4444', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800 }}>
-                ⚠️
-              </div>
+              <div style={{ background: '#fef2f2', color: '#ef4444', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800 }}><Icon name="warning" size={18} /></div>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: theme === 'dark' ? '#ffffff' : '#0f172a' }}>Cancel Emergency Rescue?</h3>
                 <p style={{ margin: 0, fontSize: '0.82rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>Please select a reason for cancelling this SOS dispatch.</p>

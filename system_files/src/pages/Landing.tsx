@@ -13,6 +13,7 @@ import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
 import { Plus } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 export const Landing: React.FC = () => {
   const { theme } = useTheme();
@@ -72,7 +73,7 @@ export const Landing: React.FC = () => {
   ];
 
   return (
-    <div id="top" className="medical-landing-root" style={{ background: isDark ? '#1e293b' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+    <div id="top" className="medical-landing-root" style={{ background: isDark ? '#1e293b' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100dvh' }}>
       <style>{`
         /* 1. Header Navigation Containers & Links MUST be 100% Transparent — NO BOXES OR BACKGROUND SHAPES */
         .col-xl-9,
@@ -202,8 +203,8 @@ export const Landing: React.FC = () => {
       
       {/* HEADER START */}
       <header style={{ border: 'none', borderBottom: 'none', boxShadow: 'none', background: isDark ? '#1e293b' : '#ffffff' }}>
-        <div className="header-area" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none', transition: 'background-color 0.3s ease' }}>
-          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none', position: 'relative', transition: 'background-color 0.3s ease' }}>
+        <div className="header-area" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none' }}>
+          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none', position: 'relative' }}>
             <div className="container-fluid" style={{ padding: '0 40px', background: 'transparent' }}>
               <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0', background: 'transparent' }}>
                 {/* Logo */}
@@ -366,7 +367,7 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* SYSTEM PORTALS SECTION */}
-      <section id="portals" className="team-area section-padding30" style={{ padding: '90px 0', background: isDark ? '#1e293b' : '#f8fafd', transition: 'background-color 0.3s ease' }}>
+      <section id="portals" className="team-area section-padding30" style={{ padding: '90px 0', background: isDark ? '#1e293b' : '#f8fafd' }}>
         <style>{`
           .portal-hover-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
@@ -427,7 +428,7 @@ export const Landing: React.FC = () => {
             
             {/* Expectant Mother */}
             <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-mother" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
+              <div className="single-team portal-hover-card portal-mother" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: isDark ? 'rgba(244,63,94,0.1)' : 'rgba(244,63,94,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src="/assets/img/portals/portal_mother.png" alt="Expectant Mother" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
@@ -445,7 +446,7 @@ export const Landing: React.FC = () => {
 
             {/* Clinical Doctor */}
             <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-doctor" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
+              <div className="single-team portal-hover-card portal-doctor" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src="/assets/img/portals/portal_doctor.png" alt="Clinical Doctor" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
@@ -463,7 +464,7 @@ export const Landing: React.FC = () => {
 
             {/* Ambulance Driver */}
             <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-driver" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
+              <div className="single-team portal-hover-card portal-driver" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src="/assets/img/portals/portal_driver.png" alt="Ambulance Driver" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
@@ -481,7 +482,7 @@ export const Landing: React.FC = () => {
 
             {/* System Admin */}
             <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-admin" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
+              <div className="single-team portal-hover-card portal-admin" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src="/assets/img/portals/portal_admin.png" alt="System Admin" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
@@ -499,7 +500,7 @@ export const Landing: React.FC = () => {
 
             {/* Village Health Team (VHT) */}
             <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-vht" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(14, 165, 233, 0.3)' : '1px solid rgba(14, 165, 233, 0.18)', boxShadow: '0 10px 30px rgba(14, 165, 233, 0.05)', height: '100%', display: 'flex', flexDirection: 'column', transition: 'background-color 0.3s ease' }}>
+              <div className="single-team portal-hover-card portal-vht" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(14, 165, 233, 0.3)' : '1px solid rgba(14, 165, 233, 0.18)', boxShadow: '0 10px 30px rgba(14, 165, 233, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ background: isDark ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src="/assets/img/portals/portal_vht.png" alt="VHT Responder" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
                 </div>
@@ -520,7 +521,7 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* KEY FEATURES STRIP */}
-      <section style={{ padding: '70px 0', background: isDark ? '#0f172a' : '#f0f6ff', transition: 'background-color 0.3s ease' }}>
+      <section style={{ padding: '70px 0', background: isDark ? '#0f172a' : '#f0f6ff' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '50px' }}>
             <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Platform Capabilities</span>
@@ -529,11 +530,11 @@ export const Landing: React.FC = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
             {[
               { img: '/assets/img/icons/icon_gps.png', title: 'Live GPS Tracking', desc: 'Satellite-grade location beacons transmit mother coordinates to nearby ambulance units in real-time.' },
-              { img: '/assets/img/icons/icon_beacon.png', title: 'Emergency SOS Beacon', desc: 'One-tap distress alerts trigger dispatch notifications across all registered response teams instantly.' },
+              { img: '/assets/img/icons/icon_beacon.png', title: 'Emergency alert', desc: 'One-tap distress alerts trigger dispatch notifications across all registered response teams instantly.' },
               { img: '/assets/img/icons/icon_consult.png', title: 'Doctor Consultations', desc: 'Direct encrypted channels between expectant mothers and duty obstetricians for remote symptom assessment.' },
               { img: '/assets/img/icons/icon_dispatch.png', title: 'Ambulance Dispatch', desc: 'AI-optimized routing dispatches the nearest ambulance with live navigation to minimize response time.' },
             ].map((feat, i) => (
-              <div key={i} style={{ flex: '1 1 220px', maxWidth: '260px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '14px', padding: '28px 22px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(15,97,239,0.08)', transition: 'background-color 0.3s ease' }}>
+              <div key={i} style={{ flex: '1 1 220px', maxWidth: '260px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '14px', padding: '28px 22px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(15,97,239,0.08)' }}>
                 <img src={feat.img} alt={feat.title} style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '16px' }} />
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, color: isDark ? '#ffffff' : '#030431', marginBottom: '10px' }}>{feat.title}</h4>
                 <p style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#64676c', lineHeight: 1.6, margin: 0 }}>{feat.desc}</p>
@@ -544,7 +545,7 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* ABOUT AREA */}
-      <section id="about" className="about-area section-padding2" style={{ padding: '90px 0', background: isDark ? '#0f172a' : '#ffffff', transition: 'background-color 0.3s ease' }}>
+      <section id="about" className="about-area section-padding2" style={{ padding: '90px 0', background: isDark ? '#0f172a' : '#ffffff' }}>
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6 col-md-10">
@@ -580,7 +581,7 @@ export const Landing: React.FC = () => {
 
 
       {/* TESTIMONIAL STARUPS START */}
-      <section className="all-starups-area testimonial-area fix" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'stretch', background: isDark ? '#0b162b' : '#ffffff', color: isDark ? '#ffffff' : '#0f172a', borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', transition: 'background-color 0.3s ease' }}>
+      <section className="all-starups-area testimonial-area fix" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'stretch', background: isDark ? '#0b162b' : '#ffffff', color: isDark ? '#ffffff' : '#0f172a', borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0' }}>
         <div className="starups" style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
           <div className="single-testimonial text-center" style={{ maxWidth: '540px', margin: '0 auto', textAlign: 'center' }}>
             <div className="testimonial-caption">
@@ -602,7 +603,7 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* NEWS AREA SECTION */}
-      <section id="news" style={{ padding: '90px 0', background: isDark ? '#1e293b' : '#ffffff', transition: 'background-color 0.3s ease' }}>
+      <section id="news" style={{ padding: '90px 0', background: isDark ? '#1e293b' : '#ffffff' }}>
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-lg-6">
@@ -616,7 +617,7 @@ export const Landing: React.FC = () => {
             
             {/* News 1 */}
             <div className="col-lg-4 col-md-6" style={{ flex: '1 1 300px', maxWidth: '360px' }}>
-              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden', transition: 'background-color 0.3s ease, border-color 0.3s ease' }}>
+              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
                 <img src="/assets/img/gallery/blog1.png" alt="" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
                 <div className="news-info" style={{ padding: '24px' }}>
                   <span style={{ fontSize: '11px', color: '#a5c422', textTransform: 'uppercase', fontWeight: 600 }}>March 08, 2026</span>
@@ -632,7 +633,7 @@ export const Landing: React.FC = () => {
 
             {/* News 2 */}
             <div className="col-lg-4 col-md-6" style={{ flex: '1 1 300px', maxWidth: '360px' }}>
-              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden', transition: 'background-color 0.3s ease, border-color 0.3s ease' }}>
+              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
                 <img src="/assets/img/gallery/blog2.png" alt="" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
                 <div className="news-info" style={{ padding: '24px' }}>
                   <span style={{ fontSize: '11px', color: '#a5c422', textTransform: 'uppercase', fontWeight: 600 }}>February 20, 2026</span>
@@ -648,7 +649,7 @@ export const Landing: React.FC = () => {
 
             {/* News 3 */}
             <div className="col-lg-4 col-md-6" style={{ flex: '1 1 300px', maxWidth: '360px' }}>
-              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden', transition: 'background-color 0.3s ease, border-color 0.3s ease' }}>
+              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
                 <img src="/assets/img/gallery/blog3.png" alt="" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
                 <div className="news-info" style={{ padding: '24px' }}>
                   <span style={{ fontSize: '11px', color: '#a5c422', textTransform: 'uppercase', fontWeight: 600 }}>January 27, 2026</span>
@@ -674,7 +675,7 @@ export const Landing: React.FC = () => {
           markers={[
             { id: 'hosp-1', lat: 0.3536, lng: 32.7554, type: 'hospital', label: 'Mukono General Hospital', sublabel: '24/7 CEMONC Surgical Emergency Unit' },
             { id: 'hosp-2', lat: 0.3689, lng: 32.7481, type: 'hospital', label: 'Goma Health Center IV', sublabel: 'Maternal Referral Facility' },
-            { id: 'hosp-3', lat: 0.3342, lng: 32.7812, type: 'hospital', label: 'Seeta Health Center III', sublabel: 'Antenatal & VHT Hub' },
+            { id: 'hosp-3', lat: 0.3342, lng: 32.7812, type: 'hospital', label: 'Seeta Health Center III', sublabel: 'Antenatal and VHT services' },
           ]} 
           theme={theme} 
         />
@@ -685,8 +686,7 @@ export const Landing: React.FC = () => {
         padding: '60px 0 20px',
         background: isDark ? '#0b162b' : '#f8fafc',
         color: isDark ? '#909090' : '#475569',
-        borderTop: isDark ? 'none' : '1px solid #e2e8f0',
-        transition: 'background-color 0.3s ease, color 0.3s ease'
+        borderTop: isDark ? 'none' : '1px solid #e2e8f0'
       }}>
         <div className="container">
           <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px' }}>
@@ -708,7 +708,7 @@ export const Landing: React.FC = () => {
               <div className="footer-thumb">
                 <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Quick Portals</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <Link to="/login?role=mother" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Expectant Mother Portal</Link>
+                  <Link to="/login?role=mother" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Mother portal</Link>
                   <Link to="/login?role=doctor" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Clinical Doctor Portal</Link>
                   <Link to="/login?role=driver" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Ambulance Driver Portal</Link>
                   <Link to="/login?role=admin" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> System Admin Portal</Link>
@@ -809,7 +809,7 @@ export const Landing: React.FC = () => {
               justifyContent: 'center',
               fontSize: '2rem',
               margin: '0 auto 20px'
-            }}>🤰</div>
+            }}><Icon name="mother" size={18} /></div>
 
             <h3 style={{
               fontSize: '1.35rem',

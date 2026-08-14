@@ -8,7 +8,8 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { MapComponent, MapMarker } from '../components/MapComponent';
-import { showToast } from '../components/Toast';
+import { showToast } from '../components/toastBus';
+import { Icon } from '../components/Icon';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -272,7 +273,7 @@ export const DoctorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="medilab-dashboard" style={{ background: theme === 'light' ? '#f6f9fe' : '#0d1117', minHeight: '100vh', display: 'flex', color: theme === 'light' ? '#444444' : '#cbd5e1', fontFamily: "'Poppins', sans-serif" }}>
+    <div className="medilab-dashboard" style={{ background: theme === 'light' ? '#f6f9fe' : '#0d1117', minHeight: '100dvh', display: 'flex', color: theme === 'light' ? '#444444' : '#cbd5e1', fontFamily: "'Poppins', sans-serif" }}>
       
       {/* SCOPED OVERRIDES */}
       <style>{`
@@ -451,9 +452,7 @@ export const DoctorDashboard: React.FC = () => {
           alignItems: 'center',
           gap: '10px'
         }}>
-          <div style={{ background: '#1977cc', color: '#ffffff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 800 }}>
-            🩺
-          </div>
+          <div style={{ background: '#1977cc', color: '#ffffff', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 800 }}><Icon name="doctor" size={18} /></div>
           <div>
             <h5 style={{
               fontSize: '15px',
@@ -462,7 +461,7 @@ export const DoctorDashboard: React.FC = () => {
               letterSpacing: '0.04em',
               color: theme === 'light' ? '#1977cc' : '#ffffff'
             }}>MamaTrack</h5>
-            <span style={{ fontSize: '11px', color: '#777777', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clinical Deck</span>
+            <span style={{ fontSize: '11px', color: '#777777', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Clinical portal</span>
           </div>
         </div>
 
@@ -514,7 +513,7 @@ export const DoctorDashboard: React.FC = () => {
                 padding: '8px'
               }}
             >
-              {doctor.is_on_duty ? '🟢 Active On-Duty' : '🔴 Standby'}
+              {doctor.is_on_duty ? 'Active On-Duty' : 'Standby'}
             </button>
           </div>
 
@@ -534,8 +533,7 @@ export const DoctorDashboard: React.FC = () => {
               justifyContent: 'center',
               gap: '6px'
             }}
-          >
-            🩸 Request Blood
+          ><Icon name="blood" size={16} /> Request Blood
           </button>
 
           <nav style={{ marginTop: '20px' }}>
@@ -552,14 +550,14 @@ export const DoctorDashboard: React.FC = () => {
               cursor: 'pointer'
             }}>
               <i className="bi bi-grid-1x2-fill"></i>
-              <span>Overview Console</span>
+              <span>Overview</span>
             </div>
           </nav>
         </div>
       </aside>
 
       {/* MAIN VIEWPORT */}
-      <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="main-content-area" style={{ flex: 1, marginLeft: '260px', minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
         
         {/* TOP NAVBAR */}
         <header className="medilab-top-header" style={{
@@ -591,12 +589,10 @@ export const DoctorDashboard: React.FC = () => {
               }}
               className="d-inline-flex d-md-none"
               title="Open Navigation Menu"
-            >
-              ☰
-            </button>
+            ><Icon name="menu" size={18} /></button>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0, lineHeight: 1.25 }}>Clinical Portal Console</h4>
-              <span style={{ fontSize: '12px', color: '#777777' }}>🏥 Facility: <strong>{hospital.name}</strong></span>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: theme === 'light' ? '#2c4964' : '#ffffff', margin: 0, lineHeight: 1.25 }}>Clinical portal</h4>
+              <span style={{ fontSize: '12px', color: '#777777' }}><Icon name="hospital" size={16} /> Facility: <strong>{hospital.name}</strong></span>
             </div>
           </div>
 
@@ -637,7 +633,7 @@ export const DoctorDashboard: React.FC = () => {
               top: 0,
               left: 0,
               width: '280px',
-              height: '100vh',
+              height: '100dvh',
               zIndex: 99999,
               background: theme === 'light' ? '#ffffff' : '#111827',
               color: theme === 'light' ? '#2c4964' : '#ffffff',
@@ -649,10 +645,10 @@ export const DoctorDashboard: React.FC = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ background: '#1977cc', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>🩺</div>
+                  <div style={{ background: '#1977cc', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}><Icon name="doctor" size={18} /></div>
                   <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
                 </div>
-                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}><Icon name="close" size={18} /></button>
               </div>
 
               {/* Profile Card */}
@@ -667,7 +663,7 @@ export const DoctorDashboard: React.FC = () => {
               {/* Navigation Menu */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                 <div style={{ padding: '10px 14px', borderRadius: '8px', background: theme === 'light' ? '#eef2f7' : 'rgba(255,255,255,0.08)', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>🩺</span> Overview Console
+                  <span><Icon name="doctor" size={18} /></span> Overview
                 </div>
               </div>
 
@@ -708,7 +704,7 @@ export const DoctorDashboard: React.FC = () => {
 
       {/* FLOATING WELCOME TOAST NOTIFICATION */}
       {user && (
-        <WelcomeToast userName={user.full_name} roleName="Clinical Specialist" subtitle={`Connected to ${hospital?.name || 'Mukono District Hospital'}. Patient triage active.`} icon="🩺" />
+        <WelcomeToast userName={user.full_name} roleName="Doctor" subtitle={`Connected to ${hospital?.name || 'Mukono District Hospital'}. Patient triage active.`} />
       )}
 
       {/* DOCTOR CLINICAL REFERENCE BANNER */}
@@ -724,15 +720,15 @@ export const DoctorDashboard: React.FC = () => {
           flexWrap: 'wrap'
         }}>
           <div style={{ flex: '1.2', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
-            <span style={{ fontSize: '11px', color: '#1977cc', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Clinical Reference Hub</span>
+            <span style={{ fontSize: '11px', color: '#1977cc', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Clinical guidance</span>
             <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 10px', color: theme === 'light' ? '#2c4964' : '#ffffff' }}>Obstetric Emergency Triage Guidelines</h3>
             <p style={{ fontSize: '13px', lineHeight: 1.5, color: '#777777', margin: '0 0 16px', maxWidth: '600px' }}>
               Follow the standard WHO safe childbirth protocols. Screen patient vitals (Blood Pressure, Heart Rate, Temperature) instantly during triage handovers. Coordinate emergency blood supply dispatch via the sidebar deck.
             </p>
             <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '12px', background: 'rgba(25, 119, 204, 0.08)', color: '#1977cc', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}>⏱️ Critical response &le; 15 mins</span>
-              <span style={{ fontSize: '12px', background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}>🏥 Direct Ward Transfer</span>
-              <span style={{ fontSize: '12px', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}>📞 District Dispatch: 0800-MAMATRACK</span>
+              <span style={{ fontSize: '12px', background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}><Icon name="hospital" size={16} /> Direct Ward Transfer</span>
+              <span style={{ fontSize: '12px', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '6px 12px', borderRadius: '4px', fontWeight: 600 }}><Icon name="phone" size={16} /> District Dispatch: 0800-MAMATRACK</span>
             </div>
           </div>
           <div style={{
@@ -759,7 +755,7 @@ export const DoctorDashboard: React.FC = () => {
         {/* LEFT COLUMN: ACTIVE MATERNAL TRANSFERS QUEUE */}
         <div className="medical-card">
           <div className="medical-card-header d-flex justify-content-between align-items-center">
-            <span>🩺 Inbound Obstetric Transfers Queue</span>
+            <span><Icon name="doctor" size={16} /> Inbound Obstetric Transfers Queue</span>
             <i className="bi bi-activity" style={{ color: '#1977cc', fontSize: '18px' }}></i>
           </div>
 
@@ -793,14 +789,13 @@ export const DoctorDashboard: React.FC = () => {
                     {/* Enhanced Medical Details */}
                     <div style={{ fontSize: '12px', color: '#555', marginBottom: '6px', background: '#f0fdf4', padding: '8px 10px', borderRadius: '6px', border: '1px solid #dcfce7' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-                        <span>🤰 Gestational Age: <strong>{weeksPregnant} weeks</strong></span>
-                        <span>📅 Due Date: <strong>{motherData?.expected_due_date || 'N/A'}</strong></span>
-                        <span>📊 Gravida: <strong>{motherData?.gravida || 'N/A'}</strong> | Parity: <strong>{motherData?.parity || 'N/A'}</strong></span>
-                        <span>⚠️ Complications: <strong style={{ color: motherData?.current_complications ? '#dc2626' : '#16a34a' }}>{motherData?.current_complications || 'None'}</strong></span>
+                        <span><Icon name="mother" size={16} /> Gestational Age: <strong>{weeksPregnant} weeks</strong></span>
+                        <span><Icon name="calendar" size={16} /> Due Date: <strong>{motherData?.expected_due_date || 'N/A'}</strong></span>
+                        <span><Icon name="chart" size={16} /> Gravida: <strong>{motherData?.gravida || 'N/A'}</strong> | Parity: <strong>{motherData?.parity || 'N/A'}</strong></span>
+                        <span><Icon name="warning" size={16} /> Complications: <strong style={{ color: motherData?.current_complications ? '#dc2626' : '#16a34a' }}>{motherData?.current_complications || 'None'}</strong></span>
                       </div>
                       {motherData?.medical_history && (
-                        <div style={{ marginTop: '4px', borderTop: '1px dashed #bbf7d0', paddingTop: '4px' }}>
-                          📝 History: <em>{motherData.medical_history}</em>
+                        <div style={{ marginTop: '4px', borderTop: '1px dashed #bbf7d0', paddingTop: '4px' }}><Icon name="notes" size={16} /> History: <em>{motherData.medical_history}</em>
                         </div>
                       )}
                     </div>
@@ -811,7 +806,7 @@ export const DoctorDashboard: React.FC = () => {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #eef2f7', paddingTop: '10px' }}>
                       <span style={{ fontSize: '12px', color: '#888888' }}>
-                        {e.status === 'delivered' ? '🏥 Delivered — Driver handoff complete' : e.status === 'arrived' ? '🚑 Ambulance Arrived at ER' : e.status === 'in_transit' ? `🚑 In Transit — ETA: ${e.eta_minutes || '?'} mins` : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
+                        {e.status === 'delivered' ? 'Delivered — Driver handoff complete' : e.status === 'arrived' ? 'Ambulance Arrived at ER' : e.status === 'in_transit'? ` In Transit — ETA: ${e.eta_minutes ||'?'} mins` : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
                       </span>
 
                       <button
@@ -835,7 +830,7 @@ export const DoctorDashboard: React.FC = () => {
         {/* LIVE GPS TRACKING MAP */}
         <div className="medical-card" style={{ marginTop: '24px' }}>
           <div className="medical-card-header d-flex justify-content-between align-items-center">
-            <span>🗺️ Live Ambulance GPS Tracker</span>
+            <span><Icon name="map" size={16} /> Live Ambulance GPS Tracker</span>
             {inboundCount > 0 && <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 700 }}>● TRACKING {inboundCount} INBOUND</span>}
           </div>
           <div className="medical-card-body" style={{ padding: '0' }}>
@@ -857,7 +852,7 @@ export const DoctorDashboard: React.FC = () => {
           {/* Patient Vitals Trend Chart Panel */}
           <div className="medical-card">
             <div className="medical-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>📈 Obstetric Patient Vitals Trend</span>
+              <span><Icon name="trend" size={16} /> Obstetric Patient Vitals Trend</span>
               <i className="bi bi-graph-up-line" style={{ color: '#1977cc' }}></i>
             </div>
             <div className="medical-card-body" style={{ padding: '16px' }}>
@@ -1006,8 +1001,7 @@ export const DoctorDashboard: React.FC = () => {
 
           {/* Bed allocation console */}
           <div className="medical-card">
-            <div className="medical-card-header">
-              🏨 Ward Bed Allocation Management
+            <div className="medical-card-header"><Icon name="facility" size={16} /> Ward Bed Allocation Management
             </div>
             <div className="medical-card-body">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '15px 20px', borderRadius: '6px' }}>
@@ -1025,8 +1019,7 @@ export const DoctorDashboard: React.FC = () => {
 
           {/* Historic triages logs */}
           <div className="medical-card" style={{ flex: 1 }}>
-            <div className="medical-card-header">
-              📋 My Diagnostic Handover Logs
+            <div className="medical-card-header"><Icon name="clipboard" size={16} /> My Diagnostic Handover Logs
             </div>
             <div className="medical-card-body" style={{ maxHeight: '280px', overflowY: 'auto', fontSize: '13px' }}>
               {assessments.length === 0 ? (
@@ -1069,7 +1062,7 @@ export const DoctorDashboard: React.FC = () => {
         <div className="medilab-modal-overlay">
           <div className="medilab-modal-container">
             <div style={{ background: '#dc3545', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignSelf: 'stretch', color: '#ffffff' }}>
-              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>🚨 Submit Emergency Blood Supply Order</h5>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}><Icon name="emergency" size={16} /> Submit Emergency Blood Supply Order</h5>
               <button onClick={() => setShowBloodModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
             
@@ -1107,7 +1100,7 @@ export const DoctorDashboard: React.FC = () => {
         <div className="medilab-modal-overlay">
           <div className="medilab-modal-container" style={{ maxWidth: '520px' }}>
             <div style={{ background: '#1977cc', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', color: '#ffffff' }}>
-              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>📋 Clinical Triage Triage: {activeEmergency.code}</h5>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}><Icon name="clipboard" size={16} /> Clinical Triage Triage: {activeEmergency.code}</h5>
               <button onClick={() => { setShowTriageModal(false); setActiveEmergency(null); }} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
             </div>
             
@@ -1203,7 +1196,7 @@ export const DoctorDashboard: React.FC = () => {
                     background: 'rgba(255,255,255,0.2)',
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>🩺</span>
+                  }}><Icon name="doctor" size={18} /></span>
                   <div>
                     <div style={{ color: '#ffffff', fontWeight: 900, fontSize: '1.1rem' }}>INCOMING PATIENT — PREPARE</div>
                     <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', marginTop: '2px' }}>Code: <strong>{emg.code}</strong> • Severity: <strong>{emg.severity.toUpperCase()}</strong></div>
@@ -1222,35 +1215,35 @@ export const DoctorDashboard: React.FC = () => {
                     <div>
                       <div style={{ fontSize: '10px', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient</div>
                       <div style={{ fontSize: '15px', fontWeight: 800, color: '#1e3a5f' }}>{motherUser?.full_name || 'Unknown'}</div>
-                      <div style={{ fontSize: '12px', color: '#1e40af', marginTop: '2px' }}>📞 {motherUser?.phone || 'N/A'}</div>
+                      <div style={{ fontSize: '12px', color: '#1e40af', marginTop: '2px'}}> {motherUser?.phone ||'N/A'}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '10px', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transport</div>
-                      <div style={{ fontSize: '12px', color: '#1e3a5f', fontWeight: 600 }}>🚑 Driver: {driverUser?.full_name || 'Assigned'}</div>
+                      <div style={{ fontSize: '12px', color: '#1e3a5f', fontWeight: 600 }}><Icon name="ambulance" size={16} /> Driver: {driverUser?.full_name || 'Assigned'}</div>
                       <div style={{ fontSize: '12px', color: '#1e40af', marginTop: '2px' }}>⏱️ ETA: ~{emg.eta_minutes || '?'} mins</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Medical Profile */}
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a5f', marginBottom: '8px' }}>🩺 Medical Preparation Details</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e3a5f', marginBottom: '8px' }}><Icon name="doctor" size={16} /> Medical Preparation Details</div>
                 <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', color: '#14532d' }}>
-                    <div>🩸 <strong>Blood Type:</strong> <span style={{ background: '#fef2f2', color: '#dc2626', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, fontSize: '12px' }}>{motherProfile?.blood_type || 'Unknown'}</span></div>
-                    <div>🤰 <strong>Gestational Age:</strong> {weeksPregnant} weeks</div>
-                    <div>📅 <strong>Due Date:</strong> {motherProfile?.expected_due_date || 'N/A'}</div>
-                    <div>📊 <strong>Gravida:</strong> {motherProfile?.gravida || 'N/A'} | <strong>Parity:</strong> {motherProfile?.parity || 'N/A'}</div>
+                    <div><Icon name="blood" size={14} /> <strong>Blood Type:</strong> <span style={{ background: '#fef2f2', color: '#dc2626', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, fontSize: '12px' }}>{motherProfile?.blood_type || 'Unknown'}</span></div>
+                    <div><Icon name="mother" size={14} /> <strong>Gestational Age:</strong> {weeksPregnant} weeks</div>
+                    <div><Icon name="calendar" size={14} /> <strong>Due Date:</strong> {motherProfile?.expected_due_date || 'N/A'}</div>
+                    <div><Icon name="chart" size={14} /> <strong>Gravida:</strong> {motherProfile?.gravida || 'N/A'} | <strong>Parity:</strong> {motherProfile?.parity || 'N/A'}</div>
                   </div>
 
                   {motherProfile?.current_complications && (
                     <div style={{ marginTop: '10px', padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '12px', color: '#991b1b' }}>
-                      ⚠️ <strong>Current Complications:</strong> {motherProfile.current_complications}
+                      <Icon name="warning" size={14} /> <strong>Current Complications:</strong> {motherProfile.current_complications}
                     </div>
                   )}
 
                   {motherProfile?.medical_history && (
                     <div style={{ marginTop: '8px', fontSize: '12px', color: '#15803d', borderTop: '1px dashed #86efac', paddingTop: '8px' }}>
-                      📋 <strong>Medical History:</strong> {motherProfile.medical_history}
+                      <Icon name="clipboard" size={14} /> <strong>Medical History:</strong> {motherProfile.medical_history}
                     </div>
                   )}
                 </div>
@@ -1264,7 +1257,7 @@ export const DoctorDashboard: React.FC = () => {
                 {/* Next of Kin */}
                 {motherProfile?.next_of_kin_name && (
                   <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 14px', marginBottom: '16px', fontSize: '12px', color: '#475569' }}>
-                    👨‍👩‍👧 <strong>Next of Kin:</strong> {motherProfile.next_of_kin_name} ({motherProfile.next_of_kin_relationship}) — {motherProfile.next_of_kin_phone}
+                    <Icon name="people" size={14} /> <strong>Next of Kin:</strong> {motherProfile.next_of_kin_name} ({motherProfile.next_of_kin_relationship}) — {motherProfile.next_of_kin_phone}
                   </div>
                 )}
 
@@ -1284,8 +1277,7 @@ export const DoctorDashboard: React.FC = () => {
                       cursor: 'pointer',
                       boxShadow: '0 4px 12px rgba(25,119,204,0.3)'
                     }}
-                  >
-                    ✅ Acknowledged — Preparing for Patient
+                  ><Icon name="success" size={16} /> Acknowledged — Preparing for Patient
                   </button>
                 </div>
               </div>

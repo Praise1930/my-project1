@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { AuthService, db } from '../services/db';
+import { AuthService, db, User as DbUser } from '../services/db';
+import { errorMessage } from '../services/errors';
+import { showToast, confirmAction } from '../components/toastBus';
 import { User, Phone, Mail, Calendar, MapPin, Heart, Users, Lock } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
@@ -14,6 +16,7 @@ import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
 import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { Icon } from '../components/Icon';
 
 export const Register: React.FC = () => {
   const { theme } = useTheme();
@@ -164,7 +167,7 @@ export const Register: React.FC = () => {
     };
     try {
       // Check if email already exists locally first
-      const existsLocally = db.users.some((u: any) => u.email.toLowerCase() === submissionData.email.toLowerCase());
+      const existsLocally = db.users.some((u: DbUser) => u.email.toLowerCase() === submissionData.email.toLowerCase());
       if (existsLocally) {
         setError('This email is already registered.');
         setIsLoading(false);
@@ -184,17 +187,17 @@ export const Register: React.FC = () => {
           console.warn('Supabase Auth registration failed:', signUpErr.message);
           const msg = signUpErr.message.toLowerCase();
           if (msg.includes('already registered') || msg.includes('already exists')) {
-            setError('⚠️ This email address is already registered. Please log in or use a different email.');
+            setError('This email address is already registered. Please log in or use a different email.');
             setIsLoading(false);
             return;
           }
           if (msg.includes('invalid') && msg.includes('email')) {
-            setError('⚠️ The email address provided is invalid. Please check and try again.');
+            setError('The email address provided is invalid. Please check and try again.');
             setIsLoading(false);
             return;
           }
           if (msg.includes('password')) {
-            setError('⚠️ Password is too weak. Please use at least 8 characters with a mix of letters and numbers.');
+            setError('Password is too weak. Please use at least 8 characters with a mix of letters and numbers.');
             setIsLoading(false);
             return;
           }
@@ -239,25 +242,31 @@ export const Register: React.FC = () => {
 
         if (isSupabaseConfigured && supabase && registeredInSupabase) {
           await supabase.auth.signOut();
-          alert(`Registration successful! A verification email has been sent to ${submissionData.email}. Click OK to open your ${providerName} and verify your account.`);
-          window.open(mailUrl, '_blank');
+          const openMail = await confirmAction({
+            title: 'Verify your email address',
+            message: `We sent a verification link to ${submissionData.email}. Open it to activate your account — you will not be able to sign in until you do.`,
+            confirmLabel: `Open ${providerName}`,
+            cancelLabel: 'I will do it later',
+            tone: 'info',
+          });
+          if (openMail) window.open(mailUrl, '_blank');
         } else {
-          alert(`Account created! However, a verification email could not be sent at this time. Please contact support at mamatrack6@gmail.com if you have issues logging in.`);
+          showToast('Your account was created, but the verification email could not be sent. Contact mamatrack6@gmail.com if you have trouble signing in.', 'warning', 9000, 'Account created');
         }
         navigate('/login?role=mother');
       } else {
         setError(res.error || 'Failed to create local account profile');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || 'Failed to register account.');
+      setError(errorMessage(err, 'Failed to register account.'));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="medical-register-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100vh', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
+    <div className="medical-register-root" style={{ background: isDark ? '#0f172a' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100dvh' }}>
       
       {/* HEADER START */}
       <header>
@@ -289,7 +298,7 @@ export const Register: React.FC = () => {
       </header>
 
       {/* CENTERED REGISTRATION FORM SECTION */}
-      <section className="register-form-section" style={{ minHeight: 'calc(100vh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
+      <section className="register-form-section" style={{ minHeight: 'calc(100dvh - 72px - 280px)', background: isDark ? 'linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.6)), url("/assets/img/hero/hero2.png") no-repeat center center / cover' : 'linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.75)), url("/assets/img/hero/hero2.png") no-repeat center center / cover', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', position: 'relative' }}>
         
         {/* Scoped card styling overrides */}
         <style>{`
@@ -406,7 +415,7 @@ export const Register: React.FC = () => {
             
             {error && (
               <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                ⚠️ {error}
+                <Icon name="warning" size={14} /> {error}
               </div>
             )}
 
@@ -700,8 +709,7 @@ export const Register: React.FC = () => {
         padding: '40px 0 20px',
         background: isDark ? '#0b162b' : '#f8fafc',
         color: isDark ? '#909090' : '#475569',
-        borderTop: isDark ? 'none' : '1px solid #e2e8f0',
-        transition: 'background-color 0.3s ease, color 0.3s ease'
+        borderTop: isDark ? 'none' : '1px solid #e2e8f0'
       }}>
         <div className="container">
           <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', justifyContent: 'space-between' }}>

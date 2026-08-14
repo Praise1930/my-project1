@@ -9,8 +9,9 @@ import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
 import { OrbitalLoader } from '../components/LoadingStates';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { WelcomeToast } from '../components/WelcomeToast';
-import { showToast } from '../components/Toast';
+import { showToast } from '../components/toastBus';
 import '../styles/driver/theme.css';
+import { Icon } from '../components/Icon';
 
 export const DriverDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -141,7 +142,7 @@ export const DriverDashboard: React.FC = () => {
 
   if (!user || !driver || !vehicle) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
         <OrbitalLoader message="Syncing Driver GPS Unit..." subtitle="Connecting Mukono District emergency dispatch server" />
       </div>
     );
@@ -284,7 +285,7 @@ export const DriverDashboard: React.FC = () => {
   };
 
   return (
-    <div className="driver-theme" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="driver-theme" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <div className="driver-bg" />
 
       {/* SCOPED THEME OVERRIDES FOR SIDEBAR */}
@@ -368,10 +369,10 @@ export const DriverDashboard: React.FC = () => {
           borderRight: theme === 'light' ? '1px solid #cbd5e1' : '1px solid rgba(255,255,255,0.08)'
         }}>
           <div className="sidebar-logo">
-            <div className="logo-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', fontSize: '1.5rem', width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🚑</div>
+            <div className="logo-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', fontSize: '1.5rem', width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="ambulance" size={18} /></div>
             <div>
               <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>MamaTrack</h2>
-              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>Ambulance Deck</p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>Ambulance portal</p>
             </div>
           </div>
 
@@ -435,21 +436,21 @@ export const DriverDashboard: React.FC = () => {
                 border: driver.is_on_duty ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)'
               }}
             >
-              {driver.is_on_duty ? '🟢 ACTIVE ON-DUTY' : '🔴 STANDBY MODE'}
+              {driver.is_on_duty ? 'ACTIVE ON-DUTY' : 'STANDBY MODE'}
             </div>
           </div>
 
           <nav className="sidebar-nav" style={{ marginTop: '1rem', flex: 1 }}>
             <div className="nav-section">
               <div className="nav-item active">
-                <span className="nav-icon">🚑</span>
+                <span className="nav-icon"><Icon name="ambulance" size={18} /></span>
                 <span>Active Mission</span>
               </div>
             </div>
           </nav>
         </aside>
 
-        {/* Main Panel Workspace */}
+        {/* Main panel */}
         <main className="main-content" style={{ padding: '2rem' }}>
           <header className="top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -473,11 +474,9 @@ export const DriverDashboard: React.FC = () => {
                 }}
                 className="d-inline-flex d-md-none"
                 title="Open Navigation Menu"
-              >
-                ☰
-              </button>
+              ><Icon name="menu" size={18} /></button>
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc', lineHeight: 1.25 }}>Ambulance Navigation Panel</h1>
+                <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: theme === 'light' ? '#0f172a' : '#f8fafc', lineHeight: 1.25 }}>Ambulance portal</h1>
                 <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0' }}>Real-time GPS Dispatch & Patient Handoff Telemetry</p>
               </div>
             </div>
@@ -489,7 +488,7 @@ export const DriverDashboard: React.FC = () => {
                 className={`btn btn-sm ${driver.is_on_duty ? 'btn-amber' : 'btn-ghost'}`}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '0.82rem' }}
               >
-                <span>{driver.is_on_duty ? '🟢 Active On-Duty' : '🔴 Standby'}</span>
+                <span>{driver.is_on_duty ? 'Active On-Duty' : 'Standby'}</span>
               </button>
               <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
               <button
@@ -515,7 +514,7 @@ export const DriverDashboard: React.FC = () => {
                 top: 0,
                 left: 0,
                 width: '280px',
-                height: '100vh',
+                height: '100dvh',
                 zIndex: 99999,
                 background: theme === 'light' ? '#ffffff' : '#0f172a',
                 color: theme === 'light' ? '#0f172a' : '#ffffff',
@@ -527,10 +526,10 @@ export const DriverDashboard: React.FC = () => {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ background: '#f59e0b', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>🚑</div>
+                    <div style={{ background: '#f59e0b', color: '#fff', width: 32, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}><Icon name="ambulance" size={18} /></div>
                     <span style={{ fontWeight: 800, fontSize: '1rem' }}>MamaTrack</span>
                   </div>
-                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}>✕</button>
+                  <button onClick={() => setMobileSidebarOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: 'inherit', cursor: 'pointer' }}><Icon name="close" size={18} /></button>
                 </div>
 
                 {/* Profile Card */}
@@ -557,13 +556,13 @@ export const DriverDashboard: React.FC = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  {driver.is_on_duty ? '🟢 ACTIVE ON-DUTY' : '🔴 STANDBY MODE'}
+                  {driver.is_on_duty ? 'ACTIVE ON-DUTY' : 'STANDBY MODE'}
                 </button>
 
                 {/* Navigation Menu */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                   <div style={{ padding: '10px 14px', borderRadius: '8px', background: theme === 'light' ? '#f1f5f9' : 'rgba(255,255,255,0.08)', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>🚑</span> Active Mission
+                    <span><Icon name="ambulance" size={18} /></span> Active Mission
                   </div>
                 </div>
 
@@ -582,7 +581,7 @@ export const DriverDashboard: React.FC = () => {
 
           {/* FLOATING WELCOME TOAST NOTIFICATION */}
           {user && (
-            <WelcomeToast userName={user.full_name} roleName="Ambulance Pilot" subtitle={`Assigned to vehicle ${vehicle?.plate_number || 'Rescue Fleet'}. Real-time GPS dispatch connected.`} icon="🚑" />
+            <WelcomeToast userName={user.full_name} roleName="Ambulance driver" subtitle={`Assigned to vehicle ${vehicle?.plate_number || 'Rescue Fleet'}. Real-time GPS dispatch connected.`} />
           )}
 
           {/* DRIVER REFERENCE BANNER */}
@@ -599,14 +598,14 @@ export const DriverDashboard: React.FC = () => {
             color: theme === 'light' ? '#334155' : '#cbd5e1'
           }}>
             <div style={{ flex: '1.2', padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: '280px' }}>
-              <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Ambulance Response Deck</span>
+              <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Response guidance</span>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 6px', color: theme === 'light' ? '#0f172a' : '#ffffff' }}>Emergency Dispatch Response Protocol</h3>
               <p style={{ fontSize: '0.8rem', lineHeight: 1.5, color: theme === 'light' ? '#64748b' : '#94a3b8', margin: '0 0 12px' }}>
                 Ensure your siren and beacons are fully operational. Drive with caution along rural pathways. Transmit GPS telemetry to the regional hospital dispatch team automatically, and review next of kin contact information before picking up the patient.
               </p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', fontSize: '0.75rem' }}>
-                <span style={{ background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>🚨 High Priority Response</span>
-                <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}>📞 Help Center: 0800-MAMATRACK</span>
+                <span style={{ background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}><Icon name="emergency" size={16} /> High Priority Response</span>
+                <span style={{ background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}><Icon name="phone" size={16} /> Help Center: 0800-MAMATRACK</span>
               </div>
             </div>
             <div style={{
@@ -640,8 +639,7 @@ export const DriverDashboard: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div className="card card-glass active-dispatch-glow" style={{ padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(239, 68, 68, 0.25)', paddingBottom: '10px', marginBottom: '14px' }}>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f87171', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🚨 Active Dispatch Assignment
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f87171', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}><Icon name="emergency" size={16} /> Active Dispatch Assignment
                     </h3>
                     <span className="badge badge-red">{activeEmergency.code}</span>
                   </div>
@@ -668,8 +666,8 @@ export const DriverDashboard: React.FC = () => {
                       <div style={{ marginTop: '6px', background: 'rgba(245, 158, 11, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.15)' }}>
                         <div style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Patient Medical Brief:</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#94a3b8' }}>🩸 Blood Type: <strong style={{ color: '#f8fafc' }}>{motherData()?.blood_type}</strong></span>
-                          <span style={{ color: '#94a3b8' }}>⚠️ Complications: <strong style={{ color: '#ef4444' }}>{motherData()?.current_complications || 'None'}</strong></span>
+                          <span style={{ color: '#94a3b8' }}><Icon name="blood" size={16} /> Blood Type: <strong style={{ color: '#f8fafc' }}>{motherData()?.blood_type}</strong></span>
+                          <span style={{ color: '#94a3b8' }}><Icon name="warning" size={16} /> Complications: <strong style={{ color: '#ef4444' }}>{motherData()?.current_complications || 'None'}</strong></span>
                         </div>
                       </div>
                     )}
@@ -681,15 +679,13 @@ export const DriverDashboard: React.FC = () => {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
                     {activeEmergency.status === 'dispatched' && (
-                      <button onClick={handleStartRoute} className="btn btn-amber btn-block" style={{ height: '48px', fontSize: '0.95rem' }}>
-                        🚀 Start Trip & GPS Simulation
+                      <button onClick={handleStartRoute} className="btn btn-amber btn-block" style={{ height: '48px', fontSize: '0.95rem' }}><Icon name="launch" size={16} /> Start Trip & GPS Simulation
                       </button>
                     )}
 
                     {activeEmergency.status === 'en_route' && (
                       <>
-                        <div className="telemetry-pulsing" style={{ fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}>
-                          ⚡ GPS simulator driving toward mother...
+                        <div className="telemetry-pulsing" style={{ fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}><Icon name="fast" size={16} /> GPS simulator driving toward mother...
                         </div>
                         <button onClick={handleManualArrived} className="btn btn-success btn-block" style={{ height: '48px', fontSize: '0.95rem' }}>
                           Arrived at Patient & Picked Up
@@ -699,19 +695,16 @@ export const DriverDashboard: React.FC = () => {
 
                     {activeEmergency.status === 'arrived' && (
                       <>
-                        <div style={{ fontSize: '0.78rem', color: '#10b981', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}>
-                          ✅ Patient picked up! Start transit to hospital.
+                        <div style={{ fontSize: '0.78rem', color: '#10b981', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}><Icon name="success" size={16} /> Patient picked up! Start transit to hospital.
                         </div>
-                        <button onClick={handleStartTransit} className="btn btn-amber btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          🏥 Start Transit to {hospitalMatched?.name || 'Hospital'}
+                        <button onClick={handleStartTransit} className="btn btn-amber btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Icon name="hospital" size={16} /> Start Transit to {hospitalMatched?.name || 'Hospital'}
                         </button>
                       </>
                     )}
 
                     {activeEmergency.status === 'in_transit' && (
                       <>
-                        <div className="telemetry-pulsing" style={{ fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}>
-                          🚑 In transit to {hospitalMatched?.name || 'hospital'}... ETA: {activeEmergency.eta_minutes || '?'} mins
+                        <div className="telemetry-pulsing" style={{ fontSize: '0.78rem', color: '#fbbf24', textAlign: 'center', marginBottom: '4px', fontWeight: 600 }}><Icon name="ambulance" size={16} /> In transit to {hospitalMatched?.name || 'hospital'}... ETA: {activeEmergency.eta_minutes || '?'} mins
                         </div>
                         <button onClick={handleHandoffComplete} className="btn btn-success btn-block" style={{ height: '48px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                           <CheckCircle size={18} /> Arrived at Hospital — Complete Mission
@@ -725,7 +718,7 @@ export const DriverDashboard: React.FC = () => {
               {/* Map routing view */}
               <div className="card card-glass map-hud-container" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
                 <div style={{ padding: '6px 10px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.1)' }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>🗺️ GPS Rescue Routing Navigation</h3>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}><Icon name="map" size={16} /> GPS Rescue Routing Navigation</h3>
                   <span style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 700, letterSpacing: '0.05em' }}>● HUD ACTIVE</span>
                 </div>
                 <div style={{ flex: 1, minHeight: '380px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>
@@ -751,7 +744,7 @@ export const DriverDashboard: React.FC = () => {
                   
                   {hasInspectedToday ? (
                     <div className="inspection-success-box" style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
-                      <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🛡️</div>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}><Icon name="shield" size={18} /></div>
                       <strong style={{ fontSize: '1rem', color: '#34d399' }}>Inspection Log Certified</strong>
                       <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '6px', marginBottom: 0 }}>
                         Ambulance <strong>{vehicle.plate_number}</strong> is fully authorized safe and standing by for regional emergency dispatches.
@@ -771,7 +764,7 @@ export const DriverDashboard: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', fontSize: '0.85rem' }}>
                         <label className="checklist-item">
                           <input type="checkbox" checked={inspectionForm.siren_ok} onChange={e => setInspectionForm({ ...inspectionForm, siren_ok: e.target.checked })} />
-                          <span>Siren & Emergency Beacon fully functional</span>
+                          <span>Siren and warning lights fully functional</span>
                         </label>
                         <label className="checklist-item">
                           <input type="checkbox" checked={inspectionForm.medical_checked} onChange={e => setInspectionForm({ ...inspectionForm, medical_checked: e.target.checked })} />
@@ -823,7 +816,7 @@ export const DriverDashboard: React.FC = () => {
               {/* Standby Map routing view */}
               <div className="card card-glass map-hud-container" style={{ display: 'flex', flexDirection: 'column', padding: '12px' }}>
                 <div style={{ padding: '6px 10px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(245, 158, 11, 0.1)' }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>🗺️ Region Standby Monitor Map</h3>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}><Icon name="map" size={16} /> Region Standby Monitor Map</h3>
                   <span style={{ fontSize: '0.68rem', color: '#fbbf24', fontWeight: 700, letterSpacing: '0.05em' }}>● STANDBY MONITOR</span>
                 </div>
                 <div style={{ flex: 1, minHeight: '380px', borderRadius: '8px', overflow: 'hidden', marginTop: '10px' }}>

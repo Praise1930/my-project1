@@ -10,6 +10,7 @@ import {
   GlassmorphicOverlayLoader
 } from '../components/LoadingStates';
 import { Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Icon } from '../components/Icon';
 
 const LocalThemeToggle: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -30,7 +31,7 @@ const LocalThemeToggle: React.FC = () => {
         gap: '6px'
       }}
     >
-      {theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+      {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
     </button>
   );
 };
@@ -52,7 +53,7 @@ export const LoadingShowcase: React.FC = () => {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       background: isDark ? '#0f172a' : '#f8fafc',
       color: isDark ? '#f8fafc' : '#0f172a',
       fontFamily: "'Muli', 'Segoe UI', sans-serif",
@@ -165,8 +166,7 @@ export const LoadingShowcase: React.FC = () => {
                     cursor: 'pointer',
                     boxShadow: '0 4px 14px rgba(15, 97, 239, 0.35)'
                   }}
-                >
-                  🚀 Launch Glassmorphism Full Overlay
+                ><Icon name="launch" size={16} /> Launch Glassmorphism Full Overlay
                 </button>
               </div>
             )}
