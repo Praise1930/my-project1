@@ -705,8 +705,11 @@ export const AuthService = {
     if (!bypassPasswordCheck && user.password_hash !== password_hash) {
       return { success: false, error: 'Incorrect credentials' };
     }
-    if (bypassPasswordCheck && user.password_hash !== password_hash) {
-      user.password_hash = password_hash; // sync password with Supabase Auth
+    if (bypassPasswordCheck) {
+      if (user.password_hash !== password_hash) {
+        user.password_hash = password_hash; // sync password with Supabase Auth
+      }
+      user.email_verified = true; // Supabase already confirmed email
     }
     if (!user.is_active) {
       return { success: false, error: 'Account is deactivated' };

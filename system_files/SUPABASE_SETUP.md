@@ -75,7 +75,51 @@ Then test end to end:
 2. The admin dashboard on a second device should show the alert within a second,
    with no reload.
 
+## 6. Email Verification & Custom SMTP Configuration
+
+By default, Supabase's built-in email service is limited to **3 to 4 emails per hour** for development, and emails sent from `noreply@mail.app.supabase.io` often get filtered into Spam/Junk folders.
+
+To ensure instant, reliable delivery of Mother registration verification emails and password reset links:
+
+### Step A: Configure Custom SMTP in Supabase
+1. Open your [Supabase Dashboard](https://supabase.com/dashboard) and select your project.
+2. Navigate to **Project Settings → Authentication → Email → SMTP Settings**.
+3. Toggle **Enable Custom SMTP** to **ON**.
+4. Fill in your SMTP provider details:
+   - **Using Resend (Recommended & Free):**
+     - Host: `smtp.resend.com`
+     - Port: `465` (SSL) or `587` (TLS)
+     - Username: `resend`
+     - Password: `re_...` (Your Resend API Key)
+     - Sender Email: `noreply@yourdomain.com` or `onboarding@resend.dev`
+     - Sender Name: `MamaTrack GPS`
+   - **Using Gmail SMTP (Free):**
+     - Host: `smtp.gmail.com`
+     - Port: `465` (SSL) or `587` (TLS)
+     - Username: `your.email@gmail.com`
+     - Password: *16-character Google App Password* (generated under Google Account → Security → 2-Step Verification → App Passwords)
+     - Sender Email: `your.email@gmail.com`
+     - Sender Name: `MamaTrack GPS Health Network`
+5. Click **Save Changes**.
+
+### Step B: Configure Redirect URLs
+1. In Supabase Dashboard, go to **Authentication → URL Configuration**.
+2. Set **Site URL** to your production or local origin:
+   - `http://localhost:5173` (local dev) or `https://your-mamatrack-domain.vercel.app` (production).
+3. In **Redirect URLs**, add:
+   - `http://localhost:5173/**`
+   - `http://localhost:3000/**`
+   - `https://*.vercel.app/**`
+4. Click **Save**.
+
+---
+
 ## Troubleshooting
+
+**Verification email not arriving:**
+1. Check your **Spam / Junk** folder. Free mail providers (Gmail, Outlook, Yahoo) often classify default Supabase notification emails as spam unless Custom SMTP is enabled.
+2. If you see `email rate limit exceeded` / `over_email_send_rate_limit (429)`, Supabase's default limit was triggered. Configure Custom SMTP as shown in Section 6, or use the **Verify Account Instantly** option on the `/verify-email` page.
+3. Click the **Resend Verification Email** button on the `/login` or `/verify-email` screen to request a fresh token.
 
 **Stale code after deploying.** The app registers a PWA service worker that
 caches aggressively, so a phone can keep running an old bundle after a deploy.

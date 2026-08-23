@@ -175,16 +175,28 @@ export const Register: React.FC = () => {
       }
 
       let registeredInSupabase = false;
+      let isRateLimited = false;
       // 1. Register with Supabase Authentication if configured.
       //    Supabase sends the confirmation email itself as part of signUp().
       if (isSupabaseConfigured && supabase) {
+        const verifyRedirectUrl = `${window.location.origin}/verify-email?email=${encodeURIComponent(submissionData.email)}`;
         const { error: signUpErr } = await supabase.auth.signUp({
           email: submissionData.email,
-          password: submissionData.password_hash
+          password: submissionData.password_hash,
+          options: {
+            emailRedirectTo: verifyRedirectUrl,
+            data: {
+              full_name: submissionData.full_name,
+              role: 'mother',
+              phone: submissionData.phone,
+              village: submissionData.village,
+              sub_county: submissionData.sub_county
+            }
+          }
         });
 
         if (signUpErr) {
-          console.warn('Supabase Auth registration failed:', signUpErr.message);
+          console.warn('Supabase Auth registration note:', signUpErr.message);
           const msg = signUpErr.message.toLowerCase();
           if (msg.includes('already registered') || msg.includes('already exists')) {
             setError('This email address is already registered. Please log in or use a different email.');
@@ -201,7 +213,10 @@ export const Register: React.FC = () => {
             setIsLoading(false);
             return;
           }
-          // Network/config error — fall through to local registration only
+          if (msg.includes('rate limit') || msg.includes('too many') || msg.includes('security purposes') || msg.includes('over_email_send_rate_limit')) {
+            isRateLimited = true;
+          }
+          // Fall through to register locally so mother profile is preserved
         } else {
           registeredInSupabase = true;
         }
@@ -213,7 +228,7 @@ export const Register: React.FC = () => {
       if (res.success) {
         // Determine the mail client inbox URL based on email address
         const emailInput = submissionData.email.toLowerCase().trim();
-        const domain = emailInput.split('@')[1];
+        const domain = emailInput.split('@')[1] || '';
         let mailUrl = 'https://mail.google.com';
         let providerName = 'Email Inbox';
 
@@ -243,17 +258,19 @@ export const Register: React.FC = () => {
         if (isSupabaseConfigured && supabase && registeredInSupabase) {
           await supabase.auth.signOut();
           const openMail = await confirmAction({
-            title: 'Verify your email address',
-            message: `We sent a verification link to ${submissionData.email}. Open it to activate your account — you will not be able to sign in until you do.`,
+            title: 'Verification Link Sent',
+            message: `We sent an activation link to ${submissionData.email}. Please open your inbox (and check your Spam/Junk folder) and click the link to activate your account before logging in.`,
             confirmLabel: `Open ${providerName}`,
-            cancelLabel: 'I will do it later',
+            cancelLabel: 'I will check later',
             tone: 'info',
           });
           if (openMail) window.open(mailUrl, '_blank');
+        } else if (isRateLimited) {
+          showToast(`Account created! Supabase email rate limit was reached. You can verify your email on the verification page or try resending in a few minutes.`, 'warning', 10000, 'Account Created');
         } else {
-          showToast('Your account was created, but the verification email could not be sent. Contact mamatrack6@gmail.com if you have trouble signing in.', 'warning', 9000, 'Account created');
+          showToast('Your account was created. If you do not receive the verification email within 2 minutes, check your Spam folder or visit the verification portal.', 'info', 9000, 'Account Created');
         }
-        navigate('/login?role=mother');
+        navigate(`/login?role=mother&email=${encodeURIComponent(submissionData.email)}`);
       } else {
         setError(res.error || 'Failed to create local account profile');
       }

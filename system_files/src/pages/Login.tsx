@@ -18,6 +18,9 @@ import { Plus } from 'lucide-react';
 import { GlassmorphicOverlayLoader } from '../components/LoadingStates';
 import { Icon } from '../components/Icon';
 
+import { showToast } from '../components/toastBus';
+import { Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+
 export const Login: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
@@ -28,13 +31,19 @@ export const Login: React.FC = () => {
     ? (rawRole as 'mother' | 'admin' | 'doctor' | 'driver' | 'vht')
     : 'mother';
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+
+  // Email verification resend states
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
 
   const rolesList = [
     { id: 'mother', title: 'Mother portal', icon: 'mother', desc: 'Emergency beacons, ANC schedule & doctor chat', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },
@@ -44,19 +53,85 @@ export const Login: React.FC = () => {
     { id: 'admin', title: 'Administrator portal', icon: 'signal', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
   ];
 
+  // Cooldown countdown timer for resend
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   // Reset inputs when role changes
   React.useEffect(() => {
     setError(null);
     setEmailError(null);
-    setEmail('');
+    setUnverifiedEmail(null);
+    setResendStatus(null);
+    if (!searchParams.get('email')) {
+      setEmail('');
+    }
     setPassword('');
   }, [role]);
 
+  const handleResendVerification = async (targetEmail?: string) => {
+    const toEmail = (targetEmail || unverifiedEmail || email).trim();
+    if (!toEmail) {
+      showToast('Please enter an email address to resend the verification link.', 'warning');
+      return;
+    }
+    if (resendCooldown > 0) return;
+
+    setIsResending(true);
+    setResendStatus(null);
+
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const verifyRedirectUrl = `${window.location.origin}/verify-email?email=${encodeURIComponent(toEmail)}`;
+        const { error: resendErr } = await supabase.auth.resend({
+          type: 'signup',
+          email: toEmail,
+          options: {
+            emailRedirectTo: verifyRedirectUrl
+          }
+        });
+
+        if (resendErr) {
+          console.warn('Resend verification error:', resendErr.message);
+          const msg = resendErr.message.toLowerCase();
+          if (msg.includes('rate limit') || msg.includes('too many') || msg.includes('security purposes') || msg.includes('over_email_send_rate_limit')) {
+            setResendStatus('Supabase hourly email limit reached. Please wait a few moments or activate directly via the Verification Portal.');
+            showToast('Email rate limit reached on Supabase. Try again in a few moments or open the verification portal.', 'warning', 8000);
+          } else {
+            setResendStatus(`Resend note: ${resendErr.message}`);
+            showToast(`Could not resend email: ${resendErr.message}`, 'error');
+          }
+          setResendCooldown(25);
+          return;
+        }
+
+        setResendStatus(`Verification email dispatched to ${toEmail}! Check your inbox and spam folder.`);
+        showToast(`Verification email resent to ${toEmail}!`, 'success', 7000, 'Email Sent');
+        setResendCooldown(45);
+      } else {
+        setResendStatus('Simulated mode: You can verify your account instantly on the Verification Portal.');
+        showToast('Running in local mode. Open the verification portal to activate.', 'info');
+      }
+    } catch (err) {
+      console.error('Failed to resend verification:', err);
+      setResendStatus('Network error while requesting verification email.');
+      showToast('Network error while requesting verification email.', 'error');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setEmailError(null);
+    setUnverifiedEmail(null);
+    setResendStatus(null);
     setIsLoading(true);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -86,7 +161,8 @@ export const Login: React.FC = () => {
           // Supabase only issues a session once the email link is confirmed, but
           // check explicitly so the user gets a clear message either way.
           if (!data.user.email_confirmed_at) {
-            setError('Your email address has not been verified yet. Please check your inbox for the verification link sent to ' + cleanEmail + ' and click it before logging in.');
+            setUnverifiedEmail(cleanEmail);
+            setError(`Your email address has not been verified yet. We sent a verification link to ${cleanEmail}.`);
             await supabase.auth.signOut();
             setIsLoading(false);
             return;
@@ -104,6 +180,13 @@ export const Login: React.FC = () => {
 
         if (authErr) {
           console.warn('Supabase authentication note:', authErr.message);
+          const msg = authErr.message.toLowerCase();
+          if (msg.includes('email not confirmed') || msg.includes('not verified')) {
+            setUnverifiedEmail(cleanEmail);
+            setError(`Your email address has not been verified yet. Please check your inbox or spam folder for the link sent to ${cleanEmail}.`);
+            setIsLoading(false);
+            return;
+          }
           // Seeded demo accounts do not exist in Supabase Auth, so fall through
           // to the local database login below rather than failing outright.
         }
@@ -114,7 +197,11 @@ export const Login: React.FC = () => {
       if (res.success) {
         navigate(`/${role}`);
       } else {
-        setError(res.error || 'Invalid email or password for the selected portal role.');
+        const errMsg = res.error || 'Invalid email or password for the selected portal role.';
+        if (errMsg.toLowerCase().includes('email') && errMsg.toLowerCase().includes('verifi')) {
+          setUnverifiedEmail(cleanEmail);
+        }
+        setError(errMsg);
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -292,8 +379,75 @@ export const Login: React.FC = () => {
           <div style={{ padding: '30px 30px 36px', background: isDark ? '#1e293b' : '#ffffff' }}>
             
             {error && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '10px 14px', borderRadius: '4px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span><Icon name="warning" size={14} /></span> {error}
+              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '12px 14px', borderRadius: '8px', fontSize: '0.88rem', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <span style={{ lineHeight: 1.4 }}>{error}</span>
+                </div>
+
+                {unverifiedEmail && (
+                  <div style={{ marginTop: '6px', paddingTop: '10px', borderTop: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '0.78rem', color: isDark ? '#cbd5e1' : '#4b5563', lineHeight: 1.4 }}>
+                      Didn't receive the email? Check your <strong>Spam / Junk</strong> folder, or click below:
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleResendVerification(unverifiedEmail)}
+                        disabled={isResending || resendCooldown > 0}
+                        style={{
+                          flex: 1,
+                          minWidth: '140px',
+                          padding: '7px 12px',
+                          borderRadius: '6px',
+                          background: resendCooldown > 0 ? (isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0') : '#0f61ef',
+                          color: resendCooldown > 0 ? (isDark ? '#94a3b8' : '#64748b') : '#ffffff',
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          cursor: resendCooldown > 0 || isResending ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Mail size={13} />
+                        {isResending ? 'Sending...' : (resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Email')}
+                      </button>
+
+                      <Link
+                        to={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
+                        style={{
+                          flex: 1,
+                          minWidth: '140px',
+                          padding: '7px 12px',
+                          borderRadius: '6px',
+                          background: isDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
+                          color: isDark ? '#ffffff' : '#0f172a',
+                          border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #cbd5e1',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <CheckCircle2 size={13} color="#10b981" />
+                        Verify Portal →
+                      </Link>
+                    </div>
+
+                    {resendStatus && (
+                      <div style={{ fontSize: '0.75rem', color: resendStatus.includes('dispatched') ? '#10b981' : '#f59e0b', marginTop: '2px' }}>
+                        {resendStatus}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
