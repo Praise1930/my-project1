@@ -87,17 +87,16 @@ export const DriverDashboard: React.FC = () => {
     };
   }, [navigate]);
 
-  // 2. Poll dispatch changes or simulation updates
+  // 2. Real-time synchronization & poll for dispatch changes or simulation updates
   useEffect(() => {
     if (!user || !driver) return;
-    const userId = user.id;
+    const userId = Number(user.id);
 
-    // Local loop to poll for incoming dispatch assignments
-    const interval = setInterval(() => {
+    const handleSync = () => {
       const activeEmg = db.emergencies.find(
-        e => e.driver_id === userId && !['delivered', 'completed', 'cancelled'].includes(e.status)
+        e => Number(e.driver_id) === userId && !['delivered', 'completed', 'cancelled'].includes(e.status)
       );
-      
+
       // Only set if changed
       if (JSON.stringify(activeEmg) !== JSON.stringify(activeEmergency)) {
         setActiveEmergency(activeEmg || null);
@@ -105,15 +104,27 @@ export const DriverDashboard: React.FC = () => {
           setIsSimulating(false);
         }
       }
-      
+
       // Refresh driver position from DB
-      const freshDriver = db.drivers.find(d => d.user_id === userId);
+      const freshDriver = db.drivers.find(d => Number(d.user_id) === userId);
       if (freshDriver && (freshDriver.current_latitude !== driver.current_latitude || freshDriver.current_longitude !== driver.current_longitude)) {
         setDriver(freshDriver);
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(interval);
+    handleSync();
+    const interval = setInterval(handleSync, 2500);
+
+    window.addEventListener('mamatrack_dispatch', handleSync);
+    window.addEventListener('mamatrack_alert_triggered', handleSync);
+    window.addEventListener('mamatrack_db_update', handleSync);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mamatrack_dispatch', handleSync);
+      window.removeEventListener('mamatrack_alert_triggered', handleSync);
+      window.removeEventListener('mamatrack_db_update', handleSync);
+    };
   }, [user, driver, activeEmergency]);
 
   // 3. Connect simulation engine updates

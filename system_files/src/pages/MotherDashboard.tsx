@@ -12,6 +12,7 @@ import { WelcomeToast } from '../components/WelcomeToast';
 import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
 import { OfflineStorageService } from '../services/offlineStorage';
+import { playAlertSound } from '../services/alertSound';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -283,29 +284,8 @@ export const MotherDashboard: React.FC = () => {
 
   // SOS Emergency activation — instant direct trigger without blurring screen
   const handleTriggerSOS = () => {
-    // Play audio siren alert sound
-    try {
-      // Safari still only exposes the prefixed constructor.
-      const AudioCtx = window.AudioContext
-        || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.5);
-      }
-    } catch (e) {
-      console.warn('SOS audio alert could not be played:', e);
-    }
+    if (!user) return;
+    playAlertSound();
 
     const lat = profile?.home_latitude || 0.3536;
     const lng = profile?.home_longitude || 32.7554;

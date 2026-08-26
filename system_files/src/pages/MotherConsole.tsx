@@ -10,6 +10,7 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
+import { playAlertSound } from '../services/alertSound';
 
 export const MotherConsole: React.FC = () => {
   const navigate = useNavigate();
@@ -202,27 +203,8 @@ export const MotherConsole: React.FC = () => {
 
   // SOS activation - instant direct trigger without blurring screen
   const handleTriggerSOS = () => {
-    // Play audio siren alert sound
-    try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.5);
-      }
-    } catch {
-      console.log('Audio alert notification sound played');
-    }
+    if (!user) return;
+    playAlertSound();
 
     const lat = profile?.home_latitude || 0.3536;
     const lng = profile?.home_longitude || 32.7554;

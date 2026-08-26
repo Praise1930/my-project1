@@ -113,27 +113,39 @@ export const DoctorDashboard: React.FC = () => {
     setBloodRequests(db.bloodRequests.filter(b => b.doctor_id === docUserId));
   };
 
-  // Poll for inbound transfers
+  // Real-time synchronization & polling for inbound transfers
   useEffect(() => {
     if (!user || !doctor) return;
-    const interval = setInterval(() => {
-      loadData(user.id, doctor.hospital_id);
-      
-      // Check for new dispatched emergencies assigned to this doctor
+    const userId = Number(user.id);
+    const hospId = Number(doctor.hospital_id);
+
+    const handleSync = () => {
+      loadData(userId, hospId);
       const myInbound = db.emergencies.filter(
-        e => e.hospital_id === doctor.hospital_id && 
-             (e.doctor_id === user.id || !e.doctor_id) &&
+        e => Number(e.hospital_id) === hospId &&
+             (Number(e.doctor_id) === userId || !e.doctor_id) &&
              ['dispatched', 'en_route', 'in_transit'].includes(e.status)
       );
-      
-      // Show alert for newest unseen emergency
       const unseen = myInbound.find(e => !seenEmergencyIds.includes(e.id));
       if (unseen && !incomingPatientEmergency) {
         setIncomingPatientEmergency(unseen);
         setSeenEmergencyIds(prev => [...prev, unseen.id]);
       }
-    }, 4000);
-    return () => clearInterval(interval);
+    };
+
+    handleSync();
+    const interval = setInterval(handleSync, 3000);
+
+    window.addEventListener('mamatrack_alert_triggered', handleSync);
+    window.addEventListener('mamatrack_dispatch', handleSync);
+    window.addEventListener('mamatrack_db_update', handleSync);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mamatrack_alert_triggered', handleSync);
+      window.removeEventListener('mamatrack_dispatch', handleSync);
+      window.removeEventListener('mamatrack_db_update', handleSync);
+    };
   }, [user, doctor, seenEmergencyIds, incomingPatientEmergency]);
 
   if (!user || !doctor || !hospital) {

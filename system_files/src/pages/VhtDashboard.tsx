@@ -125,8 +125,18 @@ export const VhtDashboard: React.FC = () => {
     };
 
     refreshData();
-    const interval = setInterval(refreshData, 5000); // refresh every 5s
-    return () => clearInterval(interval);
+    const interval = setInterval(refreshData, 3000);
+
+    window.addEventListener('mamatrack_alert_triggered', refreshData);
+    window.addEventListener('mamatrack_dispatch', refreshData);
+    window.addEventListener('mamatrack_db_update', refreshData);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mamatrack_alert_triggered', refreshData);
+      window.removeEventListener('mamatrack_dispatch', refreshData);
+      window.removeEventListener('mamatrack_db_update', refreshData);
+    };
   }, [navigate]);
 
   // Handle browser back button navigation
