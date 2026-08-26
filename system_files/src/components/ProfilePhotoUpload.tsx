@@ -244,54 +244,65 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
         </span>
       )}
 
-      {/* Dropdown menu.
-          Rendered into <body> rather than in place. The headers that host this
-          avatar use backdrop-filter, and a filtered ancestor becomes the
-          containing block for position:fixed descendants — so a menu centred
-          with top:50% was centring inside the 114px header and hanging off the
-          top of the screen. Several of those ancestors also set overflow:clip,
-          which would cut the menu off. A portal escapes both. */}
+      {/* Profile Photo Management Popover Modal */}
       {menuOpen && createPortal(
         <>
-          {/* Click-away backdrop */}
+          {/* Click-away backdrop overlay */}
           <div
-            style={{ position: 'fixed', inset: 0, zIndex: 999998 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15, 23, 42, 0.45)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              zIndex: 999998,
+            }}
             onClick={() => setMenuOpen(false)}
           />
           <div 
             className="profile-upload-dropdown"
             style={{
               position: 'fixed',
-              top: `${menuPos.top}px`,
-              left: `clamp(16px, ${menuPos.left}px, calc(100vw - ${MENU_WIDTH}px - 16px))`,
-              right: 'auto',
-              bottom: 'auto',
-              transform: 'none',
+              top: '80px',
+              left: '50%',
+              transform: 'translateX(-50%)',
               zIndex: 999999,
               background: isDark ? '#1e293b' : '#ffffff',
+              color: isDark ? '#f8fafc' : '#0f172a',
               border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #e2e8f0',
-              borderRadius: 16,
-              boxShadow: isDark ? '0 12px 35px rgba(0,0,0,0.5)' : '0 12px 35px rgba(0,0,0,0.18)',
-              padding: '16px',
-              width: `min(${MENU_WIDTH}px, calc(100vw - ${EDGE * 2}px))`,
-              maxWidth: `calc(100vw - ${EDGE * 2}px)`,
+              borderRadius: 20,
+              boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(0,0,0,0.18)',
+              padding: '20px',
+              width: `min(320px, calc(100vw - 32px))`,
+              maxWidth: `calc(100vw - 32px)`,
               boxSizing: 'border-box',
-              maxHeight: menuMaxHeight,
+              maxHeight: 'calc(100dvh - 100px)',
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px'
+              gap: '14px'
             }}
           >
-            {/* View Profile Image at the top of the menu itself */}
+            {/* Header with Title & Close Button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Manage Profile Photo</span>
+              <button
+                onClick={() => setMenuOpen(false)}
+                style={{ background: 'none', border: 'none', color: isDark ? '#94a3b8' : '#64748b', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* View Profile Image at top */}
             <div 
               onClick={() => { setMenuOpen(false); setShowPreviewModal(true); }}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                paddingBottom: '12px',
-                borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9',
+                padding: '6px 0',
                 gap: '8px',
                 cursor: 'pointer'
               }}
@@ -306,7 +317,8 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                     height: '90px',
                     borderRadius: '50%',
                     objectFit: 'cover',
-                    border: '3px solid rgba(244, 63, 94, 0.35)'
+                    border: '3px solid #f43f5e',
+                    boxShadow: '0 4px 14px rgba(244, 63, 94, 0.25)'
                   }}
                 />
               ) : (
@@ -320,12 +332,13 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   justifyContent: 'center',
                   color: '#fff',
                   fontSize: '2rem',
-                  fontWeight: 800
+                  fontWeight: 800,
+                  boxShadow: '0 4px 14px rgba(244, 63, 94, 0.25)'
                 }}>
                   {initials}
                 </div>
               )}
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#ffffff' : '#1f2937', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: isDark ? '#ffffff' : '#1f2937', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Eye size={14} style={{ color: '#f43f5e' }} /> View Full Photo
               </span>
             </div>
@@ -339,19 +352,19 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
-                  padding: '9px 12px',
-                  background: 'none',
+                  gap: 8,
+                  padding: '10px 14px',
+                  background: isDark ? '#334155' : '#f8fafc',
                   border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
-                  borderRadius: 8,
+                  borderRadius: 10,
                   cursor: 'pointer',
-                  fontSize: '0.8rem',
+                  fontSize: '0.84rem',
                   fontWeight: 600,
-                  color: isDark ? '#cbd5e1' : '#334155',
+                  color: isDark ? '#f1f5f9' : '#334155',
                   fontFamily: 'inherit'
                 }}
               >
-                <ImageIcon size={14} /> Choose from Gallery
+                <ImageIcon size={16} /> Choose from Gallery
               </button>
               <button
                 onClick={() => cameraRef.current?.click()}
@@ -360,19 +373,19 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
-                  padding: '9px 12px',
-                  background: 'none',
+                  gap: 8,
+                  padding: '10px 14px',
+                  background: isDark ? '#334155' : '#f8fafc',
                   border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
-                  borderRadius: 8,
+                  borderRadius: 10,
                   cursor: 'pointer',
-                  fontSize: '0.8rem',
+                  fontSize: '0.84rem',
                   fontWeight: 600,
-                  color: isDark ? '#cbd5e1' : '#334155',
+                  color: isDark ? '#f1f5f9' : '#334155',
                   fontFamily: 'inherit'
                 }}
               >
-                <Camera size={14} /> Take a Photo
+                <Camera size={16} /> Take a Photo
               </button>
             </div>
 
@@ -384,20 +397,20 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
+                  gap: 8,
                   width: '100%',
-                  padding: '8px 12px',
-                  background: 'rgba(239,68,68,0.06)',
-                  border: 'none',
-                  borderRadius: 8,
+                  padding: '9px 14px',
+                  background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  borderRadius: 10,
                   cursor: 'pointer',
-                  fontSize: '0.78rem',
+                  fontSize: '0.82rem',
                   fontWeight: 600,
                   color: '#ef4444',
                   fontFamily: 'inherit'
                 }}
               >
-                <Trash2 size={13} /> Remove Photo
+                <Trash2 size={15} /> Remove Photo
               </button>
             )}
           </div>
