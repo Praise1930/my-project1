@@ -54,21 +54,17 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       const width = Math.min(MENU_WIDTH, vw - safeLeft - safeRight);
 
       let left: number;
-      // On narrow screens (< 500px), center horizontally for optimal readability
-      if (vw < 500) {
-        left = (vw - width) / 2;
+      if (trigger.left < vw / 2) {
+        // Avatar is on the left half of the screen (e.g. sidebar).
+        // Align left edge of menu with left edge of avatar, guaranteed >= safeLeft.
+        left = trigger.left;
       } else {
-        // Smart positioning:
-        // If avatar is on the left half of the viewport, align menu left edge to avatar left edge.
-        // If avatar is on the right half, align menu right edge to avatar right edge.
-        if (trigger.left < vw / 2) {
-          left = trigger.left;
-        } else {
-          left = trigger.right - width;
-        }
+        // Avatar is on the right half of the screen (e.g. topbar).
+        // Align right edge of menu with right edge of avatar.
+        left = trigger.right - width;
       }
 
-      // Strictly clamp left position so it never overflows off-screen on left or right
+      // Strictly clamp left position so it NEVER goes off-screen on left or right
       const maxLeft = Math.max(safeLeft, vw - width - safeRight);
       left = Math.min(Math.max(safeLeft, left), maxLeft);
 
@@ -80,12 +76,13 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       const maxTop = Math.max(safeTop, vh - safeBottom - height);
       top = Math.min(Math.max(safeTop, top), maxTop);
 
-      setMenuPos({ top, left });
-      setMenuMaxHeight(height);
+      setMenuPos({ top: Math.round(top), left: Math.round(left) });
+      setMenuMaxHeight(Math.round(height));
     }
   };
 
   const openMenu = () => {
+    updatePosition();
     setMenuOpen(o => !o);
   };
 
@@ -262,8 +259,8 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             className="profile-upload-dropdown"
             style={{
               position: 'fixed',
-              top: menuPos.top,
-              left: menuPos.left,
+              top: `${menuPos.top}px`,
+              left: `clamp(${EDGE}px, ${menuPos.left}px, calc(100vw - ${MENU_WIDTH}px - ${EDGE}px))`,
               right: 'auto',
               bottom: 'auto',
               transform: 'none',
