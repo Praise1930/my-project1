@@ -46,27 +46,30 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
     if (trigger && trigger.width > 0 && vw > 0 && vh > 0) {
-      const safeTop = Math.max(EDGE, inset('--safe-top') + EDGE);
-      const safeBottom = Math.max(EDGE, inset('--safe-bottom') + EDGE);
-      const safeLeft = Math.max(EDGE, inset('--safe-left') + EDGE);
-      const safeRight = Math.max(EDGE, inset('--safe-right') + EDGE);
+      const safeMargin = 16;
+      const safeTop = Math.max(safeMargin, inset('--safe-top') + safeMargin);
+      const safeBottom = Math.max(safeMargin, inset('--safe-bottom') + safeMargin);
+      const safeLeft = Math.max(safeMargin, inset('--safe-left') + safeMargin);
+      const safeRight = Math.max(safeMargin, inset('--safe-right') + safeMargin);
 
       const width = Math.min(MENU_WIDTH, vw - safeLeft - safeRight);
 
       let left: number;
-      if (trigger.left < vw / 2) {
-        // Avatar is on the left half of the screen (e.g. sidebar).
-        // Align left edge of menu with left edge of avatar, guaranteed >= safeLeft.
-        left = trigger.left;
+      if (vw < 500) {
+        // On narrow viewports (< 500px), center horizontally
+        left = (vw - width) / 2;
       } else {
-        // Avatar is on the right half of the screen (e.g. topbar).
-        // Align right edge of menu with right edge of avatar.
-        left = trigger.right - width;
+        // Default to aligning left edge of menu with left edge of avatar (extends right)
+        left = trigger.left;
+        // Only align right edge if aligning left edge causes right viewport overflow
+        if (left + width > vw - safeRight) {
+          left = trigger.right - width;
+        }
       }
 
-      // Strictly clamp left position so it NEVER goes off-screen on left or right
+      // GUARANTEE: left position must NEVER be less than safeLeft (16px) or exceed viewport right
       const maxLeft = Math.max(safeLeft, vw - width - safeRight);
-      left = Math.min(Math.max(safeLeft, left), maxLeft);
+      left = Math.max(safeLeft, Math.min(left, maxLeft));
 
       const available = vh - safeTop - safeBottom;
       const height = Math.min(MENU_MAX_HEIGHT, available);
@@ -74,7 +77,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       const below = trigger.bottom + 8;
       let top = (vh - safeBottom) - below >= height ? below : trigger.top - height - 8;
       const maxTop = Math.max(safeTop, vh - safeBottom - height);
-      top = Math.min(Math.max(safeTop, top), maxTop);
+      top = Math.max(safeTop, Math.min(top, maxTop));
 
       setMenuPos({ top: Math.round(top), left: Math.round(left) });
       setMenuMaxHeight(Math.round(height));
@@ -260,7 +263,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             style={{
               position: 'fixed',
               top: `${menuPos.top}px`,
-              left: `clamp(${EDGE}px, ${menuPos.left}px, calc(100vw - ${MENU_WIDTH}px - ${EDGE}px))`,
+              left: `clamp(16px, ${menuPos.left}px, calc(100vw - ${MENU_WIDTH}px - 16px))`,
               right: 'auto',
               bottom: 'auto',
               transform: 'none',
