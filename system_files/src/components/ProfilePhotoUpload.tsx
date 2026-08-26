@@ -40,32 +40,34 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
     return parseFloat(raw) || 0;
   };
 
-  const openMenu = () => {
+  const updatePosition = () => {
     const trigger = avatarRef.current?.getBoundingClientRect();
     const vw = document.documentElement.clientWidth;
     const vh = document.documentElement.clientHeight;
 
-    if (trigger) {
-      // With viewport-fit=cover the viewport extends behind the status bar and
-      // the home indicator, so the usable box is the viewport minus the insets.
-      // Clamping to the raw viewport is what left the top of this menu tucked
-      // under the status bar in the installed app.
+    if (trigger && trigger.width > 0) {
       const safeTop = inset('--safe-top') + EDGE;
       const safeBottom = inset('--safe-bottom') + EDGE;
       const safeLeft = inset('--safe-left') + EDGE;
       const safeRight = inset('--safe-right') + EDGE;
 
       const width = Math.min(MENU_WIDTH, vw - safeLeft - safeRight);
-      // Prefer right-aligned to the avatar, which is where these sit in the
-      // headers, then clamp so neither edge leaves the usable box.
-      let left = trigger.right - width;
-      left = Math.min(Math.max(safeLeft, left), vw - width - safeRight);
+
+      // Smart positioning:
+      // If the avatar is on the left half of the viewport (e.g. sidebar), align left edge of menu to left edge of avatar.
+      // If it's on the right half (e.g. topbar right), align right edge of menu to right edge of avatar.
+      let left = trigger.left < vw / 2 ? trigger.left : trigger.right - width;
+
+      // On narrow mobile screens (<500px), center horizontally if alignment feels off
+      if (vw < 500) {
+        left = (vw - width) / 2;
+      }
+
+      left = Math.max(safeLeft, Math.min(left, vw - width - safeRight));
 
       const available = vh - safeTop - safeBottom;
       const height = Math.min(MENU_MAX_HEIGHT, available);
 
-      // Below the avatar when it fits, otherwise above it, then clamp so the
-      // menu can never start above the safe area or run past its bottom.
       const below = trigger.bottom + 8;
       let top = (vh - safeBottom) - below >= height ? below : trigger.top - height - 8;
       top = Math.min(Math.max(safeTop, top), vh - safeBottom - height);
@@ -73,8 +75,26 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
       setMenuPos({ top, left });
       setMenuMaxHeight(height);
     }
+  };
+
+  const openMenu = () => {
+    if (!menuOpen) {
+      updatePosition();
+    }
     setMenuOpen(o => !o);
   };
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    updatePosition();
+    const handleResize = () => updatePosition();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleResize, true);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleResize, true);
+    };
+  }, [menuOpen]);
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';
