@@ -42,35 +42,43 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 
   const updatePosition = () => {
     const trigger = avatarRef.current?.getBoundingClientRect();
-    const vw = document.documentElement.clientWidth;
-    const vh = document.documentElement.clientHeight;
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
-    if (trigger && trigger.width > 0) {
-      const safeTop = inset('--safe-top') + EDGE;
-      const safeBottom = inset('--safe-bottom') + EDGE;
-      const safeLeft = inset('--safe-left') + EDGE;
-      const safeRight = inset('--safe-right') + EDGE;
+    if (trigger && trigger.width > 0 && vw > 0 && vh > 0) {
+      const safeTop = Math.max(EDGE, inset('--safe-top') + EDGE);
+      const safeBottom = Math.max(EDGE, inset('--safe-bottom') + EDGE);
+      const safeLeft = Math.max(EDGE, inset('--safe-left') + EDGE);
+      const safeRight = Math.max(EDGE, inset('--safe-right') + EDGE);
 
       const width = Math.min(MENU_WIDTH, vw - safeLeft - safeRight);
 
-      // Smart positioning:
-      // If the avatar is on the left half of the viewport (e.g. sidebar), align left edge of menu to left edge of avatar.
-      // If it's on the right half (e.g. topbar right), align right edge of menu to right edge of avatar.
-      let left = trigger.left < vw / 2 ? trigger.left : trigger.right - width;
-
-      // On narrow mobile screens (<500px), center horizontally if alignment feels off
+      let left: number;
+      // On narrow screens (< 500px), center horizontally for optimal readability
       if (vw < 500) {
         left = (vw - width) / 2;
+      } else {
+        // Smart positioning:
+        // If avatar is on the left half of the viewport, align menu left edge to avatar left edge.
+        // If avatar is on the right half, align menu right edge to avatar right edge.
+        if (trigger.left < vw / 2) {
+          left = trigger.left;
+        } else {
+          left = trigger.right - width;
+        }
       }
 
-      left = Math.max(safeLeft, Math.min(left, vw - width - safeRight));
+      // Strictly clamp left position so it never overflows off-screen on left or right
+      const maxLeft = Math.max(safeLeft, vw - width - safeRight);
+      left = Math.min(Math.max(safeLeft, left), maxLeft);
 
       const available = vh - safeTop - safeBottom;
       const height = Math.min(MENU_MAX_HEIGHT, available);
 
       const below = trigger.bottom + 8;
       let top = (vh - safeBottom) - below >= height ? below : trigger.top - height - 8;
-      top = Math.min(Math.max(safeTop, top), vh - safeBottom - height);
+      const maxTop = Math.max(safeTop, vh - safeBottom - height);
+      top = Math.min(Math.max(safeTop, top), maxTop);
 
       setMenuPos({ top, left });
       setMenuMaxHeight(height);
@@ -78,19 +86,20 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   };
 
   const openMenu = () => {
-    if (!menuOpen) {
-      updatePosition();
-    }
     setMenuOpen(o => !o);
   };
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!menuOpen) return;
     updatePosition();
+    const rafId = requestAnimationFrame(() => {
+      updatePosition();
+    });
     const handleResize = () => updatePosition();
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleResize, true);
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleResize, true);
     };
@@ -265,6 +274,8 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
               boxShadow: isDark ? '0 12px 35px rgba(0,0,0,0.5)' : '0 12px 35px rgba(0,0,0,0.18)',
               padding: '16px',
               width: `min(${MENU_WIDTH}px, calc(100vw - ${EDGE * 2}px))`,
+              maxWidth: `calc(100vw - ${EDGE * 2}px)`,
+              boxSizing: 'border-box',
               maxHeight: menuMaxHeight,
               overflowY: 'auto',
               display: 'flex',
