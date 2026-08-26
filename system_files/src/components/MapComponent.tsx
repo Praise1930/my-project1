@@ -234,67 +234,85 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     });
   }, [markers]);
 
-  // 4. Render and Update Route line (Polyline)
+  const lastFittedRouteKey = useRef<string>('');
+  const activeRouteCoordsRef = useRef<[number, number][]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // 4. Render and Update Route line (Polyline) — Stable, Single Route without flickering or alternate jumping
   useEffect(() => {
     if (!mapRef.current) return;
 
-    if (routeLineRef.current) {
-      routeLineRef.current.remove();
-      routeLineRef.current = null;
+    if (!routePoints || routePoints.length < 2) {
+      if (routeLineRef.current) {
+        routeLineRef.current.remove();
+        routeLineRef.current = null;
+      }
+      activeRouteCoordsRef.current = [];
+      lastFittedRouteKey.current = '';
+      return;
     }
 
-    if (routePoints.length > 1) {
-      // Immediately render straight line polyline for instant responsiveness
-      const fallbackPolyline = L.polyline(routePoints, {
+    const start = routePoints[0];
+    const end = routePoints[routePoints.length - 1];
+    const routeIdentifier = `${start[0].toFixed(3)},${start[1].toFixed(3)}->${end[0].toFixed(3)},${end[1].toFixed(3)}`;
+
+    // Cancel any previous in-flight OSRM request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Ensure polyline layer exists on map
+    if (!routeLineRef.current) {
+      routeLineRef.current = L.polyline(routePoints, {
         color: '#f43f5e',
         weight: 5,
-        opacity: 0.85,
-        lineJoin: 'round'
+        opacity: 0.9,
+        lineJoin: 'round',
+        lineCap: 'round',
       }).addTo(mapRef.current);
-      routeLineRef.current = fallbackPolyline;
-
-      let active = true;
-
-      const fetchRoadRoute = async () => {
-        try {
-          const coordsString = routePoints.map(p => `${p[1]},${p[0]}`).join(';');
-          const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
-
-          const res = await fetch(url);
-          if (!res.ok) throw new Error('OSRM routing request failed');
-          const data = await res.json();
-
-          if (active && data.routes && data.routes.length > 0 && mapRef.current) {
-            const osrmCoords = data.routes[0].geometry.coordinates;
-            const roadPoints: [number, number][] = osrmCoords.map((c: [number, number]) => [c[1], c[0]]);
-
-            if (routeLineRef.current) {
-              routeLineRef.current.remove();
-            }
-
-            const polyline = L.polyline(roadPoints, {
-              color: '#f43f5e',
-              weight: 5,
-              opacity: 0.9,
-              lineJoin: 'round'
-            }).addTo(mapRef.current);
-
-            routeLineRef.current = polyline;
-
-            const bounds = L.latLngBounds(roadPoints);
-            mapRef.current.fitBounds(bounds, { padding: [30, 30] });
-          }
-        } catch (e) {
-          console.warn('MapComponent: OSRM routing fallback active.', e);
-        }
-      };
-
-      fetchRoadRoute();
-
-      return () => {
-        active = false;
-      };
     }
+
+    // Only fit map view once when a new route is first established
+    if (lastFittedRouteKey.current !== routeIdentifier) {
+      lastFittedRouteKey.current = routeIdentifier;
+      const bounds = L.latLngBounds(routePoints);
+      mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+    }
+
+    const fetchRoadRoute = async () => {
+      try {
+        const coordsString = `${start[1]},${start[0]};${end[1]},${end[0]}`;
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson&steps=false&alternatives=false`;
+
+        const res = await fetch(url, { signal: abortController.signal });
+        if (!res.ok) throw new Error('OSRM routing request failed');
+        const data = await res.json();
+
+        if (!abortController.signal.aborted && data.routes && data.routes.length > 0 && mapRef.current && routeLineRef.current) {
+          const osrmCoords = data.routes[0].geometry.coordinates;
+          const roadPoints: [number, number][] = osrmCoords.map((c: [number, number]) => [c[1], c[0]]);
+
+          // Smoothly update the single existing polyline coordinates without removing/recreating layers
+          routeLineRef.current.setLatLngs(roadPoints);
+          activeRouteCoordsRef.current = roadPoints;
+        }
+      } catch (e: any) {
+        if (e.name !== 'AbortError') {
+          // If offline or OSRM fails, gracefully keep the direct connection polyline
+          if (routeLineRef.current) {
+            routeLineRef.current.setLatLngs(routePoints);
+          }
+        }
+      }
+    };
+
+    fetchRoadRoute();
+
+    return () => {
+      abortController.abort();
+    };
   }, [routePoints]);
 
   // 5. Render Emergency distress radius circle
