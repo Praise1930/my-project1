@@ -438,9 +438,23 @@ header.medilab-navbar::before,
   pointer-events: none;
 }
 
-/* Any popup that still positions itself against the viewport must never be
-   wider or taller than it. */
-.profile-upload-dropdown,
+/* Profile Upload Popover Modal - Always Centered & Safe Across All Viewports */
+.profile-upload-dropdown {
+  position: fixed !important;
+  top: 80px !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+  width: min(320px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  max-height: calc(100dvh - 100px) !important;
+  box-sizing: border-box !important;
+  z-index: 999999 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+
 .notifications-panel,
 .mobile-nav-dropdown {
   max-width: calc(100vw - 24px);
