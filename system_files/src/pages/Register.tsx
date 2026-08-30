@@ -38,6 +38,8 @@ export const Register: React.FC = () => {
   });
   
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [privacyConsent, setPrivacyConsent] = useState(true);
+  const [riskFactors, setRiskFactors] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -154,6 +156,10 @@ export const Register: React.FC = () => {
       errors.village = "Village name is required.";
     }
 
+    if (!privacyConsent) {
+      errors.privacy_consent = "Informed consent under the Uganda Data Protection and Privacy Act 2019 is required.";
+    }
+
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       setIsLoading(false);
@@ -162,6 +168,8 @@ export const Register: React.FC = () => {
 
     const submissionData = {
       ...formData,
+      privacy_consent: privacyConsent,
+      risk_factors: riskFactors,
       phone: `+256${formData.phone}`,
       next_of_kin_phone: `+256${formData.next_of_kin_phone}`
     };
@@ -705,6 +713,67 @@ export const Register: React.FC = () => {
                     <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{validationErrors.village}</span>
                   )}
                 </div>
+              </div>
+
+              {/* Section 5: Obstetric Risk Checklist & Privacy Consent */}
+              <h3 style={{ fontSize: '0.9rem', color: 'var(--rose-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>
+                Obstetric Risk Factors &amp; Data Privacy
+              </h3>
+
+              <div style={{ marginBottom: '1.25rem', background: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
+                  Pre-existing Obstetric Risk Factors (Check all that apply):
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem' }}>
+                  {[
+                    { id: 'prev_csection', label: 'Previous C-Section' },
+                    { id: 'hypertension', label: 'Chronic Hypertension' },
+                    { id: 'diabetes', label: 'Gestational Diabetes' },
+                    { id: 'multiple_gestation', label: 'Multiple Pregnancy (Twins/Triplets)' },
+                    { id: 'severe_anemia', label: 'Severe Anemia (Hb < 7)' },
+                    { id: 'history_pph', label: 'History of Haemorrhage' }
+                  ].map(rf => (
+                    <label key={rf.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={riskFactors.includes(rf.id)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setRiskFactors([...riskFactors, rf.id]);
+                          } else {
+                            setRiskFactors(riskFactors.filter(x => x !== rf.id));
+                          }
+                        }}
+                      />
+                      <span>{rf.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Uganda Data Protection and Privacy Act 2019 Consent */}
+              <div style={{
+                marginBottom: '1.5rem',
+                background: privacyConsent ? (isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4') : (isDark ? 'rgba(239,68,68,0.08)' : '#fef2f2'),
+                border: `1px solid ${privacyConsent ? '#86efac' : '#fca5a5'}`,
+                borderRadius: '8px',
+                padding: '12px 14px'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={privacyConsent}
+                    onChange={e => setPrivacyConsent(e.target.checked)}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <div style={{ fontSize: '0.78rem', lineHeight: 1.45, color: isDark ? '#e2e8f0' : '#334155' }}>
+                    <strong>Uganda Data Protection &amp; Privacy Act (2019) Informed Consent:</strong>
+                    <div>I authorize MamaTrack and registered Uganda MoH healthcare / ambulance responders to process my GPS location, health vitals snapshot, and emergency notes during obstetric referral events.</div>
+                  </div>
+                </label>
+                {validationErrors.privacy_consent && (
+                  <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '6px', display: 'block' }}>{validationErrors.privacy_consent}</span>
+                )}
               </div>
 
               <button type="submit" className="btn btn-rose btn-block" disabled={isLoading} style={{ fontWeight: 700, padding: '12px 20px', background: 'var(--rose-500)', color: '#ffffff' }}>

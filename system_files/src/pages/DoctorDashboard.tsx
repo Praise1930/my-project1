@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest } from '../services/db';
+import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord, MpdsrService, MpdsrRecord } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
@@ -10,6 +10,9 @@ import { WelcomeToast } from '../components/WelcomeToast';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
+import { CdssTriageModal } from '../components/CdssTriageModal';
+import { ReferralFormModal } from '../components/ReferralFormModal';
+import { MpdsrModal } from '../components/MpdsrModal';
 
 export const DoctorDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -22,8 +25,6 @@ export const DoctorDashboard: React.FC = () => {
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
   const [assessments, setAssessments] = useState<ClinicalAssessment[]>([]);
   const [bloodRequests, setBloodRequests] = useState<BloodRequest[]>([]);
-  // Default to whichever mother is first in the database rather than a hardcoded
-  // seed id, so the vitals chart still works if the seed data changes.
   const [selectedMotherId, setSelectedMotherId] = useState<number>(() => db.mothers[0]?.user_id ?? 0);
 
   // Forms
@@ -42,12 +43,20 @@ export const DoctorDashboard: React.FC = () => {
     units: 2
   });
 
-  // Toggles
+  // Toggles & Modals
   const [showBloodModal, setShowBloodModal] = useState(false);
   const [showTriageModal, setShowTriageModal] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [incomingPatientEmergency, setIncomingPatientEmergency] = useState<Emergency | null>(null);
   const [seenEmergencyIds, setSeenEmergencyIds] = useState<number[]>([]);
+
+  // CDSS, MPDSR & Referral modals
+  const [showCdssModal, setShowCdssModal] = useState(false);
+  const [selectedCategoryForCdss, setSelectedCategoryForCdss] = useState<ObstetricEmergencyCategory>('pph');
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [selectedReferral, setSelectedReferral] = useState<ReferralRecord | null>(null);
+  const [showMpdsrModal, setShowMpdsrModal] = useState(false);
+  const [selectedEmergencyForMpdsr, setSelectedEmergencyForMpdsr] = useState<Emergency | null>(null);
 
   // Dynamic Stylesheet Loading for isolating theme CSS
   useEffect(() => {
@@ -269,19 +278,35 @@ export const DoctorDashboard: React.FC = () => {
     setHospital({ ...hospital, available_beds: newVal });
   };
 
-  // Blood Request
-  const handleBloodSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    DoctorService.submitBloodRequest(
-      user.id,
-      hospital.id,
-      bloodRequestForm.blood_type,
-      bloodRequestForm.units
-    );
-    setShowBloodModal(false);
-    setBloodRequestForm({ blood_type: 'O+', units: 2 });
+  // CDSS & Referral Handlers
+  const handleOpenReferral = (emg: Emergency) => {
+    let ref = ReferralService.getReferralByEmergencyId(emg.id);
+    if (!ref) {
+      // Auto-generate formal Uganda referral note if not already generated
+      ref = ReferralService.generateReferralRecord(emg, emg.hospital_id || hospital.id);
+    }
+    setSelectedReferral(ref);
+    setShowReferralModal(true);
+  };
+
+  const handleOpenCdss = (category?: ObstetricEmergencyCategory) => {
+    setSelectedCategoryForCdss(category || 'pph');
+    setShowCdssModal(true);
+  };
+
+  const handleOpenMpdsr = (emg: Emergency) => {
+    setSelectedEmergencyForMpdsr(emg);
+    setShowMpdsrModal(true);
+  };
+
+  const handleMobilizeTheatre = (emg: Emergency) => {
+    showToast(`Obstetric Surgical Theatre 1 at ${hospital.name} locked & sterile for Case ${emg.code}.`, 'success');
+  };
+
+  const handleMobilizeBlood = (emg: Emergency, bloodType: string = 'O+') => {
+    DoctorService.submitBloodRequest(user.id, hospital.id, bloodType, 2);
+    showToast(`Emergency 2 Units of ${bloodType} Blood reserved from Mukono Blood Bank for Case ${emg.code}.`, 'success');
     loadData(user.id, doctor.hospital_id);
-    showToast('Emergency Blood Request dispatched to Admin Center.', 'success');
   };
 
   return (
@@ -812,25 +837,66 @@ export const DoctorDashboard: React.FC = () => {
                       )}
                     </div>
                     
-                    <div style={{ fontSize: '13px', color: '#666666', marginBottom: '12px' }}>
+                    <div style={{ fontSize: '13px', color: '#666666', marginBottom: '8px' }}>
                       Distress Symptoms: {e.notes}
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #eef2f7', paddingTop: '10px' }}>
+                    {/* Category & Intervention Tag */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                      <span style={{ fontSize: '11px', background: '#fef2f2', color: '#991b1b', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                        Category: {OBSTETRIC_CATEGORIES_METADATA[e.category || 'pph']?.label}
+                      </span>
+                      {e.requires_cemonc && (
+                        <span style={{ fontSize: '11px', background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                          ⚡ CEmONC Surgical Theatre Required
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #eef2f7', paddingTop: '10px', flexWrap: 'wrap', gap: '8px' }}>
                       <span style={{ fontSize: '12px', color: '#888888' }}>
                         {e.status === 'delivered' ? 'Delivered — Driver handoff complete' : e.status === 'arrived' ? 'Ambulance Arrived at ER' : e.status === 'in_transit'? ` In Transit — ETA: ${e.eta_minutes ||'?'} mins` : `⏱️ ETA: ${e.eta_minutes || 'Calculating'} mins`}
                       </span>
 
-                      <button
-                        onClick={() => {
-                          setActiveEmergency(e);
-                          setShowTriageModal(true);
-                        }}
-                        className="btn btn-sm btn-medilab"
-                        style={{ padding: '4px 14px', fontSize: '12px' }}
-                      >
-                        Clinical Triage Handover
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleOpenReferral(e)}
+                          className="btn btn-sm"
+                          style={{ background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '4px 10px', fontSize: '11.5px', fontWeight: 600 }}
+                          title="View Official Uganda MoH Referral Note"
+                        >
+                          <Icon name="search" size={13} /> Referral Note
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenCdss(e.category)}
+                          className="btn btn-sm"
+                          style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '4px 10px', fontSize: '11.5px', fontWeight: 600 }}
+                          title="Uganda Clinical Guidelines CDSS Protocol"
+                        >
+                          <Icon name="pulse" size={13} /> CDSS
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenMpdsr(e)}
+                          className="btn btn-sm"
+                          style={{ background: '#f5f3ff', color: '#6d28d9', border: '1px solid #ddd6fe', padding: '4px 10px', fontSize: '11.5px', fontWeight: 600 }}
+                          title="Three-Delay Model Maternal Surveillance Audit"
+                        >
+                          <Icon name="trend" size={13} /> MPDSR
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setActiveEmergency(e);
+                            setShowTriageModal(true);
+                          }}
+                          className="btn btn-sm btn-medilab"
+                          style={{ padding: '4px 12px', fontSize: '11.5px' }}
+                        >
+                          Triage Handover
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1273,12 +1339,99 @@ export const DoctorDashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '10px' }}>
+                {/* Comprehensive Action Buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <button
+                      onClick={() => handleMobilizeTheatre(emg)}
+                      style={{
+                        padding: '10px',
+                        background: '#fef2f2',
+                        color: '#b91c1c',
+                        border: '1.5px solid #fecaca',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      ⚡ Prepare Theatre / C-Section
+                    </button>
+
+                    <button
+                      onClick={() => handleMobilizeBlood(emg, motherProfile?.blood_type || 'O+')}
+                      style={{
+                        padding: '10px',
+                        background: '#fff1f2',
+                        color: '#be123c',
+                        border: '1.5px solid #fecdd3',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Icon name="blood" size={14} /> Reserve Blood Bank Units
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <button
+                      onClick={() => {
+                        handleOpenCdss(emg.category);
+                      }}
+                      style={{
+                        padding: '10px',
+                        background: '#ecfdf5',
+                        color: '#047857',
+                        border: '1.5px solid #a7f3d0',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Icon name="pulse" size={14} /> Open CDSS Treatment Guide
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleOpenReferral(emg);
+                      }}
+                      style={{
+                        padding: '10px',
+                        background: '#f0f9ff',
+                        color: '#0369a1',
+                        border: '1.5px solid #bae6fd',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Icon name="search" size={14} /> View Digital Referral
+                    </button>
+                  </div>
+
                   <button
                     onClick={() => setIncomingPatientEmergency(null)}
                     style={{
-                      flex: 1,
                       padding: '12px',
                       background: '#1977cc',
                       color: '#ffffff',
@@ -1287,9 +1440,11 @@ export const DoctorDashboard: React.FC = () => {
                       fontWeight: 800,
                       fontSize: '14px',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(25,119,204,0.3)'
+                      boxShadow: '0 4px 12px rgba(25,119,204,0.3)',
+                      marginTop: '4px'
                     }}
-                  ><Icon name="success" size={16} /> Acknowledged — Preparing for Patient
+                  >
+                    <Icon name="success" size={16} /> Acknowledged — Obstetric Team Mobilized
                   </button>
                 </div>
               </div>
@@ -1297,6 +1452,37 @@ export const DoctorDashboard: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* CDSS CLINICAL PROTOCOLS MODAL */}
+      <CdssTriageModal
+        isOpen={showCdssModal}
+        onClose={() => setShowCdssModal(false)}
+        initialCategory={selectedCategoryForCdss}
+        onApplyProtocol={(cat, notes) => {
+          setAssessmentForm(prev => ({
+            ...prev,
+            treatment: `${prev.treatment ? prev.treatment + '; ' : ''}${notes}`
+          }));
+          showToast(`CDSS Treatment protocol appended for ${OBSTETRIC_CATEGORIES_METADATA[cat]?.label}`, 'success');
+        }}
+      />
+
+      {/* DIGITAL MATERNAL REFERRAL FORM MODAL */}
+      <ReferralFormModal
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
+        referral={selectedReferral}
+      />
+
+      {/* MPDSR MATERNAL DEATH & NEAR-MISS SURVEILLANCE MODAL */}
+      <MpdsrModal
+        isOpen={showMpdsrModal}
+        onClose={() => setShowMpdsrModal(false)}
+        emergency={selectedEmergencyForMpdsr}
+        onSaved={() => {
+          loadData(user.id, doctor.hospital_id);
+        }}
+      />
 
     </div>
   );

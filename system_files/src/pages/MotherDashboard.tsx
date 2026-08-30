@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor, VitalsService, SmsService, VitalsRecord } from '../services/db';
+import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor, VitalsService, SmsService, VitalsRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 import { HeartbeatLoader } from '../components/LoadingStates';
@@ -13,6 +13,8 @@ import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
 import { OfflineStorageService } from '../services/offlineStorage';
 import { playAlertSound } from '../services/alertSound';
+import { CdssTriageModal } from '../components/CdssTriageModal';
+import { ReferralFormModal } from '../components/ReferralFormModal';
 
 export const MotherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -23,11 +25,19 @@ export const MotherDashboard: React.FC = () => {
   
   // States for active emergency
   const [activeEmergency, setActiveEmergency] = useState<Emergency | null>(null);
-  // True while an alert exists only on this device and has not reached the server.
   const [heldOffline, setHeldOffline] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [emergencyNotes, setEmergencyNotes] = useState('');
   const [requireCemonc, setRequireCemonc] = useState(false);
+  const [selectedEmergencyCategory, setSelectedEmergencyCategory] = useState<ObstetricEmergencyCategory>('pph');
+  const [sosSystolic, setSosSystolic] = useState('120');
+  const [sosDiastolic, setSosDiastolic] = useState('80');
+  const [sosKicks, setSosKicks] = useState('10');
+  
+  // CDSS & Referral Record Modal states
+  const [showCdssModal, setShowCdssModal] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [activeReferralRecord, setActiveReferralRecord] = useState<ReferralRecord | null>(null);
   
   // Cancellation Modal States
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -282,26 +292,39 @@ export const MotherDashboard: React.FC = () => {
     return [];
   };
 
-  // SOS Emergency activation — instant direct trigger without blurring screen
-  const handleTriggerSOS = () => {
+  // SOS Emergency activation — categorized and vital-signs aware
+  const handleTriggerSOS = (overrideCategory?: ObstetricEmergencyCategory) => {
     if (!user) return;
     playAlertSound();
 
+    const categoryToUse = overrideCategory || selectedEmergencyCategory;
+    const catMeta = OBSTETRIC_CATEGORIES_METADATA[categoryToUse];
     const lat = profile?.home_latitude || 0.3536;
     const lng = profile?.home_longitude || 32.7554;
+    
     const newEmg = EmergencyService.triggerEmergency(
       user.id,
       lat,
       lng,
-      emergencyNotes || 'Emergency maternal distress beacon active.',
-      requireCemonc
+      emergencyNotes || `Emergency maternal distress beacon: ${catMeta.label}`,
+      requireCemonc || catMeta.urgency === 'CRITICAL',
+      categoryToUse,
+      {
+        systolic: Number(sosSystolic) || 120,
+        diastolic: Number(sosDiastolic) || 80,
+        kick_count: Number(sosKicks) || 10
+      },
+      catMeta.defaultIntervention,
+      'mother',
+      user.full_name
     );
+
     setActiveEmergency(newEmg);
     setNotifications(NotificationService.getNotificationsForUser(user.id));
     setShowConfirmModal(false);
     setEmergencyNotes('');
     setRequireCemonc(false);
-    setActiveTab('emergency'); // Auto switch to live rescue beacon tab
+    setActiveTab('emergency');
 
     const held = OfflineStorageService
       .getQueuedEmergencies()
@@ -309,14 +332,23 @@ export const MotherDashboard: React.FC = () => {
     setHeldOffline(held);
 
     if (held) {
-      // Say plainly that it has not gone out yet. Telling her responders have
-      // been alerted when the phone has no signal would be a dangerous lie.
       showToast(
-        'Your alert is saved on this phone and will be sent the moment you have signal. If you can, move to where you get network, or call 0800-MAMATRACK.',
-        'warning', 12000, 'No signal — alert not sent yet',
+        'Your alert is saved on this device and will transmit the moment you reconnect. If possible, move to a high-connectivity zone or call 0800-MAMATRACK.',
+        'warning', 12000, 'Offline Queue Active'
       );
     } else {
-      showToast('Your location has been sent. Mukono District dispatch, the matched hospital and nearby ambulance drivers have all been alerted.', 'success', 8000, 'Help is on the way');
+      showToast(`Emergency alert (${catMeta.label}) activated. Mukono District ambulance dispatch and receiving hospital notified.`, 'success', 8000, 'Help is on the way');
+    }
+  };
+
+  const handleOpenReferralNote = () => {
+    if (!activeEmergency) return;
+    const ref = ReferralService.getReferralByEmergencyId(activeEmergency.id);
+    if (ref) {
+      setActiveReferralRecord(ref);
+      setShowReferralModal(true);
+    } else {
+      showToast('Referral record is being compiled by dispatch and facility doctors.', 'info');
     }
   };
 
@@ -1110,7 +1142,59 @@ export const MotherDashboard: React.FC = () => {
                           </div>
                         </div>
 
-                        <button className="cancel-alert-btn" onClick={handleCancelSOS}>
+                        {/* Emergency Category and Referral Document Access */}
+                        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '8px 12px', fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: '#991b1b', fontWeight: 700 }}>Category: {OBSTETRIC_CATEGORIES_METADATA[activeEmergency.category || 'pph']?.label}</span>
+                            <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>{activeEmergency.severity.toUpperCase()}</span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <button
+                              type="button"
+                              onClick={handleOpenReferralNote}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #0284c7',
+                                background: '#f0f9ff',
+                                color: '#0369a1',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <Icon name="search" size={14} /> View Referral Form
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setShowCdssModal(true)}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #059669',
+                                background: '#ecfdf5',
+                                color: '#047857',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <Icon name="pulse" size={14} /> CDSS Danger Signs
+                            </button>
+                          </div>
+                        </div>
+
+                        <button className="cancel-alert-btn" onClick={handleCancelSOS} style={{ marginTop: '12px' }}>
                           Cancel Emergency
                         </button>
                       </div>
@@ -1120,8 +1204,16 @@ export const MotherDashboard: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       {/* Danger signs list */}
                       <div className="card-glass" style={{ padding: '1.25rem' }}>
-                        <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}><Icon name="warning" size={16} /> Critical Maternal Danger Signs
-                        </h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}><Icon name="warning" size={16} /> Critical Maternal Danger Signs
+                          </h4>
+                          <button
+                            onClick={() => setShowCdssModal(true)}
+                            style={{ background: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', fontSize: '0.7rem', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', cursor: 'pointer' }}
+                          >
+                            Open CDSS Guide
+                          </button>
+                        </div>
                         <p style={{ fontSize: '0.72rem', color: '#6b7280', marginBottom: '10px', lineHeight: 1.45 }}>
                           If you experience any of these signs, please press the **Trigger Emergency SOS** button immediately to dispatch clinical help:
                         </p>
@@ -1771,34 +1863,146 @@ export const MotherDashboard: React.FC = () => {
       </div>
       </div>
 
-      {/* CONFIRM TRIGGER SOS MODAL */}
+      {/* ENHANCED UGANDA MoH MATERNAL EMERGENCY SOS MODAL */}
       {showConfirmModal && (
-        <div className="modal-overlay active">
-          <div className="modal" style={{ width: '100%', maxWidth: '480px', padding: '1.5rem' }}>
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '8px', marginBottom: '12px' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f43f5e' }}>Confirm Emergency SOS Trigger</h3>
-              <button onClick={() => setShowConfirmModal(false)} style={{ background: 'none', border: 'none', color: '#4b5563', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
-            </div>
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ fontSize: '0.82rem', lineHeight: 1.4, color: '#4b5563' }}>
-                Are you sure you want to trigger a maternal rescue alert? This will immediately lock your GPS location coordinates, dispatch nearby ambulances, and notify clinical responders.
-              </p>
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: '0.78rem', color: '#6b7280', marginBottom: '4px', display: 'block' }}>Describe your symptoms (e.g. severe contractions, water broke, bleeding)</label>
-                <textarea className="form-input" style={{ minHeight: '60px', padding: '8px' }} placeholder="Provide brief notes..." value={emergencyNotes} onChange={e => setEmergencyNotes(e.target.value)} />
+        <div className="modal-overlay active" style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div className="modal card-glass" style={{ width: '100%', maxWidth: '580px', padding: '24px', background: theme === 'dark' ? '#1e293b' : '#ffffff', color: theme === 'dark' ? '#f8fafc' : '#0f172a', borderRadius: '16px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ background: '#fef2f2', color: '#ef4444', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="emergency" size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ef4444', margin: 0 }}>Trigger Maternal Rescue Beacon</h3>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Uganda Emergency Medical Services (EMS) Dispatch Protocol</span>
+                </div>
               </div>
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input type="checkbox" id="cemonc-chk" checked={requireCemonc} onChange={e => setRequireCemonc(e.target.checked)} style={{ cursor: 'pointer' }} />
-                <label htmlFor="cemonc-chk" style={{ fontSize: '0.78rem', cursor: 'pointer', userSelect: 'none', color: '#4b5563' }}>Require specialized surgical / obstetric theater (CEmONC)</label>
+              <button onClick={() => setShowConfirmModal(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Category selector */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: theme === 'dark' ? '#cbd5e1' : '#334155', marginBottom: '6px' }}>
+                  Select Emergency Category (Uganda MoH 10 Categories):
+                </label>
+                <select
+                  value={selectedEmergencyCategory}
+                  onChange={(e) => setSelectedEmergencyCategory(e.target.value as any)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #ef4444', fontSize: '0.88rem', fontWeight: 700, background: theme === 'dark' ? '#0f172a' : '#fef2f2', color: theme === 'dark' ? '#f8fafc' : '#991b1b' }}
+                >
+                  {(Object.keys(OBSTETRIC_CATEGORIES_METADATA) as ObstetricEmergencyCategory[]).map(cat => (
+                    <option key={cat} value={cat}>
+                      {OBSTETRIC_CATEGORIES_METADATA[cat].label} ({OBSTETRIC_CATEGORIES_METADATA[cat].urgency})
+                    </option>
+                  ))}
+                </select>
+                <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+                  {OBSTETRIC_CATEGORIES_METADATA[selectedEmergencyCategory].description}
+                </p>
+              </div>
+
+              {/* Quick vitals snapshot */}
+              <div style={{ background: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, marginBottom: '8px', color: theme === 'dark' ? '#cbd5e1' : '#475569' }}>
+                  Current Vitals Snapshot (Optional):
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>BP (Systolic)</span>
+                    <input
+                      type="number"
+                      value={sosSystolic}
+                      onChange={e => setSosSystolic(e.target.value)}
+                      placeholder="120"
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>BP (Diastolic)</span>
+                    <input
+                      type="number"
+                      value={sosDiastolic}
+                      onChange={e => setSosDiastolic(e.target.value)}
+                      placeholder="80"
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Kick Count (2h)</span>
+                    <input
+                      type="number"
+                      value={sosKicks}
+                      onChange={e => setSosKicks(e.target.value)}
+                      placeholder="10"
+                      style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Symptoms Notes */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>
+                  Describe specific symptoms or urgent needs:
+                </label>
+                <textarea
+                  style={{ width: '100%', minHeight: '60px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                  placeholder="e.g. Sudden severe bleeding, continuous pain, vision loss..."
+                  value={emergencyNotes}
+                  onChange={e => setEmergencyNotes(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer', color: '#334155' }}>
+                  <input type="checkbox" checked={requireCemonc} onChange={e => setRequireCemonc(e.target.checked)} />
+                  <span>Require specialized surgical / obstetric theater (CEmONC)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowCdssModal(true)}
+                  style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0284c7', padding: '4px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  View Danger Signs Guide
+                </button>
               </div>
             </div>
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '10px', marginTop: '14px' }}>
-              <button className="btn-momentra-outline" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={() => setShowConfirmModal(false)}>Cancel</button>
-              <button className="btn-momentra-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.8rem' }} onClick={handleConfirmSOS}>Trigger Dispatch SOS</button>
+
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '14px', marginTop: '16px' }}>
+              <button className="btn-momentra-outline" style={{ padding: '0.5rem 1.2rem', fontSize: '0.82rem' }} onClick={() => setShowConfirmModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn-momentra-primary"
+                style={{ padding: '0.5rem 1.5rem', fontSize: '0.82rem', background: '#ef4444', borderColor: '#dc2626', color: '#fff' }}
+                onClick={() => handleTriggerSOS()}
+              >
+                Transmit GPS Emergency SOS
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* CDSS DANGER SIGNS & CLINICAL GUIDANCE MODAL */}
+      <CdssTriageModal
+        isOpen={showCdssModal}
+        onClose={() => setShowCdssModal(false)}
+        initialCategory={selectedEmergencyCategory}
+        onApplyProtocol={(cat, notes) => {
+          setSelectedEmergencyCategory(cat);
+          setEmergencyNotes(notes);
+          showToast(`CDSS Guidance applied: ${OBSTETRIC_CATEGORIES_METADATA[cat]?.label}`, 'success');
+        }}
+      />
+
+      {/* DIGITAL MATERNAL REFERRAL RECORD MODAL */}
+      <ReferralFormModal
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
+        referral={activeReferralRecord}
+      />
 
       {/* BABY HEART RATE MEASUREMENT MODAL */}
       {showHeartRateModal && (

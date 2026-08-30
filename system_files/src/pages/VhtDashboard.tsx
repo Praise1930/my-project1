@@ -1,7 +1,7 @@
 // MamaTrack GPS — Village Health Team (VHT) Dashboard
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency, Mother, Notification } from '../services/db';
+import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency, Mother, Notification, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 
 // A mother record joined with the display fields taken from her user account.
 type MotherWithContact = Mother & { name: string; email: string; phone: string };
@@ -13,6 +13,8 @@ import { Bell, LogOut, Search } from 'lucide-react';
 import { showToast, confirmAction } from '../components/toastBus';
 import { Icon } from '../components/Icon';
 import { OfflineStorageService } from '../services/offlineStorage';
+import { CdssTriageModal } from '../components/CdssTriageModal';
+import { ReferralFormModal } from '../components/ReferralFormModal';
 
 export const VhtDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +33,19 @@ export const VhtDashboard: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // CDSS & Referral Modals State
+  const [showCdssModal, setShowCdssModal] = useState(false);
+  const [selectedCategoryForCdss, setSelectedCategoryForCdss] = useState<ObstetricEmergencyCategory>('pph');
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [selectedReferral, setSelectedReferral] = useState<ReferralRecord | null>(null);
+
+  // Community Emergency Trigger Dialog State
+  const [showTriggerModal, setShowTriggerModal] = useState(false);
+  const [motherForTrigger, setMotherForTrigger] = useState<MotherWithContact | null>(null);
+  const [triggerCategory, setTriggerCategory] = useState<ObstetricEmergencyCategory>('pph');
+  const [triggerNotes, setTriggerNotes] = useState('');
+  const [triggerRequiresCemonc, setTriggerRequiresCemonc] = useState(false);
+
   // Home Visit Form State
   const [selectedMother, setSelectedMother] = useState<MotherWithContact | null>(null);
   const [bpInput, setBpInput] = useState('120/80');
@@ -41,6 +56,8 @@ export const VhtDashboard: React.FC = () => {
   const [compInput, setCompInput] = useState('None');
 
   // Register Mother Form State
+  const [regPrivacyConsent, setRegPrivacyConsent] = useState(true);
+  const [regRiskFactors, setRegRiskFactors] = useState<string[]>([]);
   const [regForm, setRegForm] = useState({
     full_name: '',
     email: '',
@@ -201,6 +218,10 @@ export const VhtDashboard: React.FC = () => {
       errors.next_of_kin_phone = "Invalid format. Must be exactly 9 digits (e.g. 783920181).";
     }
 
+    if (!regPrivacyConsent) {
+      errors.privacy_consent = "Consent under the Uganda Data Protection and Privacy Act 2019 is required.";
+    }
+
     if (Object.keys(errors).length > 0) {
       setRegErrors(errors);
       return;
@@ -208,6 +229,8 @@ export const VhtDashboard: React.FC = () => {
 
     const submissionData = {
       ...regForm,
+      privacy_consent: regPrivacyConsent,
+      risk_factors: regRiskFactors,
       phone: `+256${regForm.phone}`,
       next_of_kin_phone: `+256${regForm.next_of_kin_phone}`
     };
@@ -246,6 +269,7 @@ export const VhtDashboard: React.FC = () => {
       setRegDobDay('');
       setRegDobMonth('');
       setRegDobYear('');
+      setRegRiskFactors([]);
       setActiveTab('mothers');
     } else {
       showToast(res.error || 'The mother could not be registered. Check the details and try again.', 'error');
@@ -283,9 +307,7 @@ export const VhtDashboard: React.FC = () => {
       recorded_by: 'vht'
     });
 
-    // Keep the last readings on this device as well. A VHT often works through
-    // several homes with no signal and only reconnects later; this is what lets
-    // the most recent numbers be read back in the field before that happens.
+    // Keep the last readings on this device as well.
     OfflineStorageService.cacheVitals(String(selectedMother.user_id), {
       blood_pressure: bpInput,
       systolic,
@@ -342,25 +364,33 @@ export const VhtDashboard: React.FC = () => {
     }
   };
 
-  const handleTriggerSOSForMother = async (mother: MotherWithContact) => {
-    const ok = await confirmAction({
-      title: `Raise an emergency for ${mother.name}?`,
-      message: `An ambulance will be dispatched to her home in ${mother.village}, the receiving hospital will be alerted, and her next of kin will be sent a text. Only continue if she needs urgent medical help now.`,
-      confirmLabel: 'Raise emergency',
-      cancelLabel: 'Not now',
-      tone: 'danger',
-    });
-    if (!ok) return;
+  const handleOpenTriggerModal = (mother: MotherWithContact) => {
+    setMotherForTrigger(mother);
+    setTriggerCategory('pph');
+    setTriggerNotes(`Emergency raised by VHT ${user?.full_name || 'Officer'} on scene in ${mother.village}.`);
+    setTriggerRequiresCemonc(false);
+    setShowTriggerModal(true);
+  };
+
+  const handleConfirmTriggerEmergency = () => {
+    if (!motherForTrigger || !user) return;
 
     EmergencyService.triggerEmergency(
-      mother.user_id,
-      mother.home_latitude,
-      mother.home_longitude,
-      `Emergency raised by VHT ${user.full_name} on scene: suspected labour or maternal distress.`,
-      false
+      motherForTrigger.user_id,
+      motherForTrigger.home_latitude,
+      motherForTrigger.home_longitude,
+      triggerNotes || `Emergency raised by VHT ${user.full_name}: ${triggerCategory}`,
+      triggerRequiresCemonc,
+      triggerCategory
     );
-    showToast(`Responders are on their way to ${mother.name} in ${mother.village}. Track the rescue from your dashboard.`, 'success', 8000, 'Emergency raised');
+    showToast(`Obstetric emergency (${OBSTETRIC_CATEGORIES_METADATA[triggerCategory]?.label || triggerCategory}) dispatched for ${motherForTrigger.name}.`, 'success', 8000, 'Emergency Dispatched');
+    setShowTriggerModal(false);
+    setMotherForTrigger(null);
     setActiveTab('home');
+  };
+
+  const handleTriggerSOSForMother = (mother: MotherWithContact) => {
+    handleOpenTriggerModal(mother);
   };
 
   const filteredMothers = mothersList.filter(m =>
@@ -455,6 +485,27 @@ export const VhtDashboard: React.FC = () => {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                setSelectedCategoryForCdss('pph');
+                setShowCdssModal(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid rgba(59,130,246,0.3)',
+                fontSize: '12px',
+                fontWeight: 700,
+                padding: '6px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <Icon name="doctor" size={14} /> CDSS Danger Signs Guide
+            </button>
             <ThemeToggle />
             <div style={{ position: 'relative' }}>
               <button aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit', position: 'relative' }}>
@@ -721,12 +772,28 @@ export const VhtDashboard: React.FC = () => {
                       <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}><Icon name="phone" size={16} /> Phone: {mother.phone} | Village: {mother.village} ({mother.sub_county})</span>
                       <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '2px' }}><Icon name="doctor" size={16} /> Blood Type: {mother.blood_type} | EDD: {mother.expected_due_date}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button onClick={() => setSelectedMother(mother)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span><Icon name="notes" size={18} /></span> Log Visit
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button onClick={() => setSelectedMother(mother)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span><Icon name="notes" size={16} /></span> Log Visit
                       </button>
-                      <button onClick={() => handleTriggerSOSForMother(mother)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span><Icon name="sos" size={18} /></span> SOS Rescue
+                      <button
+                        onClick={() => {
+                          const emg = db.emergencies.find(e => e.mother_id === mother.user_id);
+                          if (emg) {
+                            let ref = ReferralService.getReferralByEmergencyId(emg.id);
+                            if (!ref) ref = ReferralService.generateReferralRecord(emg, emg.hospital_id || 1);
+                            setSelectedReferral(ref);
+                            setShowReferralModal(true);
+                          } else {
+                            showToast('No active emergency referral note recorded yet for this mother.', 'info');
+                          }
+                        }}
+                        style={{ background: '#059669', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <span><Icon name="clipboard" size={16} /></span> Referral
+                      </button>
+                      <button onClick={() => handleTriggerSOSForMother(mother)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span><Icon name="sos" size={16} /></span> Emergency SOS
                       </button>
                     </div>
                   </div>
@@ -1032,6 +1099,63 @@ export const VhtDashboard: React.FC = () => {
                 </div>
               </div>
 
+              {/* Pre-existing Obstetric Risk Factors Checklist */}
+              <div style={{ marginBottom: '16px', background: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: isDark ? '1px solid #334155' : '1px solid #e2e8f0' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '8px', color: '#0284c7' }}>
+                  Pre-existing Obstetric Risk Factors (Check all that apply):
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem' }}>
+                  {[
+                    { id: 'prev_csection', label: 'Previous C-Section' },
+                    { id: 'hypertension', label: 'Chronic Hypertension' },
+                    { id: 'diabetes', label: 'Gestational Diabetes' },
+                    { id: 'multiple_gestation', label: 'Multiple Pregnancy' },
+                    { id: 'severe_anemia', label: 'Severe Anemia (Hb < 7)' },
+                    { id: 'history_pph', label: 'History of Haemorrhage' }
+                  ].map(rf => (
+                    <label key={rf.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={regRiskFactors.includes(rf.id)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setRegRiskFactors([...regRiskFactors, rf.id]);
+                          } else {
+                            setRegRiskFactors(regRiskFactors.filter(x => x !== rf.id));
+                          }
+                        }}
+                      />
+                      <span>{rf.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Uganda Data Protection & Privacy Act 2019 Consent */}
+              <div style={{
+                marginBottom: '20px',
+                background: regPrivacyConsent ? (isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4') : (isDark ? 'rgba(239,68,68,0.08)' : '#fef2f2'),
+                border: `1px solid ${regPrivacyConsent ? '#86efac' : '#fca5a5'}`,
+                borderRadius: '8px',
+                padding: '12px 14px'
+              }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={regPrivacyConsent}
+                    onChange={e => setRegPrivacyConsent(e.target.checked)}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <div style={{ fontSize: '0.76rem', lineHeight: 1.4, color: isDark ? '#e2e8f0' : '#334155' }}>
+                    <strong>Uganda Data Protection &amp; Privacy Act (2019) Informed Consent:</strong>
+                    <div>Patient has granted informed consent for community health surveillance, GPS dispatch, and clinical emergency referral records.</div>
+                  </div>
+                </label>
+                {regErrors.privacy_consent && (
+                  <span style={{ color: '#ef4444', fontSize: '0.74rem', marginTop: '6px', display: 'block' }}>{regErrors.privacy_consent}</span>
+                )}
+              </div>
+
               <button type="submit" className="btn btn-block" style={{ width: '100%', padding: '12px', fontSize: '0.88rem', fontWeight: 700, color: '#fff', background: '#0284c7', border: 'none', borderRadius: '6px' }}>
                 Register Expectant Mother Account
               </button>
@@ -1040,6 +1164,117 @@ export const VhtDashboard: React.FC = () => {
         )}
 
       </main>
+
+      {/* COMMUNITY EMERGENCY TRIGGER DIALOG */}
+      {showTriggerModal && motherForTrigger && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }}>
+          <div style={{
+            background: isDark ? '#1e293b' : '#ffffff',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '520px',
+            padding: '24px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            border: '2px solid #ef4444'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(239,68,68,0.2)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#ef4444', fontSize: '1.4rem' }}><Icon name="emergency" size={22} /></span>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#ef4444' }}>
+                  Raise Obstetric Emergency
+                </h3>
+              </div>
+              <button onClick={() => setShowTriggerModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'inherit' }}>&times;</button>
+            </div>
+
+            <div style={{ marginBottom: '14px', background: isDark ? 'rgba(239,68,68,0.1)' : '#fef2f2', padding: '10px 14px', borderRadius: '8px', fontSize: '0.82rem' }}>
+              <div>Patient: <strong>{motherForTrigger.name}</strong> • Village: <strong>{motherForTrigger.village}</strong></div>
+              <div>Phone: <strong>{motherForTrigger.phone}</strong> • Blood Group: <strong>{motherForTrigger.blood_type}</strong></div>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                Obstetric Emergency Category (Uganda MoH Classification):
+              </label>
+              <select
+                value={triggerCategory}
+                onChange={e => setTriggerCategory(e.target.value as ObstetricEmergencyCategory)}
+                style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: isDark ? '#0f172a' : '#fff', color: 'inherit' }}
+              >
+                {Object.entries(OBSTETRIC_CATEGORIES_METADATA).map(([key, meta]) => (
+                  <option key={key} value={key}>
+                    {meta.label} ({meta.severity.toUpperCase()})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                Field Distress &amp; Clinical Symptoms Notes:
+              </label>
+              <textarea
+                value={triggerNotes}
+                onChange={e => setTriggerNotes(e.target.value)}
+                placeholder="Describe current vital signs, blood loss volume, contractions, or fetal status..."
+                style={{ width: '100%', padding: '8px 12px', fontSize: '0.85rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: isDark ? '#0f172a' : '#fff', color: 'inherit', height: '70px', fontFamily: 'inherit' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={triggerRequiresCemonc}
+                  onChange={e => setTriggerRequiresCemonc(e.target.checked)}
+                />
+                <span>Requires Immediate CEmONC / Surgical Theatre Transfer</span>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowTriggerModal(false)}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: 'transparent', color: 'inherit', fontSize: '0.82rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmTriggerEmergency}
+                style={{ padding: '8px 18px', borderRadius: '6px', border: 'none', background: '#dc2626', color: '#fff', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Icon name="fast" size={16} /> Dispatch Emergency Rescue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CDSS DANGER SIGNS & CLINICAL PROTOCOLS MODAL */}
+      <CdssTriageModal
+        isOpen={showCdssModal}
+        onClose={() => setShowCdssModal(false)}
+        initialCategory={selectedCategoryForCdss}
+      />
+
+      {/* DIGITAL MATERNAL REFERRAL RECORD MODAL */}
+      <ReferralFormModal
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
+        referral={selectedReferral}
+      />
+
     </div>
   );
 };

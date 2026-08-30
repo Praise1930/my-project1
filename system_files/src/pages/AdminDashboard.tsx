@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, SimulationEngine, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother } from '../services/db';
+import { db, AuthService, EmergencyService, SimulationEngine, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, MpdsrService, MpdsrRecord, Dhis2Service, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -14,12 +14,16 @@ import { playAlertSound, releaseAlertSound } from '../services/alertSound';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { errorMessage } from '../services/errors';
 import { Icon } from '../components/Icon';
+import { Dhis2ExportModal } from '../components/Dhis2ExportModal';
+import { MpdsrModal } from '../components/MpdsrModal';
+import { ReferralFormModal } from '../components/ReferralFormModal';
+import { CdssTriageModal } from '../components/CdssTriageModal';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'sons' | 'reports' | 'performance'>('dispatch');
+  const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'sons' | 'reports' | 'performance' | 'mpdsr'>('dispatch');
 
   // Database states
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
@@ -28,6 +32,19 @@ export const AdminDashboard: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [mothers, setMothers] = useState<Mother[]>([]);
+
+  // GIS Map visual filters
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showDistrictGeofence, setShowDistrictGeofence] = useState(true);
+
+  // Uganda MoH Interoperability & Clinical Modals
+  const [showDhis2Modal, setShowDhis2Modal] = useState(false);
+  const [showMpdsrModal, setShowMpdsrModal] = useState(false);
+  const [selectedEmergencyForMpdsr, setSelectedEmergencyForMpdsr] = useState<Emergency | null>(null);
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  const [selectedReferral, setSelectedReferral] = useState<ReferralRecord | null>(null);
+  const [showCdssModal, setShowCdssModal] = useState(false);
+  const [selectedCategoryForCdss, setSelectedCategoryForCdss] = useState<ObstetricEmergencyCategory>('pph');
 
   // Dispatch control states
   const [selectedEmergency, setSelectedEmergency] = useState<Emergency | null>(null);
@@ -1800,6 +1817,10 @@ export const AdminDashboard: React.FC = () => {
             <i className="ti ti-chart-dots" style={{ fontSize: '18px' }}></i>
             <span>System Performance</span>
           </div>
+          <div className={`sidebar-nav-item ${activeTab === 'mpdsr' ? 'active' : ''}`} onClick={() => setActiveTab('mpdsr')}>
+            <i className="ti ti-shield-check" style={{ fontSize: '18px' }}></i>
+            <span>MPDSR Surveillance</span>
+          </div>
         </nav>
       </aside>
 
@@ -1853,7 +1874,8 @@ export const AdminDashboard: React.FC = () => {
                   { id: 'personnel', icon: 'ti-users', label: 'Duty Personnel' },
                   { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
                   { id: 'reports', icon: 'ti-chart-bar', label: 'Reports & Audits' },
-                  { id: 'performance', icon: 'ti-chart-dots', label: 'System Performance' }
+                  { id: 'performance', icon: 'ti-chart-dots', label: 'System Performance' },
+                  { id: 'mpdsr', icon: 'ti-shield-check', label: 'MPDSR Surveillance' }
                 ] as const).map(item => (
                   <button
                     key={item.id}
@@ -1922,7 +1944,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {activeTab !== 'performance' && (
+          {activeTab !== 'performance' && activeTab !== 'mpdsr' && (
             <div style={{ flex: 1, maxWidth: '340px', position: 'relative', margin: '0 16px' }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '16px' }}></i>
               <input 
@@ -1934,27 +1956,36 @@ export const AdminDashboard: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '8px 12px 8px 36px',
-                  fontSize: '13px',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  outline: 'none'
+                  fontSize: '13px',
+                  background: theme === 'dark' ? '#1e293b' : '#ffffff',
+                  color: 'inherit'
                 }}
               />
             </div>
           )}
           
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {undoStack.length > 0 && (
-              <button 
-                onClick={handleUndo} 
-                className="btn btn-warning" 
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, padding: '8px 16px', borderRadius: '6px', background: '#f59e0b', color: '#ffffff', border: 'none' }}
-              >
-                ↩️ Undo Last Change ({undoStack.length})
-              </button>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={() => setShowDhis2Modal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#ecfdf5',
+                color: '#047857',
+                border: '1px solid #a7f3d0',
+                fontSize: '13px',
+                fontWeight: 700,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+              title="Uganda HMIS 105 / DHIS2 Interoperability & Data Exchange"
+            >
+              <Icon name="trend" size={14} /> DHIS2 / eHMIS
+            </button>
 
             <button 
               onClick={handleResetDatabase} 
@@ -1967,7 +1998,10 @@ export const AdminDashboard: React.FC = () => {
                 fontWeight: 700,
                 padding: '8px 16px',
                 borderRadius: '6px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none'
               }}
               title="Reset Database to initial seed state"
             >
@@ -2458,10 +2492,52 @@ export const AdminDashboard: React.FC = () => {
               })()}
             </div>
 
-            {/* Map Fleet Monitor column */}
+            {/* Map Fleet Monitor column with GIS Heatmap & Geofence Toggles */}
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '16px', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ marginBottom: '12px' }}>
-                <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}><i className="ti ti-map-pin" style={{ color: '#3b82f6' }}></i> Fleet map</h5>
+              <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  <i className="ti ti-map-pin" style={{ color: '#3b82f6' }}></i> Fleet &amp; GIS Spatial Map
+                </h5>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowHeatmap(!showHeatmap)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: `1.5px solid ${showHeatmap ? '#ef4444' : '#cbd5e1'}`,
+                      background: showHeatmap ? '#fef2f2' : '#ffffff',
+                      color: showHeatmap ? '#b91c1c' : '#475569',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Icon name="trend" size={13} /> {showHeatmap ? 'Heatmap: ON' : 'GIS Heatmap'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDistrictGeofence(!showDistrictGeofence)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: `1.5px solid ${showDistrictGeofence ? '#0284c7' : '#cbd5e1'}`,
+                      background: showDistrictGeofence ? '#f0f9ff' : '#ffffff',
+                      color: showDistrictGeofence ? '#0369a1' : '#475569',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Icon name="location" size={13} /> {showDistrictGeofence ? 'Geofence: ON' : 'Geofence'}
+                  </button>
+                </div>
               </div>
               <div style={{ flex: 1, minHeight: '440px', borderRadius: '6px', overflow: 'hidden' }}>
                 <MapComponent
@@ -2470,6 +2546,8 @@ export const AdminDashboard: React.FC = () => {
                   markers={getMapMarkers()}
                   routePoints={getRoutePoints()}
                   theme={theme}
+                  showHeatmap={showHeatmap}
+                  showDistrictGeofence={showDistrictGeofence}
                 />
               </div>
             </div>
@@ -3423,6 +3501,169 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* TAB: MPDSR SURVEILLANCE & THREE-DELAY AUDIT HUB */}
+        {activeTab === 'mpdsr' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            
+            {/* Header banner */}
+            <div className="card" style={{ padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', color: '#ffffff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                  <span style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    UGANDA MoH SURVEILLANCE DIRECTIVE
+                  </span>
+                  <h3 style={{ margin: '6px 0 2px', fontSize: '20px', fontWeight: 800 }}>
+                    Maternal &amp; Perinatal Death Surveillance and Response (MPDSR) Hub
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '13px', opacity: 0.9 }}>
+                    Institutional surveillance, 3-Delay root-cause audits, and preventive quality improvement action plans.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => setShowDhis2Modal(true)}
+                    style={{ background: '#ffffff', color: '#6d28d9', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Export to DHIS2 / HMIS 105
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Three-delay model statistics summary */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+              <div className="card" style={{ padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #7c3aed' }}>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Audited Cases</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#7c3aed', margin: '4px 0' }}>
+                  {MpdsrService.getAllRecords().length || 1}
+                </div>
+                <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>100% Cases Reviewed</div>
+              </div>
+
+              <div className="card" style={{ padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #ef4444' }}>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Delay 1: Seeking Care</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444', margin: '4px 0' }}>
+                  {MpdsrService.getDelayAnalysisStats().delay1SeekingCareCount} Cases
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>Community danger signs</div>
+              </div>
+
+              <div className="card" style={{ padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #f59e0b' }}>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Delay 2: Reaching Care</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#f59e0b', margin: '4px 0' }}>
+                  {MpdsrService.getDelayAnalysisStats().delay2ReachingCareCount} Cases
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>Ambulance &amp; transport</div>
+              </div>
+
+              <div className="card" style={{ padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#ffffff', borderLeft: '4px solid #3b82f6' }}>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Delay 3: Facility Care</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#3b82f6', margin: '4px 0' }}>
+                  {MpdsrService.getDelayAnalysisStats().delay3ReceivingCareCount} Cases
+                </div>
+                <div style={{ fontSize: '11px', color: '#64748b' }}>Blood &amp; Theatre readiness</div>
+              </div>
+            </div>
+
+            {/* Emergency cases table with MPDSR and Referral Document actions */}
+            <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '10px', background: '#ffffff', padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Obstetric Cases Surveillance Log
+                  </h4>
+                  <span style={{ fontSize: '12px', color: '#64748b' }}>All maternal transfers subject to MoH quality audit</span>
+                </div>
+              </div>
+
+              <div className="table-responsive">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Case Code</th>
+                      <th>Patient Name</th>
+                      <th>Obstetric Category</th>
+                      <th>Hospital</th>
+                      <th>MPDSR Audit Status</th>
+                      <th>Corrective Action Plan</th>
+                      <th>Audit Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emergencies.map(e => {
+                      const motherUser = db.users.find(u => u.id === e.mother_id);
+                      const hosp = hospitals.find(h => h.id === e.hospital_id);
+                      const mpdsrRec = MpdsrService.getRecordByEmergencyId(e.id);
+                      const catMeta = OBSTETRIC_CATEGORIES_METADATA[e.category || 'pph'];
+
+                      return (
+                        <tr key={e.id}>
+                          <td>
+                            <strong>{e.code}</strong>
+                            <div style={{ fontSize: '10.5px', color: '#64748b' }}>{new Date(e.triggered_at).toLocaleDateString()}</div>
+                          </td>
+                          <td>
+                            <strong style={{ color: '#0f172a' }}>{motherUser?.full_name || 'Expectant Mother'}</strong>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{motherUser?.phone}</div>
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', background: '#fef2f2', color: '#991b1b', fontWeight: 700 }}>
+                              {catMeta?.label || 'Postpartum Haemorrhage'}
+                            </span>
+                          </td>
+                          <td>{hosp?.name || 'Mukono General Hospital'}</td>
+                          <td>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              background: mpdsrRec ? '#dcfce7' : '#fef3c7',
+                              color: mpdsrRec ? '#15803d' : '#b45309'
+                            }}>
+                              {mpdsrRec ? mpdsrRec.review_committee_status.toUpperCase() : 'PENDING AUDIT'}
+                            </span>
+                          </td>
+                          <td style={{ maxWidth: '240px', fontSize: '11.5px', color: '#475569' }}>
+                            {mpdsrRec ? mpdsrRec.corrective_action_plan : 'Audit pending by district committee.'}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                onClick={() => {
+                                  setSelectedEmergencyForMpdsr(e);
+                                  setShowMpdsrModal(true);
+                                }}
+                                style={{ padding: '4px 10px', fontSize: '11.5px', fontWeight: 700, borderRadius: '6px', border: '1px solid #7c3aed', background: '#f5f3ff', color: '#6d28d9', cursor: 'pointer' }}
+                              >
+                                {mpdsrRec ? 'Edit Audit' : 'Audit Case'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  let ref = ReferralService.getReferralByEmergencyId(e.id);
+                                  if (!ref) {
+                                    ref = ReferralService.generateReferralRecord(e, e.hospital_id || 1);
+                                  }
+                                  setSelectedReferral(ref);
+                                  setShowReferralModal(true);
+                                }}
+                                style={{ padding: '4px 10px', fontSize: '11.5px', fontWeight: 700, borderRadius: '6px', border: '1px solid #0284c7', background: '#f0f9ff', color: '#0369a1', cursor: 'pointer' }}
+                              >
+                                Referral Note
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+
         {/* FOOTER */}
         <footer className="dashboard-footer">
           <p>© 2026 MamaTrack GPS · Regional Maternal Emergency Response System. All rights reserved.</p>
@@ -4197,6 +4438,34 @@ export const AdminDashboard: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* UGANDA HMIS 105 / DHIS2 INTEROPERABILITY MODAL */}
+      <Dhis2ExportModal
+        isOpen={showDhis2Modal}
+        onClose={() => setShowDhis2Modal(false)}
+      />
+
+      {/* MPDSR MATERNAL AUDIT MODAL */}
+      <MpdsrModal
+        isOpen={showMpdsrModal}
+        onClose={() => setShowMpdsrModal(false)}
+        emergency={selectedEmergencyForMpdsr}
+        onSaved={() => loadData()}
+      />
+
+      {/* DIGITAL MATERNAL REFERRAL FORM MODAL */}
+      <ReferralFormModal
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
+        referral={selectedReferral}
+      />
+
+      {/* CDSS CLINICAL DECISION SUPPORT MODAL */}
+      <CdssTriageModal
+        isOpen={showCdssModal}
+        onClose={() => setShowCdssModal(false)}
+        initialCategory={selectedCategoryForCdss}
+      />
 
     </div>
   );

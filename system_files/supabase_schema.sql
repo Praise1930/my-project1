@@ -1,5 +1,5 @@
 -- ============================================================
--- MamaTrack GPS — Supabase Schema
+-- MamaTrack GPS — Supabase Schema (Uganda MoH Extended)
 --
 -- HOW TO RUN:
 --   1. Open https://supabase.com and select your project
@@ -8,14 +8,6 @@
 --   4. Paste this ENTIRE file and click "Run"
 --
 -- Safe to run more than once (uses IF NOT EXISTS / DROP POLICY IF EXISTS).
---
--- Column names deliberately match the TypeScript interfaces in
--- src/services/db.ts one-for-one, because SyncService upserts whole
--- records straight from localStorage into these tables.
---
--- Foreign keys are intentionally omitted: realtime rows arrive in
--- arbitrary order (an emergency can land before the mother row it
--- references) and FK constraints would reject those writes.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS public.users (
@@ -40,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.hospitals (
   longitude DOUBLE PRECISION,
   address TEXT,
   sub_county TEXT,
+  district TEXT DEFAULT 'Mukono',
   phone TEXT,
   email TEXT,
   total_beds INT,
@@ -50,7 +43,8 @@ CREATE TABLE IF NOT EXISTS public.hospitals (
   has_surgical_capacity BOOLEAN DEFAULT false,
   has_ambulance BOOLEAN DEFAULT false,
   operating_hours TEXT,
-  facility_type TEXT
+  facility_type TEXT,
+  nicu_capacity BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS public.vehicles (
@@ -84,12 +78,18 @@ CREATE TABLE IF NOT EXISTS public.mothers (
   next_of_kin_relationship TEXT,
   village TEXT,
   sub_county TEXT,
-  district TEXT,
+  district TEXT DEFAULT 'Mukono',
   vht_name TEXT,
   vht_phone TEXT,
   home_latitude DOUBLE PRECISION,
   home_longitude DOUBLE PRECISION,
-  preferred_hospital_id BIGINT
+  preferred_hospital_id BIGINT,
+  consent_given BOOLEAN DEFAULT true,
+  consent_timestamp TIMESTAMPTZ,
+  risk_factors JSONB,
+  previous_csection BOOLEAN DEFAULT false,
+  pph_history BOOLEAN DEFAULT false,
+  anc_visits_count INT DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS public.doctors (
@@ -126,6 +126,9 @@ CREATE TABLE IF NOT EXISTS public.emergencies (
   longitude DOUBLE PRECISION,
   status TEXT,
   severity TEXT,
+  category TEXT,
+  vital_signs JSONB,
+  required_intervention TEXT,
   notes TEXT,
   hospital_id BIGINT,
   driver_id BIGINT,
@@ -134,13 +137,16 @@ CREATE TABLE IF NOT EXISTS public.emergencies (
   cancel_reason TEXT,
   eta_minutes INT,
   dispatched_by BIGINT,
+  reporting_role TEXT,
+  reporting_name TEXT,
   triggered_at TIMESTAMPTZ,
   dispatched_at TIMESTAMPTZ,
   picked_up_at TIMESTAMPTZ,
   arrived_at TIMESTAMPTZ,
   delivered_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
-  cancelled_at TIMESTAMPTZ
+  cancelled_at TIMESTAMPTZ,
+  delay_intervals JSONB
 );
 
 CREATE TABLE IF NOT EXISTS public.emergency_logs (
@@ -174,6 +180,8 @@ CREATE TABLE IF NOT EXISTS public.vitals (
   diastolic INT,
   glucose DOUBLE PRECISION,
   kick_count INT,
+  pulse INT,
+  temperature DOUBLE PRECISION,
   recorded_by TEXT
 );
 
@@ -189,41 +197,81 @@ CREATE TABLE IF NOT EXISTS public.vht_visits (
   complications_observed TEXT
 );
 
+CREATE TABLE IF NOT EXISTS public.mpdsr_records (
+  id BIGINT PRIMARY KEY,
+  emergency_id BIGINT,
+  mother_id BIGINT,
+  case_classification TEXT,
+  primary_cause TEXT,
+  contributing_clinical_factors JSONB,
+  delay_1_seeking_care JSONB,
+  delay_2_reaching_care JSONB,
+  delay_3_receiving_care JSONB,
+  avoidable_factors JSONB,
+  review_committee_status TEXT,
+  corrective_action_plan TEXT,
+  responsible_facility TEXT,
+  responsible_person TEXT,
+  audit_date TIMESTAMPTZ,
+  follow_up_date DATE
+);
+
+CREATE TABLE IF NOT EXISTS public.referral_records (
+  id BIGINT PRIMARY KEY,
+  referral_code TEXT,
+  emergency_id BIGINT,
+  mother_id BIGINT,
+  referring_facility_name TEXT,
+  referring_clinician_name TEXT,
+  referring_clinician_contact TEXT,
+  receiving_facility_id BIGINT,
+  receiving_facility_name TEXT,
+  receiving_clinician_name TEXT,
+  reason_for_referral TEXT,
+  clinical_summary TEXT,
+  obstetric_history JSONB,
+  vitals_at_referral JSONB,
+  pre_referral_treatments JSONB,
+  medications_given JSONB,
+  ambulance_plate TEXT,
+  driver_name TEXT,
+  departure_time TIMESTAMPTZ,
+  arrival_time TIMESTAMPTZ,
+  handover_notes TEXT,
+  final_outcome TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
--- Realtime — this is what makes a phone SOS appear on the admin
--- desktop instantly. Without it, changes only show after a reload.
+-- Realtime publications
 -- ============================================================
 DO $$
 DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'users','hospitals','vehicles','mothers','doctors','drivers',
-    'emergencies','emergency_logs','notifications','vitals','vht_visits'
+    'emergencies','emergency_logs','notifications','vitals','vht_visits',
+    'mpdsr_records','referral_records'
   ]
   LOOP
     BEGIN
       EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I;', t);
     EXCEPTION WHEN duplicate_object THEN
-      -- already published, nothing to do
       NULL;
     END;
   END LOOP;
 END $$;
 
 -- ============================================================
--- Row Level Security
---
--- WARNING: these policies let the public anon key read and write
--- every table. Acceptable for a prototype demo. A production system
--- holding real patient data must replace them with per-role policies
--- tied to authenticated users.
+-- Row Level Security (RLS)
 -- ============================================================
 DO $$
 DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'users','hospitals','vehicles','mothers','doctors','drivers',
-    'emergencies','emergency_logs','notifications','vitals','vht_visits'
+    'emergencies','emergency_logs','notifications','vitals','vht_visits',
+    'mpdsr_records','referral_records'
   ]
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', t);
@@ -233,7 +281,3 @@ BEGIN
     );
   END LOOP;
 END $$;
-
--- Done. Reload the app; the console should show
---   "SyncService: realtime channel live — cross-device sync active."
--- with no "Could not find the table" warnings.
