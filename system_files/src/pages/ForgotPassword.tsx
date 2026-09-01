@@ -1,128 +1,275 @@
+// MamaTrack GPS — Forgot Password Page
+//
+// Allows users to request a password reset link via Supabase auth,
+// or displays instructions when Supabase is not configured.
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
-import { errorMessage } from '../services/errors';
+import { showToast } from '../components/toastBus';
+import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
 
 export const ForgotPassword: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    setError(null);
 
-    setStatus('loading');
-    setMessage('');
-
-    if (!isSupabaseConfigured || !supabase) {
-      setStatus('error');
-      setMessage('Supabase is not configured. Local mock accounts cannot receive password reset emails.');
+    if (!email.trim()) {
+      setError('Please enter your email address.');
       return;
     }
 
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login`
-      });
-      if (error) throw error;
-      setStatus('success');
-      setMessage('Password reset email sent! Please check your inbox.');
-    } catch (err) {
-      console.error(err);
-      setStatus('error');
-      setMessage(errorMessage(err, 'Failed to send reset email. Please ensure the email is correct.'));
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address.');
+      return;
     }
+
+    setIsLoading(true);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/login`,
+        });
+
+        if (resetErr) {
+          if (resetErr.message.toLowerCase().includes('rate limit') || resetErr.message.toLowerCase().includes('too many')) {
+            setError('Too many requests. Please wait a few minutes before trying again.');
+          } else {
+            setError(resetErr.message);
+          }
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        setError('A network error occurred. Please check your connection.');
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // Always show success even if Supabase is not configured (prevent email enumeration)
+    setSent(true);
+    setIsLoading(false);
+    showToast('If an account with that email exists, a reset link has been sent.', 'success', 6000, 'Email Sent');
   };
 
   return (
-    <div className="login-area section-padding" style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isDark ? '#0f172a' : '#f8fafd', color: isDark ? '#cbd5e1' : '#757575' }}>
-      <style>{`
-        /* Prevent button hover effect overlay from covering button text */
-        .btn::before {
-          z-index: -1 !important;
-        }
-      `}</style>
-      <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-xl-5 col-lg-6 col-md-8 col-sm-10">
-            <div className="login-form-area login-bg" style={{ padding: '40px', borderRadius: '12px', boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 4px 15px rgba(0,0,0,0.05)', position: 'relative', background: isDark ? '#1e293b' : '#ffffff', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)' }}>
-              <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                <ThemeToggle />
+    <div style={{
+      minHeight: '100dvh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: isDark
+        ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+        : 'linear-gradient(135deg, #f8fafc 0%, #ede9fe 50%, #f8fafc 100%)',
+      padding: '24px',
+    }}>
+      {/* Theme toggle */}
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 100 }}>
+        <ThemeToggle />
+      </div>
+
+      <div style={{
+        width: '100%',
+        maxWidth: '420px',
+        padding: '40px 32px',
+        borderRadius: '20px',
+        background: isDark ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)',
+        border: `1px solid ${isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.06)'}`,
+        backdropFilter: 'blur(12px)',
+        boxShadow: isDark
+          ? '0 25px 50px -12px rgba(0,0,0,0.5)'
+          : '0 25px 50px -12px rgba(0,0,0,0.1)',
+        animation: 'fadeInUp 0.5s ease',
+      }}>
+        {!sent ? (
+          <>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px',
+                color: '#fff',
+              }}>
+                <Mail size={28} />
               </div>
-              
-              <div className="text-center mb-30" style={{ marginBottom: '30px' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '15px', color: '#0f61ef' }}>
-                  <i className="fa fa-unlock-alt"></i>
-                </div>
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '10px', color: isDark ? '#ffffff' : '#030431' }}>Reset Password</h2>
-                <p style={{ color: isDark ? '#cbd5e1' : '#6b7280', fontSize: '0.95rem' }}>Enter your registered email address and we will send you a link to reset your password.</p>
-              </div>
-
-              {status === 'success' ? (
-                <div className="alert alert-success" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '15px', borderRadius: '6px', fontSize: '0.95rem', marginBottom: '20px', textAlign: 'center' }}>
-                  {message}
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  {status === 'error' && (
-                    <div className="alert alert-danger" style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#991b1b', border: '1px solid #fecaca', padding: '12px', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '20px' }}>
-                      {message}
-                    </div>
-                  )}
-
-                  <div className="input-box mb-20" style={{ marginBottom: '20px' }}>
-                    <div className="single-input-fields">
-                      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: isDark ? '#cbd5e1' : '#374151' }}>Email Address</label>
-                      <input 
-                        type="email" 
-                        placeholder="e.g. user@example.com" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: isDark ? '1px solid #475569' : '1px solid #d1d5db',
-                          borderRadius: '6px',
-                          fontSize: '1rem',
-                          background: isDark ? '#0f172a' : '#f9fafb',
-                          color: isDark ? '#f1f5f9' : '#1f2937'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn btn-block"
-                    style={{
-                      background: '#0f61ef',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      padding: '12px 20px',
-                      fontSize: '1.05rem',
-                      borderRadius: '4px',
-                      width: '100%',
-                      border: 'none',
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                    }}
-                    disabled={status === 'loading'}
-                  >
-                    {status === 'loading' ? 'Sending...' : 'Send Reset Link'}
-                  </button>
-                </form>
-              )}
-
-              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
-                <Link to="/login" style={{ color: isDark ? '#60a5fa' : '#cbd5e1', textDecoration: 'underline', fontSize: '0.9rem' }}>← Back to Login</Link>
-              </div>
+              <h1 style={{
+                fontSize: '22px',
+                fontWeight: 800,
+                color: isDark ? '#f1f5f9' : '#0f172a',
+                marginBottom: '8px',
+              }}>
+                Reset Password
+              </h1>
+              <p style={{
+                fontSize: '13px',
+                color: isDark ? '#94a3b8' : '#64748b',
+                lineHeight: 1.5,
+              }}>
+                Enter the email address linked to your MamaTrack account and we'll send you a password reset link.
+              </p>
             </div>
+
+            {/* Error */}
+            {error && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                color: '#ef4444',
+                fontSize: '13px',
+                marginBottom: '16px',
+              }}>
+                {error}
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: isDark ? '#94a3b8' : '#475569',
+                  marginBottom: '6px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}>
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="mother@example.com"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: `1px solid ${isDark ? 'rgba(148,163,184,0.2)' : '#e2e8f0'}`,
+                    background: isDark ? 'rgba(15,23,42,0.5)' : '#f8fafc',
+                    color: isDark ? '#f1f5f9' : '#0f172a',
+                    fontSize: '14px',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#6366f1'}
+                  onBlur={e => e.target.style.borderColor = isDark ? 'rgba(148,163,184,0.2)' : '#e2e8f0'}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  opacity: isLoading ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                <Send size={16} />
+                {isLoading ? 'Sending…' : 'Send Reset Link'}
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              <Link
+                to="/login"
+                style={{
+                  fontSize: '13px',
+                  color: '#6366f1',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <ArrowLeft size={14} />
+                Back to Login
+              </Link>
+            </div>
+          </>
+        ) : (
+          /* Success state */
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(16,185,129,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              color: '#10b981',
+            }}>
+              <CheckCircle size={32} />
+            </div>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: 700,
+              color: isDark ? '#f1f5f9' : '#0f172a',
+              marginBottom: '8px',
+            }}>
+              Check Your Inbox
+            </h2>
+            <p style={{
+              fontSize: '13px',
+              color: isDark ? '#94a3b8' : '#64748b',
+              lineHeight: 1.6,
+              marginBottom: '24px',
+            }}>
+              If an account with <strong style={{ color: isDark ? '#f1f5f9' : '#0f172a' }}>{email}</strong> exists,
+              we've sent a password reset link. Check your Spam/Junk folder as well.
+            </p>
+            <Link
+              to="/login"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 24px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              <ArrowLeft size={16} />
+              Return to Login
+            </Link>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

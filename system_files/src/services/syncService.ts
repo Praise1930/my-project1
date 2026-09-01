@@ -235,6 +235,26 @@ export const SyncService = {
     }
   },
 
+  /** Push a record deletion up to Supabase. */
+  async syncLocalDelete(storeKey: string, id: string | number) {
+    const table = SYNCED_TABLES[storeKey];
+    if (!table) return;
+
+    const stringId = String(id);
+    if (!isSupabaseConfigured || !supabase || !navigator.onLine) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from(table).delete().eq('id', id);
+      if (error) {
+        console.warn(`SyncService: delete "${table}/${stringId}" failed:`, error.message);
+      }
+    } catch (err) {
+      console.warn(`SyncService: delete "${table}/${stringId}" threw:`, errorMessage(err));
+    }
+  },
+
   /** Hold a change locally until connectivity returns. */
   enqueueOfflineChange(storeKey: string, id: string, data: SyncedRow) {
     const queue = readQueue();

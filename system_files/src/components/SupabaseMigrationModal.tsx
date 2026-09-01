@@ -1,279 +1,249 @@
-// MamaTrack GPS — Supabase Connection & Data Migration UI Modal
-import React, { useState, useEffect } from 'react';
-import { isSupabaseConfigured, testSupabaseConnection, SupabaseConnectionResult } from '../services/supabase';
-import { DataMigrationService, FullMigrationResult, SUPABASE_SQL_SCHEMA } from '../services/dataMigrationService';
-import { errorMessage } from '../services/errors';
-import { Database, CheckCircle, AlertTriangle, RefreshCw, Copy, Check, Server, ArrowRight, ShieldCheck, FileCode } from 'lucide-react';
-import { Icon } from '../components/Icon';
+// MamaTrack GPS — Supabase Data Migration Modal
+//
+// Shown from AdminDashboard to allow the admin to trigger a migration
+// of the in-memory local database to the connected Supabase instance.
 
-interface Props {
+import React, { useState } from 'react';
+import { showToast } from './toastBus';
+import { supabase, isSupabaseConfigured, testSupabaseConnection } from '../services/supabase';
+import { db } from '../services/db';
+
+interface SupabaseMigrationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const SupabaseMigrationModal: React.FC<Props> = ({ isOpen, onClose }) => {
-  const [connectionStatus, setConnectionStatus] = useState<SupabaseConnectionResult | null>(null);
-  const [testing, setTesting] = useState(false);
-  const [migrating, setMigrating] = useState(false);
-  const [migrationResult, setMigrationResult] = useState<FullMigrationResult | null>(null);
-  const [copiedSchema, setCopiedSchema] = useState(false);
+type MigrationStep = 'idle' | 'testing' | 'migrating' | 'done' | 'error';
 
-  useEffect(() => {
-    if (isOpen) {
-      handleTestConnection();
-    }
-  }, [isOpen]);
-
-  const handleTestConnection = async () => {
-    setTesting(true);
-    try {
-      const result = await testSupabaseConnection();
-      setConnectionStatus(result);
-    } catch (err) {
-      setConnectionStatus({
-        success: false,
-        message: `Connection test error: ${errorMessage(err)}`
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const handleRunMigration = async () => {
-    setMigrating(true);
-    setMigrationResult(null);
-    try {
-      const res = await DataMigrationService.runMigration();
-      setMigrationResult(res);
-    } catch (err) {
-      setMigrationResult({
-        overallSuccess: false,
-        timestamp: new Date().toISOString(),
-        connectionStatus: 'Failed',
-        summaries: [],
-        totalRecordsTransferred: 0,
-        verificationMessage: `Migration error: ${errorMessage(err)}`
-      });
-    } finally {
-      setMigrating(false);
-    }
-  };
-
-  const copySchemaToClipboard = () => {
-    navigator.clipboard.writeText(SUPABASE_SQL_SCHEMA);
-    setCopiedSchema(true);
-    setTimeout(() => setCopiedSchema(false), 2500);
-  };
+export const SupabaseMigrationModal: React.FC<SupabaseMigrationModalProps> = ({ isOpen, onClose }) => {
+  const [step, setStep] = useState<MigrationStep>('idle');
+  const [log, setLog] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
 
   if (!isOpen) return null;
 
+  const appendLog = (msg: string) => setLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+
+  const handleTestConnection = async () => {
+    setStep('testing');
+    appendLog('Testing Supabase connection…');
+    const result = await testSupabaseConnection();
+    appendLog(result.message);
+    if (result.success) {
+      appendLog('✅ Connection OK. Ready to migrate.');
+      setStep('idle');
+    } else {
+      appendLog('❌ Connection failed. Check your .env configuration.');
+      setStep('error');
+    }
+  };
+
+  const handleMigrate = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      appendLog('❌ Supabase is not configured.');
+      setStep('error');
+      return;
+    }
+
+    setStep('migrating');
+    setProgress(0);
+
+    try {
+      const tables = [
+        { name: 'users', data: db.users },
+        { name: 'mothers', data: db.mothers },
+        { name: 'hospitals', data: db.hospitals },
+        { name: 'doctors', data: db.doctors },
+        { name: 'drivers', data: db.drivers },
+      ];
+
+      for (let i = 0; i < tables.length; i++) {
+        const t = tables[i];
+        appendLog(`Uploading ${t.data.length} rows to "${t.name}"…`);
+        if (t.data.length > 0) {
+          const { error } = await supabase.from(t.name).upsert(t.data as any, { onConflict: 'id' });
+          if (error) {
+            appendLog(`⚠ ${t.name}: ${error.message}`);
+          } else {
+            appendLog(`✅ ${t.name}: ${t.data.length} rows synced.`);
+          }
+        } else {
+          appendLog(`⏭ ${t.name}: No data to upload.`);
+        }
+        setProgress(Math.round(((i + 1) / tables.length) * 100));
+      }
+
+      appendLog('🎉 Migration complete.');
+      setStep('done');
+      showToast('Supabase migration completed successfully.', 'success');
+    } catch (err) {
+      appendLog(`❌ Migration error: ${err instanceof Error ? err.message : String(err)}`);
+      setStep('error');
+    }
+  };
+
+  const handleClose = () => {
+    setStep('idle');
+    setLog([]);
+    setProgress(0);
+    onClose();
+  };
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(15, 23, 42, 0.75)',
-      backdropFilter: 'blur(6px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: '#1e293b',
-        color: '#f8fafc',
-        borderRadius: '16px',
-        maxWidth: '850px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        border: '1px solid #334155',
-        padding: '28px'
-      }}>
-        {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-[#334155]', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #334155', paddingBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', backgroundColor: '#3b82f620', borderRadius: '12px', color: '#60a5fa' }}>
-              <Database size={28} />
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>Supabase Connection & Data Migration</h2>
-              <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Test Supabase database connection & upload local data</p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            style={{ backgroundColor: '#334155', color: '#94a3b8', border: 'none', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', fontSize: '16px' }}
-          ><Icon name="close" size={18} /></button>
+    <div
+      onClick={handleClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(6px)',
+        animation: 'fadeIn 0.2s ease',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '95%',
+          maxWidth: '560px',
+          maxHeight: '80vh',
+          background: '#1e293b',
+          borderRadius: '16px',
+          border: '1px solid rgba(148,163,184,0.15)',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid rgba(148,163,184,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <h2 style={{ color: '#f1f5f9', fontSize: '18px', fontWeight: 700 }}>
+            Supabase Data Migration
+          </h2>
+          <button
+            onClick={handleClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              fontSize: '22px',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
         </div>
 
-        {/* 1. Connection Status Card */}
-        <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid #1e293b' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Server size={18} color="#38bdf8" /> Supabase Connection Status
-            </h3>
-            <button
-              onClick={handleTestConnection}
-              disabled={testing}
-              style={{
-                backgroundColor: '#3b82f6',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '6px 14px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <RefreshCw size={14} className={testing ? 'spin' : ''} />
-              {testing ? 'Testing...' : 'Test Connection'}
-            </button>
-          </div>
-
-          {connectionStatus && (
+        {/* Body */}
+        <div style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
+          {!isSupabaseConfigured && (
             <div style={{
-              backgroundColor: connectionStatus.success ? '#065f4620' : '#991b1b20',
-              border: `1px solid ${connectionStatus.success ? '#10b98150' : '#ef444450'}`,
-              borderRadius: '10px',
-              padding: '14px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px'
+              padding: '12px 16px',
+              borderRadius: '8px',
+              background: 'rgba(245,158,11,0.12)',
+              border: '1px solid rgba(245,158,11,0.3)',
+              color: '#fbbf24',
+              fontSize: '13px',
+              marginBottom: '16px',
             }}>
-              {connectionStatus.success ? <CheckCircle size={20} color="#34d399" /> : <AlertTriangle size={20} color="#f87171" />}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, color: connectionStatus.success ? '#34d399' : '#f87171', fontSize: '14px' }}>
-                  {connectionStatus.success ? 'Supabase Ready / Connected' : 'Connection Pending / Required'}
-                </div>
-                <div style={{ fontSize: '13px', color: '#cbd5e1', marginTop: '4px' }}>
-                  {connectionStatus.message}
-                </div>
-                {connectionStatus.url && (
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', fontFamily: 'monospace' }}>
-                    Target URL: {connectionStatus.url}
-                  </div>
-                )}
-              </div>
+              Supabase is not configured. Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in your <code>.env</code> file.
             </div>
           )}
-        </div>
 
-        {/* 2. SQL DDL Schema Tool */}
-        <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', padding: '20px', marginBottom: '24px', border: '1px solid #1e293b' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileCode size={18} color="#a78bfa" /> Supabase Database DDL Schema
-            </h3>
-            <button
-              onClick={copySchemaToClipboard}
-              style={{
-                backgroundColor: copiedSchema ? '#10b981' : '#475569',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '6px 14px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              {copiedSchema ? <Check size={14} /> : <Copy size={14} />}
-              {copiedSchema ? 'Copied SQL!' : 'Copy SQL Schema'}
-            </button>
-          </div>
-          <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 10px 0' }}>
-            Paste this SQL script into your Supabase SQL Editor to automatically create required tables (`users`, `hospitals`, `vehicles`, `mothers`, `vitals`, `vht_visits`, `emergencies`).
-          </p>
-          <pre style={{
-            backgroundColor: '#020617',
-            padding: '12px',
-            borderRadius: '8px',
-            fontSize: '11px',
-            color: '#38bdf8',
-            maxHeight: '130px',
-            overflowY: 'auto',
-            border: '1px solid #1e293b',
-            fontFamily: 'Consolas, Monaco, monospace'
-          }}>
-            {SUPABASE_SQL_SCHEMA}
-          </pre>
-        </div>
-
-        {/* 3. Data Transfer Action & Verification */}
-        <div style={{ backgroundColor: '#0f172a', borderRadius: '12px', padding: '20px', border: '1px solid #1e293b' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ArrowRight size={18} color="#f43f5e" /> Local to Supabase Data Transfer
-              </h3>
-              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}>
-                Upsert all local collections into Supabase tables with data loss checks.
-              </p>
-            </div>
-            <button
-              onClick={handleRunMigration}
-              disabled={migrating || !isSupabaseConfigured}
-              style={{
-                backgroundColor: isSupabaseConfigured ? '#10b981' : '#334155',
-                color: isSupabaseConfigured ? '#fff' : '#64748b',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 18px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: isSupabaseConfigured ? 'pointer' : 'not-allowed',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <ShieldCheck size={16} />
-              {migrating ? 'Transferring Data...' : 'Start Data Transfer'}
-            </button>
-          </div>
-
-          {migrationResult && (
-            <div style={{ marginTop: '16px' }}>
+          {/* Progress bar */}
+          {step === 'migrating' && (
+            <div style={{ marginBottom: '16px' }}>
               <div style={{
-                backgroundColor: migrationResult.overallSuccess ? '#065f4620' : '#991b1b20',
-                border: `1px solid ${migrationResult.overallSuccess ? '#10b981' : '#ef4444'}`,
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: migrationResult.overallSuccess ? '#34d399' : '#f87171'
+                height: '6px',
+                borderRadius: '3px',
+                background: 'rgba(148,163,184,0.15)',
+                overflow: 'hidden',
               }}>
-                {migrationResult.verificationMessage}
+                <div style={{
+                  width: `${progress}%`,
+                  height: '100%',
+                  borderRadius: '3px',
+                  background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
+                  transition: 'width 0.3s ease',
+                }} />
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
-                {migrationResult.summaries.map(item => (
-                  <div key={item.collectionName} style={{
-                    backgroundColor: '#1e293b',
-                    borderRadius: '8px',
-                    padding: '10px',
-                    border: '1px solid #334155'
-                  }}>
-                    <div style={{ fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{item.collectionName}</div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, marginTop: '4px', color: item.status === 'SUCCESS' ? '#34d399' : '#f87171' }}>
-                      {item.transferredCount} / {item.sourceCount} Transferred
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>{progress}% complete</p>
             </div>
           )}
+
+          {/* Log area */}
+          {log.length > 0 && (
+            <pre style={{
+              background: '#0f172a',
+              padding: '12px',
+              borderRadius: '8px',
+              color: '#94a3b8',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              lineHeight: 1.6,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}>
+              {log.join('\n')}
+            </pre>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid rgba(148,163,184,0.1)',
+          display: 'flex',
+          gap: '10px',
+          justifyContent: 'flex-end',
+        }}>
+          <button
+            onClick={handleTestConnection}
+            disabled={step === 'testing' || step === 'migrating' || !isSupabaseConfigured}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '8px',
+              border: '1px solid rgba(148,163,184,0.2)',
+              background: 'rgba(148,163,184,0.08)',
+              color: '#f1f5f9',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: step === 'testing' || step === 'migrating' || !isSupabaseConfigured ? 'not-allowed' : 'pointer',
+              opacity: step === 'testing' || step === 'migrating' || !isSupabaseConfigured ? 0.5 : 1,
+            }}
+          >
+            Test Connection
+          </button>
+          <button
+            onClick={handleMigrate}
+            disabled={step === 'testing' || step === 'migrating' || step === 'done' || !isSupabaseConfigured}
+            style={{
+              padding: '8px 18px',
+              borderRadius: '8px',
+              border: 'none',
+              background: step === 'done' ? '#10b981' : '#6366f1',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: step === 'testing' || step === 'migrating' || step === 'done' || !isSupabaseConfigured ? 'not-allowed' : 'pointer',
+              opacity: step === 'testing' || step === 'migrating' || step === 'done' || !isSupabaseConfigured ? 0.5 : 1,
+            }}
+          >
+            {step === 'done' ? '✓ Done' : step === 'migrating' ? 'Migrating…' : 'Start Migration'}
+          </button>
         </div>
       </div>
     </div>

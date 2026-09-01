@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, SimulationEngine, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, MpdsrService, MpdsrRecord, Dhis2Service, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
+import { db, AuthService, EmergencyService, SimulationEngine, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -44,7 +44,7 @@ export const AdminDashboard: React.FC = () => {
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [selectedReferral, setSelectedReferral] = useState<ReferralRecord | null>(null);
   const [showCdssModal, setShowCdssModal] = useState(false);
-  const [selectedCategoryForCdss, setSelectedCategoryForCdss] = useState<ObstetricEmergencyCategory>('pph');
+  const [selectedCategoryForCdss] = useState<ObstetricEmergencyCategory>('pph');
 
   // Dispatch control states
   const [selectedEmergency, setSelectedEmergency] = useState<Emergency | null>(null);
@@ -2007,10 +2007,33 @@ export const AdminDashboard: React.FC = () => {
             >
               <RefreshCw size={13} className="reset-icon" /> Reset Database
             </button>
+            {undoStack.length > 0 && (
+              <button
+                onClick={handleUndo}
+                style={{
+                  background: 'rgba(99, 102, 241, 0.1)',
+                  color: '#6366f1',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+                title="Undo last change"
+              >
+                <Icon name="back" size={13} /> Undo
+              </button>
+            )}
             <button
               onClick={() => setShowMigrationModal(true)}
-              className="btn-reset-db"
               style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: '#10b981',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',

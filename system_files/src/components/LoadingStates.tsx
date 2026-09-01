@@ -1,390 +1,325 @@
-import React from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import { Activity, Heart, Radio, RefreshCw, Zap } from 'lucide-react';
+// MamaTrack GPS — Loading States & Skeleton Components
+//
+// Four exported loaders used across the dashboards:
+//   HeartbeatLoader    — pulsing heart icon with messaging (mother dashboard, app shell)
+//   SkeletonDashboardLoader — shimmer skeleton placeholder (admin, doctor, VHT dashboards)
+//   GlassmorphicOverlayLoader — full-screen frosted glass overlay (login)
+//   OrbitalLoader      — rotating orbital dots (driver dashboard)
 
-interface LoadingProps {
+import React from 'react';
+
+/* ─── HeartbeatLoader ────────────────────────────────────────────────────── */
+
+interface HeartbeatLoaderProps {
   message?: string;
   subtitle?: string;
 }
 
-// ============================================================================
-// OPTION 1: PULSE HEARTBEAT EMERGENCY RADAR
-// ============================================================================
-export const HeartbeatLoader: React.FC<LoadingProps> = ({
-  message = "Syncing Emergency GPS Network...",
-  subtitle = "Connecting Mukono District Dispatch Server"
-}) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+export const HeartbeatLoader: React.FC<HeartbeatLoaderProps> = ({
+  message = 'Loading…',
+  subtitle,
+}) => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    padding: '32px',
+    animation: 'fadeIn 0.4s ease',
+  }}>
+    {/* Pulsing heart SVG */}
+    <div style={{ animation: 'heartbeat 1.4s ease-in-out infinite' }}>
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+      </svg>
+    </div>
 
-  return (
+    {/* ECG shimmer line */}
     <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      textAlign: 'center'
-    }}>
-      <style>{`
-        @keyframes heartbeatPulse {
-          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
-          70% { transform: scale(1.1); box-shadow: 0 0 0 24px rgba(244, 63, 94, 0); }
-          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-        }
-        @keyframes radarSweep {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-      
-      <div style={{ position: 'relative', width: '90px', height: '90px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {/* Radar Outer Ring */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          border: '2px dashed rgba(244, 63, 94, 0.4)',
-          animation: 'radarSweep 6s linear infinite'
-        }} />
-        
-        {/* Heartbeat Pulse Core */}
-        <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #f43f5e, #e11d48)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#ffffff',
-          animation: 'heartbeatPulse 1.8s ease-in-out infinite',
-          boxShadow: '0 8px 24px rgba(244, 63, 94, 0.4)'
-        }}>
-          <Heart size={30} fill="#ffffff" />
-        </div>
-      </div>
+      width: '180px',
+      height: '3px',
+      borderRadius: '2px',
+      background: 'linear-gradient(90deg, transparent 0%, #ef4444 50%, transparent 100%)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 1.8s ease-in-out infinite',
+    }} />
 
-      <h4 style={{ margin: '0 0 6px', fontSize: '1.05rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a' }}>
-        {message}
-      </h4>
-      <p style={{ margin: 0, fontSize: '0.82rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+    <p style={{
+      color: '#f1f5f9',
+      fontSize: '15px',
+      fontWeight: 600,
+      letterSpacing: '0.02em',
+      textAlign: 'center',
+    }}>
+      {message}
+    </p>
+
+    {subtitle && (
+      <p style={{
+        color: '#94a3b8',
+        fontSize: '12px',
+        textAlign: 'center',
+        maxWidth: '280px',
+        lineHeight: 1.5,
+      }}>
         {subtitle}
       </p>
-    </div>
-  );
-};
+    )}
+  </div>
+);
 
-// ============================================================================
-// OPTION 2: ROTATING GRADIENT MEDICAL SPINNER
-// ============================================================================
-export const MedicalSpinner: React.FC<LoadingProps> = ({
-  message = "Loading Portal Data...",
-  subtitle = "Retrieving latest patient records & bed metrics"
-}) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+/* ─── SkeletonDashboardLoader ────────────────────────────────────────────── */
 
-  return (
+const SkeletonBlock: React.FC<{ width?: string; height?: string; borderRadius?: string }> = ({
+  width = '100%',
+  height = '16px',
+  borderRadius = '8px',
+}) => (
+  <div style={{
+    width,
+    height,
+    borderRadius,
+    background: 'linear-gradient(90deg, rgba(148,163,184,0.1) 25%, rgba(148,163,184,0.2) 50%, rgba(148,163,184,0.1) 75%)',
+    backgroundSize: '400% 100%',
+    animation: 'shimmer 1.6s ease-in-out infinite',
+  }} />
+);
+
+export const SkeletonDashboardLoader: React.FC = () => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100dvh',
+    background: '#0f172a',
+    animation: 'fadeIn 0.3s ease',
+  }}>
+    {/* Top bar skeleton */}
     <div style={{
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      textAlign: 'center'
+      justifyContent: 'space-between',
+      padding: '16px 24px',
+      borderBottom: '1px solid rgba(148,163,184,0.1)',
     }}>
-      <style>{`
-        @keyframes gradientSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-      
-      <div style={{ position: 'relative', width: '70px', height: '70px', marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          padding: '4px',
-          background: 'conic-gradient(from 0deg, #0f61ef, #10b981, #f59e0b, #0f61ef)',
-          WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), #fff 0)',
-          animation: 'gradientSpin 1.2s linear infinite'
-        }} />
-        <div style={{ color: isDark ? '#60a5fa' : '#0f61ef' }}>
-          <Activity size={26} />
-        </div>
+      <SkeletonBlock width="140px" height="28px" />
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <SkeletonBlock width="32px" height="32px" borderRadius="50%" />
+        <SkeletonBlock width="32px" height="32px" borderRadius="50%" />
       </div>
-
-      <h4 style={{ margin: '0 0 6px', fontSize: '1rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a' }}>
-        {message}
-      </h4>
-      <p style={{ margin: 0, fontSize: '0.8rem', color: isDark ? '#94a3b8' : '#64748b' }}>
-        {subtitle}
-      </p>
     </div>
-  );
-};
 
-// ============================================================================
-// OPTION 3: SKELETON WIREFRAME SHIMMER
-// ============================================================================
-export const SkeletonDashboardLoader: React.FC = () => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
-  const skeletonBg = isDark ? '#1e293b' : '#e2e8f0';
-  const shimmerColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.6)';
-
-  return (
-    <div style={{ width: '100%', padding: '20px' }}>
-      <style>{`
-        @keyframes shimmerEffect {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .skeleton-item {
-          position: relative;
-          overflow: hidden;
-          background: ${skeletonBg};
-          border-radius: 8px;
-        }
-        .skeleton-item::after {
-          position: absolute;
-          top: 0; right: 0; bottom: 0; left: 0;
-          transform: translateX(-100%);
-          background-image: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0) 0,
-            ${shimmerColor} 50%,
-            rgba(255, 255, 255, 0) 100%
-          );
-          animation: shimmerEffect 1.6s infinite;
-          content: '';
-        }
-      `}</style>
-
-      {/* Top Banner Skeleton */}
-      <div className="skeleton-item" style={{ height: '60px', width: '100%', marginBottom: '20px' }} />
-
-      {/* Stats Cards Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {[1, 2, 3, 4].map(n => (
-          <div key={n} className="skeleton-item" style={{ height: '100px', borderRadius: '12px' }} />
+    {/* Content area */}
+    <div style={{ display: 'flex', flex: 1 }}>
+      {/* Sidebar skeleton (desktop) */}
+      <div style={{
+        width: '220px',
+        padding: '20px 16px',
+        borderRight: '1px solid rgba(148,163,184,0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonBlock key={i} width={`${70 + Math.random() * 30}%`} height="20px" />
         ))}
       </div>
 
-      {/* Main Content & Table Skeleton */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
-        <div className="skeleton-item" style={{ height: '240px', borderRadius: '12px' }} />
-        <div className="skeleton-item" style={{ height: '240px', borderRadius: '12px' }} />
+      {/* Main content skeleton */}
+      <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Stat cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{
+              padding: '20px',
+              borderRadius: '12px',
+              background: 'rgba(148,163,184,0.05)',
+              border: '1px solid rgba(148,163,184,0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}>
+              <SkeletonBlock width="60%" height="14px" />
+              <SkeletonBlock width="40%" height="28px" />
+            </div>
+          ))}
+        </div>
+
+        {/* Table skeleton */}
+        <div style={{
+          borderRadius: '12px',
+          background: 'rgba(148,163,184,0.05)',
+          border: '1px solid rgba(148,163,184,0.08)',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px',
+        }}>
+          <SkeletonBlock width="30%" height="20px" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <SkeletonBlock width="32px" height="32px" borderRadius="50%" />
+              <SkeletonBlock width="25%" height="14px" />
+              <SkeletonBlock width="20%" height="14px" />
+              <SkeletonBlock width="15%" height="14px" />
+              <SkeletonBlock width="10%" height="14px" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
-// ============================================================================
-// OPTION 4: ORBITAL SATELLITE DISPATCH LOADER
-// ============================================================================
-export const OrbitalLoader: React.FC<LoadingProps> = ({
-  message = "Acquiring GPS Satellite Signal...",
-  subtitle = "Calculating fastest ambulance response route"
-}) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
+/* ─── GlassmorphicOverlayLoader ──────────────────────────────────────────── */
 
-  return (
+interface GlassmorphicOverlayLoaderProps {
+  message?: string;
+  subtitle?: string;
+}
+
+export const GlassmorphicOverlayLoader: React.FC<GlassmorphicOverlayLoaderProps> = ({
+  message = 'Authenticating…',
+  subtitle,
+}) => (
+  <div style={{
+    position: 'fixed',
+    inset: 0,
+    zIndex: 9999,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    background: 'rgba(15, 23, 42, 0.75)',
+    animation: 'fadeIn 0.25s ease',
+  }}>
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      textAlign: 'center'
+      gap: '20px',
+      padding: '40px 48px',
+      borderRadius: '20px',
+      background: 'rgba(30, 41, 59, 0.7)',
+      border: '1px solid rgba(148, 163, 184, 0.15)',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
     }}>
-      <style>{`
-        @keyframes orbitSpin1 {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes orbitSpin2 {
-          0% { transform: rotate(360deg); }
-          100% { transform: rotate(0deg); }
-        }
-      `}</style>
-
-      <div style={{ position: 'relative', width: '80px', height: '80px', marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {/* Outer Orbit */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          border: '1.5px solid rgba(14, 165, 233, 0.25)',
-          animation: 'orbitSpin1 3s linear infinite'
-        }}>
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#0ea5e9', position: 'absolute', top: '-5px', left: '50%', transform: 'translateX(-50%)', boxShadow: '0 0 8px #0ea5e9' }} />
-        </div>
-
-        {/* Inner Orbit */}
-        <div style={{
-          position: 'absolute',
-          inset: '12px',
-          borderRadius: '50%',
-          border: '1.5px solid rgba(245, 158, 11, 0.25)',
-          animation: 'orbitSpin2 2s linear infinite'
-        }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', position: 'absolute', bottom: '-4px', left: '50%', transform: 'translateX(-50%)', boxShadow: '0 0 8px #f59e0b' }} />
-        </div>
-
-        {/* Center Icon */}
-        <div style={{ color: isDark ? '#38bdf8' : '#0284c7' }}>
-          <Radio size={24} />
-        </div>
-      </div>
-
-      <h4 style={{ margin: '0 0 6px', fontSize: '1rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a' }}>
-        {message}
-      </h4>
-      <p style={{ margin: 0, fontSize: '0.8rem', color: isDark ? '#94a3b8' : '#64748b' }}>
-        {subtitle}
-      </p>
-    </div>
-  );
-};
-
-// ============================================================================
-// OPTION 5: TOP PROGRESS BAR + STATUS BADGE
-// ============================================================================
-export const TopProgressBarLoader: React.FC<LoadingProps> = ({
-  message = "Updating VHT Field Signals..."
-}) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
-  return (
-    <div style={{ width: '100%', position: 'relative' }}>
-      <style>{`
-        @keyframes topProgressMove {
-          0% { left: -30%; width: 30%; }
-          50% { left: 30%; width: 50%; }
-          100% { left: 100%; width: 30%; }
-        }
-      `}</style>
-      
-      {/* Top Animated Bar */}
-      <div style={{ position: 'relative', width: '100%', height: '4px', background: isDark ? '#334155' : '#e2e8f0', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute',
-          top: 0, bottom: 0,
-          background: 'linear-gradient(90deg, #0f61ef, #10b981)',
-          borderRadius: '4px',
-          animation: 'topProgressMove 1.5s ease-in-out infinite',
-          boxShadow: '0 0 10px #0f61ef'
-        }} />
-      </div>
-
-      {/* Floating Status Pill */}
-      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '6px 14px',
-          borderRadius: '20px',
-          background: isDark ? '#1e293b' : '#ffffff',
-          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-          fontSize: '0.8rem',
-          fontWeight: 600,
-          color: isDark ? '#cbd5e1' : '#334155'
-        }}>
-          <RefreshCw size={13} className="spin-icon" style={{ animation: 'gradientSpin 1s linear infinite' }} />
-          <span>{message}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// OPTION 6: GLASSMORPHISM FULL OVERLAY LOADER
-// ============================================================================
-export const GlassmorphicOverlayLoader: React.FC<LoadingProps & { onClose?: () => void }> = ({
-  message = "Establishing Mukono Emergency Node...",
-  subtitle = "Verifying ambulance availability and hospital triage status",
-  onClose
-}) => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
-  return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 9999,
-      background: 'rgba(15, 23, 42, 0.72)',
-      backdropFilter: 'blur(10px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
+      {/* Spinner ring */}
       <div style={{
-        width: '100%',
-        maxWidth: '420px',
-        padding: '36px 28px',
-        background: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-        borderRadius: '20px',
-        border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.8)',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+        width: '48px',
+        height: '48px',
+        border: '3px solid rgba(99, 102, 241, 0.2)',
+        borderTopColor: '#6366f1',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+
+      <p style={{
+        color: '#f1f5f9',
+        fontSize: '15px',
+        fontWeight: 600,
+        letterSpacing: '0.02em',
         textAlign: 'center',
-        position: 'relative'
       }}>
-        {onClose && (
-          <button
-            onClick={onClose}
-            style={{ position: 'absolute', top: '14px', right: '16px', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: isDark ? '#cbd5e1' : '#64748b' }}
-          >
-            ×
-          </button>
-        )}
+        {message}
+      </p>
 
-        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
-          <div style={{
-            width: '68px', height: '68px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0f61ef, #0046c7)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', boxShadow: '0 8px 24px rgba(15, 97, 239, 0.4)',
-            position: 'relative'
-          }}>
-            <Zap size={32} />
-          </div>
-        </div>
-
-        <h3 style={{ margin: '0 0 8px', fontSize: '1.15rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
-          {message}
-        </h3>
-        <p style={{ margin: '0 0 24px', fontSize: '0.84rem', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.5 }}>
+      {subtitle && (
+        <p style={{
+          color: '#94a3b8',
+          fontSize: '12px',
+          textAlign: 'center',
+          maxWidth: '260px',
+          lineHeight: 1.5,
+        }}>
           {subtitle}
         </p>
-
-        {/* Dynamic Animated Pulse Bars */}
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-          {[0, 0.2, 0.4, 0.6].map((delay, idx) => (
-            <div key={idx} style={{
-              width: '8px', height: '24px', borderRadius: '4px',
-              background: '#0f61ef',
-              animation: `pulseBar 1s ease-in-out ${delay}s infinite alternate`
-            }} />
-          ))}
-        </div>
-        <style>{`
-          @keyframes pulseBar {
-            0% { transform: scaleY(0.4); opacity: 0.4; }
-            100% { transform: scaleY(1.3); opacity: 1; }
-          }
-        `}</style>
-      </div>
+      )}
     </div>
-  );
-};
+  </div>
+);
+
+/* ─── OrbitalLoader ──────────────────────────────────────────────────────── */
+
+interface OrbitalLoaderProps {
+  message?: string;
+  subtitle?: string;
+}
+
+export const OrbitalLoader: React.FC<OrbitalLoaderProps> = ({
+  message = 'Loading…',
+  subtitle,
+}) => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '20px',
+    padding: '32px',
+    minHeight: '100dvh',
+    background: '#0f172a',
+    animation: 'fadeIn 0.4s ease',
+  }}>
+    {/* Orbital ring with dots */}
+    <div style={{
+      position: 'relative',
+      width: '64px',
+      height: '64px',
+    }}>
+      {/* Central dot */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '10px',
+        height: '10px',
+        borderRadius: '50%',
+        background: '#6366f1',
+        transform: 'translate(-50%, -50%)',
+        boxShadow: '0 0 12px rgba(99, 102, 241, 0.6)',
+      }} />
+
+      {/* Orbiting dots */}
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: '8px',
+          height: '8px',
+          marginLeft: '-4px',
+          marginTop: '-4px',
+          borderRadius: '50%',
+          background: ['#6366f1', '#ec4899', '#10b981'][i],
+          animation: `orbit ${1.8 + i * 0.3}s linear infinite`,
+          animationDelay: `${i * -0.6}s`,
+          boxShadow: `0 0 8px ${['rgba(99,102,241,0.5)', 'rgba(236,72,153,0.5)', 'rgba(16,185,129,0.5)'][i]}`,
+        }} />
+      ))}
+    </div>
+
+    <p style={{
+      color: '#f1f5f9',
+      fontSize: '15px',
+      fontWeight: 600,
+      letterSpacing: '0.02em',
+      textAlign: 'center',
+    }}>
+      {message}
+    </p>
+
+    {subtitle && (
+      <p style={{
+        color: '#94a3b8',
+        fontSize: '12px',
+        textAlign: 'center',
+        maxWidth: '280px',
+        lineHeight: 1.5,
+      }}>
+        {subtitle}
+      </p>
+    )}
+  </div>
+);

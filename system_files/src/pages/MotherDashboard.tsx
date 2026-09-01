@@ -352,10 +352,6 @@ export const MotherDashboard: React.FC = () => {
     }
   };
 
-  const handleConfirmSOS = () => {
-    handleTriggerSOS();
-  };
-
   const handleCancelSOS = () => {
     if (!activeEmergency) return;
     setShowCancelModal(true);
@@ -899,7 +895,7 @@ export const MotherDashboard: React.FC = () => {
                     </button>
                     
                     {!activeEmergency ? (
-                      <button className="emergency-btn-home" onClick={handleTriggerSOS}><Icon name="emergency" size={16} /> Trigger Emergency SOS
+                      <button className="emergency-btn-home" onClick={() => handleTriggerSOS()}><Icon name="emergency" size={16} /> Trigger Emergency SOS
                       </button>
                     ) : (
                       <button className="emergency-btn-home triggered" onClick={handleCancelSOS} style={{ background: '#ef4444', borderColor: '#dc2626' }}><Icon name="warning" size={16} /> Cancel Emergency SOS
@@ -1058,7 +1054,7 @@ export const MotherDashboard: React.FC = () => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       {!activeEmergency ? (
-                        <button className="emergency-btn" onClick={handleTriggerSOS}>
+                        <button className="emergency-btn" onClick={() => handleTriggerSOS()}>
                           <span className="btn-emoji" style={{ fontSize: '2.5rem' }}><Icon name="sos" size={18} /></span>
                           <span style={{ fontWeight: 800 }}>Trigger SOS</span>
                         </button>

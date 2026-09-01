@@ -10,7 +10,7 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
 import { Bell, LogOut, Search } from 'lucide-react';
-import { showToast, confirmAction } from '../components/toastBus';
+import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
 import { OfflineStorageService } from '../services/offlineStorage';
 import { CdssTriageModal } from '../components/CdssTriageModal';
@@ -1212,7 +1212,7 @@ export const VhtDashboard: React.FC = () => {
               >
                 {Object.entries(OBSTETRIC_CATEGORIES_METADATA).map(([key, meta]) => (
                   <option key={key} value={key}>
-                    {meta.label} ({meta.severity.toUpperCase()})
+                    {meta.label} ({meta.urgency})
                   </option>
                 ))}
               </select>

@@ -25,85 +25,10 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const [loading, setLoading]   = useState(false);
 
   const avatarRef = useRef<HTMLButtonElement>(null);
-  // Viewport coordinates for the menu, worked out from the avatar when it opens.
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-  const [menuMaxHeight, setMenuMaxHeight] = useState(340);
-
-  const MENU_WIDTH = 260;
-  const MENU_MAX_HEIGHT = 340;
-  const EDGE = 12;
-
-  /** Place the menu next to the avatar, then pull it back inside the screen. */
-  /** Device inset in px, e.g. the status bar an installed PWA draws under. */
-  const inset = (name: string) => {
-    const raw = getComputedStyle(document.documentElement).getPropertyValue(name);
-    return parseFloat(raw) || 0;
-  };
-
-  const updatePosition = () => {
-    const trigger = avatarRef.current?.getBoundingClientRect();
-    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-
-    if (trigger && trigger.width > 0 && vw > 0 && vh > 0) {
-      const safeMargin = 16;
-      const safeTop = Math.max(safeMargin, inset('--safe-top') + safeMargin);
-      const safeBottom = Math.max(safeMargin, inset('--safe-bottom') + safeMargin);
-      const safeLeft = Math.max(safeMargin, inset('--safe-left') + safeMargin);
-      const safeRight = Math.max(safeMargin, inset('--safe-right') + safeMargin);
-
-      const width = Math.min(MENU_WIDTH, vw - safeLeft - safeRight);
-
-      let left: number;
-      if (vw < 500) {
-        // On narrow viewports (< 500px), center horizontally
-        left = (vw - width) / 2;
-      } else {
-        // Default to aligning left edge of menu with left edge of avatar (extends right)
-        left = trigger.left;
-        // Only align right edge if aligning left edge causes right viewport overflow
-        if (left + width > vw - safeRight) {
-          left = trigger.right - width;
-        }
-      }
-
-      // GUARANTEE: left position must NEVER be less than safeLeft (16px) or exceed viewport right
-      const maxLeft = Math.max(safeLeft, vw - width - safeRight);
-      left = Math.max(safeLeft, Math.min(left, maxLeft));
-
-      const available = vh - safeTop - safeBottom;
-      const height = Math.min(MENU_MAX_HEIGHT, available);
-
-      const below = trigger.bottom + 8;
-      let top = (vh - safeBottom) - below >= height ? below : trigger.top - height - 8;
-      const maxTop = Math.max(safeTop, vh - safeBottom - height);
-      top = Math.max(safeTop, Math.min(top, maxTop));
-
-      setMenuPos({ top: Math.round(top), left: Math.round(left) });
-      setMenuMaxHeight(Math.round(height));
-    }
-  };
 
   const openMenu = () => {
-    updatePosition();
     setMenuOpen(o => !o);
   };
-
-  React.useLayoutEffect(() => {
-    if (!menuOpen) return;
-    updatePosition();
-    const rafId = requestAnimationFrame(() => {
-      updatePosition();
-    });
-    const handleResize = () => updatePosition();
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
-    };
-  }, [menuOpen]);
 
   const { theme } = useTheme();
   const isDark = theme === 'dark';

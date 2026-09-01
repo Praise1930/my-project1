@@ -33,7 +33,7 @@ export const MpdsrModal: React.FC<MpdsrModalProps> = ({
   const [delay1Notes, setDelay1Notes] = useState(existing?.delay_1_seeking_care.notes || '');
 
   // Delay 2: Reaching care (Transport & Dispatch)
-  const [delay2Present, setDelay2Present] = useState(existing?.delay_2_reaching_care.present || true);
+  const [delay2Present, setDelay2Present] = useState<boolean>(existing?.delay_2_reaching_care.present || true);
   const [delay2Notes, setDelay2Notes] = useState(existing?.delay_2_reaching_care.notes || 'Emergency ambulance response monitored via GPS.');
 
   // Delay 3: Receiving care (Facility level)

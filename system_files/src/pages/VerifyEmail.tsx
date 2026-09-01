@@ -1,19 +1,17 @@
 // MamaTrack GPS — Email Verification & Account Activation Portal
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { db, User as DbUser } from '../services/db';
+import { useSearchParams, Link } from 'react-router-dom';
+import { db } from '../services/db';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
-import { CheckCircle, Mail, AlertTriangle, ArrowRight, RefreshCw, Send, ShieldCheck, Inbox } from 'lucide-react';
+import { CheckCircle, Mail, AlertTriangle, ArrowRight, Send, ShieldCheck, Inbox } from 'lucide-react';
 import { showToast } from '../components/toastBus';
-import { Icon } from '../components/Icon';
 
 export const VerifyEmail: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [isVerified, setIsVerified] = useState(false);

@@ -1,870 +1,247 @@
-// MamaTrack GPS — Custom Landing Page (Integrated with Medical Center Template)
+// MamaTrack GPS — Landing / Home Page
+//
+// The public-facing entry page for the system. Provides role-based portal
+// selection and directs users to login or registration.
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
-import { MapComponent } from '../components/MapComponent';
-
-// Import template stylesheets
-import '../styles/medical-center/bootstrap.min.css';
-import '../styles/medical-center/flaticon.css';
-import '../styles/medical-center/themify-icons.css';
-import '../styles/medical-center/fontawesome-all.min.css';
-import '../styles/medical-center/style.css';
-
-import { Plus } from 'lucide-react';
 import { Icon } from '../components/Icon';
 
+const ROLES = [
+  {
+    id: 'mother',
+    title: 'Mother Portal',
+    icon: 'mother' as const,
+    desc: 'Emergency beacons, ANC schedule & doctor chat',
+    color: '#f43f5e',
+    gradient: 'linear-gradient(135deg, #f43f5e, #e11d48)',
+  },
+  {
+    id: 'doctor',
+    title: 'Clinical Portal',
+    icon: 'doctor' as const,
+    desc: 'Patient diagnostics, bed capacity & triage',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #059669)',
+  },
+  {
+    id: 'admin',
+    title: 'Dispatch Center',
+    icon: 'ambulance' as const,
+    desc: 'Fleet coordination, SOS dispatch & MPDSR',
+    color: '#6366f1',
+    gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+  },
+  {
+    id: 'driver',
+    title: 'Driver Panel',
+    icon: 'navigate' as const,
+    desc: 'GPS navigation, fuel logs & trip records',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+  },
+  {
+    id: 'vht',
+    title: 'VHT Dashboard',
+    icon: 'vht' as const,
+    desc: 'Village visits, mother register & referrals',
+    color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+  },
+];
+
 export const Landing: React.FC = () => {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const [activeSlide, setActiveSlide] = useState(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
-
-  // Clear any dashboard theme classes from body to avoid background leak
-  useEffect(() => {
-    document.body.classList.remove('mother-theme-active', 'driver-theme-active');
-  }, []);
-
-  // Show 'New here?' popup after 4 seconds if not dismissed before
-  useEffect(() => {
-    const dismissed = sessionStorage.getItem('mamatrack_welcome_dismissed');
-    if (dismissed) return;
-    const t = setTimeout(() => setShowWelcomePopup(true), 4000);
-    return () => clearTimeout(t);
-  }, []);
-
-  const dismissWelcomePopup = () => {
-    sessionStorage.setItem('mamatrack_welcome_dismissed', '1');
-    setShowWelcomePopup(false);
-  };
-
-  // Auto-cycle slides every 6 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % 3);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const slides = [
-    {
-      subtitle: "Bringing a life should not end another",
-      title: "Mukono Maternal Emergency Rescue Dispatch",
-      desc: "One-tap GPS beacon coordinates to dispatch nearby drivers in seconds.",
-      buttonText: "Access Portals",
-      link: "#portals",
-    },
-    {
-      subtitle: "24/7 Emergency Medical Response & Support",
-      title: "Direct Doctor-to-Mother Referral Pathways",
-      desc: "Connect expectant mothers directly with duty obstetricians and midwives for real-time symptom consultations and referrals.",
-      buttonText: "Access Portals",
-      link: "#portals",
-    },
-    {
-      subtitle: "Transmitting Live Coordinates to Responder Networks",
-      title: "GPS-Driven Ambulance Dispatch Navigation",
-      desc: "Ambulance teams receive live coordinates of maternal distress calls with optimized routing to minimize travel delays.",
-      buttonText: "Access Portals",
-      link: "#portals",
-    }
-  ];
+  const [hoveredRole, setHoveredRole] = useState<string | null>(null);
 
   return (
-    <div id="top" className="medical-landing-root" style={{ background: isDark ? '#1e293b' : '#ffffff', color: isDark ? '#cbd5e1' : '#757575', fontFamily: "'Muli', sans-serif", minHeight: '100dvh' }}>
-      <style>{`
-        /* 1. Header Navigation Containers & Links MUST be 100% Transparent — NO BOXES OR BACKGROUND SHAPES */
-        .col-xl-9,
-        .col-lg-9,
-        .col-md-9,
-        .menu-main,
-        .main-menu,
-        .main-menu nav,
-        .main-menu ul,
-        .main-menu li,
-        .main-menu a,
-        #navigation,
-        #navigation li,
-        #navigation li a,
-        .landing-nav-container,
-        .landing-nav-container nav,
-        .landing-nav-container ul,
-        .landing-nav-container li,
-        .landing-nav-link,
-        a.landing-nav-link {
-          background: transparent !important;
-          background-color: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          outline: none !important;
-          border-radius: 0 !important;
-        }
+    <div style={{
+      minHeight: '100dvh',
+      background: isDark
+        ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)'
+        : 'linear-gradient(135deg, #f8fafc 0%, #ede9fe 50%, #f8fafc 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      overflow: 'hidden',
+    }}>
+      {/* Theme toggle */}
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 100 }}>
+        <ThemeToggle />
+      </div>
 
-        /* 2. Unified Header & Page Root Background (#1e293b in Dark Mode, #ffffff in Light Mode) */
-        html[data-theme='dark'] body,
-        html[data-theme='dark'] #root,
-        html[data-theme='dark'] .medical-landing-root,
-        html[data-theme='dark'] header,
-        html[data-theme='dark'] .header-area,
-        html[data-theme='dark'] .main-header,
-        html[data-theme='dark'] .header-bottom,
-        html[data-theme='dark'] .header-sticky,
-        html[data-theme='dark'] .sticky-bar,
-        html[data-theme='dark'] .sticky {
-          background: #1e293b !important;
-          background-color: #1e293b !important;
-          border: none !important;
-          border-bottom: none !important;
-          box-shadow: none !important;
-          transition: background-color 0.3s ease !important;
-        }
-
-        html[data-theme='light'] body,
-        html[data-theme='light'] #root,
-        html[data-theme='light'] .medical-landing-root,
-        html[data-theme='light'] header,
-        html[data-theme='light'] .header-area,
-        html[data-theme='light'] .main-header,
-        html[data-theme='light'] .header-bottom,
-        html[data-theme='light'] .header-sticky,
-        html[data-theme='light'] .sticky-bar,
-        html[data-theme='light'] .sticky {
-          background: #ffffff !important;
-          background-color: #ffffff !important;
-          border: none !important;
-          border-bottom: none !important;
-          box-shadow: none !important;
-          transition: background-color 0.3s ease !important;
-        }
-
-        /* 3. Link Text Colors - Pure text color toggle, no background shapes */
-        html[data-theme='dark'] .landing-nav-link,
-        html[data-theme='dark'] a.landing-nav-link,
-        html[data-theme='dark'] #navigation li a,
-        html[data-theme='dark'] .main-menu ul li a,
-        html[data-theme='dark'] .slicknav_nav a,
-        html[data-theme='dark'] .sticky-bar a,
-        html[data-theme='dark'] .mobile-nav-dropdown a:not(.header-btn) {
-          color: #ffffff !important;
-          font-size: 16px !important;
-          font-weight: 600 !important;
-          background: transparent !important;
-          background-color: transparent !important;
-          transition: color 0.2s ease !important;
-        }
-        html[data-theme='dark'] .landing-nav-link:hover,
-        html[data-theme='dark'] a.landing-nav-link:hover,
-        html[data-theme='dark'] #navigation li a:hover,
-        html[data-theme='dark'] .main-menu ul li a:hover {
-          color: #60a5fa !important;
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        html[data-theme='light'] .landing-nav-link,
-        html[data-theme='light'] a.landing-nav-link,
-        html[data-theme='light'] #navigation li a,
-        html[data-theme='light'] .main-menu ul li a,
-        html[data-theme='light'] .slicknav_nav a,
-        html[data-theme='light'] .sticky-bar a,
-        html[data-theme='light'] .mobile-nav-dropdown a:not(.header-btn) {
-          color: #102039 !important;
-          font-size: 16px !important;
-          font-weight: 600 !important;
-          background: transparent !important;
-          background-color: transparent !important;
-          transition: color 0.2s ease !important;
-        }
-        html[data-theme='light'] .landing-nav-link:hover,
-        html[data-theme='light'] a.landing-nav-link:hover,
-        html[data-theme='light'] #navigation li a:hover,
-        html[data-theme='light'] .main-menu ul li a:hover {
-          color: #0f61ef !important;
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        /* Force button text to always be visible (white) and prevent hover overlays from covering it */
-        .btn, .hero-btn, .header-btn {
-          color: #ffffff !important;
-        }
-        .btn:hover, .hero-btn:hover, .header-btn:hover {
-          color: #ffffff !important;
-        }
-        .btn::before, .hero-btn::before, .header-btn::before {
-          z-index: -1 !important;
-        }
-        .header-btn {
-          background-image: linear-gradient(to left, #559af3, #1462f3, #559af3) !important;
-        }
-      `}</style>
-      
-      {/* HEADER START */}
-      <header style={{ border: 'none', borderBottom: 'none', boxShadow: 'none', background: isDark ? '#1e293b' : '#ffffff' }}>
-        <div className="header-area" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none' }}>
-          <div className="main-header header-sticky" style={{ background: isDark ? '#1e293b' : '#ffffff', border: 'none', borderBottom: 'none', boxShadow: 'none', position: 'relative' }}>
-            <div className="container-fluid" style={{ padding: '0 40px', background: 'transparent' }}>
-              <div className="row align-items-center" style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0', background: 'transparent' }}>
-                {/* Logo */}
-                <div className="col-xl-3 col-lg-3 col-md-3">
-                  <div className="logo">
-                    <Link to="/" style={{ fontSize: '1.7rem', fontWeight: 800, color: isDark ? '#ffffff' : '#030431', display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-                      <img src="/assets/img/icons/logo.png" alt="MamaTrack Logo" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '10px' }} />
-                      <span>Mama<span style={{ color: '#0f61ef' }}>Track</span></span>
-                    </Link>
-                  </div>
-                </div>
-                
-                {/* Navigation Menu */}
-                <div className="col-xl-9 col-lg-9 col-md-9" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', background: 'transparent' }}>
-                  <div className="landing-nav-container d-flex align-items-center justify-content-end" style={{ display: 'flex', alignItems: 'center', gap: '28px', background: 'transparent' }}>
-                    <nav className="d-none d-lg-block" style={{ background: 'transparent' }}>
-                      <ul style={{ display: 'flex', listStyle: 'none', gap: '32px', margin: 0, padding: 0, flexDirection: 'row', alignItems: 'center', background: 'transparent' }}>
-                        <li><a href="#top" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>Home</a></li>
-                        <li><a href="#portals" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>System Portals</a></li>
-                        <li><a href="#about" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>About</a></li>
-                        <li><a href="#news" className="landing-nav-link" style={{ color: isDark ? '#ffffff' : '#102039', fontWeight: 600, fontSize: '16px', textDecoration: 'none', background: 'transparent', padding: '6px 0' }}>News</a></li>
-                      </ul>
-                    </nav>
-
-                    <div className="header-right-btn f-right d-none d-lg-block ml-30" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'nowrap' }}>
-                      <ThemeToggle />
-                      <Link to="/register" className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '12px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        <Plus size={16} color="#ffffff" style={{ background: 'transparent' }} />
-                        <span style={{ color: '#ffffff', fontWeight: 700, background: 'transparent' }}>Register Mother</span>
-                      </Link>
-                    </div>
-
-                    {/* Mobile Hamburger Toggle (visible on mobile only) */}
-                    <div className="d-flex d-lg-none" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <ThemeToggle />
-                      <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          fontSize: '24px',
-                          cursor: 'pointer',
-                          color: 'inherit',
-                          padding: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        aria-label="Toggle Menu"
-                      >
-                        <i className={mobileMenuOpen ? "fa fa-times" : "fa fa-bars"}></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>   
-              </div>
-            </div>
-
-            {/* Mobile Navigation Dropdown Overlay */}
-            {mobileMenuOpen && (
-              <div className="mobile-nav-dropdown d-lg-none" style={{ background: isDark ? '#1e293b' : '#ffffff', borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #f1f5f9' }}>
-                <a href="#top" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>Home</a>
-                <a href="#portals" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>System Portals</a>
-                <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>About</a>
-                <a href="#news" onClick={() => setMobileMenuOpen(false)} style={{ color: isDark ? '#f1f5f9' : '#102039' }}>News</a>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn header-btn" style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none', textAlign: 'center', marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                  <Plus size={16} color="#ffffff" style={{ background: 'transparent' }} />
-                  <span style={{ color: '#ffffff', fontWeight: 700, background: 'transparent' }}>Register Mother</span>
-                </Link>
-              </div>
-            )}
-          </div>
+      {/* Hero Section */}
+      <header style={{
+        textAlign: 'center',
+        padding: '80px 24px 40px',
+        maxWidth: '640px',
+        animation: 'fadeInUp 0.6s ease',
+      }}>
+        {/* Logo mark */}
+        <div style={{
+          width: '72px',
+          height: '72px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, #6366f1, #ec4899)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 20px',
+          boxShadow: '0 8px 32px rgba(99,102,241,0.3)',
+        }}>
+          <Icon name="heart" size={36} className="" />
+          <style>{`.landing-logo-icon { color: #fff; }`}</style>
         </div>
+
+        <h1 style={{
+          fontSize: 'clamp(28px, 5vw, 42px)',
+          fontWeight: 800,
+          background: isDark
+            ? 'linear-gradient(135deg, #f1f5f9, #c4b5fd)'
+            : 'linear-gradient(135deg, #1e1b4b, #6366f1)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          lineHeight: 1.2,
+          marginBottom: '12px',
+        }}>
+          MamaTrack GPS
+        </h1>
+
+        <p style={{
+          fontSize: 'clamp(14px, 2.5vw, 16px)',
+          color: isDark ? '#94a3b8' : '#64748b',
+          lineHeight: 1.6,
+          maxWidth: '480px',
+          margin: '0 auto',
+        }}>
+          GPS-based maternal emergency response system for Mukono District, Uganda.
+          Connecting expectant mothers, ambulance dispatchers, and clinical care facilities.
+        </p>
       </header>
 
-      {/* HERO SLIDER SECTION */}
-      <section id="home" className="slider-area" style={{ position: 'relative', height: '620px', overflow: 'hidden', background: `linear-gradient(rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.7)), url(/assets/img/hero/h1_hero.png) no-repeat center center / cover` }}>
-        <div className="hero-blur-overlay"></div>
-        {slides.map((slide, idx) => (
-          <div
-            key={idx}
-            className={`single-slider slider-height d-flex align-items-center ${activeSlide === idx ? 'active-slide' : 'inactive-slide'}`}
+      {/* Role Cards */}
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gap: '16px',
+        maxWidth: '900px',
+        width: '100%',
+        padding: '0 24px 24px',
+        animation: 'fadeInUp 0.7s ease 0.1s both',
+      }}>
+        {ROLES.map(role => (
+          <button
+            key={role.id}
+            onMouseEnter={() => setHoveredRole(role.id)}
+            onMouseLeave={() => setHoveredRole(null)}
+            onClick={() => navigate(`/login?role=${role.id}`)}
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              opacity: activeSlide === idx ? 1 : 0,
-              transition: 'opacity 0.8s ease-in-out',
               display: 'flex',
               alignItems: 'center',
-              zIndex: activeSlide === idx ? 2 : 1
+              gap: '16px',
+              padding: '20px',
+              borderRadius: '16px',
+              border: `1px solid ${hoveredRole === role.id ? role.color : isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.06)'}`,
+              background: isDark
+                ? hoveredRole === role.id ? 'rgba(30,41,59,0.9)' : 'rgba(30,41,59,0.5)'
+                : hoveredRole === role.id ? '#fff' : 'rgba(255,255,255,0.7)',
+              backdropFilter: 'blur(8px)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.25s ease',
+              transform: hoveredRole === role.id ? 'translateY(-2px)' : 'none',
+              boxShadow: hoveredRole === role.id
+                ? `0 8px 24px ${role.color}20`
+                : '0 1px 3px rgba(0,0,0,0.06)',
             }}
           >
-            <div className="container">
-              <div className="row">
-                <div className="col-xl-8 col-lg-10 col-md-10">
-                  <div className="hero__caption" style={{ 
-                    padding: '20px 0', 
-                    maxWidth: '750px',
-                    margin: '30px 0',
-                    background: 'transparent',
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}>
-                    {/* Fixed height container for text so button position never jumps */}
-                    <div style={{ minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                      <span style={{ 
-                        color: '#60a5fa', 
-                        fontSize: '1.2rem', 
-                        fontWeight: 800, 
-                        textTransform: 'uppercase', 
-                        letterSpacing: '0.04em', 
-                        display: 'block', 
-                        marginBottom: '10px',
-                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)'
-                      }}>
-                        {slide.subtitle}
-                      </span>
-                      <h1 style={{ 
-                        color: '#ffffff', 
-                        fontSize: '3.4rem', 
-                        fontWeight: 900, 
-                        lineHeight: 1.15, 
-                        marginBottom: '16px',
-                        textShadow: '0 2px 10px rgba(0, 0, 0, 0.9)'
-                      }}>
-                        {slide.title}
-                      </h1>
-                      <p style={{ 
-                        color: '#f1f5f9', 
-                        fontSize: '1.15rem', 
-                        fontWeight: 500,
-                        margin: 0, 
-                        lineHeight: 1.55,
-                        textShadow: '0 1px 6px rgba(0, 0, 0, 0.8)'
-                      }}>
-                        {slide.desc}
-                      </p>
-                    </div>
-
-                    <div style={{ marginTop: '24px' }}>
-                      {slide.link.startsWith('#') ? (
-                        <a href={slide.link} className="btn hero-btn" style={{ padding: '14px 28px', color: '#ffffff', textDecoration: 'none', borderRadius: '6px' }}>
-                          {slide.buttonText} <i className="ti-arrow-right" style={{ marginLeft: '8px' }}></i>
-                        </a>
-                      ) : (
-                        <Link to={slide.link} className="btn hero-btn" style={{ padding: '14px 28px', color: '#ffffff', textDecoration: 'none', borderRadius: '6px' }}>
-                          {slide.buttonText} <i className="ti-arrow-right" style={{ marginLeft: '8px' }}></i>
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      {/* SYSTEM PORTALS SECTION */}
-      <section id="portals" className="team-area section-padding30" style={{ padding: '90px 0', background: isDark ? '#1e293b' : '#f8fafd' }}>
-        <style>{`
-          .portal-hover-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease !important;
-          }
-          .portal-hover-card:hover {
-            transform: translateY(-6px) !important;
-          }
-          /* Dynamic operational hover overrides matching UI themes */
-          .portal-mother:hover {
-            border-color: rgba(244, 63, 94, 0.45) !important;
-            box-shadow: 0 12px 30px rgba(244, 63, 94, 0.12) !important;
-          }
-          .portal-doctor:hover {
-            border-color: rgba(16, 185, 129, 0.45) !important;
-            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.12) !important;
-          }
-          .portal-driver:hover {
-            border-color: rgba(245, 158, 11, 0.45) !important;
-            box-shadow: 0 12px 30px rgba(245, 158, 11, 0.12) !important;
-          }
-          .portal-admin:hover {
-            border-color: rgba(59, 130, 246, 0.45) !important;
-            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12) !important;
-          }
-          .portal-vht:hover {
-            border-color: rgba(14, 165, 233, 0.45) !important;
-            box-shadow: 0 12px 30px rgba(14, 165, 233, 0.12) !important;
-          }
-          /* Prevent template hovers from overriding portal text and background colors */
-          .portal-hover-card:hover .team-caption {
-            background: ${isDark ? '#0f172a' : '#ffffff'} !important;
-          }
-          .portal-hover-card:hover h3 {
-            color: inherit !important;
-          }
-          .portal-hover-card:hover span {
-            color: ${isDark ? '#94a3b8' : '#4b5563'} !important;
-          }
-          .portal-hover-card:hover a.btn {
-            color: #ffffff !important;
-            opacity: 0.95 !important;
-          }
-        `}</style>
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-lg-8">
-              <div className="section-tittle text-center mb-90" style={{ textAlign: 'center', marginBottom: '60px' }}>
-                <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700 }}>MamaTrack Portals</span>
-                <h2 style={{ color: isDark ? '#ffffff' : '#030431' }}>Select Portal to Enter</h2>
-                <p style={{ maxWidth: '600px', margin: '0 auto', fontSize: '15px', color: isDark ? '#cbd5e1' : '#212025' }}>
-                  Secure authentication access points for registered expectant mothers, clinical doctors, ambulance teams, and dispatch command administrators.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
-            
-            {/* Expectant Mother */}
-            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-mother" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid rgba(244, 63, 94, 0.18)', boxShadow: '0 10px 30px rgba(244, 63, 94, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: isDark ? 'rgba(244,63,94,0.1)' : 'rgba(244,63,94,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_mother.png" alt="Expectant Mother" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
-                </div>
-                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fb7185' }}>Expectant Mother</h3>
-                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Trigger emergency beacons, check ANC milestones, and chat with doctors.
-                  </span>
-                  <Link to="/login?role=mother" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #fb7185, #f43f5e, #fb7185)' }}>
-                    Enter Portal
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Clinical Doctor */}
-            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-doctor" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(16, 185, 129, 0.18)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_doctor.png" alt="Clinical Doctor" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
-                </div>
-                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981' }}>Clinical Doctor</h3>
-                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    View patient logs, record diagnostics, and check clinic bed availability.
-                  </span>
-                  <Link to="/login?role=doctor" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #10b981, #059669, #10b981)' }}>
-                    Enter Portal
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Ambulance Driver */}
-            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-driver" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_driver.png" alt="Ambulance Driver" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
-                </div>
-                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b' }}>Ambulance Driver</h3>
-                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Receive dispatch route trips and submit pre-duty safety checklists.
-                  </span>
-                  <Link to="/login?role=driver" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #f59e0b, #d97706, #f59e0b)' }}>
-                    Enter Portal
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* System Admin */}
-            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-admin" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.18)', boxShadow: '0 10px 30px rgba(59, 130, 246, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_admin.png" alt="System Admin" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
-                </div>
-                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3b82f6' }}>System Admin</h3>
-                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Coordinate dispatches, monitor checklists, and manage clinic facility status.
-                  </span>
-                  <Link to="/login?role=admin" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #3b82f6, #1d4ed8, #3b82f6)' }}>
-                    Enter Portal
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Village Health Team (VHT) */}
-            <div style={{ flex: '1 1 190px', maxWidth: '220px' }}>
-              <div className="single-team portal-hover-card portal-vht" style={{ background: isDark ? '#0f172a' : '#ffffff', borderRadius: '12px', overflow: 'hidden', border: isDark ? '1px solid rgba(14, 165, 233, 0.3)' : '1px solid rgba(14, 165, 233, 0.18)', boxShadow: '0 10px 30px rgba(14, 165, 233, 0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: isDark ? 'rgba(14,165,233,0.1)' : 'rgba(14,165,233,0.05)', padding: '10px 0', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src="/assets/img/portals/portal_vht.png" alt="VHT Responder" style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px' }} />
-                </div>
-                <div className="team-caption" style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', textAlign: 'center', background: 'transparent' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0ea5e9' }}>VHT Responder</h3>
-                  <span style={{ display: 'block', fontSize: '12px', margin: '4px 0 12px', color: isDark ? '#cbd5e1' : '#64676c', flex: 1 }}>
-                    Register local expectant mothers, log visits, and trigger emergency dispatches.
-                  </span>
-                  <Link to="/login?role=vht" className="btn" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', color: '#ffffff', textDecoration: 'none', backgroundImage: 'linear-gradient(to left, #0ea5e9, #0284c7, #0ea5e9)' }}>
-                    Enter Portal
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* KEY FEATURES STRIP */}
-      <section style={{ padding: '70px 0', background: isDark ? '#0f172a' : '#f0f6ff' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-            <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Platform Capabilities</span>
-            <h2 style={{ color: isDark ? '#ffffff' : '#030431', marginTop: '8px' }}>Powered by Real-Time Technology</h2>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'center' }}>
-            {[
-              { img: '/assets/img/icons/icon_gps.png', title: 'Live GPS Tracking', desc: 'Satellite-grade location beacons transmit mother coordinates to nearby ambulance units in real-time.' },
-              { img: '/assets/img/icons/icon_beacon.png', title: 'Emergency alert', desc: 'One-tap distress alerts trigger dispatch notifications across all registered response teams instantly.' },
-              { img: '/assets/img/icons/icon_consult.png', title: 'Doctor Consultations', desc: 'Direct encrypted channels between expectant mothers and duty obstetricians for remote symptom assessment.' },
-              { img: '/assets/img/icons/icon_dispatch.png', title: 'Ambulance Dispatch', desc: 'AI-optimized routing dispatches the nearest ambulance with live navigation to minimize response time.' },
-            ].map((feat, i) => (
-              <div key={i} style={{ flex: '1 1 220px', maxWidth: '260px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '14px', padding: '28px 22px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(15,97,239,0.08)' }}>
-                <img src={feat.img} alt={feat.title} style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '16px' }} />
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: isDark ? '#ffffff' : '#030431', marginBottom: '10px' }}>{feat.title}</h4>
-                <p style={{ fontSize: '13px', color: isDark ? '#94a3b8' : '#64676c', lineHeight: 1.6, margin: 0 }}>{feat.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ABOUT AREA */}
-      <section id="about" className="about-area section-padding2" style={{ padding: '90px 0', background: isDark ? '#0f172a' : '#ffffff' }}>
-        <div className="container">
-          <div className="row align-items-center">
-            <div className="col-lg-6 col-md-10">
-              <div className="about-caption mb-50" style={{ paddingRight: '20px' }}>
-                <div className="section-tittle section-tittle2 mb-35">
-                  <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700 }}>About Our Platform</span>
-                  <h2 style={{ color: isDark ? '#ffffff' : '#030431' }}>Welcome To MamaTrack</h2>
-                </div>
-                <p style={{ fontSize: '15px', lineHeight: 1.6, color: isDark ? '#cbd5e1' : '#64676c', marginBottom: '20px' }}>
-                  MamaTrack GPS integrates ambulance dispatch workflows, VHT village health support pathways, and hospital surgical teams into one digital referral console in Mukono District.
-                </p>
-                <p style={{ fontSize: '15px', lineHeight: 1.6, color: isDark ? '#cbd5e1' : '#64676c', marginBottom: '35px' }}>
-                  Registered expectant mothers gain direct channels for real-time obstetric consultations, checkup schedules logging, and instant rescue beacons coordinate tracking.
-                </p>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                  <img src="/assets/img/gallery/Homepage_testi.png" alt="DMO" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} />
-                  <div>
-                    <h5 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: isDark ? '#ffffff' : '#030431' }}>Dr. Francis Muhinda</h5>
-                    <span style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#64676c' }}>District Health Officer, Mukono</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-lg-6 col-md-10" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <div className="about-img" style={{ width: '100%' }}>
-                <img src="/assets/img/gallery/about1.png" alt="Clinical Center" style={{ width: '100%', maxWidth: '440px', display: 'block', margin: '0 auto', borderRadius: '8px', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* TESTIMONIAL STARUPS START */}
-      <section className="all-starups-area testimonial-area fix" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'stretch', background: isDark ? '#0b162b' : '#ffffff', color: isDark ? '#ffffff' : '#0f172a', borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0' }}>
-        <div className="starups" style={{ padding: '60px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
-          <div className="single-testimonial text-center" style={{ maxWidth: '540px', margin: '0 auto', textAlign: 'center' }}>
-            <div className="testimonial-caption">
-              <div className="testimonial-top-cap" style={{ marginBottom: '24px' }}>
-                <p style={{ fontSize: '1.2rem', fontWeight: 400, lineHeight: 1.65, color: isDark ? '#ffffff' : '#0f172a', fontStyle: 'italic' }}>
-                  "The GPS tracking console ensured our ambulance driver Moses located my home in Seeta ward within 15 minutes of my contractions starting. I delivered safely at Mukono Hospital."
-                </p>
-              </div>
-              <div className="testimonial-founder" style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
-                <div className="founder-text">
-                  <span style={{ display: 'block', fontSize: '17px', fontWeight: 800, color: '#0f61ef' }}>Sarah Nabosa</span>
-                  <p style={{ margin: 0, fontSize: '13px', color: isDark ? '#9fabbe' : '#475569' }}>Registered Expectant Mother — Seeta Ward, Mukono</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="starups-img" style={{ minHeight: '380px', backgroundImage: 'url(/assets/img/gallery/startup.png)', backgroundSize: 'cover', backgroundPosition: 'center center' }}></div>
-      </section>
-
-      {/* NEWS AREA SECTION */}
-      <section id="news" style={{ padding: '90px 0', background: isDark ? '#1e293b' : '#ffffff' }}>
-        <div className="container">
-          <div className="row justify-content-center">
-            <div className="col-lg-6">
-              <div className="section-tittle text-center mb-100" style={{ textAlign: 'center', marginBottom: '60px' }}>
-                <span style={{ color: isDark ? '#60a5fa' : '#0f61ef', fontWeight: 700 }}>News Updates</span>
-                <h2 style={{ color: isDark ? '#ffffff' : '#030431' }}>Maternal Health News</h2>
-              </div>
-            </div>
-          </div>
-          <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
-            
-            {/* News 1 */}
-            <div className="col-lg-4 col-md-6" style={{ flex: '1 1 300px', maxWidth: '360px' }}>
-              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
-                <img src="/assets/img/gallery/blog1.png" alt="" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
-                <div className="news-info" style={{ padding: '24px' }}>
-                  <span style={{ fontSize: '11px', color: '#a5c422', textTransform: 'uppercase', fontWeight: 600 }}>March 08, 2026</span>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#ffffff' : '#030431', margin: '8px 0' }}>
-                    GPS Referrals in Rural Mukono District
-                  </h3>
-                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: isDark ? '#cbd5e1' : '#64676c' }}>
-                    How mapping coordinate beacons saves critical minutes for mothers experiencing severe delivery labor.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* News 2 */}
-            <div className="col-lg-4 col-md-6" style={{ flex: '1 1 300px', maxWidth: '360px' }}>
-              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
-                <img src="/assets/img/gallery/blog2.png" alt="" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
-                <div className="news-info" style={{ padding: '24px' }}>
-                  <span style={{ fontSize: '11px', color: '#a5c422', textTransform: 'uppercase', fontWeight: 600 }}>February 20, 2026</span>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#ffffff' : '#030431', margin: '8px 0' }}>
-                    Safe Delivery WHO Checklist Launch
-                  </h3>
-                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: isDark ? '#cbd5e1' : '#64676c' }}>
-                    Integrating checkup milestones checklist templates mapping weeks 8 to 40 directly into user profiles.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* News 3 */}
-            <div className="col-lg-4 col-md-6" style={{ flex: '1 1 300px', maxWidth: '360px' }}>
-              <div className="news-thumb" style={{ border: isDark ? '1px solid #334155' : '1px solid #eef2f5', background: isDark ? '#0f172a' : '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
-                <img src="/assets/img/gallery/blog3.png" alt="" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
-                <div className="news-info" style={{ padding: '24px' }}>
-                  <span style={{ fontSize: '11px', color: '#a5c422', textTransform: 'uppercase', fontWeight: 600 }}>January 27, 2026</span>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: isDark ? '#ffffff' : '#030431', margin: '8px 0' }}>
-                    Integrating VHT Coordinator Alerts
-                  </h3>
-                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: isDark ? '#cbd5e1' : '#64676c' }}>
-                    Training community teams to register pregnancy profiles, coordinate ambulances, and communicate symptoms.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* SYSTEM GPS DISPATCH MAP */}
-      <section id="google-map" style={{ height: '400px', width: '100%', margin: 0, padding: 0, position: 'relative' }}>
-        <MapComponent 
-          center={[0.3536, 32.7554]} 
-          zoom={13} 
-          markers={[
-            { id: 'hosp-1', lat: 0.3536, lng: 32.7554, type: 'hospital', label: 'Mukono General Hospital', sublabel: '24/7 CEMONC Surgical Emergency Unit' },
-            { id: 'hosp-2', lat: 0.3689, lng: 32.7481, type: 'hospital', label: 'Goma Health Center IV', sublabel: 'Maternal Referral Facility' },
-            { id: 'hosp-3', lat: 0.3342, lng: 32.7812, type: 'hospital', label: 'Seeta Health Center III', sublabel: 'Antenatal and VHT services' },
-          ]} 
-          theme={theme} 
-        />
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{
-        padding: '60px 0 20px',
-        background: isDark ? '#0b162b' : '#f8fafc',
-        color: isDark ? '#909090' : '#475569',
-        borderTop: isDark ? 'none' : '1px solid #e2e8f0'
-      }}>
-        <div className="container">
-          <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '30px' }}>
-            
-            <div className="col-md-4 col-sm-4" style={{ flex: '1 1 250px' }}>
-              <div className="footer-thumb">
-                <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Contact Info</h4>
-                <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', lineHeight: 1.6, marginBottom: '15px' }}>
-                  Mukono District Health Department, Uganda. Coordinating maternal safety and emergency referral transports.
-                </p>
-                <div className="contact-info">
-                  <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-phone" style={{ marginRight: '5px' }}></i> 0800-MAMATRACK</p>
-                  <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> mamatrack6@gmail.com</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4 col-sm-4" style={{ flex: '1 1 250px' }}>
-              <div className="footer-thumb">
-                <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Quick Portals</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <Link to="/login?role=mother" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Mother portal</Link>
-                  <Link to="/login?role=doctor" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Clinical Doctor Portal</Link>
-                  <Link to="/login?role=driver" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> Ambulance Driver Portal</Link>
-                  <Link to="/login?role=admin" style={{ color: isDark ? '#909090' : '#64748b', textDecoration: 'none', fontSize: '13px' }}><i className="fa fa-angle-right" style={{ marginRight: '8px' }}></i> System Admin Portal</Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-4 col-sm-4" style={{ flex: '1 1 250px' }}>
-              <div className="footer-thumb">
-                <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>System Status</h4>
-                <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', lineHeight: 1.6 }}>
-                  MamaTrack GPS Dispatch operates 24/7 across Mukono sub-counties. Encrypted database servers are active.
-                </p>
-                <div style={{ marginTop: '15px', color: '#0f61ef', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ display: 'inline-block', width: '8px', height: '8px', background: '#0f61ef', borderRadius: '50%', animation: 'active-emergency-pulse 1.5s infinite alternate' }} /> Secure System Online
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="row border-top" style={{ borderTop: isDark ? '1px solid #16243d' : '1px solid #e2e8f0', marginTop: '40px', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <div className="col-md-6 col-sm-6">
-              <p style={{ margin: 0, fontSize: '12px', color: isDark ? '#909090' : '#64748b' }}>
-                Copyright &copy; 2026 MamaTrack GPS. All rights reserved.
-              </p>
-            </div>
-            <div className="col-md-6 col-sm-6 text-right text-align-right">
-              <p style={{ margin: 0, fontSize: '12px', color: isDark ? '#909090' : '#64748b' }}>
-                MamaTrack GPS · Regional Maternal Emergency Response System.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* ====== NEW-USER WELCOME POPUP ====== */}
-      {showWelcomePopup && (
-        <div
-          onClick={dismissWelcomePopup}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            backdropFilter: 'blur(6px)',
-            zIndex: 999999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            animation: 'fadeInOverlay 0.4s ease'
-          }}
-        >
-          <style>{`
-            @keyframes fadeInOverlay { from { opacity: 0 } to { opacity: 1 } }
-            @keyframes popupSlideIn { from { transform: translateY(24px) scale(0.95); opacity: 0; } to { transform: none; opacity: 1; } }
-          `}</style>
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: isDark ? '#1e293b' : '#ffffff',
-              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
-              borderRadius: '24px',
-              boxShadow: isDark ? '0 24px 55px rgba(0,0,0,0.55)' : '0 24px 55px rgba(0,0,0,0.12)',
-              padding: '40px 36px',
-              maxWidth: '440px',
-              width: '100%',
-              textAlign: 'center',
-              animation: 'popupSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-              position: 'relative'
-            }}
-          >
-            {/* Close Button */}
-            <button
-              onClick={dismissWelcomePopup}
-              aria-label="Dismiss"
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.4rem',
-                lineHeight: 1,
-                cursor: 'pointer',
-                color: isDark ? '#94a3b8' : '#94a3b8'
-              }}
-            >×</button>
-
-            {/* Icon */}
             <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg,#fb7185,#f43f5e)',
+              width: '48px',
+              height: '48px',
+              borderRadius: '14px',
+              background: role.gradient,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2rem',
-              margin: '0 auto 20px'
-            }}><Icon name="mother" size={18} /></div>
-
-            <h3 style={{
-              fontSize: '1.35rem',
-              fontWeight: 800,
-              margin: '0 0 10px',
-              color: isDark ? '#f8fafc' : '#0f172a'
-            }}>New here? Welcome!</h3>
-
-            <p style={{
-              fontSize: '0.875rem',
-              color: isDark ? '#94a3b8' : '#64748b',
-              lineHeight: 1.6,
-              margin: '0 0 28px'
+              color: '#fff',
+              flexShrink: 0,
             }}>
-              MamaTrack GPS provides expectant mothers in Mukono with real-time emergency dispatch, antenatal care tracking, and direct access to medical professionals.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Link
-                to="/register"
-                onClick={dismissWelcomePopup}
-                style={{
-                  display: 'block',
-                  background: 'linear-gradient(135deg,#fb7185,#f43f5e)',
-                  color: '#ffffff',
-                  textDecoration: 'none',
-                  padding: '13px',
-                  borderRadius: '12px',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  boxShadow: '0 8px 22px rgba(244,63,94,0.25)',
-                  transition: 'transform 0.2s'
-                }}
-              >
-                Create a Free Account
-              </Link>
-              <Link
-                to="/login"
-                onClick={dismissWelcomePopup}
-                style={{
-                  display: 'block',
-                  color: isDark ? '#94a3b8' : '#64748b',
-                  textDecoration: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  padding: '8px'
-                }}
-              >
-                Already have an account? Sign In
-              </Link>
+              <Icon name={role.icon} size={24} />
             </div>
-          </div>
-        </div>
-      )}
+            <div>
+              <h3 style={{
+                fontSize: '15px',
+                fontWeight: 700,
+                color: isDark ? '#f1f5f9' : '#0f172a',
+                marginBottom: '4px',
+              }}>
+                {role.title}
+              </h3>
+              <p style={{
+                fontSize: '12px',
+                color: isDark ? '#94a3b8' : '#64748b',
+                lineHeight: 1.4,
+              }}>
+                {role.desc}
+              </p>
+            </div>
+          </button>
+        ))}
+      </section>
 
+      {/* Register CTA */}
+      <div style={{
+        padding: '24px',
+        textAlign: 'center',
+        animation: 'fadeInUp 0.8s ease 0.2s both',
+      }}>
+        <p style={{
+          fontSize: '14px',
+          color: isDark ? '#94a3b8' : '#64748b',
+          marginBottom: '12px',
+        }}>
+          Expectant mother? Register for emergency support.
+        </p>
+        <button
+          onClick={() => navigate('/register')}
+          style={{
+            padding: '12px 32px',
+            borderRadius: '12px',
+            border: 'none',
+            background: 'linear-gradient(135deg, #f43f5e, #e11d48)',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(244,63,94,0.3)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(244,63,94,0.4)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'none';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(244,63,94,0.3)';
+          }}
+        >
+          Register as Mother
+        </button>
+      </div>
+
+      {/* Footer */}
+      <footer style={{
+        marginTop: 'auto',
+        padding: '24px',
+        textAlign: 'center',
+        color: isDark ? '#475569' : '#94a3b8',
+        fontSize: '12px',
+      }}>
+        MamaTrack GPS — Mukono District Health Office · Uganda Ministry of Health
+      </footer>
     </div>
   );
 };

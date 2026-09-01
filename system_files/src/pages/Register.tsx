@@ -206,11 +206,6 @@ export const Register: React.FC = () => {
         if (signUpErr) {
           console.warn('Supabase Auth registration note:', signUpErr.message);
           const msg = signUpErr.message.toLowerCase();
-          if (msg.includes('already registered') || msg.includes('already exists')) {
-            setError('This email address is already registered. Please log in or use a different email.');
-            setIsLoading(false);
-            return;
-          }
           if (msg.includes('invalid') && msg.includes('email')) {
             setError('The email address provided is invalid. Please check and try again.');
             setIsLoading(false);
@@ -224,7 +219,11 @@ export const Register: React.FC = () => {
           if (msg.includes('rate limit') || msg.includes('too many') || msg.includes('security purposes') || msg.includes('over_email_send_rate_limit')) {
             isRateLimited = true;
           }
-          // Fall through to register locally so mother profile is preserved
+          // Note: If "already registered" in Supabase Auth but deleted from the MamaTrack database,
+          // we fall through to register the new mother record locally so the deleted account is re-created.
+          if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('user already exists')) {
+            registeredInSupabase = true;
+          }
         } else {
           registeredInSupabase = true;
         }
@@ -232,6 +231,11 @@ export const Register: React.FC = () => {
       
       // 3. Register user in the local simulated database
       const res = AuthService.registerMother(submissionData);
+      if (!res.success) {
+        setError(res.error || 'Registration failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
       
       if (res.success) {
         // Determine the mail client inbox URL based on email address

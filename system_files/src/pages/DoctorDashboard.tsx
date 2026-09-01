@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord, MpdsrService, MpdsrRecord } from '../services/db';
+import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
@@ -306,6 +306,14 @@ export const DoctorDashboard: React.FC = () => {
   const handleMobilizeBlood = (emg: Emergency, bloodType: string = 'O+') => {
     DoctorService.submitBloodRequest(user.id, hospital.id, bloodType, 2);
     showToast(`Emergency 2 Units of ${bloodType} Blood reserved from Mukono Blood Bank for Case ${emg.code}.`, 'success');
+    loadData(user.id, doctor.hospital_id);
+  };
+
+  const handleBloodSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    DoctorService.submitBloodRequest(user.id, hospital.id, bloodRequestForm.blood_type, bloodRequestForm.units);
+    setShowBloodModal(false);
+    showToast(`Blood bank request for ${bloodRequestForm.units} unit(s) of ${bloodRequestForm.blood_type} dispatched successfully.`, 'success');
     loadData(user.id, doctor.hospital_id);
   };
 
@@ -846,7 +854,7 @@ export const DoctorDashboard: React.FC = () => {
                       <span style={{ fontSize: '11px', background: '#fef2f2', color: '#991b1b', padding: '3px 8px', borderRadius: '4px', fontWeight: 700 }}>
                         Category: {OBSTETRIC_CATEGORIES_METADATA[e.category || 'pph']?.label}
                       </span>
-                      {e.requires_cemonc && (
+                      {e.required_intervention === 'c_section' && (
                         <span style={{ fontSize: '11px', background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '4px', fontWeight: 800 }}>
                           ⚡ CEmONC Surgical Theatre Required
                         </span>

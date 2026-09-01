@@ -571,8 +571,8 @@ class LocalDatabase {
     try {
       const data = JSON.parse(raw);
       if (key === 'users') {
-        const hasSecondAdmin = Array.isArray(data) && data.some((u: { email?: string }) => u.email === 'admin2@mamatrack.ug');
-        if (!hasSecondAdmin || data.length < 29) {
+        const hasAdmin = Array.isArray(data) && data.some((u: { role?: string }) => u.role === 'admin');
+        if (!hasAdmin) {
           this.setStore(key, defaults);
           return defaults;
         }
@@ -603,11 +603,22 @@ class LocalDatabase {
       const oldData: SyncedRow[] = Array.isArray(parsedOld) ? parsedOld : [];
       const oldMap = new Map(oldData.map(item => [String(item.id), item]));
 
+      // Sync new/updated items
       (data as unknown as SyncedRow[]).forEach((newItem) => {
         const oldItem = oldMap.get(String(newItem.id));
         if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
           import('./syncService').then(({ SyncService }) => {
             SyncService.syncLocalChange(key, newItem.id, newItem);
+          });
+        }
+      });
+
+      // Sync deleted items
+      const newMap = new Map((data as unknown as SyncedRow[]).map(item => [String(item.id), item]));
+      oldData.forEach((oldItem) => {
+        if (!newMap.has(String(oldItem.id))) {
+          import('./syncService').then(({ SyncService }) => {
+            SyncService.syncLocalDelete(key, oldItem.id);
           });
         }
       });
@@ -1089,19 +1100,22 @@ export const EmergencyService = {
     const motherName = motherUser?.full_name || 'Patient';
 
     const catMeta = OBSTETRIC_CATEGORIES_METADATA[category] || OBSTETRIC_CATEGORIES_METADATA.other;
-    const computedSeverity = requireCemonc || catMeta.urgency === 'CRITICAL' ? 'critical' : 'high';
+    const computedSeverity: 'critical' | 'high' | 'medium' | 'low' = requireCemonc || catMeta.urgency === 'CRITICAL' ? 'critical' : 'high';
     const computedIntervention = requiredIntervention || catMeta.defaultIntervention;
 
+    let activeRecord: Emergency;
+
     if (active) {
+      const activeId = active.id;
       const updatedEmergencies = emergencies.map(e => {
-        if (Number(e.id) === Number(active!.id)) {
+        if (Number(e.id) === Number(activeId)) {
           return {
             ...e,
             mother_id: numericUserId,
             latitude: safeLat,
             longitude: safeLng,
             category,
-            severity: computedSeverity as const,
+            severity: computedSeverity,
             required_intervention: computedIntervention,
             vital_signs: vitalsSnapshot || e.vital_signs,
             notes: notes || e.notes || `Emergency maternal distress beacon: ${catMeta.label}`,
@@ -1126,12 +1140,12 @@ export const EmergencyService = {
         return e;
       });
       db.emergencies = updatedEmergencies;
-      active = updatedEmergencies.find(e => Number(e.id) === Number(active!.id)) || active;
+      activeRecord = updatedEmergencies.find(e => Number(e.id) === Number(activeId)) || active;
     } else {
       const nextId = Math.max(...emergencies.map(e => Number(e.id) || 0), 0) + 1;
       const code = `EMG-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
 
-      active = {
+      activeRecord = {
         id: nextId,
         code,
         mother_id: numericUserId,
@@ -1161,10 +1175,10 @@ export const EmergencyService = {
         cancelled_at: null
       };
 
-      db.emergencies = [...emergencies, active];
+      db.emergencies = [...emergencies, activeRecord];
     }
 
-    this.logTransition(active.id, null, 'pending', numericUserId, `SOS beacon triggered (${catMeta.label}) via GPS by ${reportingRole}`);
+    this.logTransition(activeRecord.id, null, 'pending', numericUserId, `SOS beacon triggered (${catMeta.label}) via GPS by ${reportingRole}`);
 
     // Broadcast alerts
     const admins = db.users.filter(u => u.role === 'admin');
@@ -1172,9 +1186,9 @@ export const EmergencyService = {
       NotificationService.createNotification(
         admin.id,
         `CRITICAL: ${catMeta.label}`,
-        `Patient ${motherName} triggered maternal alert (${computedSeverity.toUpperCase()}). Hospital matched: ${matchedHospital.name}. Notes: ${active.notes}`,
+        `Patient ${motherName} triggered maternal alert (${computedSeverity.toUpperCase()}). Hospital matched: ${matchedHospital.name}. Notes: ${activeRecord.notes}`,
         'emergency',
-        active.id
+        activeRecord.id
       );
     });
 
@@ -1185,7 +1199,7 @@ export const EmergencyService = {
         `INBOUND EMERGENCY: ${catMeta.label}`,
         `Expectant mother ${motherName} (${catMeta.label}). Destination: ${matchedHospital.name}. Required: ${computedIntervention.replace('_', ' ').toUpperCase()}`,
         'emergency',
-        active.id
+        activeRecord.id
       );
     });
 
@@ -1196,7 +1210,7 @@ export const EmergencyService = {
         `Emergency Available: ${catMeta.label}`,
         `New distress beacon from ${motherName} near ${matchedHospital.name}. Prepare for rapid response.`,
         'emergency',
-        active.id
+        activeRecord.id
       );
     });
 
@@ -1219,22 +1233,22 @@ export const EmergencyService = {
 
     // Real-time Event broadcast
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('mamatrack_alert_triggered', { detail: active }));
+      window.dispatchEvent(new CustomEvent('mamatrack_alert_triggered', { detail: activeRecord }));
       window.dispatchEvent(new CustomEvent('mamatrack_db_update', { detail: { key: 'emergencies' } }));
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       OfflineStorageService.queueEmergency({
-        id: String(active.id),
+        id: String(activeRecord.id),
         mother_id: String(numericUserId),
         latitude: safeLat,
         longitude: safeLng,
-        notes: active.notes,
-        created_at: active.triggered_at,
+        notes: activeRecord.notes,
+        created_at: activeRecord.triggered_at,
       });
     }
 
-    return active;
+    return activeRecord;
   },
 
   assignDispatch(
@@ -1495,6 +1509,10 @@ export const MpdsrService = {
     return db.mpdsrRecords;
   },
 
+  getAllRecords(): MpdsrRecord[] {
+    return db.mpdsrRecords;
+  },
+
   getRecordByEmergencyId(emergencyId: number): MpdsrRecord | null {
     return db.mpdsrRecords.find(r => r.emergency_id === emergencyId) || null;
   },
@@ -1535,6 +1553,16 @@ export const MpdsrService = {
       delay3Cases,
       auditsCompleted: records.filter(r => r.review_committee_status === 'audit_completed').length,
       actionPlansActive: records.filter(r => r.review_committee_status === 'action_plan_active').length
+    };
+  },
+
+  getDelayAnalysisStats() {
+    const stats = this.getDistrictStats();
+    return {
+      delay1SeekingCareCount: stats.delay1Cases,
+      delay2ReachingCareCount: stats.delay2Cases,
+      delay3ReceivingCareCount: stats.delay3Cases,
+      totalAudits: stats.totalAudits,
     };
   }
 };
@@ -1606,6 +1634,21 @@ export const ReferralService = {
 
     db.referralRecords = [newRef, ...referrals];
     return newRef;
+  },
+
+  generateReferralRecord(emergency: Emergency, hospitalId?: number): ReferralRecord {
+    const existing = this.getReferralByEmergencyId(emergency.id);
+    if (existing) return existing;
+    const ref = this.initReferralForEmergency(emergency);
+    if (hospitalId && ref.receiving_facility_id !== hospitalId) {
+      const hosp = db.hospitals.find(h => h.id === hospitalId);
+      if (hosp) {
+        ref.receiving_facility_id = hosp.id;
+        ref.receiving_facility_name = hosp.name;
+        db.referralRecords = db.referralRecords.map(r => r.id === ref.id ? ref : r);
+      }
+    }
+    return ref;
   },
 
   updateReferralStatus(emergencyId: number, status: string, notes: string) {
@@ -1704,8 +1747,6 @@ export const Dhis2Service = {
   generateHmis105Report(period: string = '2026-07') {
     const emergencies = db.emergencies;
     const mpdsr = db.mpdsrRecords;
-    const mothers = db.mothers;
-    const assessments = db.clinicalAssessments;
 
     const totalEmergencies = emergencies.length || 18;
     const pphCases = emergencies.filter(e => e.category === 'pph').length || 6;
