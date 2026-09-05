@@ -1079,7 +1079,7 @@ export const EmergencyService = {
   ): Emergency {
     const numericUserId = Number(motherUserId);
     const emergencies = db.emergencies;
-    let active = this.getActiveEmergencyForMother(numericUserId);
+    const active = this.getActiveEmergencyForMother(numericUserId);
 
     let motherProfile = db.mothers.find(m => Number(m.user_id) === numericUserId);
     if (!motherProfile) {

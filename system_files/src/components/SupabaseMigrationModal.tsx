@@ -61,7 +61,7 @@ export const SupabaseMigrationModal: React.FC<SupabaseMigrationModalProps> = ({ 
         const t = tables[i];
         appendLog(`Uploading ${t.data.length} rows to "${t.name}"…`);
         if (t.data.length > 0) {
-          const { error } = await supabase.from(t.name).upsert(t.data as any, { onConflict: 'id' });
+          const { error } = await supabase.from(t.name).upsert(t.data as unknown as Record<string, unknown>[], { onConflict: 'id' });
           if (error) {
             appendLog(`⚠ ${t.name}: ${error.message}`);
           } else {

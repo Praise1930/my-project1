@@ -72,7 +72,7 @@ export const Login: React.FC = () => {
       setEmail('');
     }
     setPassword('');
-  }, [role]);
+  }, [role, searchParams]);
 
   const handleResendVerification = async (targetEmail?: string) => {
     const toEmail = (targetEmail || unverifiedEmail || email).trim();

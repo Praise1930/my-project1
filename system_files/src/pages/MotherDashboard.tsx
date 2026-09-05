@@ -1884,7 +1884,7 @@ export const MotherDashboard: React.FC = () => {
                 </label>
                 <select
                   value={selectedEmergencyCategory}
-                  onChange={(e) => setSelectedEmergencyCategory(e.target.value as any)}
+                  onChange={(e) => setSelectedEmergencyCategory(e.target.value as ObstetricEmergencyCategory)}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #ef4444', fontSize: '0.88rem', fontWeight: 700, background: theme === 'dark' ? '#0f172a' : '#fef2f2', color: theme === 'dark' ? '#f8fafc' : '#991b1b' }}
                 >
                   {(Object.keys(OBSTETRIC_CATEGORIES_METADATA) as ObstetricEmergencyCategory[]).map(cat => (

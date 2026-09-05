@@ -377,8 +377,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           routeLineRef.current.setLatLngs(roadPoints);
           activeRouteCoordsRef.current = roadPoints;
         }
-      } catch (e: any) {
-        if (e.name !== 'AbortError') {
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name !== 'AbortError') {
           if (routeLineRef.current) {
             routeLineRef.current.setLatLngs(routePoints);
           }

@@ -8,6 +8,7 @@
     "build": "vite build",
     "type-check": "tsc -b",
     "lint": "eslint .",
+    "test:components": "vite build --config vite.test.config.ts && node -r ./src/tests/setup_env.js dist-test/test_bundle.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

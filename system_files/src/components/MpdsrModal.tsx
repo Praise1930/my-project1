@@ -12,14 +12,17 @@ interface MpdsrModalProps {
   onSaved?: (record: MpdsrRecord) => void;
 }
 
-export const MpdsrModal: React.FC<MpdsrModalProps> = ({
-  isOpen,
-  onClose,
+interface MpdsrModalContentProps {
+  emergency: Emergency;
+  onClose: () => void;
+  onSaved?: (record: MpdsrRecord) => void;
+}
+
+const MpdsrModalContent: React.FC<MpdsrModalContentProps> = ({
   emergency,
+  onClose,
   onSaved
 }) => {
-  if (!isOpen || !emergency) return null;
-
   const existing = MpdsrService.getRecordByEmergencyId(emergency.id);
   const motherUser = db.users.find(u => u.id === emergency.mother_id);
 
@@ -167,7 +170,7 @@ export const MpdsrModal: React.FC<MpdsrModalProps> = ({
               </label>
               <select
                 value={classification}
-                onChange={(e) => setClassification(e.target.value as any)}
+                onChange={(e) => setClassification(e.target.value as MpdsrRecord['case_classification'])}
                 style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '13px', fontWeight: 600 }}
               >
                 <option value="maternal_near_miss">Maternal Near-Miss (Severe acute complication survived)</option>
@@ -184,102 +187,106 @@ export const MpdsrModal: React.FC<MpdsrModalProps> = ({
                 type="text"
                 value={primaryCause}
                 onChange={(e) => setPrimaryCause(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
-                placeholder="e.g., Postpartum Haemorrhage with Hypovolemic Shock"
+                placeholder="e.g. Ruptured Uterus, Severe Pre-eclampsia"
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '13px' }}
                 required
               />
             </div>
           </div>
 
-          {/* Three-Delay Model Diagnostic */}
-          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1.5px solid #e2e8f0' }}>
+          {/* Three-Delay Model Checklists */}
+          <div>
             <h4 style={{ fontSize: '13.5px', fontWeight: 800, color: '#0f172a', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Icon name="trend" size={16} /> Three-Delay Model Root Cause Investigation (Uganda MoH Framework)
             </h4>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Delay 1 */}
-              <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', color: '#1e293b' }}>
-                  <input
-                    type="checkbox"
-                    checked={delay1Present}
-                    onChange={(e) => setDelay1Present(e.target.checked)}
-                  />
-                  <span>Delay 1: Delay in deciding to seek care (Awareness / Socio-cultural / Financial)</span>
-                </label>
-                {delay1Present && (
+            {/* Delay 1 */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', marginBottom: '10px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>
+                <input
+                  type="checkbox"
+                  checked={delay1Present}
+                  onChange={(e) => setDelay1Present(e.target.checked)}
+                />
+                Phase I Delay: Delay in deciding to seek care
+              </label>
+              {delay1Present && (
+                <div style={{ marginTop: '8px', paddingLeft: '24px' }}>
                   <input
                     type="text"
+                    placeholder="Contributing factors (e.g. lack of knowledge of danger signs, socio-cultural factors, fear of hospital costs)"
                     value={delay1Notes}
                     onChange={(e) => setDelay1Notes(e.target.value)}
-                    placeholder="Details: e.g. Late recognition of danger signs by family"
-                    style={{ width: '100%', marginTop: '6px', padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
                   />
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              {/* Delay 2 */}
-              <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', color: '#1e293b' }}>
-                  <input
-                    type="checkbox"
-                    checked={delay2Present}
-                    onChange={(e) => setDelay2Present(e.target.checked)}
-                  />
-                  <span>Delay 2: Delay in identifying and reaching medical facility (Transport / Road / Distance)</span>
-                </label>
-                {delay2Present && (
+            {/* Delay 2 */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', marginBottom: '10px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>
+                <input
+                  type="checkbox"
+                  checked={delay2Present}
+                  onChange={(e) => setDelay2Present(e.target.checked)}
+                />
+                Phase II Delay: Delay in reaching appropriate healthcare facility (Transport / Road / Navigation)
+              </label>
+              {delay2Present && (
+                <div style={{ marginTop: '8px', paddingLeft: '24px' }}>
                   <input
                     type="text"
+                    placeholder="Contributing factors (e.g. road conditions, ambulance fuel/delay, geographic distance to HC IV/Hospital)"
                     value={delay2Notes}
                     onChange={(e) => setDelay2Notes(e.target.value)}
-                    placeholder="Details: e.g. Feeder road flooding; distance to HC IV"
-                    style={{ width: '100%', marginTop: '6px', padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
                   />
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              {/* Delay 3 */}
-              <div style={{ background: '#ffffff', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', color: '#1e293b' }}>
-                  <input
-                    type="checkbox"
-                    checked={delay3Present}
-                    onChange={(e) => setDelay3Present(e.target.checked)}
-                  />
-                  <span>Delay 3: Delay in receiving adequate clinical care at facility (Blood / Theatre / Staff)</span>
-                </label>
-                {delay3Present && (
+            {/* Delay 3 */}
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>
+                <input
+                  type="checkbox"
+                  checked={delay3Present}
+                  onChange={(e) => setDelay3Present(e.target.checked)}
+                />
+                Phase III Delay: Delay in receiving adequate healthcare at facility (Triage / Surgical / Blood)
+              </label>
+              {delay3Present && (
+                <div style={{ marginTop: '8px', paddingLeft: '24px' }}>
                   <input
                     type="text"
+                    placeholder="Contributing factors (e.g. theatre occupied, lack of blood supply, delayed clinician response)"
                     value={delay3Notes}
                     onChange={(e) => setDelay3Notes(e.target.value)}
-                    placeholder="Details: e.g. Blood bank unit crossmatch time; theatre turn-around"
-                    style={{ width: '100%', marginTop: '6px', padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
                   />
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Corrective Action Plan */}
+          {/* Action Plan */}
           <div>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-              MPDSR Corrective Action Plan & Quality Improvement Recommendations
+              SMART Corrective Action Plan & Surveillance Recommendations
             </label>
             <textarea
               rows={3}
               value={correctiveAction}
               onChange={(e) => setCorrectiveAction(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '12.5px', boxSizing: 'border-box' }}
-              placeholder="Specify institutional, transport, or clinical changes to prevent recurrence..."
+              placeholder="Detail specific remedial actions: VHT retargeting, ambulance re-allocation, facility stock replenishment..."
+              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1.5px solid #cbd5e1', fontSize: '13px', resize: 'vertical' }}
               required
             />
           </div>
 
-          {/* Accountability & Review Status */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+          {/* Accountability Assignment */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Responsible Facility</label>
               <input
@@ -290,7 +297,7 @@ export const MpdsrModal: React.FC<MpdsrModalProps> = ({
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Accountable Officer</label>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Responsible Officer</label>
               <input
                 type="text"
                 value={responsiblePerson}
@@ -302,7 +309,7 @@ export const MpdsrModal: React.FC<MpdsrModalProps> = ({
               <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Committee Status</label>
               <select
                 value={committeeStatus}
-                onChange={(e) => setCommitteeStatus(e.target.value as any)}
+                onChange={(e) => setCommitteeStatus(e.target.value as MpdsrRecord['review_committee_status'])}
                 style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', fontWeight: 600 }}
               >
                 <option value="audit_completed">Audit Completed</option>
@@ -334,5 +341,23 @@ export const MpdsrModal: React.FC<MpdsrModalProps> = ({
 
       </div>
     </div>
+  );
+};
+
+export const MpdsrModal: React.FC<MpdsrModalProps> = ({
+  isOpen,
+  onClose,
+  emergency,
+  onSaved
+}) => {
+  if (!isOpen || !emergency) return null;
+
+  return (
+    <MpdsrModalContent
+      key={emergency.id}
+      emergency={emergency}
+      onClose={onClose}
+      onSaved={onSaved}
+    />
   );
 };
