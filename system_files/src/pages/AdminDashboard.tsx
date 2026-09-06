@@ -18,7 +18,7 @@ import { Dhis2ExportModal } from '../components/Dhis2ExportModal';
 import { MpdsrModal } from '../components/MpdsrModal';
 import { ReferralFormModal } from '../components/ReferralFormModal';
 import { CdssTriageModal } from '../components/CdssTriageModal';
-import { deleteSupabaseAuthUser, deleteAccountCompletely } from '../services/supabase';
+import { deleteAccountCompletely } from '../services/supabase';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -178,7 +178,7 @@ export const AdminDashboard: React.FC = () => {
       });
     });
     return list;
-  }, [mothers, users]);
+  }, [mothers, db.users]);
 
   const filteredMothers = registeredMothersWithOrphans.filter(m => {
     if (!q) return true;
