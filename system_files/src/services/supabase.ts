@@ -88,6 +88,40 @@ export async function deleteSupabaseAuthUser(email: string): Promise<{ success: 
 }
 
 /**
+ * Confirms a user's email in Supabase Auth directly using admin API.
+ * Marks email_confirm: true so the user can immediately log in without needing
+ * to click email links.
+ */
+export async function confirmSupabaseAuthUser(email: string): Promise<{ success: boolean; error?: string }> {
+  if (!supabaseAdmin) {
+    return { success: false, error: 'Admin client not configured' };
+  }
+
+  try {
+    const trimmedEmail = email.trim().toLowerCase();
+    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000
+    });
+    if (listError) return { success: false, error: listError.message };
+
+    const user = (usersData?.users || []).find(
+      (u: { email?: string }) => u.email?.toLowerCase() === trimmedEmail
+    );
+    if (!user) return { success: false, error: 'Account not found in Supabase Auth' };
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      email_confirm: true
+    });
+    if (updateError) return { success: false, error: updateError.message };
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: errorMessage(err, 'Could not confirm auth user') };
+  }
+}
+
+/**
  * Permanently and completely remove an account from both Supabase Auth
  * and all related Supabase Postgres database tables (users, mothers, doctors, drivers).
  */

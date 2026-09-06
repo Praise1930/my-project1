@@ -12,7 +12,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { supabase, isSupabaseConfigured, getAppOrigin } from '../services/supabase';
+import { supabase, isSupabaseConfigured, getAppOrigin, confirmSupabaseAuthUser } from '../services/supabase';
 
 import { Plus } from 'lucide-react';
 import { GlassmorphicOverlayLoader } from '../components/LoadingStates';
@@ -45,6 +45,7 @@ export const Login: React.FC = () => {
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
+  const [isActivating, setIsActivating] = useState(false);
 
   const rolesList = [
     { id: 'mother', title: 'Mother portal', icon: 'mother', desc: 'Emergency beacons, ANC schedule & doctor chat', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)' },
@@ -163,6 +164,29 @@ export const Login: React.FC = () => {
       showToast('Network error while requesting verification email.', 'error');
     } finally {
       setIsResending(false);
+    }
+  };
+
+  const handleInstantActivate = async (targetEmail: string) => {
+    setIsActivating(true);
+    try {
+      await confirmSupabaseAuthUser(targetEmail);
+      const users = db.users;
+      const uIdx = users.findIndex(u => u.email.toLowerCase() === targetEmail.toLowerCase());
+      if (uIdx !== -1) {
+        const updated = [...users];
+        updated[uIdx] = { ...updated[uIdx], email_verified: true };
+        db.users = updated;
+      }
+      setUnverifiedEmail(null);
+      setError(null);
+      setJustVerified(true);
+      showToast('Account activated successfully! Please enter your password to sign in.', 'success', 8000, 'Account Activated');
+    } catch (err) {
+      console.warn('Instant activation note:', err);
+      showToast('Could not activate account. Try verifying via the portal.', 'error');
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -455,6 +479,31 @@ export const Login: React.FC = () => {
                       >
                         <Mail size={13} />
                         {isResending ? 'Sending...' : (resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Email')}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleInstantActivate(unverifiedEmail)}
+                        disabled={isActivating}
+                        style={{
+                          flex: 1,
+                          minWidth: '140px',
+                          padding: '7px 12px',
+                          borderRadius: '6px',
+                          background: '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          cursor: isActivating ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <CheckCircle2 size={13} />
+                        {isActivating ? 'Activating...' : 'Activate Now'}
                       </button>
 
                       <Link

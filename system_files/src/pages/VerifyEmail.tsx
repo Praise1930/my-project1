@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { db } from '../services/db';
-import { supabase, isSupabaseConfigured, getAppOrigin } from '../services/supabase';
+import { supabase, isSupabaseConfigured, getAppOrigin, confirmSupabaseAuthUser } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { CheckCircle, Mail, AlertTriangle, ArrowRight, Send, ShieldCheck, Inbox } from 'lucide-react';
 import { showToast } from '../components/toastBus';
@@ -109,6 +109,7 @@ export const VerifyEmail: React.FC = () => {
     }
 
     markUserVerifiedLocally(clean);
+    confirmSupabaseAuthUser(clean).catch(err => console.warn('Supabase confirm note:', err));
     setIsVerified(true);
     setError(null);
     showToast(`Account successfully activated for ${clean}!`, 'success');
