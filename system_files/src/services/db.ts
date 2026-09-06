@@ -570,8 +570,12 @@ class LocalDatabase {
     }
     try {
       const data = JSON.parse(raw);
+      if (!Array.isArray(data)) {
+        this.setStore(key, defaults);
+        return defaults;
+      }
       if (key === 'users') {
-        const hasAdmin = Array.isArray(data) && data.some((u: { role?: string }) => u.role === 'admin');
+        const hasAdmin = data.some((u: { role?: string }) => u.role === 'admin');
         if (!hasAdmin) {
           this.setStore(key, defaults);
           return defaults;
