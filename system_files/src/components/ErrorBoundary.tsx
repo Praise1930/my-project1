@@ -54,7 +54,21 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   private reset = () => this.setState({ error: null, errorInfo: null, copied: false, showDetails: false });
 
-  private reload = () => window.location.reload();
+  private reload = async () => {
+    try {
+      if ('caches' in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map(k => window.caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch {
+      // Ignore
+    }
+    window.location.reload();
+  };
 
   private goHome = () => {
     this.setState({ error: null, errorInfo: null }, () => {
@@ -62,10 +76,18 @@ export class ErrorBoundary extends React.Component<Props, State> {
     });
   };
 
-  private clearCacheAndReset = () => {
+  private clearCacheAndReset = async () => {
     try {
       localStorage.clear();
       sessionStorage.clear();
+      if ('caches' in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map(k => window.caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
     } catch (e) {
       console.warn('Could not clear storage:', e);
     }

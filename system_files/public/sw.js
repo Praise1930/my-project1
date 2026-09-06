@@ -12,7 +12,7 @@
 // So: never touch build tooling URLs, fetch documents from the network first,
 // and only cache fingerprinted static assets.
 
-const CACHE_NAME = 'mamatrack-pwa-v4';
+const CACHE_NAME = 'mamatrack-pwa-v5';
 
 const PRECACHE = [
   '/',

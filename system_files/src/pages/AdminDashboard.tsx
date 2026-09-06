@@ -178,7 +178,7 @@ export const AdminDashboard: React.FC = () => {
       });
     });
     return list;
-  }, [mothers, db.users]);
+  }, [mothers]);
 
   const filteredMothers = registeredMothersWithOrphans.filter(m => {
     if (!q) return true;
