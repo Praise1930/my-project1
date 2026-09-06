@@ -369,7 +369,7 @@ export const Register: React.FC = () => {
                   <ThemeToggle />
                   <Link to="/" className="d-none d-sm-inline-block" style={{ color: isDark ? '#f1f5f9' : '#102039', fontWeight: 600, fontSize: '15px' }}>← Back to Home</Link>
                   <Link to="/" className="d-inline-block d-sm-none" style={{ color: isDark ? '#f1f5f9' : '#102039', fontSize: '18px', padding: '4px' }} title="Back to Home">
-                    <i className="fa fa-home"></i>
+                    <Icon name="home" size={16} />
                   </Link>
                   <Link to="/login?role=mother" className="btn header-btn d-none d-md-inline-block" style={{ padding: '10px 22px', fontSize: '14px', borderRadius: '8px', color: '#ffffff', background: 'linear-gradient(135deg, #0f61ef, #0046c7)', boxShadow: '0 4px 14px rgba(15, 97, 239, 0.4)', fontWeight: 700, textDecoration: 'none' }}>
                     <span style={{ color: '#ffffff', fontWeight: 700 }}>Login Mother</span>
@@ -866,8 +866,8 @@ export const Register: React.FC = () => {
             </div>
             <div className="col-md-4">
               <h4 style={{ color: isDark ? '#ffffff' : '#0f172a', fontSize: '18px', fontWeight: 600, marginBottom: '20px' }}>Helpline Info</h4>
-              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-phone" style={{ marginRight: '5px' }}></i> Emergency Helpline: 0800-MAMATRACK</p>
-              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i> mamatrack6@gmail.com</p>
+              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><span style={{ display: 'inline-flex', verticalAlign: '-0.15em', marginRight: '5px' }}><Icon name="phone" size={13} /></span> Emergency Helpline: 0800-MAMATRACK</p>
+              <p style={{ color: isDark ? '#909090' : '#64748b', fontSize: '13px', margin: '4px 0' }}><span style={{ display: 'inline-flex', verticalAlign: '-0.15em', marginRight: '5px' }}><Mail size={13} /></span> mamatrack6@gmail.com</p>
             </div>
           </div>
           <div className="row border-top" style={{ borderTop: isDark ? '1px solid #16243d' : '1px solid #e2e8f0', marginTop: '30px', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

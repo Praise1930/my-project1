@@ -314,39 +314,13 @@ export const AdminDashboard: React.FC = () => {
   });
 
 
-  // Dynamic Stylesheet Loading for isolating theme CSS
-  useEffect(() => {
-    // Add Dasher CSS
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = '/styles/dasher/theme.css';
-    link.id = 'dasher-theme-css';
-    document.head.appendChild(link);
-
-    // Add Tabler icons Webfont
-    const iconsLink = document.createElement('link');
-    iconsLink.rel = 'stylesheet';
-    iconsLink.href = 'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css';
-    iconsLink.id = 'tabler-icons-css';
-    document.head.appendChild(iconsLink);
-
-    // Add Google font
-    const fontLink = document.createElement('link');
-    fontLink.rel = 'stylesheet';
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap';
-    fontLink.id = 'public-sans-css';
-    document.head.appendChild(fontLink);
-
-    return () => {
-      // Unload on exit
-      const linkEl = document.getElementById('dasher-theme-css');
-      if (linkEl) linkEl.remove();
-      const iconsEl = document.getElementById('tabler-icons-css');
-      if (iconsEl) iconsEl.remove();
-      const fontEl = document.getElementById('public-sans-css');
-      if (fontEl) fontEl.remove();
-    };
-  }, []);
+  // The admin portal used to pull three stylesheets at runtime:
+  // /styles/dasher/theme.css, which has never existed in public/ and answered
+  // 404 on every mount; the Tabler icon webfont, now unnecessary because the
+  // sidebar and headings use the bundled <Icon> set; and Public Sans, which is
+  // requested with the rest of the fonts in index.html so it arrives with the
+  // document instead of after the first paint. The portal's own <style> block
+  // below carries the theme.
 
   // 1. Auth & Data loading
   useEffect(() => {
@@ -1855,13 +1829,13 @@ export const AdminDashboard: React.FC = () => {
             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Logout"
           >
-            <i className="ti ti-logout" style={{ fontSize: '18px' }}></i>
+            <Icon name="back" size={18} />
           </button>
         </div>
 
         <nav style={{ flex: 1, paddingTop: '10px' }}>
           <div className={`sidebar-nav-item ${activeTab === 'dispatch' ? 'active' : ''}`} onClick={() => setActiveTab('dispatch')} style={{ position: 'relative' }}>
-            <i className="ti ti-alert-triangle" style={{ fontSize: '18px' }}></i>
+            <Icon name="warning" size={18} />
             <span>Active Dispatch</span>
             {pendingCount > 0 && (
               <span style={{
@@ -1885,27 +1859,27 @@ export const AdminDashboard: React.FC = () => {
             )}
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'facilities' ? 'active' : ''}`} onClick={() => setActiveTab('facilities')}>
-            <i className="ti ti-building-hospital" style={{ fontSize: '18px' }}></i>
+            <Icon name="hospital" size={18} />
             <span>Health Facilities</span>
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'personnel' ? 'active' : ''}`} onClick={() => setActiveTab('personnel')}>
-            <i className="ti ti-users" style={{ fontSize: '18px' }}></i>
+            <Icon name="people" size={18} />
             <span>Duty Personnel</span>
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'mothers' ? 'active' : ''}`} onClick={() => setActiveTab('mothers')}>
-            <i className="ti ti-user-heart" style={{ fontSize: '18px' }}></i>
+            <Icon name="mother" size={18} />
             <span>Expectant Mothers</span>
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
-            <i className="ti ti-file-analytics" style={{ fontSize: '18px' }}></i>
+            <Icon name="notes" size={18} />
             <span>Audit & Fuel Logs</span>
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'performance' ? 'active' : ''}`} onClick={() => setActiveTab('performance')}>
-            <i className="ti ti-chart-dots" style={{ fontSize: '18px' }}></i>
+            <Icon name="chart" size={18} />
             <span>System Performance</span>
           </div>
           <div className={`sidebar-nav-item ${activeTab === 'mpdsr' ? 'active' : ''}`} onClick={() => setActiveTab('mpdsr')}>
-            <i className="ti ti-shield-check" style={{ fontSize: '18px' }}></i>
+            <Icon name="shield" size={18} />
             <span>MPDSR Surveillance</span>
           </div>
         </nav>
@@ -1956,13 +1930,13 @@ export const AdminDashboard: React.FC = () => {
               {/* Nav Menu */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
                 {([
-                  { id: 'dispatch', icon: 'ti-map-pin', label: 'GPS Dispatch' },
-                  { id: 'facilities', icon: 'ti-building-hospital', label: 'Health Facilities' },
-                  { id: 'personnel', icon: 'ti-users', label: 'Duty Personnel' },
-                  { id: 'mothers', icon: 'ti-heart', label: 'Expectant Mothers' },
-                  { id: 'reports', icon: 'ti-chart-bar', label: 'Reports & Audits' },
-                  { id: 'performance', icon: 'ti-chart-dots', label: 'System Performance' },
-                  { id: 'mpdsr', icon: 'ti-shield-check', label: 'MPDSR Surveillance' }
+                  { id: 'dispatch', icon: 'location', label: 'GPS Dispatch' },
+                  { id: 'facilities', icon: 'hospital', label: 'Health Facilities' },
+                  { id: 'personnel', icon: 'people', label: 'Duty Personnel' },
+                  { id: 'mothers', icon: 'mother', label: 'Expectant Mothers' },
+                  { id: 'reports', icon: 'chart', label: 'Reports & Audits' },
+                  { id: 'performance', icon: 'trend', label: 'System Performance' },
+                  { id: 'mpdsr', icon: 'shield', label: 'MPDSR Surveillance' }
                 ] as const).map(item => (
                   <button
                     key={item.id}
@@ -1982,7 +1956,7 @@ export const AdminDashboard: React.FC = () => {
                       textAlign: 'left'
                     }}
                   >
-                    <i className={`ti ${item.icon}`} style={{ fontSize: '1.1rem' }}></i>
+                    <Icon name={item.icon} size={18} />
                     {item.label}
                   </button>
                 ))}
@@ -1994,7 +1968,7 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => { AuthService.logout(); navigate('/login?role=admin'); }}
                   style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '8px 14px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <i className="ti ti-logout"></i> Logout
+                  <Icon name="back" size={16} /> Logout
                 </button>
               </div>
             </div>
@@ -2033,7 +2007,7 @@ export const AdminDashboard: React.FC = () => {
 
           {activeTab !== 'performance' && activeTab !== 'mpdsr' && (
             <div style={{ flex: 1, maxWidth: '340px', position: 'relative', margin: '0 16px' }}>
-              <i className="ti ti-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: '16px' }}></i>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', display: 'flex', pointerEvents: 'none' }}><Icon name="search" size={16} /></span>
               <input 
                 type="text" 
                 placeholder={`Search ${activeTab} by name, code, hospital...`} 
@@ -2142,7 +2116,7 @@ export const AdminDashboard: React.FC = () => {
               style={{ alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '8px 16px', borderRadius: '6px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer' }}
               title="Logout"
             >
-              <i className="ti ti-logout" style={{ fontSize: '16px' }}></i>
+              <Icon name="back" size={16} />
               <span>Logout</span>
             </button>
           </div>
@@ -2606,7 +2580,7 @@ export const AdminDashboard: React.FC = () => {
             <div className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '16px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <h5 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                  <i className="ti ti-map-pin" style={{ color: '#3b82f6' }}></i> Fleet &amp; GIS Spatial Map
+                  <span style={{ color: '#3b82f6', display: 'inline-flex', verticalAlign: '-0.15em' }}><Icon name="location" size={16} /></span> Fleet &amp; GIS Spatial Map
                 </h5>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button

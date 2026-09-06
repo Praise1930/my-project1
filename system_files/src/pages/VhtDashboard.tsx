@@ -400,7 +400,7 @@ export const VhtDashboard: React.FC = () => {
   );
 
   return (
-    <div className="vht-theme" style={{ display: 'flex', minHeight: '100dvh', background: isDark ? '#0f172a' : '#f0f9ff', color: isDark ? '#f1f5f9' : '#334155', fontFamily: "'Muli', sans-serif" }}>
+    <div className="vht-theme" style={{ display: 'flex', minHeight: '100dvh', background: isDark ? '#0f172a' : '#f0f9ff', color: isDark ? '#f1f5f9' : '#334155', fontFamily: 'var(--font-sans)' }}>
       
       {/* SIDEBAR NAVIGATION */}
       <aside style={{ width: '260px', background: isDark ? '#1e293b' : '#ffffff', borderRight: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e0f2fe', display: 'flex', flexDirection: 'column', padding: '24px 16px', position: 'fixed', top: 0, bottom: 0 }}>

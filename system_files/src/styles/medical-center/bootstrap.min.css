@@ -4,20 +4,19 @@
 /* Box-sizing reset */
 *, *::before, *::after { box-sizing: border-box; }
 
-/* Basic responsive containers */
-.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-.row { display: flex; flex-wrap: wrap; margin: 0 -8px; }
-.col { flex: 1; padding: 0 8px; }
+/* .container and .row are defined in styles/base.css. */
+.col { flex: 1; padding: 0 8px; min-width: 0; }
 
-/* Common utilities */
-.text-center { text-align: center; }
-.d-flex { display: flex; }
-.d-none { display: none; }
-.d-block { display: block; }
-.w-100 { width: 100%; }
-.h-100 { height: 100%; }
+/* The utility and component rules that used to live here — .text-center,
+   .d-flex/.d-none/.d-block, .w-100, .form-control, .btn and its variants — are
+   defined in styles/base.css now. Two copies of .btn in different stylesheets
+   meant whichever happened to load second won, so a small button on this page
+   picked up full-size padding. base.css owns them; this file keeps only the
+   reset and the spacing helpers that are unique to it. */
+
 .m-0 { margin: 0; }
 .p-0 { padding: 0; }
+.h-100 { height: 100%; }
 .mb-1 { margin-bottom: 4px; }
 .mb-2 { margin-bottom: 8px; }
 .mb-3 { margin-bottom: 16px; }
@@ -25,39 +24,3 @@
 .mt-2 { margin-top: 8px; }
 .mt-3 { margin-top: 16px; }
 .mt-4 { margin-top: 24px; }
-
-/* Form controls stub */
-.form-control {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.form-control:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-}
-
-/* Button resets */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.btn-primary { background: #6366f1; color: #fff; }
-.btn-primary:hover { background: #4f46e5; }
-.btn-danger { background: #ef4444; color: #fff; }
-.btn-danger:hover { background: #dc2626; }
-.btn-success { background: #10b981; color: #fff; }
-.btn-success:hover { background: #059669; }

@@ -11,6 +11,10 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
+// The Momentra skin for this portal. Scoped here rather than globally so the
+// rose treatment of .sidebar / .card-glass / .form-input does not repaint the
+// admin, doctor and driver portals, which share those class names.
+import '../styles/mother.css';
 import { OfflineStorageService } from '../services/offlineStorage';
 import { playAlertSound } from '../services/alertSound';
 import { CdssTriageModal } from '../components/CdssTriageModal';
@@ -1055,12 +1059,12 @@ export const MotherDashboard: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                       {!activeEmergency ? (
                         <button className="emergency-btn" onClick={() => handleTriggerSOS()}>
-                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}><Icon name="sos" size={18} /></span>
+                          <span className="btn-emoji"><Icon name="sos" size={34} /></span>
                           <span style={{ fontWeight: 800 }}>Trigger SOS</span>
                         </button>
                       ) : (
                         <button className="emergency-btn triggered" onClick={handleCancelSOS} style={{ animation: 'active-emergency-pulse 1s infinite alternate', background: '#ef4444', border: '3px solid #dc2626', cursor: 'pointer' }}>
-                          <span className="btn-emoji" style={{ fontSize: '2.5rem' }}><Icon name="warning" size={18} /></span>
+                          <span className="btn-emoji"><Icon name="warning" size={34} /></span>
                           <span style={{ fontWeight: 800 }}>Cancel SOS</span>
                         </button>
                       )}

@@ -1,0 +1,1548 @@
+/* MamaTrack GPS — Base Component Layer
+ * ============================================================================
+ *
+ * index.css carries the design tokens and the reset. This file carries the
+ * components those tokens describe: buttons, form controls, cards, tables,
+ * badges, the dashboard shell and the handful of layout utilities the screens
+ * use by name.
+ *
+ * Every screen was written against these class names — `btn`, `form-input`,
+ * `card`, `dashboard-layout`, `d-none d-md-flex` and so on — but no rule ever
+ * defined them, so controls fell back to the browser's defaults: unstyled grey
+ * buttons, inputs at their intrinsic 177px width overflowing their grid column,
+ * responsive helpers that hid nothing. This file is that missing layer.
+ *
+ * Rules here deliberately avoid !important. The dashboards each ship a scoped
+ * <style> block that re-skins these components per portal (rose for the mother
+ * portal, amber for the driver, blue for admin, teal for the doctor); those
+ * blocks must keep winning, so this file only ever sets the structural
+ * baseline — size, spacing, radius, states — and neutral colours drawn from the
+ * tokens.
+ *
+ * Load order: index.css → base.css → portal theme → overlays.css →
+ * viewport.css.
+ */
+
+/* ============================================================================
+   1. Buttons
+   ============================================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.btn:hover {
+  filter: brightness(0.97);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+
+/* Icons inside a button never shrink, so a long label wraps instead of
+   squashing the glyph into an ellipse. */
+.btn > svg,
+.btn > .btn-emoji {
+  flex: none;
+}
+
+/* --- Sizes --------------------------------------------------------------- */
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+  gap: 6px;
+}
+
+.btn-lg {
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* --- Variants ------------------------------------------------------------ */
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  filter: none;
+}
+
+.btn-success {
+  background: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background: var(--success-hover);
+  border-color: var(--success-hover);
+  filter: none;
+}
+
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+  filter: none;
+}
+
+.btn-amber {
+  background: var(--amber-500);
+  border-color: var(--amber-500);
+  color: #1f1300;
+}
+
+.btn-amber:hover {
+  background: var(--amber-600);
+  border-color: var(--amber-600);
+  color: #ffffff;
+  filter: none;
+}
+
+.btn-rose {
+  background: var(--rose-500);
+  border-color: var(--rose-500);
+  color: #ffffff;
+}
+
+.btn-rose:hover {
+  background: var(--rose-600);
+  border-color: var(--rose-600);
+  filter: none;
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  filter: none;
+}
+
+/* The SOS glyph wrapper. Sized by the screen that uses it; this only keeps it
+   centred and stops it inheriting the button's text metrics. */
+.btn-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* ============================================================================
+   2. Form controls
+   ============================================================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* A grid or flex item defaults to min-width:auto and so refuses to shrink
+     below its content. An <input> reports an intrinsic width of roughly 177px,
+     which is wider than a column of a two-up grid inside a 320px card — that is
+     what pushed the fields past the card edge and clipped their spin buttons. */
+  min-width: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.form-input,
+.form-control,
+.form-select,
+.form-textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input::placeholder,
+.form-control::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus,
+.form-control:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-input:disabled,
+.form-control:disabled,
+.form-select:disabled {
+  background: var(--bg-input);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.form-select {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+
+.form-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+/* Validation */
+.form-input.has-error,
+.form-control.has-error,
+.form-select.has-error {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.form-input.has-error:focus,
+.form-control.has-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Two-up field row that collapses on a phone. */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* A number field's spin buttons sit inside the padding box. Left at the browser
+   default they overlap the value on a narrow field, so they are hidden and the
+   value is typed. The field keeps inputmode="numeric" behaviour either way. */
+.form-input[type='number']::-webkit-outer-spin-button,
+.form-input[type='number']::-webkit-inner-spin-button,
+.form-control[type='number']::-webkit-outer-spin-button,
+.form-control[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.form-input[type='number'],
+.form-control[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Country-code prefix welded to the left of a phone field. */
+.phone-input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.phone-input-group .phone-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-color);
+  border-right: none;
+  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.phone-input-group .form-input {
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+  border-left: none;
+}
+
+/* ============================================================================
+   3. Cards and panels
+   ============================================================================ */
+
+/* No padding by default: most screens pass their own, and the admin list cards
+   deliberately run their header and body to the card edge. */
+.card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+
+.card-body {
+  padding: var(--space-lg);
+}
+
+.card-header {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 700;
+}
+
+/* Metric tile — a number with a caption. */
+.card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  min-width: 0;
+}
+
+.metric-val,
+.metric-number {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.metric-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  min-width: 0;
+}
+
+/* Doctor portal panels. */
+.medical-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.medical-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.medical-card-body {
+  padding: var(--space-lg);
+}
+
+/* ============================================================================
+   4. Tables
+   ============================================================================ */
+
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table,
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.table th,
+.admin-table th {
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.table td,
+.admin-table td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td,
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+  background: var(--bg-input);
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--border-color);
+}
+
+.table-borderless th,
+.table-borderless td {
+  border: none;
+}
+
+/* ============================================================================
+   5. Badges and status pills
+   ============================================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badge-red,
+.badge-alert-pending {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger-hover);
+}
+
+.badge-alert-success {
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--success-hover);
+}
+
+.badge-amber {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.badge-blue {
+  background: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+}
+
+.license-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-input);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.sos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  background: rgba(239, 68, 68, 0.14);
+  color: var(--danger-hover);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.doc-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--danger);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.facility-subtext {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* ============================================================================
+   6. Dashboard shell
+   ============================================================================ */
+
+.dashboard-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100dvh;
+}
+
+.main-content,
+.main-content-area {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.top-header,
+.medilab-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 0.85rem var(--space-lg);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.25rem 0;
+}
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex: none;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0.7rem 1.25rem;
+  border: none;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebar-nav-item:hover,
+.sidebar-nav-item.active {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.sidebar-profile,
+.sidebar-footer-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-md) var(--space-lg);
+  min-width: 0;
+}
+
+.sidebar-username,
+.user-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-role {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.logo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-sm);
+  background: var(--primary-light);
+  color: var(--primary);
+  flex: none;
+}
+
+.admin-logout-btn,
+.driver-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius-sm);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-logout-btn:hover,
+.driver-logout-btn:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-search-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.9rem 0.55rem 2.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.admin-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.dashboard-footer {
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* Modal shells used by the admin and doctor portals. */
+.admin-modal-overlay,
+.medilab-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: var(--bg-overlay);
+  overflow-y: auto;
+}
+
+/* ============================================================================
+   7. Rescue status tracker
+   ============================================================================ */
+
+.status-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.status-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.step-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex: none;
+  transition: background-color var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast);
+}
+
+.step-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-muted);
+  overflow-wrap: break-word;
+}
+
+/* A step is reached (dispatched → en route → arrived → delivered) or done. */
+.status-step.completed .step-circle,
+.status-step.dispatched .step-circle,
+.status-step.arrived .step-circle,
+.status-step.delivered .step-circle {
+  background: var(--success);
+  border-color: var(--success);
+  color: #ffffff;
+}
+
+.status-step.completed .step-label,
+.status-step.dispatched .step-label,
+.status-step.arrived .step-label,
+.status-step.delivered .step-label {
+  color: var(--text-primary);
+}
+
+.status-step.active .step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-primary);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.status-step.active .step-label {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.status-step.pending .step-circle {
+  background: var(--bg-input);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--success), var(--primary));
+  transition: width var(--transition-slow);
+}
+
+/* ============================================================================
+   8. Appointment / checkup list
+   ============================================================================ */
+
+.checkup-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  min-width: 0;
+}
+
+.checkup-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 6px 8px;
+  border-radius: var(--border-radius-sm);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.8rem;
+  line-height: 1.15;
+  text-align: center;
+  flex: none;
+}
+
+.checkup-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.checkup-type {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--text-primary);
+}
+
+.checkup-hospital {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.nav-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+/* ============================================================================
+   9. Driver portal odds and ends
+   ============================================================================ */
+
+.driver-theme,
+.driver-bg {
+  min-width: 0;
+}
+
+.map-hud-container {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+}
+
+.inspection-success-box {
+  padding: var(--space-md);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--border-radius-sm);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--success-hover);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.active-dispatch-glow {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.15), 0 12px 30px -12px rgba(239, 68, 68, 0.5);
+}
+
+.telemetry-pulsing {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.btn-blood-req {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--border-radius-sm);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger-hover);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-blood-req:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.btn-medilab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.6rem 1.15rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: #1977cc;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.btn-medilab:hover {
+  background: #145ea1;
+}
+
+.form-control-medilab,
+.form-control-admin {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.form-control-medilab:focus,
+.form-control-admin:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.form-label-admin {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.triage-card {
+  padding: var(--space-md);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+}
+
+.btn-reset-db {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reset-icon {
+  display: inline-flex;
+  flex: none;
+}
+
+/* ============================================================================
+   10. Public pages (landing, login, register)
+   ============================================================================ */
+
+.medical-login-root,
+.medical-register-root {
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.login-form-section,
+.register-form-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 5vw, 4rem) 1rem;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.footer-link-text {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.footer-link-text:hover {
+  text-decoration: underline;
+}
+
+/* Soft background orbs behind the auth cards. Decorative only. */
+.bg-orbs {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.35;
+}
+
+.orb-1 {
+  width: 340px;
+  height: 340px;
+  top: -90px;
+  left: -80px;
+  background: var(--primary);
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  right: -100px;
+  bottom: -110px;
+  background: var(--rose-400);
+}
+
+.orb-3 {
+  width: 260px;
+  height: 260px;
+  right: -80px;
+  top: 20%;
+  background: var(--info);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .orb {
+    animation: orbDrift 18s ease-in-out infinite alternate;
+  }
+
+  .orb-2 {
+    animation-duration: 24s;
+  }
+
+  .orb-3 {
+    animation-duration: 30s;
+  }
+}
+
+@keyframes orbDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(24px, -18px, 0) scale(1.08); }
+}
+
+/* ============================================================================
+   11. Layout utilities
+   ============================================================================ */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: clamp(12px, 4vw, 24px);
+}
+
+.container-fluid {
+  width: 100%;
+  padding-inline: clamp(12px, 4vw, 24px);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-inline: -12px;
+}
+
+.row > * {
+  padding-inline: 12px;
+  min-width: 0;
+}
+
+.g-4 {
+  gap: 1.5rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+/* The screens set their own column ratio inline (`1.05fr 1.15fr` and the like),
+   and an inline declaration outranks any selector — so the collapse to a single
+   column has to be forced, or these grids stay two-up on a phone and run off
+   the side of the screen. */
+@media (max-width: 900px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Bootstrap-shaped column helpers, only the widths this app uses. */
+.col-md-4,
+.col-md-5 {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .col-md-4 { width: 33.333333%; }
+  .col-md-5 { width: 41.666667%; }
+}
+
+/* --- Display ------------------------------------------------------------- */
+
+.d-none          { display: none !important; }
+.d-block         { display: block !important; }
+.d-inline-block  { display: inline-block !important; }
+.d-flex          { display: flex !important; }
+.d-inline-flex   { display: inline-flex !important; }
+
+@media (min-width: 576px) {
+  .d-sm-none         { display: none !important; }
+  .d-sm-block        { display: block !important; }
+  .d-sm-inline-block { display: inline-block !important; }
+  .d-sm-flex         { display: flex !important; }
+}
+
+@media (min-width: 768px) {
+  .d-md-none         { display: none !important; }
+  .d-md-block        { display: block !important; }
+  .d-md-inline-block { display: inline-block !important; }
+  .d-md-flex         { display: flex !important; }
+  .d-md-inline-flex  { display: inline-flex !important; }
+}
+
+/* --- Flex alignment ------------------------------------------------------ */
+
+.align-items-center      { align-items: center; }
+.align-items-start       { align-items: flex-start; }
+.justify-content-between { justify-content: space-between; }
+.justify-content-center  { justify-content: center; }
+.justify-content-end     { justify-content: flex-end; }
+.flex-wrap               { flex-wrap: wrap; }
+
+/* --- Spacing, sizing, text ----------------------------------------------- */
+
+.w-100        { width: 100%; }
+.text-center  { text-align: center; }
+.text-end     { text-align: right; }
+.border-top   { border-top: 1px solid var(--border-color); }
+.rounded-3    { border-radius: var(--border-radius); }
+.mb-6         { margin-bottom: 2rem; }
+
+/* ============================================================================
+   12. Dark mode
+   ============================================================================ */
+
+[data-theme='dark'] .btn {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .btn-primary { background: var(--primary); color: #ffffff; }
+[data-theme='dark'] .btn-success { background: var(--success); color: #ffffff; }
+[data-theme='dark'] .btn-danger  { background: var(--danger);  color: #ffffff; }
+[data-theme='dark'] .btn-rose    { background: var(--rose-500); color: #ffffff; }
+[data-theme='dark'] .btn-amber   { background: var(--amber-500); color: #1f1300; }
+
+[data-theme='dark'] .btn:hover {
+  filter: brightness(1.12);
+}
+
+[data-theme='dark'] .form-input,
+[data-theme='dark'] .form-control,
+[data-theme='dark'] .form-select,
+[data-theme='dark'] .form-textarea,
+[data-theme='dark'] .form-control-admin,
+[data-theme='dark'] .form-control-medilab,
+[data-theme='dark'] .admin-search-input {
+  background: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .phone-input-group .phone-prefix {
+  background: #1e293b;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+[data-theme='dark'] .table th,
+[data-theme='dark'] .admin-table th {
+  background: #1e293b;
+}
+
+[data-theme='dark'] .admin-table tbody tr:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+[data-theme='dark'] .badge,
+[data-theme='dark'] .license-badge {
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--text-secondary);
+}
+
+[data-theme='dark'] .orb {
+  opacity: 0.22;
+}
+
+/* ============================================================================
+   13. Reduced motion
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-pulsing,
+  .orb {
+    animation: none;
+  }
+
+  .btn,
+  .form-input,
+  .form-control,
+  .step-circle,
+  .progress-fill {
+    transition: none;
+  }
+}
+
+
+/* ============================================================================
+   14. Shared shell pieces used by more than one portal
+   ============================================================================
+
+   These class names originate in the mother portal's stylesheet, but the driver
+   and VHT screens use them too. mother.css is loaded only with the mother
+   portal (so its rose treatment does not repaint the other dashboards), which
+   left these unstyled everywhere else. Neutral definitions live here; each
+   portal's own rules still override them.
+   ============================================================================ */
+
+.card-glass {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  min-width: 0;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .card-glass {
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+  }
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-card);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.checklist-item:hover {
+  border-color: var(--primary);
+}
+
+.checklist-item input[type='checkbox'] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+/* The tick follows the portal it is in rather than the indigo default. */
+.driver-theme .checklist-item input[type='checkbox'] { accent-color: var(--amber-500); }
+.mother-theme .checklist-item input[type='checkbox'] { accent-color: var(--rose-500); }
+.vht-theme .checklist-item input[type='checkbox'] { accent-color: var(--info); }
+
+/* --- Sidebar shell ------------------------------------------------------- */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  flex: none;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-color);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-lg);
+  min-width: 0;
+}
+
+.sidebar-logo h2,
+.sidebar-logo h3 {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border-color);
+  min-width: 0;
+}
+
+.sidebar-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-item:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.nav-item.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* --- Generic modal shell ------------------------------------------------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: var(--bg-overlay);
+  overflow-y: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100dvh - 2 * var(--space-lg));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+/* --- Sidebar collapse ---------------------------------------------------- */
+
+/* Every portal pins its sidebar with position:fixed and offsets the content by
+   260px. Below the tablet breakpoint the sidebar is hidden and the drawer takes
+   over, so the offset has to go with it or the content sits off-screen. */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    display: block;
+  }
+
+  .dashboard-layout > aside.sidebar {
+    display: none;
+  }
+
+  .main-content,
+  .main-content-area {
+    margin-left: 0;
+    max-width: 100%;
+  }
+}

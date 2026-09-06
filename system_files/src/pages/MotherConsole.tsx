@@ -10,6 +10,10 @@ import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
 import { showToast } from '../components/toastBus';
 import { Icon } from '../components/Icon';
+// The Momentra skin for this portal. Scoped here rather than globally so the
+// rose treatment of .sidebar / .card-glass / .form-input does not repaint the
+// admin, doctor and driver portals, which share those class names.
+import '../styles/mother.css';
 import { playAlertSound } from '../services/alertSound';
 
 export const MotherConsole: React.FC = () => {

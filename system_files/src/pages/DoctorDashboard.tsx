@@ -58,30 +58,11 @@ export const DoctorDashboard: React.FC = () => {
   const [showMpdsrModal, setShowMpdsrModal] = useState(false);
   const [selectedEmergencyForMpdsr, setSelectedEmergencyForMpdsr] = useState<Emergency | null>(null);
 
-  // Dynamic Stylesheet Loading for isolating theme CSS
-  useEffect(() => {
-    // Add Medilab CSS
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = '/styles/medilab/main.css';
-    link.id = 'medilab-theme-css';
-    document.head.appendChild(link);
-
-    // Add Bootstrap icons
-    const iconsLink = document.createElement('link');
-    iconsLink.rel = 'stylesheet';
-    iconsLink.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css';
-    iconsLink.id = 'bootstrap-icons-css';
-    document.head.appendChild(iconsLink);
-
-    return () => {
-      // Unload on exit
-      const linkEl = document.getElementById('medilab-theme-css');
-      if (linkEl) linkEl.remove();
-      const iconsEl = document.getElementById('bootstrap-icons-css');
-      if (iconsEl) iconsEl.remove();
-    };
-  }, []);
+  // /styles/medilab/main.css was requested here on every mount but has never
+  // existed in public/, so it answered 404 and this portal rendered with no
+  // theme at all; the Bootstrap icon webfont it also pulled is no longer used
+  // now that these screens draw the bundled <Icon> set. Poppins ships with the
+  // fonts in index.html. The scoped <style> block below is the theme.
 
   // 1. Authentication Check
   useEffect(() => {
@@ -461,6 +442,59 @@ export const DoctorDashboard: React.FC = () => {
           background: #111827 !important;
           border-right: 1px solid rgba(255,255,255,0.08) !important;
         }
+        /* Dark mode. Only the sidebar had an override before, so in dark mode the
+           cards, metric tiles, headers, fields and modal stayed white on a near
+           black page — text on those panels was still the light-mode navy, which
+           read fine, but the panels themselves glared and the portal looked
+           half-switched. */
+        html[data-theme="dark"] .medilab-dashboard .medical-card {
+          background: #111827;
+          border-color: rgba(255, 255, 255, 0.08);
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.35);
+        }
+        html[data-theme="dark"] .medilab-dashboard .medical-card-header {
+          background: #0f172a;
+          border-bottom-color: rgba(255, 255, 255, 0.08);
+          color: #e2e8f0;
+        }
+        html[data-theme="dark"] .medilab-dashboard .metric-box {
+          background: #111827;
+          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.35);
+        }
+        html[data-theme="dark"] .medilab-dashboard .metric-title {
+          color: #94a3b8;
+        }
+        html[data-theme="dark"] .medilab-dashboard .metric-number {
+          color: #f1f5f9;
+        }
+        html[data-theme="dark"] .medilab-dashboard header.medilab-navbar,
+        html[data-theme="dark"] .medilab-dashboard .medilab-top-header {
+          background: #111827;
+          border-bottom-color: rgba(255, 255, 255, 0.08);
+          box-shadow: none;
+        }
+        html[data-theme="dark"] .medilab-dashboard .form-control-medilab {
+          background: #0f172a;
+          border-color: rgba(255, 255, 255, 0.14);
+          color: #f1f5f9;
+        }
+        html[data-theme="dark"] .medilab-dashboard .form-control-medilab::placeholder {
+          color: #64748b;
+        }
+        html[data-theme="dark"] .medilab-dashboard .medilab-modal-container {
+          background: #111827;
+          color: #e2e8f0;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        html[data-theme="dark"] .medilab-dashboard .badge-status-arrived {
+          background: rgba(21, 87, 36, 0.35);
+          color: #86efac;
+        }
+        html[data-theme="dark"] .medilab-dashboard .badge-status-enroute {
+          background: rgba(133, 100, 4, 0.35);
+          color: #fcd34d;
+        }
+
         @media (max-width: 768px) {
           .medilab-dashboard {
             flex-direction: column !important;
@@ -537,7 +571,7 @@ export const DoctorDashboard: React.FC = () => {
             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="Logout"
           >
-            <i className="bi bi-box-arrow-right" style={{ fontSize: '18px' }}></i>
+            <Icon name="back" size={18} />
           </button>
         </div>
 
@@ -594,7 +628,7 @@ export const DoctorDashboard: React.FC = () => {
               fontSize: '13px',
               cursor: 'pointer'
             }}>
-              <i className="bi bi-grid-1x2-fill"></i>
+              <Icon name="menu" size={18} />
               <span>Overview</span>
             </div>
           </nav>
@@ -661,7 +695,7 @@ export const DoctorDashboard: React.FC = () => {
                 gap: '4px'
               }}
             >
-              <i className="bi bi-box-arrow-right" style={{ fontSize: '14px' }}></i> Log Out
+              <Icon name="back" size={14} /> Log Out
             </button>
           </div>
         </header>
@@ -801,13 +835,13 @@ export const DoctorDashboard: React.FC = () => {
         <div className="medical-card">
           <div className="medical-card-header d-flex justify-content-between align-items-center">
             <span><Icon name="doctor" size={16} /> Inbound Obstetric Transfers Queue</span>
-            <i className="bi bi-activity" style={{ color: '#1977cc', fontSize: '18px' }}></i>
+            <span style={{ color: '#1977cc', display: 'inline-flex' }}><Icon name="vitals" size={18} /></span>
           </div>
 
           <div className="medical-card-body" style={{ maxHeight: '520px', overflowY: 'auto' }}>
             {emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 0', color: '#888888', fontSize: '14px' }}>
-                <i className="bi bi-check-circle" style={{ fontSize: '2.5rem', color: '#28a745', display: 'block', marginBottom: '12px' }}></i>
+                <span style={{ color: '#28a745', display: 'flex', justifyContent: 'center', marginBottom: '12px' }}><Icon name="success" size={40} /></span>
                 No active ambulance dispatches scheduled for this facility.
               </div>
             ) : (
@@ -939,7 +973,7 @@ export const DoctorDashboard: React.FC = () => {
           <div className="medical-card">
             <div className="medical-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span><Icon name="trend" size={16} /> Obstetric Patient Vitals Trend</span>
-              <i className="bi bi-graph-up-line" style={{ color: '#1977cc' }}></i>
+              <span style={{ color: '#1977cc', display: 'inline-flex' }}><Icon name="trend" size={16} /></span>
             </div>
             <div className="medical-card-body" style={{ padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '8px' }}>
