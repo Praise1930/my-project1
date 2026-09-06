@@ -68,6 +68,29 @@ const getMarkerIcon = (type: MapMarker['type']) => {
         0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
         100% { transform: scale(1.15); box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0); }
       }
+      .leaflet-tiles-dark .leaflet-tile {
+        filter: brightness(0.65) invert(1) contrast(2.2) hue-rotate(200deg) saturate(0.35) !important;
+      }
+      .map-container.dark-map .leaflet-container {
+        background: #0f172a !important;
+      }
+      .map-container.dark-map .leaflet-bar a {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border-bottom: 1px solid #334155 !important;
+      }
+      .map-container.dark-map .leaflet-bar a:hover {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+      }
+      .map-container.dark-map .leaflet-control-attribution {
+        background: rgba(15, 23, 42, 0.85) !important;
+        color: #94a3b8 !important;
+        border-radius: 4px;
+      }
+      .map-container.dark-map .leaflet-control-attribution a {
+        color: #60a5fa !important;
+      }
     </style>`,
     className: 'custom-map-marker',
     iconSize: [38, 38],
@@ -179,16 +202,16 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     } else if (viewMode === 'terrain') {
       tileUrl = 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
       attribution = '&copy; Google Maps Terrain &mdash; Map data &copy; Google';
-    } else if (theme === 'dark') {
-      tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-      attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
     }
+
+    const isDarkRoadmap = theme === 'dark' && viewMode === 'google';
 
     const tileLayer = L.tileLayer(tileUrl, {
       attribution: attribution,
       maxZoom: 20,
       maxNativeZoom: 19,
-      subdomains: theme === 'dark' && viewMode === 'google' ? ['a', 'b', 'c', 'd'] : ['mt0', 'mt1', 'mt2', 'mt3']
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      className: isDarkRoadmap ? 'leaflet-tiles-dark' : ''
     }).addTo(mapRef.current);
 
     tileLayerRef.current = tileLayer;
@@ -431,7 +454,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '350px' }}>
       <div 
         ref={mapContainerRef} 
-        className={`map-container ${viewMode === 'satellite' ? 'satellite-mode' : ''}`} 
+        className={`map-container ${theme === 'dark' ? 'dark-map' : ''} ${viewMode === 'satellite' ? 'satellite-mode' : ''}`} 
         style={{ width: '100%', height: '100%' }} 
       />
 
