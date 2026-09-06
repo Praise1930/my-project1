@@ -12,7 +12,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { supabase, isSupabaseConfigured, getAppOrigin } from '../services/supabase';
 
 import { Plus } from 'lucide-react';
 import { GlassmorphicOverlayLoader } from '../components/LoadingStates';
@@ -87,7 +87,7 @@ export const Login: React.FC = () => {
 
     try {
       if (isSupabaseConfigured && supabase) {
-        const verifyRedirectUrl = `${window.location.origin}/verify-email?email=${encodeURIComponent(toEmail)}`;
+        const verifyRedirectUrl = `${getAppOrigin()}/verify-email?email=${encodeURIComponent(toEmail)}`;
         const { error: resendErr } = await supabase.auth.resend({
           type: 'signup',
           email: toEmail,

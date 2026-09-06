@@ -15,7 +15,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { supabase, isSupabaseConfigured, deleteSupabaseAuthUser } from '../services/supabase';
+import { supabase, isSupabaseConfigured, deleteSupabaseAuthUser, getAppOrigin } from '../services/supabase';
 import { Icon } from '../components/Icon';
 
 export const Register: React.FC = () => {
@@ -242,7 +242,7 @@ export const Register: React.FC = () => {
       // 1. Register with Supabase Authentication if configured.
       //    Supabase sends the confirmation email itself as part of signUp().
       if (isSupabaseConfigured && supabase) {
-        const verifyRedirectUrl = `${window.location.origin}/verify-email?email=${encodeURIComponent(submissionData.email)}`;
+        const verifyRedirectUrl = `${getAppOrigin()}/verify-email?email=${encodeURIComponent(submissionData.email)}`;
         const { error: signUpErr } = await supabase.auth.signUp({
           email: submissionData.email,
           password: submissionData.password_hash,

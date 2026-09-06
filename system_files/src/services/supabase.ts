@@ -17,6 +17,18 @@ export const isSupabaseConfigured = Boolean(
   supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY'
 );
 
+/**
+ * Returns the canonical origin URL for this deployment.
+ * Prefers the explicit VITE_APP_URL env var (which should match the Supabase
+ * Site URL) so verification emails always point to the correct domain,
+ * falling back to window.location.origin for local dev.
+ */
+export function getAppOrigin(): string {
+  const envUrl = (import.meta.env.VITE_APP_URL || '').trim().replace(/\/+$/, '');
+  if (envUrl && envUrl.startsWith('http')) return envUrl;
+  return window.location.origin;
+}
+
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;

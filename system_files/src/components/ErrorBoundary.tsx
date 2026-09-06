@@ -4,22 +4,28 @@
 // blank page. That is a poor outcome anywhere and an unacceptable one for a
 // responder mid-dispatch, so a failure is contained to a recoverable message
 // with the emergency line still visible.
+//
+// The `resetKey` prop is driven by the current pathname so a navigation clears
+// any prior crash automatically, preventing users from being stuck.
 
 import React from 'react';
 import '../styles/overlays.css';
 
 interface Props {
   children: React.ReactNode;
+  /** Change this value (e.g. to the current pathname) to auto-clear errors on navigation. */
+  resetKey?: string;
 }
 
 interface State {
   error: Error | null;
+  errorInfo: string | null;
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
-  state: State = { error: null };
+  state: State = { error: null, errorInfo: null };
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { error };
   }
 
@@ -27,11 +33,28 @@ export class ErrorBoundary extends React.Component<Props, State> {
     // Kept on the device: the console is the only diagnostic channel available
     // when a field device fails and cannot reach the server.
     console.error('Unhandled interface error:', error, info.componentStack);
+    this.setState({ errorInfo: info.componentStack || null });
   }
 
-  private reset = () => this.setState({ error: null });
+  componentDidUpdate(prevProps: Props) {
+    // Auto-reset when the route (resetKey) changes so the user is not stuck
+    // on the error screen after clicking "Go to Home" or the back button.
+    if (this.state.error && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ error: null, errorInfo: null });
+    }
+  }
+
+  private reset = () => this.setState({ error: null, errorInfo: null });
 
   private reload = () => window.location.reload();
+
+  private goHome = () => {
+    // Clear error first, then navigate via direct location change
+    // (avoids depending on react-router inside the boundary).
+    this.setState({ error: null, errorInfo: null }, () => {
+      window.location.href = '/';
+    });
+  };
 
   render() {
     if (!this.state.error) return this.props.children;
@@ -72,6 +95,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
           </div>
 
           <div className="ov-dialog__foot">
+            <button type="button" className="ov-btn ov-btn--quiet" onClick={this.goHome}>
+              Go to Home
+            </button>
             <button type="button" className="ov-btn ov-btn--quiet" onClick={this.reload}>
               Reload the app
             </button>

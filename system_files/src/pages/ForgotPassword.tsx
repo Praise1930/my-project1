@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { supabase, isSupabaseConfigured, getAppOrigin } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { showToast } from '../components/toastBus';
 import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
@@ -38,7 +38,7 @@ export const ForgotPassword: React.FC = () => {
     if (isSupabaseConfigured && supabase) {
       try {
         const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/login`,
+          redirectTo: `${getAppOrigin()}/login`,
         });
 
         if (resetErr) {

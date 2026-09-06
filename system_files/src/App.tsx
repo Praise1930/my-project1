@@ -55,6 +55,13 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
+// Route-aware wrapper that feeds the current pathname into ErrorBoundary so it
+// resets automatically when the user navigates to a different screen.
+const RouteAwareErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { pathname } = useLocation();
+  return <ErrorBoundary resetKey={pathname}>{children}</ErrorBoundary>;
+};
+
 const App: React.FC = () => {
   useEffect(() => {
     SyncService.init();
@@ -74,7 +81,7 @@ const App: React.FC = () => {
         <ScrollToTop />
         {/* Inside the router so a failed screen can still be navigated away
             from, and so the boundary resets when the route changes. */}
-        <ErrorBoundary>
+        <RouteAwareErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public Routes */}
@@ -99,7 +106,7 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-        </ErrorBoundary>
+        </RouteAwareErrorBoundary>
       </Router>
     </ThemeProvider>
   );
