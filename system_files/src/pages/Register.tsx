@@ -1,6 +1,6 @@
 // MamaTrack GPS — Expectant Mother Registration Portal (With Medical Center UI Theme)
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthService, db, User as DbUser } from '../services/db';
 import { errorMessage } from '../services/errors';
@@ -47,6 +47,16 @@ export const Register: React.FC = () => {
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
+
+  useEffect(() => {
+    // Automatically cleanse any deleted/orphaned mother accounts from local storage
+    const motherUserIds = new Set(db.mothers.map(m => String(m.user_id)));
+    const ghostUsers = db.users.filter(u => u.role === 'mother' && !motherUserIds.has(String(u.id)));
+    if (ghostUsers.length > 0) {
+      const ghostEmails = new Set(ghostUsers.map(u => u.email.toLowerCase().trim()));
+      db.users = db.users.filter(u => !ghostEmails.has(u.email.toLowerCase().trim()));
+    }
+  }, []);
 
   const handleDobChange = (part: 'day' | 'month' | 'year', value: string) => {
     let d = dobDay;
@@ -178,16 +188,20 @@ export const Register: React.FC = () => {
 
       // 1. Verify existence against authoritative source
       if (isSupabaseConfigured && supabase) {
-        // Query Supabase users table to see if this email is actively registered
-        const { data: remoteUsers, error: checkErr } = await supabase
-          .from('users')
-          .select('id, email')
-          .ilike('email', emailNormalized);
+        try {
+          // Query Supabase users table to see if this email is actively registered
+          const { data: remoteUsers, error: checkErr } = await supabase
+            .from('users')
+            .select('id, email')
+            .ilike('email', emailNormalized);
 
-        if (!checkErr && remoteUsers && remoteUsers.length > 0) {
-          setError('This email is already registered. Please sign in or use a different email.');
-          setIsLoading(false);
-          return;
+          if (!checkErr && remoteUsers && remoteUsers.length > 0) {
+            setError('This email is already registered. Please sign in or use a different email.');
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.warn('Supabase remote users check note:', e);
         }
 
         // If email is NOT registered in Supabase users table, purge any stale local records
@@ -206,12 +220,20 @@ export const Register: React.FC = () => {
           // non-fatal if not configured or already clear
         }
       } else {
-        // Pure local offline mode
-        const existsLocally = db.users.some((u: DbUser) => u.email.toLowerCase().trim() === emailNormalized);
-        if (existsLocally) {
-          setError('This email is already registered.');
-          setIsLoading(false);
-          return;
+        // Pure local offline mode:
+        // Only reject if an active mother record currently exists for this user.
+        // If no active mother record exists, the account was deleted by admin — purge ghost user and allow registration.
+        const existingUser = db.users.find((u: DbUser) => u.email.toLowerCase().trim() === emailNormalized);
+        if (existingUser) {
+          const hasActiveMother = db.mothers.some(m => String(m.user_id) === String(existingUser.id));
+          if (hasActiveMother) {
+            setError('This email is already registered. Please sign in or use a different email.');
+            setIsLoading(false);
+            return;
+          } else {
+            // It's a ghost from a deleted account: purge it!
+            db.users = db.users.filter(u => u.email.toLowerCase().trim() !== emailNormalized);
+          }
         }
       }
 
