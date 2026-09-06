@@ -4,6 +4,7 @@ import { errorMessage } from './errors';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
@@ -15,6 +16,51 @@ export const isSupabaseConfigured = Boolean(
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// Admin client with service_role key — used ONLY for privileged operations
+// such as deleting Auth users. This bypasses RLS by design.
+const isAdminConfigured = Boolean(isSupabaseConfigured && supabaseServiceRoleKey);
+export const supabaseAdmin = isAdminConfigured
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+  : null;
+
+/**
+ * Delete a user from Supabase Auth by their email address.
+ * This ensures re-registration with the same email works after admin deletion.
+ * Requires the service_role key to be configured.
+ */
+export async function deleteSupabaseAuthUser(email: string): Promise<{ success: boolean; error?: string }> {
+  if (!supabaseAdmin) {
+    return { success: false, error: 'Admin client not configured (missing VITE_SUPABASE_SERVICE_ROLE_KEY)' };
+  }
+
+  try {
+    // Look up the auth user by email
+    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) {
+      return { success: false, error: `Failed to list auth users: ${listError.message}` };
+    }
+
+    const authUser = usersData?.users?.find(
+      (u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase()
+    );
+    if (!authUser) {
+      // No auth user with this email — nothing to delete, consider it success
+      return { success: true };
+    }
+
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+    if (deleteError) {
+      return { success: false, error: `Failed to delete auth user: ${deleteError.message}` };
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: errorMessage(err, 'Unknown error deleting auth user') };
+  }
+}
 
 export interface SupabaseConnectionResult {
   success: boolean;

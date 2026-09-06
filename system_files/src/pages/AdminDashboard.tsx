@@ -18,6 +18,7 @@ import { Dhis2ExportModal } from '../components/Dhis2ExportModal';
 import { MpdsrModal } from '../components/MpdsrModal';
 import { ReferralFormModal } from '../components/ReferralFormModal';
 import { CdssTriageModal } from '../components/CdssTriageModal';
+import { deleteSupabaseAuthUser } from '../services/supabase';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -809,9 +810,24 @@ export const AdminDashboard: React.FC = () => {
     });
     if (!ok) return;
     saveBackupState(); // Save undo state
+
+    const motherEmail = mother?.email;
+
+    // 1. Remove from local database (triggers async sync delete for data tables)
     db.mothers = db.mothers.filter(m => m.id !== id);
     db.users = db.users.filter(u => u.id !== userId);
     loadData();
+
+    // 2. Delete the Supabase Auth user so the email can be re-used for registration.
+    //    This runs in the background — local deletion is already done above.
+    if (motherEmail) {
+      deleteSupabaseAuthUser(motherEmail).then(result => {
+        if (!result.success) {
+          console.warn('Could not remove Supabase Auth user:', result.error);
+        }
+      });
+    }
+
     showToast(`${mother?.full_name || 'The record'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Record removed');
   };
 
@@ -980,6 +996,9 @@ export const AdminDashboard: React.FC = () => {
     });
     if (!ok) return;
     saveBackupState(); // Save undo state
+
+    const personEmail = person?.email;
+
     if (role === 'doctor') {
       db.doctors = db.doctors.filter(d => d.id !== id);
     } else {
@@ -987,6 +1006,16 @@ export const AdminDashboard: React.FC = () => {
     }
     db.users = db.users.filter(u => u.id !== userId);
     loadData();
+
+    // Delete the Supabase Auth user so the email can be re-used for registration
+    if (personEmail) {
+      deleteSupabaseAuthUser(personEmail).then(result => {
+        if (!result.success) {
+          console.warn('Could not remove Supabase Auth user:', result.error);
+        }
+      });
+    }
+
     showToast(`${person?.full_name || 'The profile'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Profile removed');
   };
 
