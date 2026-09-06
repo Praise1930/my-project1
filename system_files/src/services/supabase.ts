@@ -37,23 +37,29 @@ export async function deleteSupabaseAuthUser(email: string): Promise<{ success: 
   }
 
   try {
-    // Look up the auth user by email
-    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    const trimmedEmail = email.trim().toLowerCase();
+    // Look up the auth user by email (page size up to 1000)
+    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000
+    });
     if (listError) {
       return { success: false, error: `Failed to list auth users: ${listError.message}` };
     }
 
-    const authUser = usersData?.users?.find(
-      (u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase()
+    const authUsers = (usersData?.users || []).filter(
+      (u: { email?: string }) => u.email?.toLowerCase() === trimmedEmail
     );
-    if (!authUser) {
+    if (authUsers.length === 0) {
       // No auth user with this email — nothing to delete, consider it success
       return { success: true };
     }
 
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(authUser.id);
-    if (deleteError) {
-      return { success: false, error: `Failed to delete auth user: ${deleteError.message}` };
+    for (const user of authUsers) {
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+      if (deleteError) {
+        return { success: false, error: `Failed to delete auth user: ${deleteError.message}` };
+      }
     }
 
     return { success: true };
@@ -61,6 +67,54 @@ export async function deleteSupabaseAuthUser(email: string): Promise<{ success: 
     return { success: false, error: errorMessage(err, 'Unknown error deleting auth user') };
   }
 }
+
+/**
+ * Permanently and completely remove an account from both Supabase Auth
+ * and all related Supabase Postgres database tables (users, mothers, doctors, drivers).
+ */
+export async function deleteAccountCompletely(params: {
+  email?: string;
+  userId?: number | string;
+  motherId?: number | string;
+  doctorId?: number | string;
+  driverId?: number | string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { email, userId, motherId, doctorId, driverId } = params;
+  const trimmedEmail = email ? email.trim() : undefined;
+
+  try {
+    // 1. Delete from Supabase Auth if email provided
+    if (trimmedEmail && supabaseAdmin) {
+      await deleteSupabaseAuthUser(trimmedEmail);
+    }
+
+    // 2. Delete from Supabase database tables using admin client (bypasses RLS) or standard client
+    const client = supabaseAdmin || supabase;
+    if (client) {
+      if (motherId) {
+        await client.from('mothers').delete().eq('id', motherId);
+      }
+      if (userId) {
+        await client.from('mothers').delete().eq('user_id', userId);
+        await client.from('users').delete().eq('id', userId);
+      }
+      if (trimmedEmail) {
+        await client.from('users').delete().ilike('email', trimmedEmail);
+      }
+      if (doctorId) {
+        await client.from('doctors').delete().eq('id', doctorId);
+      }
+      if (driverId) {
+        await client.from('drivers').delete().eq('id', driverId);
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: errorMessage(err, 'Unknown error during complete account deletion') };
+  }
+}
+
 
 export interface SupabaseConnectionResult {
   success: boolean;

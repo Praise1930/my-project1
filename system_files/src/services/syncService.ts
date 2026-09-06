@@ -173,10 +173,17 @@ export const SyncService = {
         }
         if (!data || data.length === 0) continue;
 
-        // Remote wins for rows that exist on both sides; purely-local rows are kept
-        // so unsynced offline work is not silently discarded.
+        // Remote rows from Supabase represent the authoritative state.
+        // Purely-local rows are kept only if they are pending in the offline sync queue,
+        // ensuring that accounts and records deleted on other devices or by admins
+        // do not linger indefinitely as stale phantom records in localStorage.
+        const queuedIds = new Set(readQueue().filter(q => q.storeKey === storeKey).map(q => String(q.id)));
         const merged = new Map<string, SyncedRow>();
-        readLocal(storeKey).forEach((row) => merged.set(String(row.id), row));
+        readLocal(storeKey).forEach((row) => {
+          if (queuedIds.has(String(row.id))) {
+            merged.set(String(row.id), row);
+          }
+        });
         (data as SyncedRow[]).forEach((row) => merged.set(String(row.id), row));
 
         writeLocalSilently(storeKey, Array.from(merged.values()));

@@ -864,10 +864,14 @@ export const AuthService = {
     previous_csection?: boolean;
     pph_history?: boolean;
   }): { success: boolean; user?: User; error?: string } {
-    const users = db.users;
-    if (users.some(u => u.email.toLowerCase() === data.email.toLowerCase())) {
-      return { success: false, error: 'Email already registered' };
-    }
+    // Purge any stale user/mother records with this email to ensure clean re-registration
+    const targetEmail = data.email.toLowerCase().trim();
+    const staleUserIds = new Set(
+      db.users
+        .filter(u => u.email.toLowerCase().trim() === targetEmail)
+        .map(u => String(u.id))
+    );
+    const users = db.users.filter(u => u.email.toLowerCase().trim() !== targetEmail);
 
     const nextUserId = Math.max(...users.map(u => u.id), 0) + 1;
     const newUser: User = {
@@ -886,7 +890,7 @@ export const AuthService = {
     const startDate = new Date(data.pregnancy_start_date);
     const dueDate = new Date(startDate.setDate(startDate.getDate() + 280));
 
-    const mothers = db.mothers;
+    const mothers = db.mothers.filter(m => !staleUserIds.has(String(m.user_id)));
     const nextMotherId = Math.max(...mothers.map(m => m.id), 0) + 1;
     const newMother: Mother = {
       id: nextMotherId,

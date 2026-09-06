@@ -18,7 +18,7 @@ import { Dhis2ExportModal } from '../components/Dhis2ExportModal';
 import { MpdsrModal } from '../components/MpdsrModal';
 import { ReferralFormModal } from '../components/ReferralFormModal';
 import { CdssTriageModal } from '../components/CdssTriageModal';
-import { deleteSupabaseAuthUser } from '../services/supabase';
+import { deleteSupabaseAuthUser, deleteAccountCompletely } from '../services/supabase';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -143,9 +143,46 @@ export const AdminDashboard: React.FC = () => {
     );
   });
 
-  const filteredMothers = mothers.filter(m => {
+  const registeredMothersWithOrphans = useMemo(() => {
+    const existingMotherUserIds = new Set(mothers.map(m => String(m.user_id)));
+    const list = [...mothers];
+    db.users.filter(u => u.role === 'mother' && !existingMotherUserIds.has(String(u.id))).forEach(u => {
+      list.push({
+        id: -u.id,
+        user_id: u.id,
+        date_of_birth: '',
+        national_id: 'REGISTERED-USER',
+        blood_type: 'Pending',
+        pregnancy_start_date: '-',
+        expected_due_date: 'Pending Triage',
+        gravida: 1,
+        parity: 0,
+        medical_history: 'Account registered; antenatal profile pending.',
+        current_complications: 'None',
+        next_of_kin_name: '-',
+        next_of_kin_phone: '-',
+        next_of_kin_relationship: '-',
+        village: 'Registered Account',
+        sub_county: 'Mukono',
+        district: 'Mukono',
+        vht_name: 'Unassigned',
+        vht_phone: '-',
+        home_latitude: 0.3536,
+        home_longitude: 32.7554,
+        preferred_hospital_id: 1,
+        consent_given: true,
+        risk_factors: [],
+        previous_csection: false,
+        pph_history: false,
+        anc_visits_count: 0
+      });
+    });
+    return list;
+  }, [mothers, users]);
+
+  const filteredMothers = registeredMothersWithOrphans.filter(m => {
     if (!q) return true;
-    const motherUser = db.users.find(u => u.id === m.user_id);
+    const motherUser = db.users.find(u => String(u.id) === String(m.user_id));
     return (
       (motherUser && motherUser.full_name.toLowerCase().includes(q)) ||
       (motherUser && motherUser.email.toLowerCase().includes(q)) ||
@@ -801,7 +838,10 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleDeleteMother = async (id: number, userId: number) => {
-    const mother = db.users.find(u => u.id === userId);
+    const targetMother = db.mothers.find(m => String(m.id) === String(id));
+    const effectiveUserId = targetMother?.user_id ?? userId;
+    const mother = db.users.find(u => String(u.id) === String(effectiveUserId) || String(u.id) === String(userId));
+    
     const ok = await confirmAction({
       title: 'Remove this mother?',
       message: `${mother?.full_name || 'This mother'} will no longer appear on the register, and her antenatal history and home location will be removed from the district view.`,
@@ -813,22 +853,34 @@ export const AdminDashboard: React.FC = () => {
 
     const motherEmail = mother?.email;
 
-    // 1. Remove from local database (triggers async sync delete for data tables)
-    db.mothers = db.mothers.filter(m => m.id !== id);
-    db.users = db.users.filter(u => u.id !== userId);
-    loadData();
+    // 1. Remove from local database (mothers and users, matching by id, user_id and email)
+    db.mothers = db.mothers.filter(m => String(m.id) !== String(id) && String(m.user_id) !== String(effectiveUserId));
+    db.users = db.users.filter(u => 
+      String(u.id) !== String(effectiveUserId) && 
+      String(u.id) !== String(userId) && 
+      (!motherEmail || u.email.toLowerCase().trim() !== motherEmail.toLowerCase().trim())
+    );
 
-    // 2. Delete the Supabase Auth user so the email can be re-used for registration.
-    //    This runs in the background — local deletion is already done above.
-    if (motherEmail) {
-      deleteSupabaseAuthUser(motherEmail).then(result => {
-        if (!result.success) {
-          console.warn('Could not remove Supabase Auth user:', result.error);
-        }
-      });
+    // Also clear session if this mother was logged in
+    const curSession = db.getSessionUserForRole('mother');
+    if (curSession && (String(curSession.id) === String(effectiveUserId) || (motherEmail && curSession.email.toLowerCase().trim() === motherEmail.toLowerCase().trim()))) {
+      db.setSessionUser(null, 'mother');
     }
 
-    showToast(`${mother?.full_name || 'The record'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Record removed');
+    loadData();
+
+    // 2. Completely delete from Supabase Auth and remote Postgres tables
+    deleteAccountCompletely({
+      email: motherEmail,
+      userId: effectiveUserId,
+      motherId: id > 0 ? id : undefined
+    }).then(result => {
+      if (!result.success) {
+        console.warn('Could not completely remove remote account:', result.error);
+      }
+    });
+
+    showToast(`${mother?.full_name || 'The record'} has been completely removed. This email can now be re-registered.`, 'success', 6000, 'Record removed');
   };
 
   // --- FACILITY CRUD ACTIONS ---
@@ -986,7 +1038,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleDeletePersonnel = async (role: 'doctor' | 'driver', id: number, userId: number) => {
-    const person = db.users.find(u => u.id === userId);
+    const person = db.users.find(u => String(u.id) === String(userId));
     const duty = role === 'doctor' ? 'receive inbound transfers' : 'be assigned to a dispatch';
     const ok = await confirmAction({
       title: `Remove this ${role}?`,
@@ -1000,23 +1052,29 @@ export const AdminDashboard: React.FC = () => {
     const personEmail = person?.email;
 
     if (role === 'doctor') {
-      db.doctors = db.doctors.filter(d => d.id !== id);
+      db.doctors = db.doctors.filter(d => String(d.id) !== String(id) && String(d.user_id) !== String(userId));
     } else {
-      db.drivers = db.drivers.filter(d => d.id !== id);
+      db.drivers = db.drivers.filter(d => String(d.id) !== String(id) && String(d.user_id) !== String(userId));
     }
-    db.users = db.users.filter(u => u.id !== userId);
+    db.users = db.users.filter(u => 
+      String(u.id) !== String(userId) && 
+      (!personEmail || u.email.toLowerCase().trim() !== personEmail.toLowerCase().trim())
+    );
     loadData();
 
-    // Delete the Supabase Auth user so the email can be re-used for registration
-    if (personEmail) {
-      deleteSupabaseAuthUser(personEmail).then(result => {
-        if (!result.success) {
-          console.warn('Could not remove Supabase Auth user:', result.error);
-        }
-      });
-    }
+    // Completely delete from Supabase Auth and remote Postgres tables
+    deleteAccountCompletely({
+      email: personEmail,
+      userId,
+      doctorId: role === 'doctor' ? id : undefined,
+      driverId: role === 'driver' ? id : undefined
+    }).then(result => {
+      if (!result.success) {
+        console.warn('Could not completely remove remote profile:', result.error);
+      }
+    });
 
-    showToast(`${person?.full_name || 'The profile'} has been removed. Use Undo to restore it.`, 'success', 6000, 'Profile removed');
+    showToast(`${person?.full_name || 'The profile'} has been removed. This email can now be re-registered.`, 'success', 6000, 'Profile removed');
   };
 
   const handlePersonnelSubmit = (e: React.FormEvent) => {

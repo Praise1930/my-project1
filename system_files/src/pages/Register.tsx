@@ -15,7 +15,7 @@ import '../styles/medical-center/themify-icons.css';
 import '../styles/medical-center/fontawesome-all.min.css';
 import '../styles/medical-center/style.css';
 
-import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { supabase, isSupabaseConfigured, deleteSupabaseAuthUser } from '../services/supabase';
 import { Icon } from '../components/Icon';
 
 export const Register: React.FC = () => {
@@ -174,12 +174,45 @@ export const Register: React.FC = () => {
       next_of_kin_phone: `+256${formData.next_of_kin_phone}`
     };
     try {
-      // Check if email already exists locally first
-      const existsLocally = db.users.some((u: DbUser) => u.email.toLowerCase() === submissionData.email.toLowerCase());
-      if (existsLocally) {
-        setError('This email is already registered.');
-        setIsLoading(false);
-        return;
+      const emailNormalized = submissionData.email.toLowerCase().trim();
+
+      // 1. Verify existence against authoritative source
+      if (isSupabaseConfigured && supabase) {
+        // Query Supabase users table to see if this email is actively registered
+        const { data: remoteUsers, error: checkErr } = await supabase
+          .from('users')
+          .select('id, email')
+          .ilike('email', emailNormalized);
+
+        if (!checkErr && remoteUsers && remoteUsers.length > 0) {
+          setError('This email is already registered. Please sign in or use a different email.');
+          setIsLoading(false);
+          return;
+        }
+
+        // If email is NOT registered in Supabase users table, purge any stale local records
+        // that belong to a previously deleted account so re-registration succeeds cleanly.
+        const staleUsers = db.users.filter(u => u.email.toLowerCase().trim() === emailNormalized);
+        if (staleUsers.length > 0) {
+          const staleIds = new Set(staleUsers.map(u => String(u.id)));
+          db.users = db.users.filter(u => u.email.toLowerCase().trim() !== emailNormalized);
+          db.mothers = db.mothers.filter(m => !staleIds.has(String(m.user_id)));
+        }
+
+        // Also ensure no dangling/orphaned Supabase Auth user blocks sign-up
+        try {
+          await deleteSupabaseAuthUser(emailNormalized);
+        } catch {
+          // non-fatal if not configured or already clear
+        }
+      } else {
+        // Pure local offline mode
+        const existsLocally = db.users.some((u: DbUser) => u.email.toLowerCase().trim() === emailNormalized);
+        if (existsLocally) {
+          setError('This email is already registered.');
+          setIsLoading(false);
+          return;
+        }
       }
 
       let registeredInSupabase = false;
