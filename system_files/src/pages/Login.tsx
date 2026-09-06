@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { AuthService } from '../services/db';
+import { AuthService, db } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 
 // Import template stylesheets
@@ -39,7 +39,8 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
 
-  // Email verification resend states
+  // Email verification states
+  const [justVerified, setJustVerified] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -52,6 +53,45 @@ export const Login: React.FC = () => {
     { id: 'vht', title: 'Village Health Team (VHT)', icon: 'vht', desc: 'Community maternal tracking & SOS alerts', color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.1)' },
     { id: 'admin', title: 'Administrator portal', icon: 'signal', desc: 'Fleet dispatch, facility & system administration', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
   ];
+
+  // Check if arriving from an email confirmation link or Supabase callback
+  React.useEffect(() => {
+    const isVerifiedParam = searchParams.get('verified') === 'true';
+    const emailParam = searchParams.get('email');
+    const hash = window.location.hash || '';
+
+    const processVerification = async () => {
+      let targetEmail = (emailParam || '').trim();
+
+      if (isSupabaseConfigured && supabase && (hash.includes('access_token') || hash.includes('type=signup'))) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.email) {
+            targetEmail = session.user.email;
+          }
+        } catch (err) {
+          console.warn('Supabase session fetch note:', err);
+        }
+      }
+
+      if (isVerifiedParam || hash.includes('type=signup') || hash.includes('access_token')) {
+        setJustVerified(true);
+        if (targetEmail) {
+          setEmail(targetEmail);
+          const users = db.users;
+          const uIdx = users.findIndex(u => u.email.toLowerCase() === targetEmail.toLowerCase());
+          if (uIdx !== -1) {
+            const updated = [...users];
+            updated[uIdx] = { ...updated[uIdx], email_verified: true };
+            db.users = updated;
+          }
+        }
+        showToast('Email verified successfully! You can now log in.', 'success', 7000, 'Account Verified');
+      }
+    };
+
+    processVerification();
+  }, [searchParams]);
 
   // Cooldown countdown timer for resend
   React.useEffect(() => {
@@ -87,7 +127,7 @@ export const Login: React.FC = () => {
 
     try {
       if (isSupabaseConfigured && supabase) {
-        const verifyRedirectUrl = `${getAppOrigin()}/verify-email?email=${encodeURIComponent(toEmail)}`;
+        const verifyRedirectUrl = `${getAppOrigin()}/login?role=${role}&verified=true&email=${encodeURIComponent(toEmail)}`;
         const { error: resendErr } = await supabase.auth.resend({
           type: 'signup',
           email: toEmail,
@@ -448,6 +488,26 @@ export const Login: React.FC = () => {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {justVerified && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid #10b981',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: isDark ? '#34d399' : '#065f46'
+              }}>
+                <CheckCircle2 size={22} style={{ flexShrink: 0, color: '#10b981' }} />
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.92rem', marginBottom: '2px' }}>Email Verified Successfully!</strong>
+                  <span style={{ fontSize: '0.82rem', opacity: 0.9 }}>Your account is active. Enter your password below to sign in.</span>
+                </div>
               </div>
             )}
 

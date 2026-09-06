@@ -24,9 +24,12 @@ export const isSupabaseConfigured = Boolean(
  * falling back to window.location.origin for local dev.
  */
 export function getAppOrigin(): string {
+  if (typeof window !== 'undefined' && window.location?.origin && window.location.origin.startsWith('http')) {
+    return window.location.origin;
+  }
   const envUrl = (import.meta.env.VITE_APP_URL || '').trim().replace(/\/+$/, '');
   if (envUrl && envUrl.startsWith('http')) return envUrl;
-  return window.location.origin;
+  return 'https://my-project1-peach.vercel.app';
 }
 
 export const supabase = isSupabaseConfigured

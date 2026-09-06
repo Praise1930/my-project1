@@ -128,7 +128,7 @@ export const VerifyEmail: React.FC = () => {
 
     try {
       if (isSupabaseConfigured && supabase) {
-        const verifyRedirectUrl = `${getAppOrigin()}/verify-email?email=${encodeURIComponent(clean)}`;
+        const verifyRedirectUrl = `${getAppOrigin()}/login?role=mother&verified=true&email=${encodeURIComponent(clean)}`;
         const { error: resendErr } = await supabase.auth.resend({
           type: 'signup',
           email: clean,

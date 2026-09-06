@@ -242,7 +242,7 @@ export const Register: React.FC = () => {
       // 1. Register with Supabase Authentication if configured.
       //    Supabase sends the confirmation email itself as part of signUp().
       if (isSupabaseConfigured && supabase) {
-        const verifyRedirectUrl = `${getAppOrigin()}/verify-email?email=${encodeURIComponent(submissionData.email)}`;
+        const verifyRedirectUrl = `${getAppOrigin()}/login?role=mother&verified=true&email=${encodeURIComponent(submissionData.email)}`;
         const { error: signUpErr } = await supabase.auth.signUp({
           email: submissionData.email,
           password: submissionData.password_hash,

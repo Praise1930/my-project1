@@ -3,7 +3,7 @@
 // The public-facing entry page for the system. Provides role-based portal
 // selection and directs users to login or registration.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { Icon } from '../components/Icon';
@@ -56,6 +56,15 @@ export const Landing: React.FC = () => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [hoveredRole, setHoveredRole] = useState<string | null>(null);
+
+  // If redirected here by Supabase Auth with an email verification token or session hash, forward directly to /login
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    if (hash.includes('access_token') || hash.includes('type=signup') || search.includes('type=signup') || search.includes('verified=')) {
+      navigate(`/login${search}${hash}`, { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <div style={{
