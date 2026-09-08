@@ -2,13 +2,26 @@
 import { createClient } from '@supabase/supabase-js';
 import { errorMessage } from './errors';
 
+// The publishable ("anon") key is designed to ship in the browser bundle; it is
+// the RLS policies behind it that protect data, not its secrecy.
+//
+// The service_role key is the opposite: it bypasses RLS entirely. It used to be
+// hard-coded a few lines below this comment and was therefore compiled into the
+// public JavaScript bundle, where anyone could read it straight out of the
+// deployed site and read, alter or delete every patient record. It has been
+// removed, and no privileged client is constructed in the browser any more.
+// Anything genuinely needing service_role must run server-side (a Supabase Edge
+// Function or a serverless route), never here.
 const FALLBACK_SUPABASE_URL = 'https://tdomiogiabjomkhjkres.supabase.co';
-const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkb21pb2dpYWJqb21raGprcmVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMTEwNjksImV4cCI6MjEwMDY4NzA2OX0.gBVxScPK_BFdrXPW-ib2sxQ2ZZ0bebPCHvLhxwjiGOs';
-const FALLBACK_SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkb21pb2dpYWJqb21raGprcmVzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTExMTA2OSwiZXhwIjoyMTAwNjg3MDY5fQ.xNBI1uxUYJMVbJgO8_eDucrqvEt64DBEJJP_0g0CRQQ';
+// Supabase's modern publishable key. It replaces the legacy `anon` JWT, which is
+// being disabled on this project: the legacy anon and service_role keys share a
+// JWT secret, so retiring the leaked service_role key retires the anon key with
+// it. A publishable key carries no privileges of its own — RLS policies decide
+// what it can reach — so it is safe in the bundle, exactly as the anon key was.
+const FALLBACK_SUPABASE_ANON_KEY = 'sb_publishable_QQoC5fJhUP51XrbROGz31Q_dOM3Uj9p';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL).trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY).trim();
-const supabaseServiceRoleKey = (import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || FALLBACK_SUPABASE_SERVICE_ROLE_KEY).trim();
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
@@ -85,14 +98,18 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Admin client with service_role key — used ONLY for privileged operations
-// such as deleting Auth users. This bypasses RLS by design.
-const isAdminConfigured = Boolean(isSupabaseConfigured && supabaseServiceRoleKey);
-export const supabaseAdmin = isAdminConfigured
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    })
-  : null;
+/**
+ * There is deliberately no admin client here.
+ *
+ * A service_role client cannot exist safely in a browser: whatever key it is
+ * built from ends up in the bundle, and that key bypasses Row Level Security on
+ * every table. The privileged operations below therefore report that they are
+ * unavailable rather than quietly re-introducing the exposure. Implement them
+ * as a Supabase Edge Function holding the key server-side and call that instead.
+ */
+const ADMIN_UNAVAILABLE =
+  'This action needs Supabase admin privileges, which are not available from the browser. ' +
+  'It must be performed from the Supabase dashboard or a server-side endpoint.';
 
 /**
  * Delete a user from Supabase Auth by their email address.
@@ -100,40 +117,13 @@ export const supabaseAdmin = isAdminConfigured
  * Requires the service_role key to be configured.
  */
 export async function deleteSupabaseAuthUser(email: string): Promise<{ success: boolean; error?: string }> {
-  if (!supabaseAdmin) {
-    return { success: false, error: 'Admin client not configured (missing VITE_SUPABASE_SERVICE_ROLE_KEY)' };
-  }
-
-  try {
-    const trimmedEmail = email.trim().toLowerCase();
-    // Look up the auth user by email (page size up to 1000)
-    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000
-    });
-    if (listError) {
-      return { success: false, error: `Failed to list auth users: ${listError.message}` };
-    }
-
-    const authUsers = (usersData?.users || []).filter(
-      (u: { email?: string }) => u.email?.toLowerCase() === trimmedEmail
-    );
-    if (authUsers.length === 0) {
-      // No auth user with this email — nothing to delete, consider it success
-      return { success: true };
-    }
-
-    for (const user of authUsers) {
-      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
-      if (deleteError) {
-        return { success: false, error: `Failed to delete auth user: ${deleteError.message}` };
-      }
-    }
-
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: errorMessage(err, 'Unknown error deleting auth user') };
-  }
+  // Deleting an Auth user requires service_role. Removing the row from the
+  // `users` table (which deleteAccountCompletely still does) is enough for the
+  // account to disappear from the app; the Auth identity has to be removed from
+  // the Supabase dashboard, or by a server-side endpoint, so the same address
+  // can be registered again.
+  console.warn(`Supabase Auth deletion for "${email}" skipped: ${ADMIN_UNAVAILABLE}`);
+  return { success: false, error: ADMIN_UNAVAILABLE };
 }
 
 /**
@@ -142,32 +132,12 @@ export async function deleteSupabaseAuthUser(email: string): Promise<{ success: 
  * to click email links.
  */
 export async function confirmSupabaseAuthUser(email: string): Promise<{ success: boolean; error?: string }> {
-  if (!supabaseAdmin) {
-    return { success: false, error: 'Admin client not configured' };
-  }
-
-  try {
-    const trimmedEmail = email.trim().toLowerCase();
-    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000
-    });
-    if (listError) return { success: false, error: listError.message };
-
-    const user = (usersData?.users || []).find(
-      (u: { email?: string }) => u.email?.toLowerCase() === trimmedEmail
-    );
-    if (!user) return { success: false, error: 'Account not found in Supabase Auth' };
-
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      email_confirm: true
-    });
-    if (updateError) return { success: false, error: updateError.message };
-
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: errorMessage(err, 'Could not confirm auth user') };
-  }
+  // Marking an address confirmed requires service_role. The confirmation link
+  // in the sign-up email does the same job safely, and now that
+  // buildVerifyRedirectUrl() points that link at the right origin it actually
+  // works, so this shortcut is no longer the only way in.
+  console.warn(`Supabase Auth confirmation for "${email}" skipped: ${ADMIN_UNAVAILABLE}`);
+  return { success: false, error: ADMIN_UNAVAILABLE };
 }
 
 /**
@@ -185,13 +155,17 @@ export async function deleteAccountCompletely(params: {
   const trimmedEmail = email ? email.trim() : undefined;
 
   try {
-    // 1. Delete from Supabase Auth if email provided
-    if (trimmedEmail && supabaseAdmin) {
-      await deleteSupabaseAuthUser(trimmedEmail);
+    // The Auth identity itself can only be removed with service_role, which is
+    // deliberately absent from the browser. The database rows below are what the
+    // app reads, so the account stops existing as far as MamaTrack is concerned;
+    // clearing the leftover Auth identity is a dashboard/server-side step.
+    let authRemoved = true;
+    if (trimmedEmail) {
+      const authResult = await deleteSupabaseAuthUser(trimmedEmail);
+      authRemoved = authResult.success;
     }
 
-    // 2. Delete from Supabase database tables using admin client (bypasses RLS) or standard client
-    const client = supabaseAdmin || supabase;
+    const client = supabase;
     if (client) {
       if (motherId) {
         await client.from('mothers').delete().eq('id', motherId);
@@ -211,6 +185,13 @@ export async function deleteAccountCompletely(params: {
       }
     }
 
+    if (!authRemoved) {
+      return {
+        success: true,
+        error: 'Account records removed. The Supabase Auth identity remains and must be deleted ' +
+               'from the Supabase dashboard before this email can be registered again.'
+      };
+    }
     return { success: true };
   } catch (err) {
     return { success: false, error: errorMessage(err, 'Unknown error during complete account deletion') };

@@ -72,12 +72,11 @@ const App: React.FC = () => {
       <PWAInstallBanner />
       <ToastContainer />
       <ConfirmDialog />
-      {/* Opt in to the v7 behaviours now: state updates are wrapped in
-          startTransition, and relative paths inside splat routes resolve the
-          way v7 will. The only splat route here is the catch-all redirect, so
-          neither changes how this app routes — it just settles the behaviour
-          before the upgrade rather than during it. */}
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      {/* React Router v7. The v7_startTransition and v7_relativeSplatPath flags
+          this used to opt into are the default behaviour now, so the `future`
+          prop is gone — the routing behaviour is unchanged, which is exactly
+          why opting in early was worth doing. */}
+      <Router>
         <ScrollToTop />
         {/* Inside the router so a failed screen can still be navigated away
             from, and so the boundary resets when the route changes. */}

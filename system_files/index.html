@@ -22,11 +22,22 @@
          fetched at runtime after the first paint, or not at all. -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Public+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-    <!-- PWA Settings -->
+    <!-- PWA Settings.
+         The icons here and in the manifest must be real PNGs at exactly the
+         sizes they declare. They previously were 1024x1024 JPEGs named .png,
+         which Chrome rejects — that failed the installability check, so "Add to
+         home screen" produced a plain bookmark that opened in the browser with
+         its chrome and pinch-zoom instead of installing the app. -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#6366f1" />
+    <meta name="application-name" content="MamaTrack" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+    <!-- iOS ignores the manifest: it needs its own 180x180 icon and these metas
+         to launch full-screen from the home screen. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="MamaTrack" />
     
     <script>
       window.deferredPWAInstallPrompt = null;
