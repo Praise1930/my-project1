@@ -21,15 +21,16 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React runtime — loaded on every page
-          'vendor-react': ['react', 'react-dom'],
-          // Router — small, shared across all pages
-          'vendor-router': ['react-router-dom'],
-          // Leaflet map library — heavy, only used by map-enabled dashboards
-          'vendor-leaflet': ['leaflet'],
-          // Lucide icons — tree-shakeable but still worth isolating
-          'vendor-lucide': ['lucide-react'],
+        // Vite 8 bundles with Rolldown, which takes manualChunks as a
+        // function rather than the object map Rollup accepted. Same split as
+        // before: the heavy, rarely-changing vendor code is separated from app
+        // code so a release does not invalidate it in everyone's cache.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return;
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'vendor-react';
+          if (/[\\/]node_modules[\\/](react-router|react-router-dom)[\\/]/.test(id)) return 'vendor-router';
+          if (/[\\/]node_modules[\\/]leaflet[\\/]/.test(id)) return 'vendor-leaflet';
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'vendor-lucide';
         },
       },
     },

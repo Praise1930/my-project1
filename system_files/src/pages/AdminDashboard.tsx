@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, SimulationEngine, isEmergencyActive, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
+import { db, AuthService, EmergencyService, NotificationService, SimulationEngine, isEmergencyActive, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, Notification, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Bell } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { WelcomeToast } from '../components/WelcomeToast';
@@ -33,6 +33,13 @@ export const AdminDashboard: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [mothers, setMothers] = useState<Mother[]>([]);
+
+  // Alert history. The coordinator's SOS modal only covers a case while it is
+  // live; every alert raised for this admin is written to `notifications` but
+  // nothing on this screen ever displayed them, so an alert missed while away
+  // from the desk was unrecoverable. This is that history.
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // GIS Map visual filters
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -374,6 +381,8 @@ export const AdminDashboard: React.FC = () => {
     setDoctors(db.doctors);
     setVehicles(db.vehicles);
     setMothers(db.mothers);
+    const sessionUser = db.getSessionUserForRole('admin');
+    if (sessionUser) setNotifications(NotificationService.getNotificationsForUser(sessionUser.id));
   };
 
   // Real-time state poller, BroadcastChannel, and storage event listeners for instant alerts
@@ -509,6 +518,7 @@ export const AdminDashboard: React.FC = () => {
   if (!user) return <SkeletonDashboardLoader />;
 
   // Stats calculation
+  const unreadNotifications = notifications.filter(n => !n.is_read).length;
   const pendingCount = emergencies.filter(e => e.status === 'pending').length;
   const activeDispatchCount = emergencies.filter(e => ['dispatched', 'en_route', 'arrived', 'in_transit', 'delivered'].includes(e.status)).length;
   const onDutyDrivers = drivers.filter(d => d.is_on_duty).length;
@@ -2153,6 +2163,60 @@ export const AdminDashboard: React.FC = () => {
               <Icon name="signal" size={13} /> Database
             </button>
             <ThemeToggle />
+
+            {/* Alert history. Every CRITICAL alert raised for this coordinator is
+                already written to `notifications`; until now nothing displayed
+                them, so an SOS missed while away from the screen left no trace. */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                aria-label={`Alert history${unreadNotifications > 0 ? `, ${unreadNotifications} unread` : ''}`}
+                onClick={() => {
+                  const opening = !showNotifications;
+                  setShowNotifications(opening);
+                  if (opening && user) {
+                    NotificationService.markAllAsRead(user.id);
+                    setNotifications(NotificationService.getNotificationsForUser(user.id));
+                  }
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', position: 'relative', padding: '6px', display: 'flex', alignItems: 'center' }}
+              >
+                <Bell size={20} />
+                {unreadNotifications > 0 && (
+                  <span style={{ position: 'absolute', top: 0, right: 0, background: '#ef4444', color: '#fff', minWidth: 16, height: 16, borderRadius: 8, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div style={{ position: 'absolute', top: '38px', right: 0, width: 320, maxWidth: '90vw', background: theme === 'dark' ? '#1e293b' : '#ffffff', border: '1px solid rgba(0,0,0,0.12)', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 200, padding: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <h4 style={{ margin: 0, fontSize: 13, fontWeight: 800 }}>Alert history</h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowNotifications(false)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: 12, fontWeight: 700 }}
+                    >Close</button>
+                  </div>
+                  <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {notifications.length === 0 ? (
+                      <span style={{ fontSize: 12, color: '#64748b', textAlign: 'center', padding: 12 }}>
+                        No alerts yet. Incoming emergencies will be listed here.
+                      </span>
+                    ) : (
+                      notifications.slice(0, 50).map(n => (
+                        <div key={n.id} style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 7, fontSize: 12 }}>
+                          <span style={{ fontWeight: 700, display: 'block', color: n.type === 'emergency' ? '#ef4444' : 'inherit' }}>{n.title}</span>
+                          <span style={{ color: '#64748b', display: 'block' }}>{n.message}</span>
+                          <span style={{ color: '#94a3b8', fontSize: 10 }}>{new Date(n.created_at).toLocaleString()}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <ProfilePhotoUpload user={user} onUpdated={setUser} size={34} showLabel={false} />
             <button 
               onClick={() => { AuthService.logout(); navigate('/login?role=admin'); }}

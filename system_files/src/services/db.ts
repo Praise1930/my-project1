@@ -623,6 +623,47 @@ const SEED_REFERRAL_RECORDS: ReferralRecord[] = [
 // 3. DATABASE CLASS IMPLEMENTATION
 // ============================================================================
 
+/**
+ * ── Record ids ──────────────────────────────────────────────────────────────
+ *
+ * Every new row used to take `Math.max(existing ids) + 1`, computed from the
+ * rows this device happens to hold. That is unsafe here for two reasons, both
+ * observed in the live database:
+ *
+ *   * Ids were reused after deletion. A notification or log that outlived its
+ *     emergency then pointed at whichever unrelated case later took the same
+ *     number — the coordinator saw stale CRITICAL alerts attached to a patient
+ *     they had nothing to do with.
+ *
+ *   * Two devices allocate the same number. SyncService upserts on `id`, so the
+ *     second write silently overwrites the first: one mother's emergency could
+ *     destroy another's. In a maternal emergency system that is the worst
+ *     failure mode in the file.
+ *
+ * Ids are now drawn from the clock plus a random slot, so they are unique
+ * across devices without any coordination, and never reused. The value is
+ * (milliseconds since 2020) * 4096 + random(0..4095): about 8.6e14 today, well
+ * inside Number.MAX_SAFE_INTEGER (9.007e15) and inside Postgres BIGINT, and it
+ * stays inside both until well after this system's lifetime. Two rows collide
+ * only if two devices allocate in the very same millisecond AND draw the same
+ * one of 4096 slots.
+ *
+ * Seeded demo rows keep their small ids; new ids sort above them, so ordering
+ * by id still reads chronologically.
+ */
+const MAMATRACK_EPOCH_MS = 1577836800000; // 2020-01-01T00:00:00Z
+const ID_SLOTS = 4096;
+let lastIssuedId = 0;
+
+export function newRecordId(): number {
+  let id = (Date.now() - MAMATRACK_EPOCH_MS) * ID_SLOTS + Math.floor(Math.random() * ID_SLOTS);
+  // Two rows created inside the same millisecond on this device must still
+  // differ even if the random slot repeats.
+  if (id <= lastIssuedId) id = lastIssuedId + 1;
+  lastIssuedId = id;
+  return id;
+}
+
 class LocalDatabase {
   private getStore<T>(key: string, defaults: T[]): T[] {
     const raw = localStorage.getItem(`mamatrack_${key}`);
@@ -816,7 +857,7 @@ export const SmsService = {
   },
   sendSms(toName: string, toNumber: string, message: string): SmsLog {
     const logs = db.smsLogs;
-    const nextId = Math.max(...logs.map(l => l.id), 0) + 1;
+    const nextId = newRecordId();
     const newLog: SmsLog = {
       id: nextId,
       to_name: toName,
@@ -851,7 +892,7 @@ export const VitalsService = {
   },
   addVitalsRecord(motherId: number, record: { systolic: number; diastolic: number; glucose: number; kick_count: number; pulse?: number; temperature?: number; recorded_by: 'patient' | 'vht' | 'doctor' }): VitalsRecord {
     const records = db.vitals;
-    const nextId = Math.max(...records.map(r => r.id), 0) + 1;
+    const nextId = newRecordId();
     const newRecord: VitalsRecord = {
       id: nextId,
       mother_id: motherId,
@@ -872,7 +913,7 @@ export const VhtService = {
   },
   addVisitLog(log: Omit<VhtVisitLog, 'id'>): VhtVisitLog {
     const logs = db.vhtVisits;
-    const nextId = Math.max(...logs.map(l => l.id), 0) + 1;
+    const nextId = newRecordId();
     const newLog: VhtVisitLog = {
       id: nextId,
       ...log
@@ -939,7 +980,7 @@ export const AuthService = {
     );
     const users = db.users.filter(u => u.email.toLowerCase().trim() !== targetEmail);
 
-    const nextUserId = Math.max(...users.map(u => u.id), 0) + 1;
+    const nextUserId = newRecordId();
     const newUser: User = {
       id: nextUserId,
       full_name: data.full_name,
@@ -957,7 +998,7 @@ export const AuthService = {
     const dueDate = new Date(startDate.setDate(startDate.getDate() + 280));
 
     const mothers = db.mothers.filter(m => !staleUserIds.has(String(m.user_id)));
-    const nextMotherId = Math.max(...mothers.map(m => m.id), 0) + 1;
+    const nextMotherId = newRecordId();
     const newMother: Mother = {
       id: nextMotherId,
       user_id: nextUserId,
@@ -1028,7 +1069,7 @@ export const UserService = {
     if (!user) return null;
     let profile = db.mothers.find(m => Number(m.user_id) === numId);
     if (!profile && user.role === 'mother') {
-      const nextMotherId = Math.max(...db.mothers.map(m => Number(m.id) || 0), 0) + 1;
+      const nextMotherId = newRecordId();
       profile = {
         id: nextMotherId,
         user_id: numId,
@@ -1212,8 +1253,19 @@ export const EmergencyService = {
       db.emergencies = updatedEmergencies;
       activeRecord = updatedEmergencies.find(e => Number(e.id) === Number(activeId)) || active;
     } else {
-      const nextId = Math.max(...emergencies.map(e => Number(e.id) || 0), 0) + 1;
-      const code = `EMG-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
+      const nextId = newRecordId();
+      // The id is now a large clock-derived number, so it can no longer double
+      // as the human-readable case number. That is derived separately from the
+      // codes already on record: it is display-only, so if two devices happen to
+      // mint the same one offline the effect is cosmetic, not a lost record.
+      const year = new Date().getFullYear();
+      const codePrefix = `EMG-${year}-`;
+      const lastSeq = emergencies.reduce((max, e) => {
+        if (typeof e.code !== 'string' || !e.code.startsWith(codePrefix)) return max;
+        const n = parseInt(e.code.slice(codePrefix.length), 10);
+        return Number.isFinite(n) && n > max ? n : max;
+      }, 0);
+      const code = `${codePrefix}${String(lastSeq + 1).padStart(4, '0')}`;
 
       activeRecord = {
         id: nextId,
@@ -1301,10 +1353,27 @@ export const EmergencyService = {
       );
     }
 
-    // Real-time Event broadcast
+    // Real-time Event broadcast.
+    //
+    // window events only reach listeners in THIS tab. The coordinator's console
+    // also subscribes to a BroadcastChannel for NEW_EMERGENCY_SOS so a console
+    // open in another tab is interrupted the instant the beacon fires — but
+    // nothing ever posted to that channel, so the listener sat dead and the
+    // other tab waited on its 1.5s poller (or the `storage` event) instead.
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('mamatrack_alert_triggered', { detail: activeRecord }));
       window.dispatchEvent(new CustomEvent('mamatrack_db_update', { detail: { key: 'emergencies' } }));
+
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          const channel = new BroadcastChannel('mamatrack_emergency_channel');
+          channel.postMessage({ type: 'NEW_EMERGENCY_SOS', emergency: activeRecord });
+          channel.close();
+        } catch (err) {
+          // Never let a notification channel stop an SOS from being raised.
+          console.warn('SOS broadcast channel notice:', err);
+        }
+      }
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -1563,7 +1632,7 @@ export const EmergencyService = {
 
   logTransition(emergencyId: number, prev: string | null, next: string, userId: number | null, notes: string): void {
     const logs = db.emergencyLogs;
-    const nextLogId = Math.max(...logs.map(l => l.id), 0) + 1;
+    const nextLogId = newRecordId();
     const emg = db.emergencies.find(e => e.id === emergencyId);
 
     const newLog: EmergencyLog = {
@@ -1589,7 +1658,7 @@ export const NotificationService = {
 
   createNotification(userId: number, title: string, message: string, type: Notification['type'], refId: number | null = null): Notification {
     const notifs = db.notifications;
-    const nextId = Math.max(...notifs.map(n => n.id), 0) + 1;
+    const nextId = newRecordId();
     const newNotif: Notification = {
       id: nextId,
       user_id: userId,
@@ -1635,7 +1704,7 @@ export const MpdsrService = {
       saved = record as MpdsrRecord;
       db.mpdsrRecords = records.map(r => r.id === record.id ? saved : r);
     } else {
-      const nextId = Math.max(...records.map(r => r.id), 0) + 1;
+      const nextId = newRecordId();
       saved = {
         ...record,
         id: nextId
@@ -1706,7 +1775,7 @@ export const ReferralService = {
     const weeks = mother ? Math.max(1, Math.min(42, Math.floor((new Date().getTime() - new Date(mother.pregnancy_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))) : 36;
 
     const referrals = db.referralRecords;
-    const nextId = Math.max(...referrals.map(r => r.id), 0) + 1;
+    const nextId = newRecordId();
     const refCode = `REF-${new Date().getFullYear()}-${String(nextId).padStart(4, '0')}`;
 
     const newRef: ReferralRecord = {
@@ -1917,7 +1986,7 @@ export const DoctorService = {
     mpdsrData?: Partial<MpdsrRecord>
   ): ClinicalAssessment {
     const assessments = db.clinicalAssessments;
-    const nextId = Math.max(...assessments.map(a => a.id), 0) + 1;
+    const nextId = newRecordId();
 
     const newAssessment: ClinicalAssessment = {
       id: nextId,
@@ -1967,7 +2036,7 @@ export const DoctorService = {
 
   submitBloodRequest(doctorUserId: number, hospitalId: number, bloodType: string, units: number): BloodRequest {
     const reqs = db.bloodRequests;
-    const nextId = Math.max(...reqs.map(r => r.id), 0) + 1;
+    const nextId = newRecordId();
 
     const newRequest: BloodRequest = {
       id: nextId,
@@ -2016,7 +2085,7 @@ export const DriverService = {
 
   submitInspection(driverUserId: number, vehicleId: number, fuelLevel: 'full' | 'half' | 'low', siren: boolean, medical: boolean, tires: boolean, engine: boolean): VehicleInspection {
     const ins = db.inspections;
-    const nextId = Math.max(...ins.map(i => i.id), 0) + 1;
+    const nextId = newRecordId();
 
     const newInspection: VehicleInspection = {
       id: nextId,
@@ -2036,7 +2105,7 @@ export const DriverService = {
 
   submitFuelLog(driverUserId: number, vehicleId: number, liters: number, cost: number, station: string): FuelLog {
     const logs = db.fuelLogs;
-    const nextId = Math.max(...logs.map(l => l.id), 0) + 1;
+    const nextId = newRecordId();
 
     const newLog: FuelLog = {
       id: nextId,

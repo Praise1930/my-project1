@@ -93,7 +93,8 @@ import {
   isEmergencyActiveForDriver,
   isEmergencyClosed,
   emergencyStatusRank,
-  NotificationService
+  NotificationService,
+  newRecordId
 } from '../services/db';
 import { SYNCED_TABLES } from '../services/syncService';
 
@@ -824,6 +825,95 @@ test('the alert reaches an admin on another device', () => {
   // if both tables replicate through Supabase.
   assert(SYNCED_TABLES.emergencies === 'emergencies', 'Emergencies are not replicated to other devices');
   assert(SYNCED_TABLES.notifications === 'notifications', 'Notifications are not replicated to other devices');
+});
+
+// ============================================================================
+// COMPONENT 21: Record id allocation
+//
+// Regression cover for two defects found in the live database: ids reused after
+// deletion (stale notifications cross-linking to an unrelated patient's case)
+// and two devices minting the same id (SyncService upserts on `id`, so the
+// second write silently destroyed the first emergency).
+// ============================================================================
+suite('21. Collision-Safe Record Ids');
+
+test('ids are unique, monotonic, and safe for JSON and BIGINT', () => {
+  const ids: number[] = [];
+  for (let i = 0; i < 5000; i++) ids.push(newRecordId());
+
+  assert(new Set(ids).size === ids.length, 'newRecordId() produced a duplicate');
+
+  for (let i = 1; i < ids.length; i++) {
+    assert(ids[i] > ids[i - 1], 'ids are not monotonically increasing');
+  }
+
+  for (const id of ids) {
+    assert(Number.isSafeInteger(id), `id ${id} is not a safe integer — JSON would corrupt it`);
+    assert(id > 0, 'id must be positive');
+    // Postgres BIGINT tops out at 9.22e18; the safe-integer ceiling is stricter
+    // and already asserted above.
+    assert(id < Number.MAX_SAFE_INTEGER, 'id exceeds the safe integer range');
+  }
+
+  // New ids must sort above the seeded demo rows so ordering by id stays
+  // chronological.
+  const maxSeeded = Math.max(...db.emergencies.map(e => Number(e.id) || 0), 0);
+  assert(ids[0] > maxSeeded, 'a freshly minted id collides with the seeded range');
+});
+
+test('a deleted id is never handed out again', () => {
+  // The old allocator was max(existing)+1, so deleting the newest record made
+  // the next one reuse its number — and any notification that outlived it then
+  // pointed at the wrong case.
+  const mother = db.users.find(u => u.role === 'mother');
+  const admin = db.users.find(u => u.role === 'admin');
+
+  const first = EmergencyService.triggerEmergency(
+    mother!.id, 0.3536, 32.7554, 'id-reuse regression, first', true, 'pph'
+  );
+  const firstId = first.id;
+  EmergencyService.closeEmergency(firstId, admin!.id, 'closing so a new one can be raised');
+
+  // Delete it outright, exactly as an admin account purge would.
+  db.emergencies = db.emergencies.filter(e => e.id !== firstId);
+
+  const second = EmergencyService.triggerEmergency(
+    mother!.id, 0.3536, 32.7554, 'id-reuse regression, second', true, 'pph'
+  );
+
+  assert(second.id !== firstId, 'a deleted id was handed out again');
+  assert(second.id > firstId, 'the replacement id did not advance past the deleted one');
+  EmergencyService.closeEmergency(second.id, admin!.id, 'cleanup');
+});
+
+test('two devices allocating at the same moment do not collide', () => {
+  // Simulates the real failure: two phones, each unaware of the other, minting
+  // ids in the same instant. Under max(local)+1 both produced the same number
+  // and the second upsert overwrote the first.
+  const deviceA: number[] = [];
+  const deviceB: number[] = [];
+  for (let i = 0; i < 2000; i++) {
+    deviceA.push(newRecordId());
+    deviceB.push(newRecordId());
+  }
+  const overlap = deviceA.filter(id => deviceB.includes(id));
+  assert(overlap.length === 0, `two devices minted ${overlap.length} identical id(s)`);
+});
+
+test('the human-readable case code still reads as a per-year sequence', () => {
+  const mother = db.users.find(u => u.role === 'mother');
+  const admin = db.users.find(u => u.role === 'admin');
+  const emg = EmergencyService.triggerEmergency(
+    mother!.id, 0.3536, 32.7554, 'case code format check', true, 'sepsis'
+  );
+  const year = new Date().getFullYear();
+  assert(
+    new RegExp(`^EMG-${year}-\\d{4}$`).test(emg.code),
+    `case code "${emg.code}" is not in EMG-${year}-NNNN form`
+  );
+  // The code must stay readable even though the id behind it is now large.
+  assert(emg.id > 1e12, 'the emergency id is not clock-derived');
+  EmergencyService.closeEmergency(emg.id, admin!.id, 'cleanup');
 });
 
 // ============================================================================
