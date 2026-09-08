@@ -1,7 +1,7 @@
 // MamaTrack GPS — Village Health Team (VHT) Dashboard
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency, Mother, Notification, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
+import { isEmergencyActive, db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency, Mother, Notification, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 
 // A mother record joined with the display fields taken from her user account.
 type MotherWithContact = Mother & { name: string; email: string; phone: string };
@@ -135,7 +135,7 @@ export const VhtDashboard: React.FC = () => {
       setVisitsList(VhtService.getVisitsByVht(session.id));
 
       // Load active emergencies
-      setActiveEmergencies(db.emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)));
+      setActiveEmergencies(db.emergencies.filter(e => isEmergencyActive(e)));
 
       // Load notifications
       setNotifications(NotificationService.getNotificationsForUser(session.id));

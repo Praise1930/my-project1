@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, DriverService, EmergencyService, SimulationEngine, User, Driver, Emergency, Vehicle, Mother } from '../services/db';
+import { db, AuthService, DriverService, EmergencyService, SimulationEngine, isEmergencyActiveForDriver, User, Driver, Emergency, Vehicle, Mother } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { CheckSquare, PlusSquare, CheckCircle, LogOut } from 'lucide-react';
@@ -64,9 +64,12 @@ export const DriverDashboard: React.FC = () => {
       setDriver(drvProfile);
       setVehicle(db.vehicles.find(v => v.id === drvProfile.vehicle_id) || null);
       
-      // Load active emergency dispatch matching driver's user id
+      // Load active emergency dispatch matching driver's user id.
+      // Compare as numbers: ids round-trip through Supabase and localStorage as
+      // JSON, and a string "7" from a synced row would never === a numeric 7,
+      // which would silently show a stale dispatch after a refresh.
       const activeEmg = db.emergencies.find(
-        e => e.driver_id === sessionUser.id && !['delivered', 'completed', 'cancelled'].includes(e.status)
+        e => Number(e.driver_id) === Number(sessionUser.id) && isEmergencyActiveForDriver(e)
       );
       setActiveEmergency(activeEmg || null);
     }
@@ -94,7 +97,7 @@ export const DriverDashboard: React.FC = () => {
 
     const handleSync = () => {
       const activeEmg = db.emergencies.find(
-        e => Number(e.driver_id) === userId && !['delivered', 'completed', 'cancelled'].includes(e.status)
+        e => Number(e.driver_id) === userId && isEmergencyActiveForDriver(e)
       );
 
       // Only set if changed
@@ -103,6 +106,14 @@ export const DriverDashboard: React.FC = () => {
         if (!activeEmg) {
           setIsSimulating(false);
         }
+      }
+
+      // The crew's leg is over the moment the patient is handed over. Stop any
+      // simulation still ticking for that case so it cannot write an earlier
+      // stage back over the delivered row and bring the card back on the next
+      // refresh.
+      if (activeEmergency && (!activeEmg || activeEmg.id !== activeEmergency.id)) {
+        SimulationEngine.stopSimulation(activeEmergency.id);
       }
 
       // Refresh driver position from DB
@@ -287,10 +298,17 @@ export const DriverDashboard: React.FC = () => {
   };
 
   const handleHandoffComplete = () => {
-    if (activeEmergency) {
-      SimulationEngine.stopSimulation(activeEmergency.id);
-    }
-    EmergencyService.updateStatus(activeEmergency!.id, 'delivered', user.id, 'Patient handed over to clinical reception. Driver mission complete.');
+    if (!activeEmergency) return;
+    // Stop the simulation before the write, not after: a tick landing between
+    // the two would re-save the in-transit row on top of the handover.
+    SimulationEngine.stopSimulation(activeEmergency.id);
+    setIsSimulating(false);
+    EmergencyService.updateStatus(
+      activeEmergency.id,
+      'delivered',
+      user.id,
+      'Patient handed over to clinical reception. Driver mission complete.'
+    );
     setActiveEmergency(null);
     showToast('Maternal rescue mission logged as complete. Ready for next dispatch.', 'success');
   };

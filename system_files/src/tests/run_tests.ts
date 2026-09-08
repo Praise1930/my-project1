@@ -88,8 +88,14 @@ import {
   ReferralService,
   CdssService,
   MpdsrService,
-  Dhis2Service
+  Dhis2Service,
+  isEmergencyActive,
+  isEmergencyActiveForDriver,
+  isEmergencyClosed,
+  emergencyStatusRank,
+  NotificationService
 } from '../services/db';
+import { SYNCED_TABLES } from '../services/syncService';
 
 // ── Test Harness State ──
 interface TestResult {
@@ -618,6 +624,206 @@ test('executes complete emergency workflow: beacon -> nearest CEmONC -> ranked a
   });
   assert(mpdsrSaved.id !== undefined, 'MPDSR record ID missing');
   assert(mpdsrSaved.case_classification === 'maternal_near_miss', 'Case classification mismatch');
+});
+
+// ============================================================================
+// COMPONENT 19: Emergency close-out lifecycle
+//
+// Regression cover for the two reported defects:
+//   * a case that had been finished stayed in the admin's Active Emergencies
+//   * the same case came back on the driver's dashboard after a refresh
+// ============================================================================
+suite('19. Emergency Close-Out Lifecycle (Admin & Driver)');
+
+test('a closed case leaves every active list and never returns to the driver', () => {
+  const mother = db.users.find(u => u.role === 'mother');
+  assert(!!mother, 'No seeded mother available');
+
+  const emergency = EmergencyService.triggerEmergency(
+    mother!.id,
+    0.3536,
+    32.7554,
+    'Close-out lifecycle regression case',
+    true,
+    'pph'
+  );
+
+  const driver = db.drivers.find(d => d.vehicle_id);
+  assert(!!driver, 'No seeded driver with a vehicle');
+  const hospital = db.hospitals[0];
+  const admin = db.users.find(u => u.role === 'admin');
+  assert(!!admin, 'No seeded admin');
+
+  EmergencyService.assignDispatch(emergency.id, driver!.user_id, null, hospital.id, admin!.id, 12);
+  EmergencyService.updateStatus(emergency.id, 'en_route', driver!.user_id, 'en route');
+  EmergencyService.updateStatus(emergency.id, 'arrived', driver!.user_id, 'arrived');
+  EmergencyService.updateStatus(emergency.id, 'in_transit', driver!.user_id, 'in transit');
+
+  // Driver hands the patient over: the crew's leg is done, the case is not.
+  const delivered = EmergencyService.updateStatus(emergency.id, 'delivered', driver!.user_id, 'handed over');
+  assert(delivered.status === 'delivered', 'Handover did not record `delivered`');
+  assert(!isEmergencyActiveForDriver(delivered), 'Delivered case still shows on the driver dashboard');
+  assert(isEmergencyActive(delivered), 'Delivered case should still be open for the clinical team');
+
+  // Coordinator closes it out from the admin dashboard.
+  const closed = EmergencyService.closeEmergency(emergency.id, admin!.id, 'Closed by coordinator');
+  assert(closed.status === 'completed', 'closeEmergency did not complete the case');
+  assert(isEmergencyClosed(closed), 'Closed case not reported as closed');
+  assert(!isEmergencyActive(closed), 'Closed case still counted as active on the admin dashboard');
+  assert(!isEmergencyActiveForDriver(closed), 'Closed case still counted as active for the driver');
+
+  // Closing releases the ambulance for the next dispatch.
+  if (closed.vehicle_id) {
+    const vehicle = db.vehicles.find(v => v.id === closed.vehicle_id);
+    assert(vehicle?.status === 'available', 'Ambulance was not released when the case closed');
+  }
+
+  // Closing is idempotent, and the mother is free to raise a new alert.
+  const again = EmergencyService.closeEmergency(emergency.id, admin!.id, 'second click');
+  assert(again.status === 'completed', 'Re-closing a closed case changed its status');
+  assert(
+    EmergencyService.getActiveEmergencyForMother(mother!.id) === null,
+    'A closed case still blocks the mother from raising a new emergency'
+  );
+});
+
+test('an out-of-order write cannot re-open a closed case', () => {
+  // This is what used to resurrect a finished emergency: a simulation tick or a
+  // replayed offline edit from another device arriving after the close-out.
+  const mother = db.users.find(u => u.role === 'mother');
+  const admin = db.users.find(u => u.role === 'admin');
+  const emergency = EmergencyService.triggerEmergency(
+    mother!.id,
+    0.3536,
+    32.7554,
+    'Stale-write regression case',
+    true,
+    'pre_eclampsia'
+  );
+
+  const driver = db.drivers.find(d => d.vehicle_id);
+  EmergencyService.assignDispatch(emergency.id, driver!.user_id, null, db.hospitals[0].id, admin!.id, 12);
+  EmergencyService.closeEmergency(emergency.id, admin!.id, 'Closed early');
+
+  const rewound = EmergencyService.updateStatus(emergency.id, 'en_route', driver!.user_id, 'stale simulation tick');
+  assert(rewound.status === 'completed', 'A stale write rewound a completed emergency');
+
+  const stored = db.emergencies.find(e => e.id === emergency.id);
+  assert(stored?.status === 'completed', 'The stored record was rewound by a stale write');
+
+  const cancelled = EmergencyService.cancelEmergency(emergency.id, 'late cancel', mother!.id);
+  assert(cancelled.status === 'completed', 'A completed case was re-opened by a late cancellation');
+
+  // And the rank function the sync layer relies on orders the lifecycle.
+  assert(emergencyStatusRank('pending') < emergencyStatusRank('dispatched'), 'Lifecycle rank out of order');
+  assert(emergencyStatusRank('delivered') < emergencyStatusRank('completed'), 'Lifecycle rank out of order');
+  assert(emergencyStatusRank('completed') === emergencyStatusRank('cancelled'), 'Terminal states must rank equally');
+  assert(emergencyStatusRank('not-a-status') === -1, 'Unknown status must rank as unknown');
+});
+
+// ============================================================================
+// COMPONENT 20: Admin alerting on a new SOS
+//
+// Answers "does the coordinator actually get alerted when a mother triggers an
+// emergency?" by exercising every leg of the chain the admin console listens on.
+// ============================================================================
+suite('20. Admin Alert Delivery on Emergency Trigger');
+
+test('every admin receives an emergency notification naming the patient and case', () => {
+  const admins = db.users.filter(u => u.role === 'admin');
+  assert(admins.length > 0, 'No admin user seeded — nobody could be alerted');
+
+  const mother = db.users.find(u => u.role === 'mother');
+  assert(!!mother, 'No seeded mother available');
+
+  const before = new Map(
+    admins.map(a => [a.id, NotificationService.getNotificationsForUser(a.id).length])
+  );
+
+  const emergency = EmergencyService.triggerEmergency(
+    mother!.id,
+    0.3536,
+    32.7554,
+    'Admin alert delivery check',
+    true,
+    'pph'
+  );
+
+  admins.forEach(admin => {
+    const notifs = NotificationService.getNotificationsForUser(admin.id);
+    assert(
+      notifs.length > (before.get(admin.id) || 0),
+      `Admin ${admin.full_name} received no new notification for the SOS`
+    );
+
+    const alert = notifs.find(n => n.reference_id === emergency.id && n.type === 'emergency');
+    assert(!!alert, `No 'emergency' notification for admin ${admin.full_name} referencing this case`);
+    assert(alert!.is_read === false, 'The admin alert arrived already marked as read');
+    assert(
+      alert!.message.includes(mother!.full_name),
+      'The admin alert does not name the patient'
+    );
+    assert(
+      alert!.title.toUpperCase().includes('CRITICAL'),
+      'The admin alert is not flagged as critical'
+    );
+  });
+});
+
+test('the SOS raises the live window event the admin console listens on', () => {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const w = (globalThis as any).window;
+  const originalDispatch = w.dispatchEvent;
+  const seen: Array<{ type: string; detail: any }> = [];
+  w.dispatchEvent = (ev: any) => {
+    seen.push({ type: ev?.type, detail: ev?.detail });
+    return true;
+  };
+
+  let emergency;
+  try {
+    const mother = db.users.find(u => u.role === 'mother');
+    emergency = EmergencyService.triggerEmergency(
+      mother!.id,
+      0.3536,
+      32.7554,
+      'Admin live-event check',
+      true,
+      'pre_eclampsia'
+    );
+  } finally {
+    w.dispatchEvent = originalDispatch;
+  }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  const alertEvent = seen.find(e => e.type === 'mamatrack_alert_triggered');
+  assert(!!alertEvent, "No 'mamatrack_alert_triggered' event was dispatched");
+  assert(alertEvent!.detail?.id === emergency.id, 'The alert event carried the wrong emergency');
+
+  // The admin console only opens its SOS modal for a `pending` case, so the
+  // payload must arrive in that state.
+  assert(
+    alertEvent!.detail?.status === 'pending',
+    "The alert event payload was not 'pending' — the admin modal would ignore it"
+  );
+
+  // Writing the notification rows also pokes the views to re-read.
+  assert(
+    seen.some(e => e.type === 'mamatrack_db_update' && e.detail?.key === 'notifications'),
+    'Notification writes did not raise a db-update event for the admin bell'
+  );
+  assert(
+    seen.some(e => e.type === 'mamatrack_db_update' && e.detail?.key === 'emergencies'),
+    'The SOS did not raise a db-update event for the emergencies store'
+  );
+});
+
+test('the alert reaches an admin on another device', () => {
+  // Cross-device delivery is what matters in the field: the mother's phone and
+  // the coordinator's desktop are different browsers, so the alert only lands
+  // if both tables replicate through Supabase.
+  assert(SYNCED_TABLES.emergencies === 'emergencies', 'Emergencies are not replicated to other devices');
+  assert(SYNCED_TABLES.notifications === 'notifications', 'Notifications are not replicated to other devices');
 });
 
 // ============================================================================

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, SimulationEngine, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
+import { db, AuthService, EmergencyService, SimulationEngine, isEmergencyActive, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -533,7 +533,7 @@ export const AdminDashboard: React.FC = () => {
     });
 
     // Add active emergencies
-    emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).forEach(e => {
+    emergencies.filter(e => isEmergencyActive(e)).forEach(e => {
       const m = db.users.find(usr => usr.id === e.mother_id);
       list.push({ id: `emg-${e.id}`, lat: e.latitude, lng: e.longitude, type: 'emergency', label: ` Distress: ${m?.full_name ||'Patient'}`, sublabel: e.notes });
     });
@@ -719,6 +719,50 @@ export const AdminDashboard: React.FC = () => {
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Dispatch failed';
       showToast(errMsg, 'error');
+    }
+  };
+
+  /**
+   * Close a case out from the dispatch desk.
+   *
+   * Until now `completed` was only reachable from the doctor's console, so a
+   * case the ambulance had delivered stayed in Active Emergencies indefinitely
+   * with no control on this screen to clear it — the bug this fixes. Closing
+   * also frees the ambulance and stops any simulation still running for it, so
+   * the same case cannot reappear on the driver's dashboard after a refresh.
+   */
+  const handleCloseEmergency = async (emergency: Emergency) => {
+    const motherUser = db.users.find(u => u.id === emergency.mother_id);
+    const isDelivered = emergency.status === 'delivered';
+
+    const ok = await confirmAction({
+      title: isDelivered ? `Close ${emergency.code}?` : `Force-close ${emergency.code}?`,
+      message: isDelivered
+        ? `${motherUser?.full_name || 'The patient'} has been handed over to the clinical team. Closing marks the response cycle complete, releases the ambulance and removes the case from Active Emergencies. It stays in the emergency history and reports.`
+        : `This case is still at "${emergency.status.replace(/_/g, ' ')}". Closing it now ends the response cycle early, releases the ambulance and removes it from Active Emergencies. Only do this if the response has genuinely finished.`,
+      confirmLabel: isDelivered ? 'Close case' : 'Force close',
+      tone: isDelivered ? 'info' : 'warning',
+    });
+    if (!ok || !user) return;
+
+    try {
+      saveBackupState();
+      SimulationEngine.stopSimulation(emergency.id);
+      EmergencyService.closeEmergency(
+        emergency.id,
+        user.id,
+        `Case closed by dispatch coordinator ${user.full_name}. Response cycle complete.`
+      );
+      if (selectedEmergency?.id === emergency.id) setSelectedEmergency(null);
+      loadData();
+      showToast(
+        `${emergency.code} closed. The ambulance and crew are available for the next dispatch.`,
+        'success',
+        6000,
+        'Case closed'
+      );
+    } catch (err) {
+      showToast(errorMessage(err, 'Could not close this case.'), 'error');
     }
   };
 
@@ -2355,11 +2399,11 @@ export const AdminDashboard: React.FC = () => {
                 </div>
                 
                 <div style={{ padding: '16px', maxHeight: '420px', overflowY: 'auto' }}>
-                  {filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).length === 0 ? (
+                  {filteredEmergencies.filter(e => isEmergencyActive(e)).length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 0', fontSize: '13px', color: '#64748b' }}><Icon name="online" size={16} /> No matching active emergencies reported in the region
                     </div>
                   ) : (
-                    filteredEmergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
+                    filteredEmergencies.filter(e => isEmergencyActive(e)).map(e => {
                       const m = db.users.find(usr => usr.id === e.mother_id);
                       const drvUser = e.driver_id ? db.users.find(usr => usr.id === e.driver_id) : null;
                       const drvObj = e.driver_id ? db.drivers.find(d => d.user_id === e.driver_id) : null;
@@ -2407,6 +2451,43 @@ export const AdminDashboard: React.FC = () => {
                               </span>
                             </div>
                           </div>
+
+                          {/* CLOSE-OUT CONTROL.
+                              A case that has been delivered is finished as far as
+                              the response cycle goes, but nothing on this screen
+                              could mark it complete, so it sat in this list for
+                              good. Any dispatched case can also be force-closed
+                              if the response ended off-system. */}
+                          {e.status !== 'pending' && (
+                            <button
+                              type="button"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                handleCloseEmergency(e);
+                              }}
+                              style={{
+                                width: '100%',
+                                marginTop: '10px',
+                                padding: '8px 12px',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                color: '#ffffff',
+                                backgroundColor: e.status === 'delivered' ? '#059669' : '#64748b',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <Icon name="success" size={14} />
+                              {e.status === 'delivered'
+                                ? 'Close Case — Response Complete'
+                                : 'Force Close Case'}
+                            </button>
+                          )}
                         </div>
                       );
                     })
