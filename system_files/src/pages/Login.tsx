@@ -170,7 +170,12 @@ export const Login: React.FC = () => {
   const handleInstantActivate = async (targetEmail: string) => {
     setIsActivating(true);
     try {
-      await confirmSupabaseAuthUser(targetEmail);
+      // Confirming the address in Supabase Auth needs service_role, which is no
+      // longer present in the browser (it was exposed in the public bundle).
+      // The local record is still marked verified so the demo/offline flow
+      // works, but the user is told plainly when the emailed link is still
+      // required for the Supabase-backed sign-in.
+      const confirmResult = await confirmSupabaseAuthUser(targetEmail);
       const users = db.users;
       const uIdx = users.findIndex(u => u.email.toLowerCase() === targetEmail.toLowerCase());
       if (uIdx !== -1) {
@@ -181,7 +186,15 @@ export const Login: React.FC = () => {
       setUnverifiedEmail(null);
       setError(null);
       setJustVerified(true);
-      showToast('Account activated successfully! Please enter your password to sign in.', 'success', 8000, 'Account Activated');
+      if (confirmResult.success) {
+        showToast('Account activated successfully! Please enter your password to sign in.', 'success', 8000, 'Account Activated');
+      } else {
+        showToast(
+          'Activated on this device. If sign-in still reports an unverified email, open the confirmation link we sent to ' +
+          `${targetEmail} — that completes activation.`,
+          'info', 9000, 'Check your inbox'
+        );
+      }
     } catch (err) {
       console.warn('Instant activation note:', err);
       showToast('Could not activate account. Try verifying via the portal.', 'error');

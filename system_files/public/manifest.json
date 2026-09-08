@@ -2,6 +2,17 @@
   "short_name": "MamaTrack",
   "name": "MamaTrack GPS Maternal Emergency Response System",
   "description": "GPS-based maternal emergency response system for Mukono District, Uganda.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#6366f1",
+  "categories": ["health", "medical"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -16,17 +27,26 @@
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/icon-maskable-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     }
   ],
-  "start_url": "/",
-  "scope": "/",
-  "background_color": "#0d1117",
-  "theme_color": "#6366f1",
-  "display": "standalone",
-  "orientation": "portrait",
-  "categories": ["health", "medical"]
+  "shortcuts": [
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "description": "Open the mother portal to raise an emergency alert",
+      "url": "/login?role=mother",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Dispatch console",
+      "short_name": "Dispatch",
+      "description": "Open the coordinator dispatch console",
+      "url": "/login?role=admin",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }
