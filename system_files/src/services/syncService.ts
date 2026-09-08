@@ -14,6 +14,7 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { errorMessage } from './errors';
 import { OfflineStorageService } from './offlineStorage';
+import { emergencyStatusRank } from './db';
 
 /** A synced record. Every synced table keys on `id`; the rest is table-specific. */
 export type SyncedRow = Record<string, unknown> & { id: string | number };
@@ -83,6 +84,25 @@ function readQueue(): SyncQueueItem[] {
 // Write without going through db's setters, so no outbound sync is re-triggered.
 function writeLocalSilently(storeKey: string, list: SyncedRow[]): void {
   localStorage.setItem(`mamatrack_${storeKey}`, JSON.stringify(list));
+}
+
+/**
+ * True when `incoming` would move an emergency *backwards* through its
+ * lifecycle relative to the copy already held locally.
+ *
+ * Emergencies are the one synced table where a late-arriving older row is
+ * actively harmful. A coordinator's tab that still holds a dispatched copy — or
+ * an offline queue replayed after the case closed — would otherwise upsert that
+ * older row and un-complete a case the crew had already finished, which is why
+ * a completed emergency kept coming back on the admin and driver dashboards
+ * after a refresh. Every other table is last-write-wins as before.
+ */
+function isStaleEmergencyRow(storeKey: string, local: SyncedRow | undefined, incoming: SyncedRow): boolean {
+  if (storeKey !== 'emergencies' || !local) return false;
+  const localRank = emergencyStatusRank(String(local.status ?? ''));
+  const incomingRank = emergencyStatusRank(String(incoming.status ?? ''));
+  if (localRank === -1 || incomingRank === -1) return false;
+  return incomingRank < localRank;
 }
 
 function notifyViews(storeKey: string): void {
@@ -178,16 +198,46 @@ export const SyncService = {
         // ensuring that accounts and records deleted on other devices or by admins
         // do not linger indefinitely as stale phantom records in localStorage.
         const queuedIds = new Set(readQueue().filter(q => q.storeKey === storeKey).map(q => String(q.id)));
+        const localRows = readLocal(storeKey);
+        const localById = new Map(localRows.map((row) => [String(row.id), row]));
+
         const merged = new Map<string, SyncedRow>();
-        readLocal(storeKey).forEach((row) => {
+        localRows.forEach((row) => {
           if (queuedIds.has(String(row.id))) {
             merged.set(String(row.id), row);
           }
         });
-        (data as SyncedRow[]).forEach((row) => merged.set(String(row.id), row));
+
+        // Rows that must be re-pushed because the server copy is behind ours.
+        const toRepush: SyncedRow[] = [];
+
+        (data as SyncedRow[]).forEach((row) => {
+          const id = String(row.id);
+          const local = localById.get(id);
+
+          // A local edit still sitting in the offline queue has not reached the
+          // server yet, so the server copy is by definition older — keep ours.
+          // (This loop previously ran unguarded and overwrote every queued row
+          // that the block above had just preserved, silently losing the edit.)
+          if (queuedIds.has(id)) return;
+
+          if (isStaleEmergencyRow(storeKey, local, row)) {
+            merged.set(id, local as SyncedRow);
+            toRepush.push(local as SyncedRow);
+            return;
+          }
+
+          merged.set(id, row);
+        });
 
         writeLocalSilently(storeKey, Array.from(merged.values()));
         notifyViews(storeKey);
+
+        // Heal the server: push our newer state back so every other device
+        // converges on the closed case instead of re-reading the stale one.
+        toRepush.forEach((row) => {
+          void this.syncLocalChange(storeKey, row.id, row);
+        });
       } catch (err) {
         console.warn(`SyncService: initial pull of "${storeKey}" threw:`, errorMessage(err));
       }
@@ -210,6 +260,18 @@ export const SyncService = {
     } else {
       // Skip no-op echoes of our own write to avoid needless re-renders.
       if (JSON.stringify(list[idx]) === JSON.stringify(row)) return;
+
+      // Drop a realtime update that would rewind the lifecycle, and push our
+      // newer copy back so the sender's own view corrects itself.
+      if (isStaleEmergencyRow(storeKey, list[idx], row)) {
+        console.warn(
+          `SyncService: ignored stale remote status "${String(row.status)}" for ` +
+          `"${storeKey}/${row.id}" — local copy is "${String(list[idx].status)}".`
+        );
+        void this.syncLocalChange(storeKey, list[idx].id, list[idx]);
+        return;
+      }
+
       list[idx] = row;
     }
 

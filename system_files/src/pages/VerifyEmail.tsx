@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { db } from '../services/db';
-import { supabase, isSupabaseConfigured, getAppOrigin, confirmSupabaseAuthUser } from '../services/supabase';
+import { supabase, isSupabaseConfigured, buildVerifyRedirectUrl, confirmSupabaseAuthUser } from '../services/supabase';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { CheckCircle, Mail, AlertTriangle, ArrowRight, Send, ShieldCheck, Inbox } from 'lucide-react';
 import { showToast } from '../components/toastBus';
@@ -129,7 +129,7 @@ export const VerifyEmail: React.FC = () => {
 
     try {
       if (isSupabaseConfigured && supabase) {
-        const verifyRedirectUrl = `${getAppOrigin()}/login?role=mother&verified=true&email=${encodeURIComponent(clean)}`;
+        const verifyRedirectUrl = buildVerifyRedirectUrl(clean, 'mother');
         const { error: resendErr } = await supabase.auth.resend({
           type: 'signup',
           email: clean,

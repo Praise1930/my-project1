@@ -18,18 +18,67 @@ export const isSupabaseConfigured = Boolean(
 );
 
 /**
- * Returns the canonical origin URL for this deployment.
- * Prefers the explicit VITE_APP_URL env var (which should match the Supabase
- * Site URL) so verification emails always point to the correct domain,
- * falling back to window.location.origin for local dev.
+ * The production domain this app is served from. Supabase is configured with
+ * this as its Site URL, and it is the only Vercel host without deployment
+ * protection in front of it.
+ */
+export const CANONICAL_APP_ORIGIN = 'https://my-project1-peach.vercel.app';
+
+/**
+ * True for a Vercel host that is NOT the production alias — a branch preview
+ * (`…-git-<branch>-<scope>.vercel.app`) or a per-deployment URL
+ * (`…-<hash>-<scope>.vercel.app`).
+ *
+ * These hosts sit behind Vercel Deployment Protection, so a verification link
+ * pointing at one opens Vercel's own SSO sign-in page instead of the MamaTrack
+ * mothers' portal. A mother has no Vercel account, so the link is a dead end
+ * for her — which is exactly the bug this guards against.
+ */
+function isProtectedVercelPreviewHost(hostname: string): boolean {
+  if (!hostname.endsWith('.vercel.app')) return false;
+  return hostname !== new URL(CANONICAL_APP_ORIGIN).hostname;
+}
+
+/**
+ * Returns the canonical origin URL for this deployment — the origin every
+ * Supabase auth email (sign-up confirmation, password reset) must point back to.
+ *
+ * Order of preference:
+ *   1. VITE_APP_URL, when set. This is the explicit override and should match
+ *      the Supabase "Site URL" exactly.
+ *   2. window.location.origin — but only when it is safe to link back to:
+ *      localhost and LAN dev servers, and the production Vercel alias.
+ *   3. CANONICAL_APP_ORIGIN, used whenever the current page is being served
+ *      from a protected Vercel preview/deployment URL.
+ *
+ * The previous implementation returned window.location.origin unconditionally
+ * and only consulted VITE_APP_URL when there was no window at all, so
+ * registering on any preview deployment produced a confirmation email whose
+ * link landed on the Vercel login page.
  */
 export function getAppOrigin(): string {
-  if (typeof window !== 'undefined' && window.location?.origin && window.location.origin.startsWith('http')) {
-    return window.location.origin;
-  }
   const envUrl = (import.meta.env.VITE_APP_URL || '').trim().replace(/\/+$/, '');
-  if (envUrl && envUrl.startsWith('http')) return envUrl;
-  return 'https://my-project1-peach.vercel.app';
+  if (envUrl.startsWith('http')) return envUrl;
+
+  if (typeof window !== 'undefined' && window.location?.origin?.startsWith('http')) {
+    const { origin, hostname } = window.location;
+    if (!isProtectedVercelPreviewHost(hostname)) return origin;
+  }
+
+  return CANONICAL_APP_ORIGIN;
+}
+
+/**
+ * Builds the URL a Supabase confirmation email should return the user to.
+ * Always the role's own login portal, pre-filled with the address that was
+ * verified, so a mother lands on the mothers' sign-in form and nowhere else.
+ *
+ * Note: Supabase silently falls back to the project's Site URL when the
+ * redirect is not on its allow-list, so this origin must also be listed under
+ * Authentication -> URL Configuration -> Redirect URLs.
+ */
+export function buildVerifyRedirectUrl(email: string, role: string = 'mother'): string {
+  return `${getAppOrigin()}/login?role=${encodeURIComponent(role)}&verified=true&email=${encodeURIComponent(email)}`;
 }
 
 export const supabase = isSupabaseConfigured

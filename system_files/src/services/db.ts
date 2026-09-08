@@ -232,6 +232,68 @@ export interface Emergency {
   delay_intervals?: DelayIntervalMetrics;
 }
 
+export type EmergencyStatus = Emergency['status'];
+
+/**
+ * ── Emergency lifecycle: one source of truth ────────────────────────────────
+ *
+ * pending -> verified -> dispatched -> en_route -> arrived -> in_transit
+ *         -> delivered -> completed        (or -> cancelled at any point)
+ *
+ * The stages are ordered, and an emergency only ever moves forwards. Every
+ * screen used to hard-code its own array of "statuses that still count as
+ * active", which is how a case that had been closed could still be listed as
+ * active on one dashboard and gone from another. They all read these helpers
+ * now.
+ */
+export const EMERGENCY_STATUS_ORDER: EmergencyStatus[] = [
+  'pending', 'verified', 'dispatched', 'en_route', 'arrived', 'in_transit', 'delivered', 'completed'
+];
+
+/** Statuses from which an emergency never moves again. */
+export const TERMINAL_EMERGENCY_STATUSES: EmergencyStatus[] = ['completed', 'cancelled'];
+
+/** True once the case is closed — completed or cancelled. */
+export function isEmergencyClosed(emergency: Pick<Emergency, 'status'> | null | undefined): boolean {
+  return !!emergency && TERMINAL_EMERGENCY_STATUSES.includes(emergency.status);
+}
+
+/**
+ * True while the case is still open anywhere in the system: coordination,
+ * transport or clinical handover. Used by the admin, doctor and VHT consoles.
+ * `delivered` is still open — the patient is at the facility but the case has
+ * not been closed out yet.
+ */
+export function isEmergencyActive(emergency: Pick<Emergency, 'status'> | null | undefined): boolean {
+  return !!emergency && !isEmergencyClosed(emergency);
+}
+
+/**
+ * True while the case still needs the ambulance crew. The driver's leg ends at
+ * `delivered`: once the patient is handed over, the case belongs to the
+ * clinical team and must not reappear on the driver's screen.
+ */
+export function isEmergencyActiveForDriver(emergency: Pick<Emergency, 'status'> | null | undefined): boolean {
+  return isEmergencyActive(emergency) && emergency!.status !== 'delivered';
+}
+
+/**
+ * Rank of a status in the lifecycle. Cancelled sits at the very end alongside
+ * completed so that neither can be overwritten by an earlier stage arriving
+ * late — from a slow realtime echo, an offline queue replay, or a simulation
+ * tick still running in another open tab.
+ */
+export function emergencyStatusRank(status: string): number {
+  // `cancelled` is ranked alongside `completed` rather than after it: they are
+  // two different endings to the same case, and neither may be rewound by an
+  // earlier stage. Ranking them equally leaves last-write-wins between the two
+  // (they are mutually exclusive in practice) while still blocking `delivered`
+  // or anything before it from overwriting either.
+  if (status === 'cancelled') return EMERGENCY_STATUS_ORDER.indexOf('completed');
+  const idx = EMERGENCY_STATUS_ORDER.indexOf(status as EmergencyStatus);
+  return idx === -1 ? -1 : idx;
+}
+
 export interface EmergencyLog {
   id: number;
   emergency_id: number;
@@ -1008,7 +1070,7 @@ export const UserService = {
 export const EmergencyService = {
   getActiveEmergencyForMother(userId: number): Emergency | null {
     const numId = Number(userId);
-    return db.emergencies.find(e => Number(e.mother_id) === numId && !['completed', 'cancelled'].includes(e.status)) || null;
+    return db.emergencies.find(e => Number(e.mother_id) === numId && isEmergencyActive(e)) || null;
   },
 
   findBestHospital(lat: number, lng: number, requireCemonc: boolean = false, emergencyCategory?: ObstetricEmergencyCategory): Hospital {
@@ -1365,6 +1427,20 @@ export const EmergencyService = {
     if (!emg) throw new Error('Emergency not found');
 
     const prevStatus = emg.status;
+
+    // The lifecycle only runs forwards. A closed case stays closed, and a stage
+    // that arrives out of order — a simulation tick still ticking in another
+    // tab, a queued offline edit replayed after the case was closed, a realtime
+    // echo of an older row — is dropped rather than written. Without this an
+    // emergency that had been completed could be pushed back to `en_route` by a
+    // stale writer and reappear on the admin and driver dashboards.
+    if (status === prevStatus) return emg;
+    if (emergencyStatusRank(status) < emergencyStatusRank(prevStatus)) {
+      console.warn(
+        `EmergencyService: ignoring out-of-order transition ${prevStatus} -> ${status} for emergency ${emergencyId}.`
+      );
+      return emg;
+    }
     const updatedEmg: Emergency = { ...emg, status };
     const nowStr = new Date().toISOString();
 
@@ -1437,10 +1513,36 @@ export const EmergencyService = {
     return updatedEmg;
   },
 
+  /**
+   * Close a case out from the coordination desk.
+   *
+   * `completed` used to be reachable only through a doctor recording a clinical
+   * assessment, so a case the ambulance had already delivered stayed in the
+   * admin's Active Emergencies list forever and there was no control anywhere
+   * on that screen to clear it. This is that control's service call: it is
+   * idempotent, and it releases the ambulance and crew for the next dispatch.
+   */
+  closeEmergency(emergencyId: number, closedByUserId: number, notes?: string): Emergency {
+    const emg = db.emergencies.find(e => e.id === emergencyId);
+    if (!emg) throw new Error('Emergency not found');
+    if (isEmergencyClosed(emg)) return emg;
+
+    return this.updateStatus(
+      emergencyId,
+      'completed',
+      closedByUserId,
+      notes || 'Case closed by the dispatch coordinator. Response cycle complete.'
+    );
+  },
+
   cancelEmergency(emergencyId: number, reason: string, cancelledByUserId: number): Emergency {
     const emergencies = db.emergencies;
     const emg = emergencies.find(e => e.id === emergencyId);
     if (!emg) throw new Error('Emergency record not found');
+
+    // A case that has already been completed or cancelled is not re-opened to
+    // be cancelled again.
+    if (isEmergencyClosed(emg)) return emg;
 
     const updatedEmg: Emergency = {
       ...emg,
@@ -1977,6 +2079,10 @@ export const SimulationEngine = {
     if (activeSims[emergencyId]) return;
 
     const interval = window.setInterval(() => {
+      // Re-read on every tick. This loop also runs in the coordinator's browser
+      // after a dispatch, so the row it is driving can be moved on by the
+      // driver's phone at any moment; writing a cached copy back would resurrect
+      // a case the crew had already delivered or closed.
       const emergencies = db.emergencies;
       const emg = emergencies.find(e => e.id === emergencyId);
       if (!emg || !['dispatched', 'en_route'].includes(emg.status)) {
@@ -2064,6 +2170,8 @@ export const SimulationEngine = {
       const emergencies = db.emergencies;
       const emg = emergencies.find(e => e.id === emergencyId);
       if (!emg || emg.status !== 'in_transit') {
+        // Delivered, closed, cancelled, or taken over elsewhere — stop rather
+        // than write this leg's state back over it.
         this.stopSimulation(emergencyId);
         return;
       }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
+import { isEmergencyActive, db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
@@ -839,13 +839,13 @@ export const DoctorDashboard: React.FC = () => {
           </div>
 
           <div className="medical-card-body" style={{ maxHeight: '520px', overflowY: 'auto' }}>
-            {emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).length === 0 ? (
+            {emergencies.filter(e => isEmergencyActive(e)).length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 0', color: '#888888', fontSize: '14px' }}>
                 <span style={{ color: '#28a745', display: 'flex', justifyContent: 'center', marginBottom: '12px' }}><Icon name="success" size={40} /></span>
                 No active ambulance dispatches scheduled for this facility.
               </div>
             ) : (
-              emergencies.filter(e => !['completed', 'cancelled'].includes(e.status)).map(e => {
+              emergencies.filter(e => isEmergencyActive(e)).map(e => {
                 const motherData = db.mothers.find(m => m.user_id === e.mother_id);
                 const patientUser = db.users.find(u => u.id === e.mother_id);
                 const weeksPregnant = motherData ? Math.max(1, Math.min(42, Math.floor((new Date().getTime() - new Date(motherData.pregnancy_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)))) : 0;
