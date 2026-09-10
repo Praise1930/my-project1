@@ -1,7 +1,7 @@
 // MamaTrack GPS — Village Health Team (VHT) Dashboard
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isEmergencyActive, db, AuthService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, User, VhtVisitLog, Emergency, Mother, Notification, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
+import { isEmergencyActive, db, AuthService, UserService, EmergencyService, NotificationService, VhtService, VitalsService, SmsService, AncService, User, VhtVisitLog, Emergency, Mother, Notification, CheckupSchedule, AncProgress, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 
 // A mother record joined with the display fields taken from her user account.
 type MotherWithContact = Mother & { name: string; email: string; phone: string };
@@ -22,12 +22,13 @@ export const VhtDashboard: React.FC = () => {
   const isDark = theme === 'dark';
   
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'mothers' | 'visits' | 'register'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'mothers' | 'anc' | 'visits' | 'register'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Lists
   const [mothersList, setMothersList] = useState<MotherWithContact[]>([]);
   const [visitsList, setVisitsList] = useState<VhtVisitLog[]>([]);
+  const [ancRows, setAncRows] = useState<{ userId: number; name: string; phone: string; village: string; progress: AncProgress }[]>([]);
   const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -134,6 +135,23 @@ export const VhtDashboard: React.FC = () => {
       // Load VHT visits
       setVisitsList(VhtService.getVisitsByVht(session.id));
 
+      // ANC follow-up worklist: every mother's contact status, defaulters first.
+      setAncRows(
+        db.mothers
+          .map(m => {
+            AncService.ensureAncSchedule(m.user_id);
+            const u = db.users.find(usr => usr.id === m.user_id);
+            return {
+              userId: m.user_id,
+              name: u?.full_name || 'Expectant Mother',
+              phone: u?.phone || '',
+              village: m.village,
+              progress: AncService.getProgress(m.user_id)
+            };
+          })
+          .sort((a, b) => b.progress.overdue.length - a.progress.overdue.length)
+      );
+
       // Load active emergencies
       setActiveEmergencies(db.emergencies.filter(e => isEmergencyActive(e)));
 
@@ -237,6 +255,16 @@ export const VhtDashboard: React.FC = () => {
     
     const res = AuthService.registerMother(submissionData);
     if (res.success) {
+      // She is this VHT's mother, and she starts with a full WHO ANC plan
+      // rather than an empty schedule nobody can act on.
+      if (res.user) {
+        UserService.updateMotherProfile(res.user.id, {
+          vht_name: user.full_name,
+          vht_phone: user.phone
+        });
+        AncService.ensureAncSchedule(res.user.id);
+      }
+
       // Send Welcome SMS
       SmsService.sendSms(
         submissionData.full_name,
@@ -389,6 +417,29 @@ export const VhtDashboard: React.FC = () => {
     setActiveTab('home');
   };
 
+
+  // ── ANC follow-up: the VHT's defaulter-tracing job ──
+  const ancDefaulterCount = ancRows.filter(r => r.progress.overdue.length > 0).length;
+
+  const handleAncReminder = (motherUserId: number, checkup: CheckupSchedule) => {
+    if (!user) return;
+    AncService.sendReminder(motherUserId, checkup, user.id);
+    showToast('She has been sent a reminder about this visit.', 'success', 4500, 'Reminder sent');
+  };
+
+  const handleAncReferToClinic = (motherUserId: number, name: string) => {
+    if (!user) return;
+    const when = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+    AncService.scheduleVisit(motherUserId, {
+      checkup_type: 'ANC Catch-up Visit (VHT referral)',
+      scheduled_date: when,
+      scheduled_time: '09:00',
+      notes: `Referred to the clinic by ${user.full_name} after a missed antenatal contact.`,
+      booked_by: user.id
+    });
+    showToast(`${name} has a catch-up appointment on ${new Date(when).toDateString()} and has been notified.`, 'success', 6000, 'Referred to clinic');
+  };
+
   const handleTriggerSOSForMother = (mother: MotherWithContact) => {
     handleOpenTriggerModal(mother);
   };
@@ -415,6 +466,12 @@ export const VhtDashboard: React.FC = () => {
           </button>
           <button onClick={() => setActiveTab('mothers')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'mothers' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'mothers' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'mothers' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
             <span><Icon name="mother" size={18} /></span> Expectant Mothers
+          </button>
+          <button onClick={() => setActiveTab('anc')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'anc' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'anc' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'anc' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+            <span><Icon name="calendar" size={18} /></span> ANC Follow-up
+            {ancDefaulterCount > 0 && (
+              <span style={{ marginLeft: 'auto', background: '#ef4444', color: '#fff', fontSize: '0.66rem', fontWeight: 800, borderRadius: '10px', padding: '1px 7px' }}>{ancDefaulterCount}</span>
+            )}
           </button>
           <button onClick={() => setActiveTab('visits')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'visits' ? 'rgba(14,165,233,0.1)' : 'transparent', color: activeTab === 'visits' ? '#0284c7' : 'inherit', fontWeight: activeTab === 'visits' ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
             <span><Icon name="clipboard" size={18} /></span> Visit Logs History
@@ -804,6 +861,99 @@ export const VhtDashboard: React.FC = () => {
         )}
 
         {/* TAB: VISIT LOGS HISTORY */}
+        {/* TAB: ANC FOLLOW-UP — who is behind on their antenatal contacts */}
+        {activeTab === 'anc' && (
+          <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px' }}>
+            <div style={{ marginBottom: '18px' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}><Icon name="calendar" size={16} /> Antenatal Care Follow-up</h3>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
+                Every mother on the register against the WHO 8-contact schedule. Mothers who have fallen behind are listed first — remind them, or book them a catch-up visit at the clinic.
+              </p>
+            </div>
+
+            {ancRows.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748b', fontSize: '0.85rem' }}>
+                No mothers on the register yet.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {ancRows.map(row => {
+                  const behind = row.progress.overdue.length > 0;
+                  return (
+                    <div
+                      key={row.userId}
+                      style={{
+                        border: `1px solid ${behind ? 'rgba(239,68,68,0.3)' : 'rgba(2,132,199,0.15)'}`,
+                        background: behind ? (isDark ? 'rgba(239,68,68,0.06)' : 'rgba(254,226,226,0.4)') : 'transparent',
+                        borderRadius: '10px',
+                        padding: '14px 16px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>{row.name}</div>
+                          <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                            {row.village} · {row.phone} · {row.progress.gestationWeeks} weeks
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: behind ? '#dc2626' : '#0284c7' }}>
+                            {row.progress.completed} / {row.progress.total} contacts
+                          </div>
+                          {behind && (
+                            <div style={{ fontSize: '0.72rem', color: '#dc2626', fontWeight: 700 }}>
+                              {row.progress.overdue.length} overdue
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ height: '7px', background: 'rgba(0,0,0,0.06)', borderRadius: '4px', overflow: 'hidden', margin: '10px 0' }}>
+                        <div style={{ width: `${row.progress.percent}%`, height: '100%', background: behind ? '#f97316' : '#0284c7', transition: 'width 0.3s ease' }} />
+                      </div>
+
+                      {row.progress.lastCompleted && (
+                        <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                          Last contact: {row.progress.lastCompleted.checkup_type}
+                          {row.progress.lastCompleted.results ? ` · BP ${row.progress.lastCompleted.results.blood_pressure}` : ''}
+                        </div>
+                      )}
+
+                      {row.progress.nextContact && !behind && (
+                        <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                          Next: {row.progress.nextContact.checkup_type} on {new Date(row.progress.nextContact.scheduled_date).toDateString()}
+                        </div>
+                      )}
+
+                      {behind && (
+                        <div style={{ marginTop: '8px' }}>
+                          <div style={{ fontSize: '0.74rem', color: '#b91c1c', fontWeight: 700, marginBottom: '6px' }}>
+                            Missed: {row.progress.overdue.map(c => c.checkup_type).join(', ')}
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <button
+                              onClick={() => handleAncReminder(row.userId, row.progress.overdue[0])}
+                              style={{ fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '8px', border: '1px solid #0284c7', background: 'transparent', color: '#0284c7', cursor: 'pointer' }}
+                            >
+                              Send reminder
+                            </button>
+                            <button
+                              onClick={() => handleAncReferToClinic(row.userId, row.name)}
+                              style={{ fontSize: '0.75rem', fontWeight: 700, padding: '6px 14px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0369a1)', color: '#ffffff', cursor: 'pointer' }}
+                            >
+                              Book catch-up visit
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'visits' && (
           <div className="card-glass" style={{ padding: '24px', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '12px' }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: '16px' }}><Icon name="clipboard" size={16} /> Monitored Visit Registry</h3>

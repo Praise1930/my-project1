@@ -306,8 +306,29 @@ export interface EmergencyLog {
   created_at: string;
 }
 
+// Clinical results captured when an ANC contact is actually conducted.
+export interface AncVisitResults {
+  blood_pressure: string;          // "120/80"
+  weight_kg: number;
+  fundal_height_cm: number;
+  fetal_heart_rate: number;        // bpm
+  haemoglobin: number;             // g/dL
+  urine_protein: 'negative' | 'trace' | '+' | '++' | '+++';
+  temperature?: number;            // degrees Celsius
+  tt_dose_given: string;           // 'None' | 'TT1'..'TT5'
+  iptp_dose_given: string;         // 'None' | 'IPTp1'..'IPTp4'
+  ifa_supplied: boolean;           // Iron / Folic Acid
+  llin_given: boolean;             // Long-lasting insecticidal net
+  hiv_test: 'not_done' | 'negative' | 'positive' | 'known_positive';
+  syphilis_test: 'not_done' | 'negative' | 'positive';
+  danger_signs: string[];
+  findings: string;
+  advice: string;
+}
+
 export interface CheckupSchedule {
   id: number;
+  /** Holds the mother's USER id (the identifier every other table keys on). */
   mother_id: number;
   hospital_id: number | null;
   checkup_type: string;
@@ -315,7 +336,47 @@ export interface CheckupSchedule {
   scheduled_time: string;
   notes: string;
   status: 'upcoming' | 'completed' | 'missed' | 'rescheduled';
+  /** 1-8 for the WHO recommended ANC contacts; undefined for ad-hoc visits. */
+  anc_visit_number?: number;
+  conducted_by?: number;                   // user id of the doctor / VHT
+  conducted_by_role?: 'doctor' | 'vht';
+  completed_at?: string;
+  results?: AncVisitResults;
 }
+
+// ── WHO 2016 Antenatal Care Model: 8 recommended contacts ──
+// Single source of truth shared by the mother, doctor, VHT and admin views.
+export interface AncContactDefinition {
+  visit: number;
+  weeks: string;     // human-readable window
+  minWeek: number;   // gestational week the contact becomes due
+  label: string;
+  desc: string;
+  focus: string[];   // what the clinician is expected to do at this contact
+}
+
+export const WHO_ANC_CONTACTS: AncContactDefinition[] = [
+  { visit: 1, weeks: '8-12', minWeek: 8, label: 'First ANC Contact', desc: 'Confirm pregnancy, conduct base blood panel, test for HIV/syphilis, prescribe iron/folate.', focus: ['Booking bloods & Hb', 'HIV and syphilis testing', 'IFA supplementation', 'LLIN issue'] },
+  { visit: 2, weeks: '16', minWeek: 16, label: 'Second ANC Visit', desc: 'Assess blood pressure, monitor fetal movement, discuss maternal health birth plans.', focus: ['Blood pressure', 'Fundal height', 'IPTp1 (SP)', 'Birth preparedness plan'] },
+  { visit: 3, weeks: '20', minWeek: 20, label: 'Foetal Anomaly Scan', desc: 'Ultrasound screening to verify physical organ development, limbs, and placenta position.', focus: ['Ultrasound', 'Fetal heart rate', 'IPTp2 (SP)', 'Danger sign counselling'] },
+  { visit: 4, weeks: '24-26', minWeek: 24, label: 'Gestational Diabetes Test', desc: 'Glucose testing, anemia panel check, administer Tetanus Toxoid (TT2) vaccination.', focus: ['Glucose screen', 'Haemoglobin', 'TT vaccination', 'Urine protein'] },
+  { visit: 5, weeks: '28', minWeek: 28, label: 'Third Trimester Begins', desc: 'Administer Anti-D if Rh-negative. Review danger signs (bleeding, swelling).', focus: ['Anti-D if Rh negative', 'Pre-eclampsia screen', 'IPTp3 (SP)', 'Fetal growth'] },
+  { visit: 6, weeks: '32', minWeek: 32, label: 'Foetal Growth Review', desc: 'Fetal positioning check, blood pressure assessment, check kick counts.', focus: ['Fundal height', 'Kick counts', 'Blood pressure', 'Haemoglobin recheck'] },
+  { visit: 7, weeks: '36', minWeek: 36, label: 'Pre-Labour Assessment', desc: 'Determine cephalic (head down) engagement. Finalize hospital bag list and transportation.', focus: ['Presentation & engagement', 'Transport plan', 'Facility of delivery', 'Danger signs'] },
+  { visit: 8, weeks: '38-40', minWeek: 38, label: 'Final Birth Check', desc: 'Final clinical assessment, sweep membrane options, confirm 24/7 dispatcher contacts.', focus: ['Final assessment', 'Labour signs', 'Confirm dispatcher contacts', 'Referral readiness'] }
+];
+
+export const ANC_DANGER_SIGNS: string[] = [
+  'Severe headache or blurred vision',
+  'Vaginal bleeding',
+  'Severe abdominal pain',
+  'Swelling of face and hands',
+  'Reduced or absent fetal movement',
+  'Fever',
+  'Convulsions',
+  'Difficulty breathing',
+  'Leaking liquor'
+];
 
 export interface Notification {
   id: number;
@@ -541,7 +602,7 @@ const SEED_CHILDREN: Child[] = [
 ];
 
 const SEED_CHECKUPS: CheckupSchedule[] = [
-  { id: 1, mother_id: 15, hospital_id: 1, checkup_type: 'Antenatal Visit 4', scheduled_date: '2026-06-25', scheduled_time: '09:00', notes: 'Routine checkup - 24 weeks', status: 'completed' },
+  { id: 1, mother_id: 15, hospital_id: 1, checkup_type: 'ANC Contact 4 \u2014 Gestational Diabetes Test', scheduled_date: '2026-06-25', scheduled_time: '09:00', notes: 'Routine checkup - 24 weeks', status: 'completed', anc_visit_number: 4 },
   { id: 2, mother_id: 15, hospital_id: 1, checkup_type: 'Ultrasound Scan', scheduled_date: '2026-07-10', scheduled_time: '10:30', notes: 'Anomaly scan', status: 'upcoming' }
 ];
 
@@ -906,10 +967,17 @@ export const VitalsService = {
 
 export const VhtService = {
   getVisitsForMother(motherId: number): VhtVisitLog[] {
-    return db.vhtVisits.filter(v => v.mother_id === motherId);
+    return db.vhtVisits
+      .filter(v => Number(v.mother_id) === Number(motherId))
+      .sort((a, b) => new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime());
   },
   getVisitsByVht(vhtId: number): VhtVisitLog[] {
-    return db.vhtVisits.filter(v => v.vht_id === vhtId);
+    return db.vhtVisits
+      .filter(v => Number(v.vht_id) === Number(vhtId))
+      .sort((a, b) => new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime());
+  },
+  getAllVisits(): VhtVisitLog[] {
+    return [...db.vhtVisits].sort((a, b) => new Date(b.visit_date).getTime() - new Date(a.visit_date).getTime());
   },
   addVisitLog(log: Omit<VhtVisitLog, 'id'>): VhtVisitLog {
     const logs = db.vhtVisits;
@@ -919,7 +987,454 @@ export const VhtService = {
       ...log
     };
     db.vhtVisits = [...logs, newLog];
+
+    // The visit has to show up where the mother and her doctor can see it.
+    const vht = db.users.find(u => u.id === Number(log.vht_id));
+    const concerns = (log.complications_observed || '').trim();
+    const hasConcern =
+      concerns !== '' && concerns.toLowerCase() !== 'none' && concerns.toLowerCase() !== 'n/a';
+
+    NotificationService.createNotification(
+      Number(log.mother_id),
+      'Home visit recorded',
+      `${vht?.full_name || 'Your VHT'} visited you on ${log.visit_date}. BP ${log.blood_pressure}, temperature ${log.temperature}°C, fetal movement ${log.fetal_movement}.${
+        hasConcern ? ` Noted: ${concerns}.` : ''
+      }`,
+      'status_update',
+      nextId
+    );
+
+    if (hasConcern) {
+      const motherUser = db.users.find(u => u.id === Number(log.mother_id));
+      db.users
+        .filter(u => u.role === 'doctor')
+        .forEach(doc => {
+          NotificationService.createNotification(
+            doc.id,
+            'VHT flagged a community finding',
+            `${vht?.full_name || 'A VHT'} reported "${concerns}" for ${motherUser?.full_name || 'a registered mother'} (BP ${log.blood_pressure}, ${log.temperature}°C).`,
+            'status_update',
+            nextId
+          );
+        });
+    }
+
     return newLog;
+  }
+};
+
+
+// ============================================================================
+// ANTENATAL CARE (ANC) CONTACT SERVICE
+// The clinical loop that ties doctors and VHTs to the mother's progress:
+// a contact is scheduled -> conducted -> recorded -> reflected on her dashboard.
+// ============================================================================
+
+export interface AncProgress {
+  completed: number;
+  total: number;
+  percent: number;
+  gestationWeeks: number;
+  nextContact: CheckupSchedule | null;
+  overdue: CheckupSchedule[];
+  lastCompleted: CheckupSchedule | null;
+}
+
+function addDays(iso: string, days: number): string {
+  const d = new Date(iso);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export const AncService = {
+  /** Gestational age in completed weeks, derived from the recorded LMP. */
+  gestationWeeks(motherUserId: number): number {
+    const mother = db.mothers.find(m => Number(m.user_id) === Number(motherUserId));
+    if (!mother || !mother.pregnancy_start_date) return 0;
+    const start = new Date(mother.pregnancy_start_date).getTime();
+    if (Number.isNaN(start)) return 0;
+    const diff = Date.now() - start;
+    return Math.max(0, Math.min(42, Math.floor(diff / (1000 * 60 * 60 * 24 * 7))));
+  },
+
+  /**
+   * Every mother gets the full WHO 8-contact plan derived from her LMP.
+   * Existing rows are preserved; only missing contacts are created, so a
+   * mother registered by a VHT today immediately has a real ANC schedule.
+   */
+  ensureAncSchedule(motherUserId: number): CheckupSchedule[] {
+    const mother = db.mothers.find(m => Number(m.user_id) === Number(motherUserId));
+    if (!mother || !mother.pregnancy_start_date) return this.getSchedule(motherUserId);
+
+    const all = db.checkups;
+
+    // Adopt legacy rows that predate anc_visit_number by reading the visit
+    // number out of their label ("Antenatal Visit 4" -> 4).
+    let adopted = false;
+    const normalised = all.map(c => {
+      if (Number(c.mother_id) !== Number(motherUserId) || c.anc_visit_number) return c;
+      const match = /(\d+)/.exec(c.checkup_type || '');
+      const n = match ? Number(match[1]) : NaN;
+      if (/antenatal|anc/i.test(c.checkup_type || '') && n >= 1 && n <= 8) {
+        adopted = true;
+        return { ...c, anc_visit_number: n };
+      }
+      return c;
+    });
+
+    const claimed = new Set(
+      normalised
+        .filter(c => Number(c.mother_id) === Number(motherUserId) && c.anc_visit_number)
+        .map(c => c.anc_visit_number as number)
+    );
+
+    const created: CheckupSchedule[] = [];
+    WHO_ANC_CONTACTS.forEach(contact => {
+      if (claimed.has(contact.visit)) return;
+      created.push({
+        id: newRecordId(),
+        mother_id: Number(motherUserId),
+        hospital_id: mother.preferred_hospital_id ?? null,
+        checkup_type: `ANC Contact ${contact.visit} — ${contact.label}`,
+        scheduled_date: addDays(mother.pregnancy_start_date, contact.minWeek * 7),
+        scheduled_time: '09:00',
+        notes: contact.desc,
+        status: 'upcoming',
+        anc_visit_number: contact.visit
+      });
+    });
+
+    if (created.length > 0 || adopted) {
+      db.checkups = [...normalised, ...created];
+    }
+
+    this.refreshMissedStatuses(motherUserId);
+    return this.getSchedule(motherUserId);
+  },
+
+  getSchedule(motherUserId: number): CheckupSchedule[] {
+    return db.checkups
+      .filter(c => Number(c.mother_id) === Number(motherUserId))
+      .sort((a, b) => {
+        const an = a.anc_visit_number ?? 99;
+        const bn = b.anc_visit_number ?? 99;
+        if (an !== bn) return an - bn;
+        return new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime();
+      });
+  },
+
+  /** An upcoming contact whose date has passed is a missed contact. */
+  refreshMissedStatuses(motherUserId?: number): void {
+    const today = startOfToday().getTime();
+    let changed = false;
+    const updated = db.checkups.map(c => {
+      if (motherUserId !== undefined && Number(c.mother_id) !== Number(motherUserId)) return c;
+      if (c.status !== 'upcoming') return c;
+      const due = new Date(c.scheduled_date).getTime();
+      // 14 days of grace before a contact counts as defaulted.
+      if (!Number.isNaN(due) && today - due > 14 * 86400000) {
+        changed = true;
+        return { ...c, status: 'missed' as const };
+      }
+      return c;
+    });
+    if (changed) db.checkups = updated;
+  },
+
+  getProgress(motherUserId: number): AncProgress {
+    const schedule = this.getSchedule(motherUserId);
+    const ancContacts = schedule.filter(c => c.anc_visit_number);
+    const completed = ancContacts.filter(c => c.status === 'completed');
+    const total = WHO_ANC_CONTACTS.length;
+    const today = startOfToday().getTime();
+
+    const upcoming = schedule
+      .filter(c => c.status === 'upcoming')
+      .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime());
+
+    const overdue = schedule.filter(
+      c => c.status === 'missed' || (c.status === 'upcoming' && new Date(c.scheduled_date).getTime() < today)
+    );
+
+    const lastCompleted = [...completed].sort(
+      (a, b) => new Date(b.completed_at || b.scheduled_date).getTime() - new Date(a.completed_at || a.scheduled_date).getTime()
+    )[0] || null;
+
+    return {
+      completed: completed.length,
+      total,
+      percent: Math.round((Math.min(completed.length, total) / total) * 100),
+      gestationWeeks: this.gestationWeeks(motherUserId),
+      nextContact: upcoming[0] || null,
+      overdue,
+      lastCompleted
+    };
+  },
+
+  /** Book an appointment. Used by doctors (clinic) and VHTs (community referral). */
+  scheduleVisit(
+    motherUserId: number,
+    input: {
+      checkup_type: string;
+      scheduled_date: string;
+      scheduled_time?: string;
+      notes?: string;
+      hospital_id?: number | null;
+      anc_visit_number?: number;
+      booked_by?: number;
+    }
+  ): CheckupSchedule {
+    const mother = db.mothers.find(m => Number(m.user_id) === Number(motherUserId));
+    const record: CheckupSchedule = {
+      id: newRecordId(),
+      mother_id: Number(motherUserId),
+      hospital_id: input.hospital_id ?? mother?.preferred_hospital_id ?? null,
+      checkup_type: input.checkup_type,
+      scheduled_date: input.scheduled_date,
+      scheduled_time: input.scheduled_time || '09:00',
+      notes: input.notes || '',
+      status: 'upcoming',
+      anc_visit_number: input.anc_visit_number
+    };
+
+    db.checkups = [...db.checkups, record];
+
+    const hospital = db.hospitals.find(h => h.id === record.hospital_id);
+    const when = new Date(record.scheduled_date).toDateString();
+
+    NotificationService.createNotification(
+      Number(motherUserId),
+      'New appointment booked',
+      `${record.checkup_type} on ${when} at ${record.scheduled_time}${hospital ? ` — ${hospital.name}` : ''}.`,
+      'checkup_reminder',
+      record.id
+    );
+
+    const motherUser = db.users.find(u => u.id === Number(motherUserId));
+    if (motherUser) {
+      SmsService.sendSms(
+        motherUser.full_name,
+        motherUser.phone,
+        `MamaTrack: Your ${record.checkup_type} is booked for ${when} at ${record.scheduled_time}${hospital ? ` (${hospital.name})` : ''}. Please attend.`
+      );
+    }
+
+    return record;
+  },
+
+  rescheduleVisit(checkupId: number, newDate: string, newTime: string, reason = ''): CheckupSchedule | null {
+    const existing = db.checkups.find(c => c.id === checkupId);
+    if (!existing) return null;
+
+    const updated: CheckupSchedule = {
+      ...existing,
+      scheduled_date: newDate,
+      scheduled_time: newTime || existing.scheduled_time,
+      status: 'upcoming',
+      notes: reason ? `${existing.notes} | Rescheduled: ${reason}` : existing.notes
+    };
+    db.checkups = db.checkups.map(c => (c.id === checkupId ? updated : c));
+
+    NotificationService.createNotification(
+      existing.mother_id,
+      'Appointment rescheduled',
+      `${existing.checkup_type} has moved to ${new Date(newDate).toDateString()} at ${updated.scheduled_time}.`,
+      'checkup_reminder',
+      checkupId
+    );
+
+    return updated;
+  },
+
+  markMissed(checkupId: number): CheckupSchedule | null {
+    const existing = db.checkups.find(c => c.id === checkupId);
+    if (!existing) return null;
+    const updated = { ...existing, status: 'missed' as const };
+    db.checkups = db.checkups.map(c => (c.id === checkupId ? updated : c));
+    return updated;
+  },
+
+  /**
+   * The core of the loop: a clinician conducts the visit, the findings are
+   * stored on the contact, vitals are appended to the mother's ledger, her ANC
+   * count advances, she is notified, and the next contact is booked.
+   */
+  completeVisit(
+    checkupId: number,
+    conductedByUserId: number,
+    results: AncVisitResults
+  ): { checkup: CheckupSchedule; next: CheckupSchedule | null; alerts: string[] } | null {
+    const existing = db.checkups.find(c => c.id === checkupId);
+    if (!existing) return null;
+
+    const clinician = db.users.find(u => u.id === Number(conductedByUserId));
+    const role: 'doctor' | 'vht' = clinician?.role === 'vht' ? 'vht' : 'doctor';
+    const now = new Date().toISOString();
+
+    const completed: CheckupSchedule = {
+      ...existing,
+      status: 'completed',
+      completed_at: now,
+      conducted_by: Number(conductedByUserId),
+      conducted_by_role: role,
+      results
+    };
+    db.checkups = db.checkups.map(c => (c.id === checkupId ? completed : c));
+
+    // 1. Append the readings to the shared vitals ledger.
+    const bpParts = String(results.blood_pressure || '').split('/');
+    const systolic = parseInt(bpParts[0] || '0', 10) || 0;
+    const diastolic = parseInt(bpParts[1] || '0', 10) || 0;
+    if (systolic > 0 && diastolic > 0) {
+      VitalsService.addVitalsRecord(existing.mother_id, {
+        systolic,
+        diastolic,
+        glucose: 0,
+        kick_count: 0,
+        pulse: results.fetal_heart_rate || undefined,
+        temperature: results.temperature,
+        recorded_by: role
+      });
+    }
+
+    // 2. Advance the mother's clinical record.
+    const mother = db.mothers.find(m => Number(m.user_id) === Number(existing.mother_id));
+    if (mother) {
+      const completedCount = db.checkups.filter(
+        c => Number(c.mother_id) === Number(existing.mother_id) && c.status === 'completed'
+      ).length;
+      db.mothers = db.mothers.map(m =>
+        Number(m.user_id) === Number(existing.mother_id)
+          ? {
+              ...m,
+              anc_visits_count: completedCount,
+              current_complications:
+                results.danger_signs && results.danger_signs.length > 0
+                  ? results.danger_signs.join(', ')
+                  : m.current_complications
+            }
+          : m
+      );
+    }
+
+    // 3. Flag anything clinically abnormal.
+    const alerts: string[] = [];
+    if (systolic >= 140 || diastolic >= 90) alerts.push(`Raised blood pressure (${results.blood_pressure} mmHg)`);
+    if (results.haemoglobin > 0 && results.haemoglobin < 11) alerts.push(`Anaemia (Hb ${results.haemoglobin} g/dL)`);
+    if (results.fetal_heart_rate > 0 && (results.fetal_heart_rate < 110 || results.fetal_heart_rate > 160))
+      alerts.push(`Abnormal fetal heart rate (${results.fetal_heart_rate} bpm)`);
+    if (results.urine_protein === '++' || results.urine_protein === '+++')
+      alerts.push(`Proteinuria (${results.urine_protein})`);
+    if (results.temperature && results.temperature >= 38) alerts.push(`Fever (${results.temperature}°C)`);
+    if (results.danger_signs && results.danger_signs.length > 0) alerts.push(...results.danger_signs);
+
+    // 4. Tell the mother what happened at her visit.
+    const motherUser = db.users.find(u => u.id === Number(existing.mother_id));
+    NotificationService.createNotification(
+      existing.mother_id,
+      `${existing.checkup_type} completed`,
+      `${clinician?.full_name || 'Your clinician'} recorded your visit. BP ${results.blood_pressure}${
+        results.fetal_heart_rate ? `, fetal heart rate ${results.fetal_heart_rate} bpm` : ''
+      }. ${results.advice || 'Keep to your next appointment.'}`,
+      'status_update',
+      checkupId
+    );
+
+    if (motherUser) {
+      SmsService.sendSms(
+        motherUser.full_name,
+        motherUser.phone,
+        `MamaTrack: Your ANC visit was recorded by ${clinician?.full_name || 'your clinician'}. BP ${results.blood_pressure}.${
+          alerts.length > 0 ? ` Follow-up needed: ${alerts.join('; ')}.` : ''
+        }`
+      );
+    }
+
+    // 5. Escalate abnormal findings to clinical staff.
+    if (alerts.length > 0) {
+      db.users
+        .filter(u => u.role === 'doctor')
+        .forEach(doc => {
+          NotificationService.createNotification(
+            doc.id,
+            'ANC finding needs review',
+            `${motherUser?.full_name || 'A patient'} — ${alerts.join('; ')} recorded at ${existing.checkup_type}.`,
+            'status_update',
+            checkupId
+          );
+        });
+
+      if (mother && mother.next_of_kin_phone) {
+        SmsService.sendSms(
+          mother.next_of_kin_name,
+          mother.next_of_kin_phone,
+          `MamaTrack Alert: ${motherUser?.full_name || 'Your relative'} had findings needing follow-up at her ANC visit: ${alerts.join('; ')}.`
+        );
+      }
+    }
+
+    // 6. Make sure the next WHO contact exists and is booked.
+    let next: CheckupSchedule | null = null;
+    if (existing.anc_visit_number) {
+      this.ensureAncSchedule(existing.mother_id);
+      next =
+        this.getSchedule(existing.mother_id).find(
+          c => (c.anc_visit_number ?? 0) === existing.anc_visit_number! + 1
+        ) || null;
+
+      // A defaulted next contact is re-opened rather than left as missed.
+      if (next && next.status === 'missed') {
+        next = this.rescheduleVisit(next.id, addDays(new Date().toISOString(), 14), '09:00', 'Re-booked at previous contact');
+      }
+    }
+
+    return { checkup: completed, next, alerts };
+  },
+
+  /** Mothers whose ANC contacts have lapsed — the VHT follow-up worklist. */
+  getDefaulters(): { mother: Mother; user: User | undefined; overdue: CheckupSchedule[]; progress: AncProgress }[] {
+    this.refreshMissedStatuses();
+    return db.mothers
+      .map(mother => {
+        const progress = this.getProgress(mother.user_id);
+        return {
+          mother,
+          user: db.users.find(u => u.id === mother.user_id),
+          overdue: progress.overdue,
+          progress
+        };
+      })
+      .filter(row => row.overdue.length > 0)
+      .sort((a, b) => b.overdue.length - a.overdue.length);
+  },
+
+  /** VHT / clinic reminder for an upcoming or lapsed contact. */
+  sendReminder(motherUserId: number, checkup: CheckupSchedule, fromUserId: number): void {
+    const motherUser = db.users.find(u => u.id === Number(motherUserId));
+    const sender = db.users.find(u => u.id === Number(fromUserId));
+    const when = new Date(checkup.scheduled_date).toDateString();
+
+    NotificationService.createNotification(
+      Number(motherUserId),
+      'ANC reminder',
+      `${sender?.full_name || 'Your health worker'} is reminding you about ${checkup.checkup_type}, due ${when}. Please attend the clinic.`,
+      'checkup_reminder',
+      checkup.id
+    );
+
+    if (motherUser) {
+      SmsService.sendSms(
+        motherUser.full_name,
+        motherUser.phone,
+        `MamaTrack reminder from ${sender?.full_name || 'your health worker'}: ${checkup.checkup_type} was due ${when}. Please visit the clinic.`
+      );
+    }
   }
 };
 
@@ -2060,6 +2575,56 @@ export const DoctorService = {
     });
 
     return newRequest;
+  }
+};
+
+export const BloodBankService = {
+  getAll(): BloodRequest[] {
+    return [...db.bloodRequests].sort(
+      (a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime()
+    );
+  },
+
+  getPending(): BloodRequest[] {
+    return this.getAll().filter(r => r.status === 'pending');
+  },
+
+  /** Closes the loop a doctor opens with submitBloodRequest. */
+  updateStatus(requestId: number, status: BloodRequest['status'], actedByUserId: number): BloodRequest | null {
+    const existing = db.bloodRequests.find(r => r.id === requestId);
+    if (!existing) return null;
+
+    const updated = { ...existing, status };
+    db.bloodRequests = db.bloodRequests.map(r => (r.id === requestId ? updated : r));
+
+    const actor = db.users.find(u => u.id === Number(actedByUserId));
+    const wording =
+      status === 'approved'
+        ? 'approved by the blood bank'
+        : status === 'delivered'
+        ? 'delivered to your facility'
+        : 'cancelled';
+
+    NotificationService.createNotification(
+      existing.doctor_id,
+      `Blood request ${status}`,
+      `Your request for ${existing.units} unit(s) of ${existing.blood_type} was ${wording}${
+        actor ? ` by ${actor.full_name}` : ''
+      }.`,
+      'status_update',
+      requestId
+    );
+
+    const doctorUser = db.users.find(u => u.id === existing.doctor_id);
+    if (doctorUser && status !== 'cancelled') {
+      SmsService.sendSms(
+        doctorUser.full_name,
+        doctorUser.phone,
+        `MamaTrack Blood Bank: ${existing.units} unit(s) of ${existing.blood_type} ${wording}.`
+      );
+    }
+
+    return updated;
   }
 };
 

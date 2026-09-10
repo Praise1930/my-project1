@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor } from '../services/db';
+import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, AncService, User, Mother, Emergency, CheckupSchedule, Notification, Doctor } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, LogOut, Send } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -86,7 +86,8 @@ export const MotherConsole: React.FC = () => {
     }
 
     // Load lists
-    setCheckups(db.checkups.filter(c => c.mother_id === sessionUser.id));
+    AncService.ensureAncSchedule(sessionUser.id);
+    setCheckups(AncService.getSchedule(sessionUser.id).filter(c => c.status === 'upcoming' || c.status === 'completed'));
     setNotifications(NotificationService.getNotificationsForUser(sessionUser.id));
 
     // Get active emergency

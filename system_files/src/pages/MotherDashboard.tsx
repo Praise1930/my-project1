@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, User, Mother, Emergency, CheckupSchedule, Notification, Doctor, VitalsService, SmsService, VitalsRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
+import { db, AuthService, UserService, EmergencyService, NotificationService, SimulationEngine, AncService, VhtService, WHO_ANC_CONTACTS, User, Mother, Emergency, CheckupSchedule, Notification, Doctor, VitalsService, SmsService, VitalsRecord, VhtVisitLog, AncProgress, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { Bell, Calendar, LogOut, ArrowLeft, PhoneCall, Send } from 'lucide-react';
 import { HeartbeatLoader } from '../components/LoadingStates';
@@ -64,6 +64,8 @@ export const MotherDashboard: React.FC = () => {
 
   // Lists
   const [checkups, setCheckups] = useState<CheckupSchedule[]>([]);
+  const [ancProgress, setAncProgress] = useState<AncProgress | null>(null);
+  const [homeVisits, setHomeVisits] = useState<VhtVisitLog[]>([]);
 
   // Vitals states
   const [vitalsList, setVitalsList] = useState<VitalsRecord[]>([]);
@@ -151,19 +153,43 @@ export const MotherDashboard: React.FC = () => {
       });
     }
 
-    // Load static lists
-    setCheckups(db.checkups.filter(c => c.mother_id === sessionUser.id));
-    setVitalsList(VitalsService.getVitalsForMother(sessionUser.id));
-    setNotifications(NotificationService.getNotificationsForUser(sessionUser.id));
+    // Every mother has the full WHO 8-contact plan derived from her LMP.
+    AncService.ensureAncSchedule(sessionUser.id);
 
-    // Get active emergency
-    const emg = EmergencyService.getActiveEmergencyForMother(sessionUser.id);
-    setActiveEmergency(emg);
+    // Anything a doctor or VHT records has to appear here without a reload,
+    // so the record is re-read on every database change and on a short poll.
+    // Each store is re-read fresh from storage on every tick, so the values are
+    // compared before being set — otherwise every tick would replace identical
+    // objects and re-render the whole dashboard four times a minute for nothing.
+    function applyIfChanged<T>(setter: React.Dispatch<React.SetStateAction<T>>, next: T): void {
+      setter((prev: T) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+    }
 
-    // An alert still listed in offline storage has not reached the server yet.
-    setHeldOffline(
-      !!emg && OfflineStorageService.getQueuedEmergencies().some(q => q.id === String(emg.id)),
-    );
+    const refresh = () => {
+      const fresh = UserService.getMotherData(sessionUser.id);
+      if (fresh) applyIfChanged<Mother | null>(setProfile, fresh.profile);
+
+      applyIfChanged(setCheckups, AncService.getSchedule(sessionUser.id));
+      applyIfChanged<AncProgress | null>(setAncProgress, AncService.getProgress(sessionUser.id));
+      applyIfChanged(setHomeVisits, VhtService.getVisitsForMother(sessionUser.id));
+      applyIfChanged(setVitalsList, VitalsService.getVitalsForMother(sessionUser.id));
+      applyIfChanged(setNotifications, NotificationService.getNotificationsForUser(sessionUser.id));
+
+      const current = EmergencyService.getActiveEmergencyForMother(sessionUser.id);
+      applyIfChanged<Emergency | null>(setActiveEmergency, current);
+      setHeldOffline(
+        !!current && OfflineStorageService.getQueuedEmergencies().some(q => q.id === String(current.id)),
+      );
+    };
+
+    refresh();
+    const interval = setInterval(refresh, 4000);
+    window.addEventListener('mamatrack_db_update', refresh);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mamatrack_db_update', refresh);
+    };
   }, [navigate]);
 
   // Handle browser back button navigation
@@ -452,35 +478,31 @@ export const MotherDashboard: React.FC = () => {
 
   // Dynamic next appointment calculation
   const getNextAppointmentInfo = () => {
-    const upcoming = checkups.filter(c => c.status === 'upcoming');
-    if (upcoming.length > 0) {
-      const next = upcoming[0];
+    // Soonest upcoming appointment, not simply the first row in the table.
+    const next =
+      ancProgress?.nextContact ||
+      [...checkups]
+        .filter(c => c.status === 'upcoming')
+        .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())[0];
+
+    if (next) {
       const dt = new Date(next.scheduled_date);
       return {
         date: dt.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }),
-        time: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: next.scheduled_time || '09:00',
         type: next.checkup_type
       };
     }
     return {
-      date: '24 May, 2026',
-      time: '10:30 AM',
-      type: 'ANC Checkup'
+      date: 'Not scheduled',
+      time: '--:--',
+      type: 'No upcoming ANC contact'
     };
   };
   const nextAppt = getNextAppointmentInfo();
 
-  // WHO Milestones
-  const whoMilestones = [
-    { visit: 1, weeks: '8-12', minWeek: 8, label: 'First ANC Contact', desc: 'Confirm pregnancy, conduct base blood panel, test for HIV/syphilis, prescribe iron/folate.' },
-    { visit: 2, weeks: '16', minWeek: 16, label: 'Second ANC Visit', desc: 'Assess blood pressure, monitor fetal movement, discuss maternal health birth plans.' },
-    { visit: 3, weeks: '20', minWeek: 20, label: 'Foetal Anomaly Scan', desc: 'Ultrasound screening to verify physical organ development, limbs, and placenta position.' },
-    { visit: 4, weeks: '24-26', minWeek: 24, label: 'Gestational Diabetes Test', desc: 'Glucose testing, anemia panel check, administer Tetanus Toxoid (TT2) vaccination.' },
-    { visit: 5, weeks: '28', minWeek: 28, label: 'Third Trimester Begins', desc: 'Administer Anti-D if Rh-negative. Review danger signs (bleeding, swelling).' },
-    { visit: 6, weeks: '32', minWeek: 32, label: 'Foetal Growth Review', desc: 'Fetal positioning check, blood pressure assessment, check kick counts.' },
-    { visit: 7, weeks: '36', minWeek: 36, label: 'Pre-Labour Assessment', desc: 'Determine cephalic (head down) engagement. Finalize hospital bag list and transportation.' },
-    { visit: 8, weeks: '38-40', minWeek: 38, label: 'Final Birth Check', desc: 'Final clinical assessment, sweep membrane options, confirm 24/7 dispatcher contacts.' }
-  ];
+  // WHO Milestones — shared definition from the data layer.
+  const whoMilestones = WHO_ANC_CONTACTS;
 
   return (
     <div className="mother-theme momentra-root" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'row' }}>
@@ -1325,7 +1347,11 @@ export const MotherDashboard: React.FC = () => {
                             </div>
                             <div className="checkup-info">
                               <div className="checkup-type" style={{ color: '#1f2937', fontWeight: 700 }}>{c.checkup_type}</div>
-                              <div className="checkup-hospital" style={{ color: '#6b7280' }}>{c.notes}</div>
+                              <div className="checkup-hospital" style={{ color: '#6b7280' }}>
+                                {c.status === 'completed' && c.conducted_by
+                                  ? `Seen by ${db.users.find(u => u.id === c.conducted_by)?.full_name || 'your clinician'}${c.results ? ` · BP ${c.results.blood_pressure}` : ''}`
+                                  : c.notes}
+                              </div>
                             </div>
                             <span className="badge" style={{ fontSize: '0.65rem', background: c.status === 'completed' ? '#dcfce7' : c.status === 'upcoming' ? '#fef3c7' : '#fee2e2', color: c.status === 'completed' ? '#15803d' : c.status === 'upcoming' ? '#b45309' : '#b91c1c', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
                               {c.status.toUpperCase()}
@@ -1351,15 +1377,44 @@ export const MotherDashboard: React.FC = () => {
                 <div style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', paddingBottom: '10px', marginBottom: '1.5rem' }}>
                   <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}><Icon name="calendar" size={14} /> WHO Antenatal Care Progress Timeline</h3>
                   <p style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>
-                    The World Health Organization recommends at least 8 ANC contacts. Expand each visit milestone to understand details.
+                    The World Health Organization recommends at least 8 ANC contacts. Each one is marked complete when your clinician records the visit.
                   </p>
+                </div>
+
+                {/* Live ANC progress, driven by the visits clinicians have recorded */}
+                <div style={{ background: 'rgba(244,63,94,0.04)', border: '1px solid rgba(244,63,94,0.1)', borderRadius: '14px', padding: '16px 18px', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1f2937' }}>Your antenatal progress</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#e11d48' }}>
+                      {ancProgress?.completed ?? 0} / {ancProgress?.total ?? 8} contacts
+                    </span>
+                  </div>
+                  <div style={{ height: '10px', background: 'rgba(0,0,0,0.05)', borderRadius: '6px', overflow: 'hidden' }}>
+                    <div style={{ width: `${ancProgress?.percent ?? 0}%`, height: '100%', background: 'linear-gradient(135deg, #fb7185, #f43f5e)', transition: 'width 0.4s ease' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 20px', marginTop: '10px', fontSize: '0.76rem', color: '#4b5563' }}>
+                    <span><Icon name="baby" size={13} /> {weeks} weeks pregnant</span>
+                    {ancProgress?.nextContact && (
+                      <span><Icon name="calendar" size={13} /> Next: {ancProgress.nextContact.checkup_type} on {new Date(ancProgress.nextContact.scheduled_date).toLocaleDateString([], { day: 'numeric', month: 'short' })}</span>
+                    )}
+                    {(ancProgress?.overdue.length ?? 0) > 0 && (
+                      <span style={{ color: '#b91c1c', fontWeight: 700 }}><Icon name="warning" size={13} /> {ancProgress?.overdue.length} visit(s) overdue</span>
+                    )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   {whoMilestones.map((m) => {
-                    const isDone = checkups.some(c => c.status === 'completed' && c.checkup_type.toLowerCase().includes(String(m.visit)));
-                    const isCurrent = weeks >= m.minWeek && !isDone;
-                    
+                    // Matched on the contact number the clinician actually filled in,
+                    // not on a substring of the appointment label.
+                    const contact = checkups.find(c => c.anc_visit_number === m.visit);
+                    const isDone = contact?.status === 'completed';
+                    const isMissed = contact?.status === 'missed';
+                    const isCurrent = !isDone && !isMissed && weeks >= m.minWeek;
+                    const clinician = contact?.conducted_by
+                      ? db.users.find(u => u.id === contact.conducted_by)
+                      : undefined;
+
                     let dotColor = 'rgba(0,0,0,0.08)';
                     let badgeText = 'Future';
                     let cardBorder = 'rgba(0,0,0,0.04)';
@@ -1370,6 +1425,11 @@ export const MotherDashboard: React.FC = () => {
                       badgeText = 'Completed';
                       cardBorder = 'rgba(34,197,94,0.15)';
                       badgeColor = { bg: '#dcfce7', text: '#15803d' };
+                    } else if (isMissed) {
+                      dotColor = '#dc2626';
+                      badgeText = 'Missed';
+                      cardBorder = 'rgba(220,38,38,0.2)';
+                      badgeColor = { bg: '#fee2e2', text: '#b91c1c' };
                     } else if (isCurrent) {
                       dotColor = '#d97706';
                       badgeText = 'Due Now';
@@ -1389,6 +1449,43 @@ export const MotherDashboard: React.FC = () => {
                             <span className="badge" style={{ fontSize: '0.65rem', background: badgeColor.bg, color: badgeColor.text, padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>{badgeText}</span>
                           </div>
                           <p style={{ fontSize: '0.78rem', color: '#4b5563', marginTop: '4px', lineHeight: 1.4 }}>{m.desc}</p>
+
+                          {contact && !isDone && (
+                            <div style={{ fontSize: '0.72rem', color: '#6b7280', marginTop: '6px' }}>
+                              <Icon name="calendar" size={12} /> Scheduled for {new Date(contact.scheduled_date).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })} at {contact.scheduled_time}
+                            </div>
+                          )}
+
+                          {isDone && contact?.results && (
+                            <div style={{ marginTop: '8px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: '10px', padding: '10px 12px' }}>
+                              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803d', marginBottom: '4px' }}>
+                                Recorded by {clinician?.full_name || 'your clinician'}
+                                {contact.completed_at ? ` on ${new Date(contact.completed_at).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+                              </div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', fontSize: '0.73rem', color: '#3f6b52' }}>
+                                <span>BP <strong>{contact.results.blood_pressure}</strong></span>
+                                {contact.results.fetal_heart_rate > 0 && <span>Fetal heart rate <strong>{contact.results.fetal_heart_rate} bpm</strong></span>}
+                                {contact.results.fundal_height_cm > 0 && <span>Fundal height <strong>{contact.results.fundal_height_cm} cm</strong></span>}
+                                {contact.results.weight_kg > 0 && <span>Weight <strong>{contact.results.weight_kg} kg</strong></span>}
+                                {contact.results.haemoglobin > 0 && <span>Haemoglobin <strong>{contact.results.haemoglobin} g/dL</strong></span>}
+                                <span>Urine protein <strong>{contact.results.urine_protein}</strong></span>
+                                {contact.results.tt_dose_given !== 'None' && <span>Tetanus <strong>{contact.results.tt_dose_given}</strong></span>}
+                                {contact.results.iptp_dose_given !== 'None' && <span>Malaria prevention <strong>{contact.results.iptp_dose_given}</strong></span>}
+                                {contact.results.ifa_supplied && <span>Iron &amp; folic acid given</span>}
+                                {contact.results.llin_given && <span>Mosquito net issued</span>}
+                              </div>
+                              {contact.results.danger_signs.length > 0 && (
+                                <div style={{ fontSize: '0.73rem', color: '#b91c1c', fontWeight: 700, marginTop: '6px' }}>
+                                  Danger signs noted: {contact.results.danger_signs.join(', ')}
+                                </div>
+                              )}
+                              {contact.results.advice && (
+                                <div style={{ fontSize: '0.73rem', color: '#4b5563', marginTop: '6px', fontStyle: 'italic' }}>
+                                  Advice: {contact.results.advice}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1685,6 +1782,51 @@ export const MotherDashboard: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* VHT home visits — what the community health worker recorded */}
+              <div className="card-glass" style={{ padding: '24px', marginTop: '24px', background: theme === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: theme === 'light' ? '#1f2937' : '#ffffff', marginBottom: '4px' }}>
+                  <Icon name="vht" size={16} /> Village Health Team Visits
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#6b7280', marginBottom: '16px' }}>
+                  Home visits recorded by your VHT, {profile.vht_name}{profile.vht_phone && profile.vht_phone !== '-' ? ` (${profile.vht_phone})` : ''}.
+                </p>
+
+                {homeVisits.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 0', color: '#6b7280', fontSize: '0.82rem' }}>
+                    No home visits recorded yet. Your VHT logs each visit here.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {homeVisits.map(v => {
+                      const vht = db.users.find(u => u.id === v.vht_id);
+                      const concern = (v.complications_observed || '').trim();
+                      const flagged = concern !== '' && concern.toLowerCase() !== 'none';
+                      return (
+                        <div key={v.id} style={{ borderLeft: `4px solid ${flagged ? '#ef4444' : '#0ea5e9'}`, paddingLeft: '14px', paddingTop: '2px', paddingBottom: '2px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px' }}>
+                            <strong style={{ fontSize: '0.85rem', color: theme === 'light' ? '#1f2937' : '#f1f5f9' }}>
+                              {new Date(v.visit_date).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </strong>
+                            <span style={{ fontSize: '0.72rem', color: '#6b7280' }}>{vht?.full_name || 'Village Health Team'}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px', fontSize: '0.78rem', color: theme === 'light' ? '#4b5563' : '#cbd5e1', marginTop: '4px' }}>
+                            <span>Blood pressure <strong>{v.blood_pressure}</strong></span>
+                            <span>Temperature <strong>{v.temperature}°C</strong></span>
+                            <span>Fetal movement <strong style={{ color: v.fetal_movement === 'normal' ? '#16a34a' : '#ef4444', textTransform: 'capitalize' }}>{v.fetal_movement}</strong></span>
+                          </div>
+                          {flagged && (
+                            <div style={{ fontSize: '0.78rem', color: '#b91c1c', fontWeight: 700, marginTop: '4px' }}>Observed: {concern}</div>
+                          )}
+                          {v.notes && (
+                            <div style={{ fontSize: '0.76rem', color: '#6b7280', fontStyle: 'italic', marginTop: '3px' }}>{v.notes}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

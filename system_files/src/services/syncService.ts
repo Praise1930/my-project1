@@ -44,6 +44,11 @@ export const SYNCED_TABLES: Record<string, string> = {
   notifications: 'notifications',
   vitals: 'vitals',
   vht_visits: 'vht_visits',
+  // Antenatal contacts and blood orders cross role boundaries — a visit a
+  // doctor records has to reach the mother's phone, and a blood request has to
+  // reach the district admin — so both belong on the shared database.
+  checkups: 'checkups',
+  blood_requests: 'blood_requests',
 };
 
 interface SyncQueueItem {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isEmergencyActive, db, AuthService, DoctorService, VitalsService, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord } from '../services/db';
+import { isEmergencyActive, db, AuthService, DoctorService, VitalsService, AncService, VhtService, WHO_ANC_CONTACTS, ANC_DANGER_SIGNS, User, Doctor, Emergency, Hospital, ClinicalAssessment, BloodRequest, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA, ReferralService, ReferralRecord, CheckupSchedule, AncVisitResults, AncProgress, VhtVisitLog } from '../services/db';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { SkeletonDashboardLoader } from '../components/LoadingStates';
@@ -57,6 +57,33 @@ export const DoctorDashboard: React.FC = () => {
   const [selectedReferral, setSelectedReferral] = useState<ReferralRecord | null>(null);
   const [showMpdsrModal, setShowMpdsrModal] = useState(false);
   const [selectedEmergencyForMpdsr, setSelectedEmergencyForMpdsr] = useState<Emergency | null>(null);
+  // ── ANC clinic state ──
+  const [ancSchedule, setAncSchedule] = useState<CheckupSchedule[]>([]);
+  const [ancProgress, setAncProgress] = useState<AncProgress | null>(null);
+  const [motherVhtVisits, setMotherVhtVisits] = useState<VhtVisitLog[]>([]);
+  const [ancCheckup, setAncCheckup] = useState<CheckupSchedule | null>(null);
+  const [showAncModal, setShowAncModal] = useState(false);
+  const [showBookAncModal, setShowBookAncModal] = useState(false);
+  const [bookForm, setBookForm] = useState({ checkup_type: 'ANC Follow-up Review', scheduled_date: '', scheduled_time: '09:00', notes: '' });
+  const [ancForm, setAncForm] = useState<AncVisitResults>({
+    blood_pressure: '120/80',
+    weight_kg: 0,
+    fundal_height_cm: 0,
+    fetal_heart_rate: 140,
+    haemoglobin: 0,
+    urine_protein: 'negative',
+    temperature: 36.8,
+    tt_dose_given: 'None',
+    iptp_dose_given: 'None',
+    ifa_supplied: true,
+    llin_given: false,
+    hiv_test: 'not_done',
+    syphilis_test: 'not_done',
+    danger_signs: [],
+    findings: '',
+    advice: ''
+  });
+
 
   // /styles/medilab/main.css was requested here on every mount but has never
   // existed in public/, so it answered 404 and this portal rendered with no
@@ -137,6 +164,22 @@ export const DoctorDashboard: React.FC = () => {
       window.removeEventListener('mamatrack_db_update', handleSync);
     };
   }, [user, doctor, seenEmergencyIds, incomingPatientEmergency]);
+
+
+  // ── ANC clinic: load the selected patient's contact schedule ──
+  const refreshAncForSelected = React.useCallback(() => {
+    if (!selectedMotherId) return;
+    AncService.ensureAncSchedule(selectedMotherId);
+    setAncSchedule(AncService.getSchedule(selectedMotherId));
+    setAncProgress(AncService.getProgress(selectedMotherId));
+    setMotherVhtVisits(VhtService.getVisitsForMother(selectedMotherId));
+  }, [selectedMotherId]);
+
+  useEffect(() => {
+    refreshAncForSelected();
+    window.addEventListener('mamatrack_db_update', refreshAncForSelected);
+    return () => window.removeEventListener('mamatrack_db_update', refreshAncForSelected);
+  }, [refreshAncForSelected]);
 
   if (!user || !doctor || !hospital) {
     return <SkeletonDashboardLoader />;
@@ -288,6 +331,110 @@ export const DoctorDashboard: React.FC = () => {
     DoctorService.submitBloodRequest(user.id, hospital.id, bloodType, 2);
     showToast(`Emergency 2 Units of ${bloodType} Blood reserved from Mukono Blood Bank for Case ${emg.code}.`, 'success');
     loadData(user.id, doctor.hospital_id);
+  };
+
+
+  const openAncVisit = (checkup: CheckupSchedule) => {
+    const previous = ancSchedule
+      .filter(c => c.status === 'completed' && c.results)
+      .sort((a, b) => new Date(b.completed_at || 0).getTime() - new Date(a.completed_at || 0).getTime())[0];
+
+    setAncCheckup(checkup);
+    setAncForm({
+      blood_pressure: previous?.results?.blood_pressure || '120/80',
+      weight_kg: previous?.results?.weight_kg || 0,
+      fundal_height_cm: 0,
+      fetal_heart_rate: 140,
+      haemoglobin: previous?.results?.haemoglobin || 0,
+      urine_protein: 'negative',
+      temperature: 36.8,
+      tt_dose_given: 'None',
+      iptp_dose_given: 'None',
+      ifa_supplied: true,
+      llin_given: false,
+      hiv_test: previous?.results?.hiv_test === 'positive' ? 'known_positive' : 'not_done',
+      syphilis_test: 'not_done',
+      danger_signs: [],
+      findings: '',
+      advice: ''
+    });
+    setShowAncModal(true);
+  };
+
+  const toggleAncDangerSign = (sign: string) => {
+    setAncForm(prev => ({
+      ...prev,
+      danger_signs: prev.danger_signs.includes(sign)
+        ? prev.danger_signs.filter(s => s !== sign)
+        : [...prev.danger_signs, sign]
+    }));
+  };
+
+  const handleAncSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ancCheckup || !user) return;
+
+    if (!/^\d{2,3}\s*\/\s*\d{2,3}$/.test(ancForm.blood_pressure.trim())) {
+      showToast('Enter blood pressure as systolic/diastolic, for example 120/80.', 'error');
+      return;
+    }
+
+    const outcome = AncService.completeVisit(ancCheckup.id, user.id, {
+      ...ancForm,
+      blood_pressure: ancForm.blood_pressure.replace(/\s/g, '')
+    });
+
+    if (!outcome) {
+      showToast('That appointment could not be found. Refresh and try again.', 'error');
+      return;
+    }
+
+    setShowAncModal(false);
+    setAncCheckup(null);
+    refreshAncForSelected();
+
+    const motherName = db.users.find(u => u.id === selectedMotherId)?.full_name || 'the patient';
+    if (outcome.alerts.length > 0) {
+      showToast(
+        `Visit recorded for ${motherName}. Flagged for follow-up: ${outcome.alerts.join('; ')}.`,
+        'warning',
+        9000,
+        'ANC contact completed — findings flagged'
+      );
+    } else {
+      showToast(
+        `Visit recorded for ${motherName}.${outcome.next ? ` Next contact booked for ${new Date(outcome.next.scheduled_date).toDateString()}.` : ''}`,
+        'success',
+        6000,
+        'ANC contact completed'
+      );
+    }
+  };
+
+  const handleBookAnc = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMotherId || !bookForm.scheduled_date) {
+      showToast('Choose a date for the appointment.', 'error');
+      return;
+    }
+    AncService.scheduleVisit(selectedMotherId, {
+      checkup_type: bookForm.checkup_type,
+      scheduled_date: bookForm.scheduled_date,
+      scheduled_time: bookForm.scheduled_time,
+      notes: bookForm.notes,
+      hospital_id: hospital?.id ?? null,
+      booked_by: user?.id
+    });
+    setShowBookAncModal(false);
+    setBookForm({ checkup_type: 'ANC Follow-up Review', scheduled_date: '', scheduled_time: '09:00', notes: '' });
+    refreshAncForSelected();
+    showToast('The appointment is booked and she has been notified by SMS.', 'success', 5000, 'Appointment booked');
+  };
+
+  const handleAncReminder = (checkup: CheckupSchedule) => {
+    if (!user || !selectedMotherId) return;
+    AncService.sendReminder(selectedMotherId, checkup, user.id);
+    showToast('A reminder has been sent to her phone.', 'info', 4000, 'Reminder sent');
   };
 
   const handleBloodSubmit = (e: React.FormEvent) => {
@@ -1119,6 +1266,141 @@ export const DoctorDashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* ANTENATAL CARE CLINIC — schedule, conduct and record WHO contacts */}
+          <div className="medical-card">
+            <div className="medical-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span><Icon name="calendar" size={16} /> Antenatal Care Clinic</span>
+              <button
+                onClick={() => setShowBookAncModal(true)}
+                className="btn btn-sm btn-medilab"
+                style={{ padding: '4px 14px', fontSize: '11.5px' }}
+              >
+                Book appointment
+              </button>
+            </div>
+            <div className="medical-card-body" style={{ padding: '16px' }}>
+              {(() => {
+                const motherUser = db.users.find(u => u.id === selectedMotherId);
+                const motherRow = db.mothers.find(m => Number(m.user_id) === Number(selectedMotherId));
+                if (!motherUser || !motherRow) {
+                  return <div style={{ textAlign: 'center', padding: '24px 0', color: '#888', fontSize: '12px' }}>Select a patient above to open her antenatal record.</div>;
+                }
+
+                const contacts = ancSchedule.filter(c => c.anc_visit_number);
+                const extras = ancSchedule.filter(c => !c.anc_visit_number);
+                const pct = ancProgress?.percent ?? 0;
+
+                return (
+                  <>
+                    {/* Progress header */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #eef2f7', borderRadius: '6px', padding: '12px 14px', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                        <strong style={{ fontSize: '13px', color: '#2c4964' }}>{motherUser.full_name}</strong>
+                        <span style={{ fontSize: '11px', color: '#666' }}>
+                          {ancProgress?.gestationWeeks ?? 0} weeks · EDD {new Date(motherRow.expected_due_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+                        <span>WHO ANC contacts completed</span>
+                        <span style={{ fontWeight: 700, color: '#1977cc' }}>{ancProgress?.completed ?? 0} of {ancProgress?.total ?? 8}</span>
+                      </div>
+                      <div style={{ height: '7px', background: '#e5edf5', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: pct >= 75 ? '#16a34a' : pct >= 40 ? '#1977cc' : '#f59e0b', transition: 'width 0.3s ease' }} />
+                      </div>
+                      {(ancProgress?.overdue.length ?? 0) > 0 && (
+                        <div style={{ marginTop: '8px', fontSize: '11px', color: '#b91c1c', fontWeight: 600 }}>
+                          <Icon name="warning" size={14} /> {ancProgress?.overdue.length} contact(s) overdue — she needs follow-up.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Contact list */}
+                    <div style={{ maxHeight: '340px', overflowY: 'auto' }}>
+                      {[...contacts, ...extras].map(c => {
+                        const def = WHO_ANC_CONTACTS.find(w => w.visit === c.anc_visit_number);
+                        const due = new Date(c.scheduled_date);
+                        const isDone = c.status === 'completed';
+                        const isMissed = c.status === 'missed';
+                        const badge = isDone
+                          ? { bg: '#dcfce7', fg: '#15803d', text: 'COMPLETED' }
+                          : isMissed
+                          ? { bg: '#fee2e2', fg: '#b91c1c', text: 'MISSED' }
+                          : { bg: '#fef3c7', fg: '#b45309', text: 'UPCOMING' };
+
+                        return (
+                          <div key={c.id} style={{ borderBottom: '1px solid #eef2f7', padding: '10px 0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                              <strong style={{ fontSize: '12.5px', color: '#2c4964' }}>{c.checkup_type}</strong>
+                              <span style={{ fontSize: '9.5px', background: badge.bg, color: badge.fg, padding: '2px 8px', borderRadius: '10px', fontWeight: 800, whiteSpace: 'nowrap' }}>{badge.text}</span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>
+                              {due.toDateString()} at {c.scheduled_time}
+                              {def ? ` · due from week ${def.minWeek}` : ''}
+                            </div>
+
+                            {isDone && c.results && (
+                              <div style={{ marginTop: '6px', background: '#f1f8f4', border: '1px solid #dcfce7', borderRadius: '4px', padding: '8px 10px', fontSize: '11px', color: '#3f6b52' }}>
+                                BP {c.results.blood_pressure} · FHR {c.results.fetal_heart_rate} bpm · Fundal {c.results.fundal_height_cm} cm · Hb {c.results.haemoglobin} g/dL · Urine {c.results.urine_protein}
+                                {c.results.findings && <div style={{ marginTop: '3px', fontStyle: 'italic' }}>{c.results.findings}</div>}
+                                {c.results.danger_signs.length > 0 && (
+                                  <div style={{ marginTop: '3px', color: '#b91c1c', fontWeight: 600 }}>Danger signs: {c.results.danger_signs.join(', ')}</div>
+                                )}
+                              </div>
+                            )}
+
+                            {!isDone && (
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '7px', flexWrap: 'wrap' }}>
+                                <button
+                                  onClick={() => openAncVisit(c)}
+                                  className="btn btn-sm btn-medilab"
+                                  style={{ padding: '3px 12px', fontSize: '11px' }}
+                                >
+                                  Conduct visit
+                                </button>
+                                <button
+                                  onClick={() => handleAncReminder(c)}
+                                  style={{ padding: '3px 12px', fontSize: '11px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '50px', color: '#2c4964', cursor: 'pointer' }}
+                                >
+                                  Send reminder
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Community visits by her VHT */}
+                    <div style={{ marginTop: '14px', borderTop: '2px solid #eef2f7', paddingTop: '12px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#2c4964', marginBottom: '8px' }}>
+                        <Icon name="people" size={14} /> VHT home visits
+                      </div>
+                      {motherVhtVisits.length === 0 ? (
+                        <div style={{ fontSize: '11.5px', color: '#888' }}>No community visits recorded for this patient yet.</div>
+                      ) : (
+                        motherVhtVisits.slice(0, 5).map(v => {
+                          const vht = db.users.find(u => u.id === v.vht_id);
+                          const concern = (v.complications_observed || '').trim();
+                          const flagged = concern !== '' && concern.toLowerCase() !== 'none';
+                          return (
+                            <div key={v.id} style={{ borderLeft: `3px solid ${flagged ? '#ef4444' : '#1977cc'}`, paddingLeft: '10px', marginBottom: '8px' }}>
+                              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#2c4964' }}>{v.visit_date} · {vht?.full_name || 'VHT'}</div>
+                              <div style={{ fontSize: '11px', color: '#666' }}>
+                                BP {v.blood_pressure} · {v.temperature}°C · fetal movement {v.fetal_movement}
+                              </div>
+                              {flagged && <div style={{ fontSize: '11px', color: '#b91c1c', fontWeight: 600 }}>Observed: {concern}</div>}
+                              {v.notes && <div style={{ fontSize: '10.5px', color: '#888', fontStyle: 'italic' }}>{v.notes}</div>}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
           {/* Bed allocation console */}
           <div className="medical-card">
             <div className="medical-card-header"><Icon name="facility" size={16} /> Ward Bed Allocation Management
@@ -1176,6 +1458,198 @@ export const DoctorDashboard: React.FC = () => {
       </footer>
 
       </div>
+
+      {/* ANC CONTACT — CONDUCT VISIT MODAL */}
+      {showAncModal && ancCheckup && (
+        <div className="medilab-modal-overlay">
+          <div className="medilab-modal-container" style={{ maxWidth: '720px' }}>
+            <div style={{ background: '#1977cc', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignSelf: 'stretch', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}>
+                <Icon name="doctor" size={16} /> {ancCheckup.checkup_type}
+              </h5>
+              <button onClick={() => setShowAncModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+
+            <form onSubmit={handleAncSubmit} style={{ padding: '20px', maxHeight: '72vh', overflowY: 'auto' }}>
+              {(() => {
+                const def = WHO_ANC_CONTACTS.find(w => w.visit === ancCheckup.anc_visit_number);
+                if (!def) return null;
+                return (
+                  <div style={{ background: '#f1f6fb', border: '1px solid #dbe8f5', borderRadius: '6px', padding: '10px 12px', marginBottom: '16px', fontSize: '11.5px', color: '#2c4964' }}>
+                    <strong>WHO contact {def.visit} · week {def.weeks}</strong>
+                    <div style={{ marginTop: '3px' }}>{def.focus.join(' · ')}</div>
+                  </div>
+                );
+              })()}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Blood pressure (mmHg)</label>
+                  <input className="form-control-medilab" value={ancForm.blood_pressure} onChange={e => setAncForm({ ...ancForm, blood_pressure: e.target.value })} placeholder="120/80" required />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Weight (kg)</label>
+                  <input className="form-control-medilab" type="number" step="0.1" min="0" value={ancForm.weight_kg || ''} onChange={e => setAncForm({ ...ancForm, weight_kg: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Fundal height (cm)</label>
+                  <input className="form-control-medilab" type="number" step="0.5" min="0" value={ancForm.fundal_height_cm || ''} onChange={e => setAncForm({ ...ancForm, fundal_height_cm: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Fetal heart rate (bpm)</label>
+                  <input className="form-control-medilab" type="number" min="0" max="240" value={ancForm.fetal_heart_rate || ''} onChange={e => setAncForm({ ...ancForm, fetal_heart_rate: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Haemoglobin (g/dL)</label>
+                  <input className="form-control-medilab" type="number" step="0.1" min="0" value={ancForm.haemoglobin || ''} onChange={e => setAncForm({ ...ancForm, haemoglobin: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Temperature (°C)</label>
+                  <input className="form-control-medilab" type="number" step="0.1" min="30" max="45" value={ancForm.temperature ?? ''} onChange={e => setAncForm({ ...ancForm, temperature: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Urine protein</label>
+                  <select className="form-control-medilab" value={ancForm.urine_protein} onChange={e => setAncForm({ ...ancForm, urine_protein: e.target.value as AncVisitResults['urine_protein'] })}>
+                    <option value="negative">Negative</option>
+                    <option value="trace">Trace</option>
+                    <option value="+">+</option>
+                    <option value="++">++</option>
+                    <option value="+++">+++</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Tetanus toxoid</label>
+                  <select className="form-control-medilab" value={ancForm.tt_dose_given} onChange={e => setAncForm({ ...ancForm, tt_dose_given: e.target.value })}>
+                    <option value="None">Not given today</option>
+                    <option value="TT1">TT1</option>
+                    <option value="TT2">TT2</option>
+                    <option value="TT3">TT3</option>
+                    <option value="TT4">TT4</option>
+                    <option value="TT5">TT5</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>IPTp (SP) dose</label>
+                  <select className="form-control-medilab" value={ancForm.iptp_dose_given} onChange={e => setAncForm({ ...ancForm, iptp_dose_given: e.target.value })}>
+                    <option value="None">Not given today</option>
+                    <option value="IPTp1">IPTp1</option>
+                    <option value="IPTp2">IPTp2</option>
+                    <option value="IPTp3">IPTp3</option>
+                    <option value="IPTp4">IPTp4</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>HIV test</label>
+                  <select className="form-control-medilab" value={ancForm.hiv_test} onChange={e => setAncForm({ ...ancForm, hiv_test: e.target.value as AncVisitResults['hiv_test'] })}>
+                    <option value="not_done">Not done today</option>
+                    <option value="negative">Negative</option>
+                    <option value="positive">Positive</option>
+                    <option value="known_positive">Known positive — on ART</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Syphilis test</label>
+                  <select className="form-control-medilab" value={ancForm.syphilis_test} onChange={e => setAncForm({ ...ancForm, syphilis_test: e.target.value as AncVisitResults['syphilis_test'] })}>
+                    <option value="not_done">Not done today</option>
+                    <option value="negative">Negative</option>
+                    <option value="positive">Positive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '18px', margin: '14px 0', fontSize: '12px', color: '#444' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={ancForm.ifa_supplied} onChange={e => setAncForm({ ...ancForm, ifa_supplied: e.target.checked })} />
+                  Iron / folic acid supplied
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={ancForm.llin_given} onChange={e => setAncForm({ ...ancForm, llin_given: e.target.checked })} />
+                  Mosquito net (LLIN) issued
+                </label>
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '6px' }}>Danger signs present</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {ANC_DANGER_SIGNS.map(sign => {
+                    const on = ancForm.danger_signs.includes(sign);
+                    return (
+                      <button
+                        key={sign}
+                        type="button"
+                        onClick={() => toggleAncDangerSign(sign)}
+                        style={{
+                          fontSize: '11px', padding: '4px 10px', borderRadius: '50px', cursor: 'pointer',
+                          border: `1px solid ${on ? '#dc3545' : '#cbd5e1'}`,
+                          background: on ? '#fee2e2' : '#ffffff',
+                          color: on ? '#b91c1c' : '#475569',
+                          fontWeight: on ? 700 : 500
+                        }}
+                      >
+                        {sign}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Clinical findings</label>
+                <textarea className="form-control-medilab" rows={3} value={ancForm.findings} onChange={e => setAncForm({ ...ancForm, findings: e.target.value })} placeholder="Examination findings, presentation, oedema, any concerns." required />
+              </div>
+
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Advice given to the mother</label>
+                <textarea className="form-control-medilab" rows={2} value={ancForm.advice} onChange={e => setAncForm({ ...ancForm, advice: e.target.value })} placeholder="This is sent to her dashboard and by SMS." />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowAncModal(false)} style={{ background: '#eef2f7', border: 'none', borderRadius: '50px', padding: '8px 22px', fontSize: '13px', color: '#2c4964', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" className="btn btn-medilab">Record visit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* BOOK ANC APPOINTMENT MODAL */}
+      {showBookAncModal && (
+        <div className="medilab-modal-overlay">
+          <div className="medilab-modal-container">
+            <div style={{ background: '#1977cc', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignSelf: 'stretch', color: '#ffffff' }}>
+              <h5 style={{ margin: 0, fontWeight: 700, fontSize: '15px' }}><Icon name="calendar" size={16} /> Book an appointment</h5>
+              <button onClick={() => setShowBookAncModal(false)} style={{ background: 'none', border: 'none', color: '#ffffff', fontSize: '20px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+            </div>
+            <form onSubmit={handleBookAnc} style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '14px', fontSize: '12px', color: '#666' }}>
+                For <strong style={{ color: '#2c4964' }}>{db.users.find(u => u.id === selectedMotherId)?.full_name || 'the selected patient'}</strong>
+              </div>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Appointment type</label>
+                <input className="form-control-medilab" value={bookForm.checkup_type} onChange={e => setBookForm({ ...bookForm, checkup_type: e.target.value })} required />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Date</label>
+                  <input className="form-control-medilab" type="date" value={bookForm.scheduled_date} onChange={e => setBookForm({ ...bookForm, scheduled_date: e.target.value })} required />
+                </div>
+                <div style={{ width: '130px' }}>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Time</label>
+                  <input className="form-control-medilab" type="time" value={bookForm.scheduled_time} onChange={e => setBookForm({ ...bookForm, scheduled_time: e.target.value })} required />
+                </div>
+              </div>
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#555', display: 'block', marginBottom: '5px' }}>Note for the mother</label>
+                <textarea className="form-control-medilab" rows={2} value={bookForm.notes} onChange={e => setBookForm({ ...bookForm, notes: e.target.value })} />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowBookAncModal(false)} style={{ background: '#eef2f7', border: 'none', borderRadius: '50px', padding: '8px 22px', fontSize: '13px', color: '#2c4964', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" className="btn btn-medilab">Book &amp; notify</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* BLOOD REQUEST MODAL */}
       {showBloodModal && (

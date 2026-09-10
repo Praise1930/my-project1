@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, AuthService, EmergencyService, NotificationService, SimulationEngine, isEmergencyActive, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, Notification, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
+import { db, AuthService, EmergencyService, NotificationService, SimulationEngine, AncService, BloodBankService, isEmergencyActive, User, Emergency, Hospital, Driver, Doctor, Vehicle, Mother, Notification, MpdsrService, ReferralService, ReferralRecord, ObstetricEmergencyCategory, OBSTETRIC_CATEGORIES_METADATA } from '../services/db';
 import { MapComponent, MapMarker } from '../components/MapComponent';
 import { RefreshCw, Bell } from 'lucide-react';
 import { ThemeToggle, useTheme } from '../contexts/ThemeContext';
@@ -24,6 +24,7 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [activeTab, setActiveTab] = useState<'dispatch' | 'facilities' | 'personnel' | 'mothers' | 'sons' | 'reports' | 'performance' | 'mpdsr'>('dispatch');
 
   // Database states
@@ -863,6 +864,24 @@ export const AdminDashboard: React.FC = () => {
     setEditMother(null);
     loadData();
     showToast('Expectant Mother profile updated.', 'success');
+  };
+
+  const handleBloodRequestAction = (requestId: number, status: 'approved' | 'delivered' | 'cancelled') => {
+    if (!user) return;
+    const updated = BloodBankService.updateStatus(requestId, status, user.id);
+    if (!updated) {
+      showToast('That blood request could not be found.', 'error');
+      return;
+    }
+    setRefreshTick(t => t + 1);
+    showToast(
+      status === 'cancelled'
+        ? 'The request was declined and the doctor has been told.'
+        : `${updated.units} unit(s) of ${updated.blood_type} marked ${status}. The requesting doctor has been notified.`,
+      status === 'cancelled' ? 'info' : 'success',
+      5000,
+      'Blood bank updated'
+    );
   };
 
   const handleDeleteMother = async (id: number, userId: number) => {
@@ -3212,6 +3231,7 @@ export const AdminDashboard: React.FC = () => {
                     <th>Village & Sub-County</th>
                     <th>Pregnancy Start</th>
                     <th>Expected Due Date</th>
+                    <th>ANC Progress</th>
                     <th>Next of Kin</th>
                     <th>VHT Assigned</th>
                     <th>Actions</th>
@@ -3220,11 +3240,12 @@ export const AdminDashboard: React.FC = () => {
                 <tbody>
                   {filteredMothers.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No expectant mothers registered.</td>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>No expectant mothers registered.</td>
                     </tr>
                   ) : (
                     filteredMothers.map(m => {
                       const u = db.users.find(usr => usr.id === m.user_id);
+                      const anc = AncService.getProgress(m.user_id);
                       return (
                         <tr key={m.id}>
                           <td>
@@ -3246,6 +3267,18 @@ export const AdminDashboard: React.FC = () => {
                           </td>
                           <td>{m.pregnancy_start_date}</td>
                           <td><strong style={{ color: '#2563eb' }}>{m.expected_due_date}</strong></td>
+                          <td style={{ minWidth: '140px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '3px' }}>
+                              <span style={{ fontWeight: 700, color: '#0f172a' }}>{anc.completed}/{anc.total} contacts</span>
+                              <span style={{ color: '#64748b' }}>{anc.gestationWeeks}w</span>
+                            </div>
+                            <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{ width: `${anc.percent}%`, height: '100%', background: anc.overdue.length > 0 ? '#f97316' : anc.percent >= 75 ? '#16a34a' : '#2563eb' }} />
+                            </div>
+                            {anc.overdue.length > 0 && (
+                              <div style={{ fontSize: '10px', color: '#dc2626', fontWeight: 700, marginTop: '3px' }}>{anc.overdue.length} overdue</div>
+                            )}
+                          </td>
                           <td>
                             <div>{m.next_of_kin_name} ({m.next_of_kin_relationship})</div>
                             <div style={{ fontSize: '11px', color: '#64748b' }}>{m.next_of_kin_phone}</div>
@@ -3488,6 +3521,57 @@ export const AdminDashboard: React.FC = () => {
                             <div style={{ textAlign: 'right' }}>
                               <strong style={{ color: '#10b981' }}>{f.cost.toLocaleString()} UGX</strong>
                               <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(f.logged_at).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Blood bank requests raised by doctors */}
+                <div key={`blood-${refreshTick}`} className="card" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', background: '#ffffff', padding: '24px', gridColumn: '1 / -1' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h5 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>Blood Bank Requests</h5>
+                    {BloodBankService.getPending().length > 0 && (
+                      <span style={{ fontSize: '11px', fontWeight: 800, background: '#fee2e2', color: '#b91c1c', padding: '3px 10px', borderRadius: '12px' }}>
+                        {BloodBankService.getPending().length} awaiting action
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', fontSize: '13px' }}>
+                    {BloodBankService.getAll().length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>No blood supply requests raised.</div>
+                    ) : (
+                      BloodBankService.getAll().map(r => {
+                        const doc = db.users.find(u => u.id === r.doctor_id);
+                        const hosp = db.hospitals.find(h => h.id === r.hospital_id);
+                        const tone =
+                          r.status === 'delivered' ? { bg: '#dcfce7', fg: '#15803d' }
+                          : r.status === 'approved' ? { bg: '#dbeafe', fg: '#1d4ed8' }
+                          : r.status === 'cancelled' ? { bg: '#f1f5f9', fg: '#64748b' }
+                          : { bg: '#fef3c7', fg: '#b45309' };
+                        return (
+                          <div key={r.id} style={{ borderBottom: '1px solid #e2e8f0', padding: '12px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#334155' }}>
+                                {r.units} unit(s) · {r.blood_type}
+                                <span style={{ marginLeft: '10px', fontSize: '10px', fontWeight: 800, background: tone.bg, color: tone.fg, padding: '2px 9px', borderRadius: '12px', textTransform: 'uppercase' }}>{r.status}</span>
+                              </div>
+                              <div style={{ color: '#64748b', fontSize: '12px' }}>
+                                Requested by {doc?.full_name || 'a doctor'}{hosp ? ` · ${hosp.name}` : ''} · {new Date(r.requested_at).toLocaleString()}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              {r.status === 'pending' && (
+                                <>
+                                  <button onClick={() => handleBloodRequestAction(r.id, 'approved')} style={{ fontSize: '11px', fontWeight: 700, background: '#2563eb', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer' }}>Approve</button>
+                                  <button onClick={() => handleBloodRequestAction(r.id, 'cancelled')} style={{ fontSize: '11px', fontWeight: 700, background: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer' }}>Decline</button>
+                                </>
+                              )}
+                              {r.status === 'approved' && (
+                                <button onClick={() => handleBloodRequestAction(r.id, 'delivered')} style={{ fontSize: '11px', fontWeight: 700, background: '#16a34a', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '4px', cursor: 'pointer' }}>Mark delivered</button>
+                              )}
                             </div>
                           </div>
                         );

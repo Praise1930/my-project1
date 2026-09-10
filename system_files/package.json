@@ -9,7 +9,8 @@
     "type-check": "tsc -b",
     "lint": "eslint .",
     "test:components": "vite build --config vite.test.config.ts && node -r ./src/tests/setup_env.js dist-test/test_bundle.cjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:anc": "vite build --config vite.anc.config.ts && node -r ./src/tests/setup_env.js dist-anc/anc_test.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.0",
