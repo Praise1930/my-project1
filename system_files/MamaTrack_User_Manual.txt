@@ -1,0 +1,393 @@
+===============================================================================
+                         MAMATRACK GPS — USER MANUAL
+          GPS-Enabled Maternal Health & Emergency Response System
+                           Mukono District, Uganda
+===============================================================================
+Version : September 2026 (build 44aee68)
+Web app : https://my-project1-peach.vercel.app
+Logins  : see logins.txt (supplied with this manual)
+
+-------------------------------------------------------------------------------
+CONTENTS
+-------------------------------------------------------------------------------
+ 1. About the system
+ 2. Before you start (requirements, installing the app)
+ 3. Signing in, registering and resetting a password
+ 4. Expectant Mother portal
+ 5. Village Health Team (VHT) portal
+ 6. Doctor / Clinician portal
+ 7. Ambulance Driver portal
+ 8. District Administrator portal
+ 9. How an emergency moves through the system
+10. How routine antenatal care (ANC) moves through the system
+11. Working offline
+12. Troubleshooting
+13. Safety and data notice
+
+===============================================================================
+1. ABOUT THE SYSTEM
+===============================================================================
+MamaTrack GPS makes an expectant mother's exact location visible to responders
+before she reaches a health facility. It connects five kinds of users on one
+shared record:
+
+  * Expectant Mother  – raises an SOS, tracks the ambulance, follows her ANC
+                        schedule and health ledger.
+  * VHT Worker        – registers mothers, logs home visits, follows up
+                        mothers who miss ANC contacts.
+  * Doctor            – receives inbound patients, conducts ANC visits,
+                        requests blood, completes handovers and audits.
+  * Ambulance Driver  – receives dispatches, navigates to the patient and
+                        the facility, logs fuel and pre-duty inspections.
+  * Administrator     – triages and dispatches SOS alerts, monitors the
+                        fleet, manages facilities, staff, mothers, blood
+                        requests and reports.
+
+Changes made on one device reach the other devices automatically (live sync).
+
+===============================================================================
+2. BEFORE YOU START
+===============================================================================
+Requirements
+  * A smartphone, tablet or computer with a modern browser
+    (Chrome, Edge, Firefox or Safari).
+  * Location (GPS) permission switched ON — essential for mothers and drivers.
+  * Internet connection for sync. The app keeps working with no network and
+    catches up when the connection returns (see Section 11).
+
+Installing as an app (recommended on phones)
+  1. Open the web address above in Chrome.
+  2. Tap the "Install" banner, or open the browser menu and choose
+     "Add to Home screen" / "Install app".
+  3. Open MamaTrack from the home-screen icon. It runs full-screen like a
+     normal app.
+
+Allow location
+  When the browser asks "Allow MamaTrack to use your location?", choose
+  Allow. If you refused by mistake, open the browser's site settings,
+  set Location to Allow, and reload the page.
+
+Theme
+  Light and dark themes are supported; use the theme switch in the app.
+
+===============================================================================
+3. SIGNING IN, REGISTERING AND RESETTING A PASSWORD
+===============================================================================
+3.1 Sign in
+  1. Open the app. On the landing page choose your portal, or go to Login.
+  2. At the top of the login card select your role:
+        Mother | VHT | Doctor | Driver | Admin
+     The role MUST match your account. Choosing the wrong role gives
+     "User account not found with selected role".
+  3. Enter your email address and password.
+  4. Press Sign in. You are taken to your role's dashboard.
+
+3.2 Register as a new expectant mother
+  1. On the login page press "Register Mother Account".
+  2. Fill in: full name, email, phone number, password (minimum 6
+     characters) and confirm password.
+  3. Fill in pregnancy start date (month/year), sub-county (Mukono
+     Municipality, Goma, Nama, Koome, Ntenjeru), village/ward, and next of
+     kin (name, phone, relationship).
+  4. Submit. A confirmation email is sent — open it and click the link to
+     verify, then sign in. (Check Spam / Junk if it does not arrive.)
+  5. Your full 8-contact WHO ANC schedule is created automatically.
+  A VHT can also register a mother on her behalf (Section 5).
+
+3.3 Forgot password
+  1. On the login page choose "Forgot password".
+  2. Enter your registered email and submit.
+  3. Follow the link in the email to set a new password.
+
+3.4 Sign out
+  Press the Logout / Exit icon in the menu or top bar. Always sign out on a
+  shared device.
+
+===============================================================================
+4. EXPECTANT MOTHER PORTAL
+===============================================================================
+Open the menu (top-left icon on phones) to move between sections.
+
+4.1 Overview (Home)
+  * Pregnancy progress — weeks pregnant and progress to delivery.
+  * "Your antenatal progress" — how many of the 8 WHO ANC contacts are done.
+  * Next Appointment — your soonest booked visit.
+  * Your Health Score and personalised pregnancy insights.
+  * Alert Notifications — messages from your doctor, VHT and the system.
+    Use "Mark all read" to clear them.
+
+4.2 Emergency — RAISING AN SOS
+  Use this for danger signs such as:
+    - Vaginal bleeding or sudden warm fluid leakage
+    - Severe, persistent headache or blurred vision
+    - Severe, constant abdominal pain or cramping
+    - High fever, severe chills, or fits/convulsions
+    - Sudden swelling of the face, hands or ankles
+  Steps
+    1. Go to Emergency and press "Trigger SOS"
+       ("Trigger Maternal Rescue Beacon" / "Tap to dispatch ambulance").
+    2. Allow location if asked. Your GPS position is attached to the alert.
+    3. The district coordinator is alerted at once and dispatches an
+       ambulance.
+    4. Watch the status change: Pending -> Dispatched -> En-Route ->
+       Arrived. The screen shows the Assigned Driver, ambulance Plate No,
+       and Ambulance ETA, with the ambulance moving on the map.
+    5. Keep the app open and your phone charged. Stay where you are if safe.
+  Cancel
+    Press "Cancel SOS" only if help is no longer needed. Cancelling is
+    possible only before the ambulance picks you up.
+  In a life-threatening emergency, also call the facility hotline shown in
+  the app.
+
+4.3 WHO ANC Checklist / Checkup Schedules
+  * Shows all 8 WHO antenatal contacts with due dates.
+  * Completed contacts show what the clinician recorded (BP, weight,
+    fundal height, fetal heart rate, haemoglobin, urine protein, tetanus,
+    malaria prevention, mosquito net, advice) and who recorded it.
+  * Missed contacts are shown in red — contact your VHT or clinic.
+
+4.4 Vitals history / Health Ledger
+  * Log your own readings: blood pressure (systolic/diastolic), glucose
+    level, fetal kicks, temperature. Press "Save & Validate Vitals".
+  * All readings from you, your VHT and your doctor appear here with
+    "Recorded By" and "Recorded Date/Time".
+  * "Village Health Team Visits" lists every home visit by your VHT.
+
+4.5 Appointments & Consult
+  * Upcoming appointments and reminders.
+  * "Expert Doctor Consultation" — type symptoms or questions to your
+    doctor.
+
+4.6 Profile & Contacts
+  * Update medical history / allergies, village, sub-county and next of kin.
+  * Upload a profile photo.
+  * See your assigned VHT and doctors.
+
+===============================================================================
+5. VILLAGE HEALTH TEAM (VHT) PORTAL
+===============================================================================
+5.1 Dashboard
+  Counters: Mothers Monitored, Home Visits Logged, Active SOS Alerts,
+  plus a notifications bell.
+
+5.2 Register Mother
+  1. Open "Register Mother".
+  2. Enter the mother's full name, email, phone, date of birth, blood group,
+     pregnancy start date, village and sub-county, and next of kin.
+  3. Tick known risk factors (Previous C-Section, Chronic Hypertension,
+     Gestational Diabetes, History of Haemorrhage, Multiple Pregnancy,
+     Severe Anaemia Hb < 7).
+  4. Save. You are recorded as her VHT and her 8-contact ANC schedule is
+     created.
+
+5.3 Assigned Mothers
+  Search by name, village or phone. Open a mother to see her details.
+  You can raise an SOS on a mother's behalf if she cannot.
+
+5.4 Visit Logs — recording a home visit
+  1. Choose the mother and the date.
+  2. Enter Blood Pressure (e.g. 120/80), temperature (e.g. 36.6),
+     fetal kicks and Fetal Movements Status
+     (Normal / Active, Reduced / Sluggish, No movement felt).
+  3. Select Observed Complications if any (e.g. Swollen Feet / Face,
+     Premature Water Breaking) and write advice given to the mother.
+  4. Press "Save Visit Log".
+  Result: the mother is notified; if complications were recorded, every
+  doctor is alerted.
+
+5.5 ANC Follow-up
+  * Every mother against her 8-contact schedule; defaulters (missed
+    contacts) appear first with a red badge count.
+  * "Send reminder" — sends an in-app notification and SMS to the mother.
+  * "Book catch-up visit" — books a new date for the missed contact.
+
+===============================================================================
+6. DOCTOR / CLINICIAN PORTAL
+===============================================================================
+6.1 Overview
+  Duty Status (on/off duty), available ward beds, pending blood orders,
+  and incoming alerts.
+
+6.2 Inbound Transfers (emergencies)
+  * Each inbound patient shows name, blood group, condition, ETA and
+    distress notes, so the team can prepare before arrival.
+  * CDSS triage (Uganda Clinical Guidelines) helps classify severity.
+  * "View Official Uganda MoH Referral Note" opens the referral form.
+  * Request blood: choose Requested Blood Group and units -> submit.
+    The administrator approves and delivers it (Section 8.6); you are
+    notified at each step.
+  * Complete Handover: after arrival, enter Clinical Diagnosis / Findings,
+    Treatment Plan Administered (e.g. C-section, IV drip) and the Handoff
+    Outcome, then press "Complete Handover". This closes the case.
+  * If the outcome is Deceased / Fatal complication, complete the MPDSR
+    (Three-Delay Model) audit.
+
+6.3 Antenatal Care Clinic
+  1. Select a patient. Her progress bar shows WHO ANC contacts completed.
+  2. Review the contact list, past results and her VHT home visits.
+  3. "Conduct visit" opens the Uganda MoH ANC form. Record:
+       BP (e.g. 120/80), weight, fundal height, fetal heart rate,
+       haemoglobin, urine protein, temperature, tetanus toxoid,
+       IPTp1–IPTp4, iron/folic acid, mosquito net (LLIN), HIV test,
+       syphilis test, danger signs present, clinical findings and a
+       note/advice for the mother.
+  4. Press "Record visit".
+  Result: the mother's checklist and vitals update; she receives an
+  in-app message and SMS; abnormal results (high BP, low Hb, abnormal fetal
+  heart rate, proteinuria, fever, danger signs) alert all doctors and her
+  next of kin; the next contact is booked automatically.
+  Also: "Book appointment" and "Send reminder".
+
+6.4 My Treated Cases
+  History of cases you handled, with trace and triage reports.
+
+===============================================================================
+7. AMBULANCE DRIVER PORTAL
+===============================================================================
+7.1 Duty status
+  Switch between ACTIVE ON-DUTY and STANDBY MODE. Only on-duty drivers
+  receive dispatches. Keep location ON.
+
+7.2 Pre-duty Safety Inspection (do this at the start of every shift)
+  Tick: tyre pressure & suspension OK; engine fluid, oil & coolant OK;
+  siren & warning lights working; obstetric delivery kit & oxygen tanks
+  verified. Select Inspected Fuel Level (Full / Half / Low Tank) and submit
+  ("Inspection Log Certified").
+
+7.3 Responding to a dispatch (Active Mission)
+  1. A new mission shows PICKUP (patient name and GPS), DESTINATION
+     facility and ETA.
+  2. Press "Start Trip & GPS Simulation" — status becomes En-Route and
+     your position is shared with the mother, coordinator and hospital.
+  3. On reaching the mother press "Arrived at Patient & Picked Up".
+  4. Press "Start transit to hospital".
+  5. On arrival press "Arrived at Hospital". The doctor then completes the
+     handover and the ambulance is released.
+  Steps only move forward; a finished case cannot be re-opened.
+
+7.4 Fuel log
+  Record fuel purchases: filling station name, amount and cost.
+
+===============================================================================
+8. DISTRICT ADMINISTRATOR PORTAL
+===============================================================================
+8.1 GPS Dispatch (command console)
+  * "INCOMING SOS ALERT" pops up with a sound for every new SOS.
+  * Pending Dispatch Triage lists new alerts: case code, patient, distress
+    notes and location on the map.
+  * Dispatch: choose the Target Hospital Facility and Ambulance & Driver
+    (the nearest capable facility is suggested), then press "Dispatch".
+  * Active Dispatched Missions shows live ambulance positions.
+  * Close out a case once it is Delivered (or force-close a case that ended
+    off-system). This releases the ambulance.
+  * Cancel a case only before pickup.
+  * The bell shows Alert history.
+
+8.2 Expectant Mothers
+  Registered Expectant Mothers Directory with ANC Progress column. Add,
+  edit or deactivate mothers; view next of kin and due dates.
+
+8.3 Duty Personnel
+  Obstetricians & Medical Specialists Roster and Ambulance Drivers Roster.
+  Add personnel (name, email, phone, role, licence number, specialisation,
+  assigned hospital/vehicle, shift) and set a new account password.
+  Press "Save Personnel".
+
+8.4 Health Facilities
+  Hospital Referral Network Directory. Add or edit a facility: name, type
+  (Government / Private / NGO-Mission), level, address, hotline, email,
+  available ward beds, CEmONC capability, blood bank, surgical theatre.
+  Keep bed counts current — dispatch uses them. Press "Save Facility".
+
+8.5 Reports & Audits
+  Historical rescue referral audit logs, Audit & Fuel Logs, pre-duty
+  inspections, DHIS2 export.
+
+8.6 Blood Bank Requests
+  Requests raised by doctors appear here. Press Approve or Decline, then
+  "Mark delivered" once issued. The requesting doctor is notified by app
+  and SMS.
+
+8.7 MPDSR Surveillance
+  Maternal and perinatal death reviews: audit status and corrective action
+  plans.
+
+8.8 System Performance
+  Uptime, average dispatch latency, GPS sync accuracy and traffic volume.
+
+===============================================================================
+9. HOW AN EMERGENCY MOVES THROUGH THE SYSTEM
+===============================================================================
+  Mother / VHT          Administrator         Driver               Doctor
+  ------------          -------------         ------               ------
+  Trigger SOS  ------>  INCOMING SOS
+                        Dispatch     ------>  New mission
+  sees Dispatched                             Start trip  (en_route)
+  sees ETA / map                              Picked up   (arrived)
+                                              Start transit (in_transit)  -> Inbound
+                                              Arrived at hospital (delivered)
+                        Close out                                  Complete Handover
+                                                                  (completed)
+
+  Status order: pending -> dispatched -> en_route -> arrived ->
+                in_transit -> delivered -> completed
+  (or cancelled, before pickup only)
+
+===============================================================================
+10. HOW ROUTINE ANTENATAL CARE MOVES THROUGH THE SYSTEM
+===============================================================================
+  1. Mother registers (herself or via VHT) -> 8 ANC contacts are scheduled
+     from her pregnancy start date.
+  2. VHT logs home visits -> mother and (if complications) doctors notified.
+  3. Doctor conducts each ANC visit -> results saved, mother notified,
+     abnormal findings escalated, next contact booked.
+  4. A contact not done within 14 days of its date is marked missed ->
+     mother sees it in red; VHT sees her in ANC Follow-up and sends a
+     reminder or books a catch-up visit.
+  5. Administrator monitors ANC progress for every mother.
+
+===============================================================================
+11. WORKING OFFLINE
+===============================================================================
+  * With no network the app keeps working; your actions are saved on the
+    device and queued.
+  * When the connection returns they are sent automatically. Do not clear
+    browser data while offline or queued changes will be lost.
+  * An SOS raised offline is sent as soon as any signal is available — in
+    a real emergency also phone the facility hotline.
+
+===============================================================================
+12. TROUBLESHOOTING
+===============================================================================
+  Problem                                   What to do
+  ----------------------------------------  ---------------------------------
+  "User account not found with selected     Select the correct role tab
+   role"                                    (Mother/VHT/Doctor/Driver/Admin).
+  "Incorrect credentials"                   Re-type the password (case
+                                            sensitive) or use Forgot password.
+  "Email address has not been verified"     Open the confirmation email
+                                            (check Spam/Junk) or resend it.
+  "Account is deactivated"                  Contact the administrator.
+  Map shows wrong place / no location       Turn on GPS and allow location
+                                            for the site, then reload.
+  Data not updating on another device       Check internet; wait a few
+                                            seconds; pull to refresh / reload.
+  Installed icon opens in browser           Remove it and re-install from
+                                            Chrome's "Install app".
+  Blank or error screen                     Reload the page; the error
+                                            screen resets when you navigate.
+
+===============================================================================
+13. SAFETY AND DATA NOTICE
+===============================================================================
+  * This deployment contains demonstration (fictional) data and shared
+    demo passwords. It must NOT hold real patient data until database
+    access is restricted per user and accounts are moved to managed
+    authentication.
+  * Never share your password. Sign out on shared devices.
+  * MamaTrack supports, and does not replace, clinical judgement and
+    standard emergency telephone procedures.
+
+-------------------------------------------------------------------------------
+End of manual
+-------------------------------------------------------------------------------

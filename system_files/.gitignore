@@ -25,3 +25,5 @@ dist-anc
 *.njsproj
 *.sln
 *.sw?
+
+logins.txt
